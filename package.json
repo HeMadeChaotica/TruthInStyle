@@ -1,9 +1,9 @@
 {
-  "name": "truthinstyle-final-execution",
-  "version": "1.0.0",
+  "name": "truth-in-style-zero-build",
+  "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "check": "node --check app.js",
-    "start": "python3 -m http.server 4173"
+    "check": "node --check src/main.js && node --check tools/generate-icons.mjs"
   }
 }
