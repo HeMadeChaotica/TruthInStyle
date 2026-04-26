@@ -1,21 +1,42 @@
-export const dayRecord = {
-  id: 'day-2026-04-23',
-  dayDate: '2026-04-23',
-  titleOfDay: 'New Ritual Spine'
+function todayContext(seed = new Date()) {
+  const month = String(seed.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(seed.getUTCDate()).padStart(2, '0');
+  const year = seed.getUTCFullYear();
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(seed).toUpperCase();
+  return { dateMMDDYYYY: `${month}/${day}/${year}`, weekday };
+}
+
+const now = todayContext();
+
+export const day_state = {
+  activeDate: now.dateMMDDYYYY,
+  activeWeekday: now.weekday,
+  titleOfDay: 'TITLE OF THE DAY'
 };
 
-export const sourceInputs = {
-  assurer_assessment: { mood: 'Focused', era: 'Rebuild', libido: 'Flirty' },
-  assurer_writer: { freewrite: 'Keep structure clean and true.' },
-  da_eater_day: { macros: { protein: 130, carbs: 180, fat: 65 }, meals: 3 },
-  thicc_fitt_day: { session: 'Pull', cardio: 'Walk', da_juice: 'tracked-private' },
-  remember_me_calendar: [{ date: '2026-04-23', notes: 'Reset architecture' }],
-  remember_me_moments: [{ type: 'WOW', description: 'Fresh start took shape.' }],
-  work_feed: { signal: 'Deep architecture pass complete.' }
+export const source_inputs = {
+  day_record: { [day_state.activeDate]: { weekday: day_state.activeWeekday, titleOfDay: day_state.titleOfDay } },
+  assurer_assessment: { [day_state.activeDate]: {} },
+  assurer_writer: { [day_state.activeDate]: { heresTheThing: '' } },
+  da_eater_day: { [day_state.activeDate]: {} },
+  thicc_fitt_day: { [day_state.activeDate]: {} },
+  remember_me_calendar: { [day_state.activeDate]: [] },
+  remember_me_moments: { [day_state.activeDate]: [] },
+  work_feed: { [day_state.activeDate]: { suggestionSeed: '' } },
+  thicc_clients: {},
+  thicc_client_logs: {},
+  media_library: {},
+  centralized_option_registry: {}
 };
 
-export const summationPrompts = [
-  'What defined today?',
-  'Horny thought of the day',
-  'What do I want future me to remember?'
-];
+export const daily_synthesis = {
+  summation_page: { [day_state.activeDate]: { versionId: 'v1', sealed: false } },
+  summation_fragments: { [day_state.activeDate]: [] },
+  summation_prompts: { [day_state.activeDate]: [] }
+};
+
+export const archive_trend_intelligence = {
+  hopewood_entries: {},
+  hopewood_search_index: {},
+  yearly_trend_cache: {}
+};

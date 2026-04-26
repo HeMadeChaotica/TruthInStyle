@@ -7,6 +7,7 @@ export const routeMap = {
   '/525600': '525,600',
   '/clock-it': 'clock.it',
   '/thicc-fitt': 'thicc.fitt',
+  '/its-getting-thicc': 'its.getting.THICC',
   '/da-eater': 'da.eater',
   '/the-work': 'the.work'
 } as const;
