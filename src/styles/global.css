@@ -1,14 +1,169 @@
-:root { color-scheme: dark; }
-body { margin: 0; font-family: Inter, system-ui, sans-serif; color: #ff5ac8; background: radial-gradient(circle at 80% 10%, rgba(255,90,200,0.25), transparent 45%), linear-gradient(145deg, #090410, #2a0f2e 40%, #130918 100%); min-height: 100vh; }
-#app { min-height: 100vh; position: relative; }
-.opening { display: grid; place-items: center; min-height: 100vh; text-align: center; }
-.opening-image { opacity: 0.7; font-size: 0.8rem; letter-spacing: 0.08em; }
-.opening h1 { font-size: clamp(2.2rem, 8vw, 5rem); letter-spacing: 0.4em; margin: 0; }
-.opening-glow { margin-top: 14rem; background: rgba(255, 90, 200, 0.1); border: 1px solid #ff5ac8; color: #ffd0ef; padding: 0.7rem 1.1rem; border-radius: 999px; }
-.control-panel { position: fixed; left: -180px; top: 0; width: 96px; height: 100%; backdrop-filter: blur(7px); background: rgba(24, 14, 31, 0.23); border-right: 1px solid rgba(255,90,200,0.35); transition: left 160ms ease; overflow: auto; }
-.control-panel.open { left: 0; }
-.control-panel ul { list-style: none; padding: 0.8rem 0.5rem; margin: 0; font-size: 0.72rem; text-transform: uppercase; }
-.control-panel button { width: 100%; background: transparent; color: #ffc0e7; border: 1px solid rgba(255,90,200,0.3); border-radius: 8px; margin-top: 0.35rem; }
-section { padding: 2rem; max-width: 900px; margin: 0 auto; }
-.center { text-align: center; border: 1px dashed rgba(255,90,200,0.4); border-radius: 999px; padding: 0.8rem; max-width: 300px; margin: 1rem auto; }
-.truth-wand { position: fixed; bottom: 1rem; right: 1rem; border-radius: 999px; border: 1px solid rgba(255,90,200,0.5); background: rgba(23, 8, 30, 0.8); color: #ffd7f0; width: 48px; height: 48px; }
+:root {
+  color-scheme: dark;
+  --truth-pink: #ffc2de;
+}
+
+* {
+  box-sizing: border-box;
+  text-transform: uppercase;
+  color: var(--truth-pink);
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+  font-family: Inter, system-ui, sans-serif;
+  background: radial-gradient(circle at 20% 10%, rgba(255, 120, 190, 0.25), transparent 30%), #0f0614;
+}
+
+.opening-screen,
+.section-screen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.opening-screen {
+  display: grid;
+  place-items: center;
+}
+
+.opening-screen img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.65;
+}
+
+.truth-entry {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: 1px solid var(--truth-pink);
+  padding: 0.5rem 1rem;
+}
+
+.control-panel {
+  position: fixed;
+  top: 0;
+  left: -96px;
+  width: 96px;
+  max-width: 1in;
+  height: 100vh;
+  z-index: 10;
+  background: rgba(40, 15, 42, 0.25);
+  backdrop-filter: blur(4px);
+  transition: left 120ms ease;
+}
+
+.control-panel.open {
+  left: 0;
+}
+
+.control-panel ul {
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: center;
+}
+
+.control-panel button {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0.1rem;
+}
+
+.control-panel button img,
+.wand img,
+.section-anchor,
+.eye-of-truth img,
+.trigger-button img {
+  width: 100%;
+  display: block;
+}
+
+.day-plugin {
+  font-size: 0.5rem;
+  text-align: center;
+}
+
+.day-plugin input {
+  width: 92px;
+  max-width: calc(1in - 4px);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--truth-pink);
+}
+
+.section-anchor {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: 42px;
+}
+
+.wand {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  width: 44px;
+  border: 0;
+  background: transparent;
+}
+
+h1 {
+  margin: 0;
+  padding: 0.75rem 0 0;
+  text-align: center;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.eye-of-truth {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  border: 0;
+  background: transparent;
+}
+
+.eye-of-truth.inactive {
+  opacity: 0.75;
+}
+
+.section-content {
+  position: absolute;
+  inset: 3rem 3rem;
+}
+
+.trigger-button {
+  border: 0;
+  background: transparent;
+  width: 70px;
+}
+
+@media (orientation: portrait) {
+  body::before {
+    content: 'LANDSCAPE ONLY';
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 999;
+  }
+}
