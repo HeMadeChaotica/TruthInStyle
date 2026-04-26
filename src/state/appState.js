@@ -6,7 +6,10 @@ export const appState = {
   route: '/',
   controlPanelOpen: false,
   activeDay: { ...day_state },
-  ui: { versionId: 'v1' }
+  ui: {
+    versionId: 'v1',
+    thiccDossiers: [{ id: 'thicc-info-1', label: 'THICC.INFO' }]
+  }
 };
 
 export function setRoute(route) {
@@ -26,6 +29,19 @@ export function setActiveDay(nextDateMMDDYYYY) {
   const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(asDate).toUpperCase();
   appState.activeDay.activeDate = nextDateMMDDYYYY;
   appState.activeDay.activeWeekday = weekday;
+  notify();
+}
+
+export function addThiccDossierTemplate() {
+  const nextIndex = appState.ui.thiccDossiers.length + 1;
+  appState.ui.thiccDossiers.push({ id: `thicc-info-${nextIndex}`, label: `THICC.INFO ${nextIndex}` });
+  notify();
+}
+
+export function renameThiccDossier(id, clientName) {
+  const target = appState.ui.thiccDossiers.find((dossier) => dossier.id === id);
+  if (!target) return;
+  target.label = clientName?.trim() ? `${clientName.trim().toUpperCase()} FILE` : target.label;
   notify();
 }
 
