@@ -7,6 +7,18 @@ import { sealTruthForActiveDay } from './services/summationFlow.js';
 import { addThiccDossierTemplate, appState, renameThiccDossier, setActiveDay, setRoute, subscribe, toggleControlPanel } from './state/appState.js';
 
 let app;
+let previousRoute = '/';
+let floatingControlsVisible = true;
+let floatingControlsTimer = null;
+
+function showFloatingControlsTemporarily() {
+  floatingControlsVisible = true;
+  clearTimeout(floatingControlsTimer);
+  floatingControlsTimer = setTimeout(() => {
+    floatingControlsVisible = false;
+    render();
+  }, 2000);
+}
 
 function toISOFromMMDDYYYY(mmddyyyy) {
   const [m, d, y] = mmddyyyy.split('/');
@@ -222,16 +234,18 @@ function renderSectionContent(route) {
 function renderSectionShell() {
   const current = ROUTE_MAP[appState.route];
   const anchor = sectionAnchorGlyphs[appState.route];
+  const isAssurer = appState.route === '/the-assurer';
   const showEye = current?.hasEye;
   const eyeAction = current?.eyeActive ? 'trigger-eye-of-truth' : '';
+  const controlsClass = floatingControlsVisible ? 'controls-visible' : 'controls-faded';
 
   return `
     ${renderControlPanel()}
     <section class="section-screen">
       <img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />
-      ${showEye ? `<button class="eye-of-truth ${current.eyeActive ? 'active' : 'inactive'}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer" aria-hidden="true"></div>` : ''}
+      ${showEye ? `<button class="eye-of-truth ${isAssurer ? 'eye-center active' : `eye-floating inactive ${controlsClass}`}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer ${isAssurer ? 'center-shimmer' : 'floating-shimmer'}" aria-hidden="true"></div>` : ''}
       <div class="section-layout">${renderSectionContent(appState.route)}</div>
-      <button class="wand" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>
+      <button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>
     </section>
   `;
 }
@@ -250,6 +264,7 @@ function bindEvents() {
   app.querySelectorAll('[data-action]').forEach((node) => {
     node.addEventListener('click', () => {
       if (node.dataset.action === 'clone-thicc-template') return addThiccDossierTemplate();
+      showFloatingControlsTemporarily();
       runAction(node.dataset.action);
     });
   });
@@ -261,10 +276,18 @@ function bindEvents() {
   app.querySelector('[data-dossier-name]')?.addEventListener('change', (event) => {
     renameThiccDossier(appState.ui.thiccDossiers[0].id, event.target.value);
   });
+
+  app.querySelector('.section-screen')?.addEventListener('pointerdown', () => {
+    showFloatingControlsTemporarily();
+  });
 }
 
 function render() {
   if (!app) return;
+  if (appState.route !== previousRoute && appState.route !== '/') {
+    showFloatingControlsTemporarily();
+    previousRoute = appState.route;
+  }
   app.innerHTML = appState.route === '/' ? renderOpening() : renderSectionShell();
   bindEvents();
 }
