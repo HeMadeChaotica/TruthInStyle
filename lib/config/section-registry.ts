@@ -1,5 +1,4 @@
 export const sectionRegistry = [
-  'control.panel',
   'the.assurer',
   'the.summation',
   'hopewood',
@@ -7,5 +6,7 @@ export const sectionRegistry = [
   '525,600',
   'clock.it',
   'thicc.fitt',
-  'da.eater'
+  'its.getting.THICC',
+  'da.eater',
+  'the.work'
 ] as const;
