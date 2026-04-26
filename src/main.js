@@ -1,4 +1,3 @@
-import './styles/global.css';
 import { ACTION_MAP } from './config/actionMap.js';
 import { controlPanelGlyphs, openingAssets, sectionAnchorGlyphs, triggerGlyphs } from './config/assetManifest.js';
 import { CONTROL_PANEL_ORDER, ROUTE_MAP } from './config/sectionRegistry.js';
@@ -7,7 +6,7 @@ import { archive_trend_intelligence } from './data/scaffoldData.js';
 import { sealTruthForActiveDay } from './services/summationFlow.js';
 import { addThiccDossierTemplate, appState, renameThiccDossier, setActiveDay, setRoute, subscribe, toggleControlPanel } from './state/appState.js';
 
-const app = document.getElementById('app');
+let app;
 
 function toISOFromMMDDYYYY(mmddyyyy) {
   const [m, d, y] = mmddyyyy.split('/');
@@ -266,9 +265,13 @@ function bindEvents() {
 }
 
 function render() {
+  if (!app) return;
   app.innerHTML = appState.route === '/' ? renderOpening() : renderSectionShell();
   bindEvents();
 }
 
-subscribe(render);
-setRoute('/');
+export function mountApp(rootElement) {
+  app = rootElement;
+  subscribe(render);
+  setRoute('/');
+}
