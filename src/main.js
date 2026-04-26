@@ -36,8 +36,7 @@ function renderOpening() {
   return `
     <section class="opening-screen">
       <img src="${openingAssets.scene0Entry}" alt="OPENING ASSET" />
-      <div class="opening-title">CHAOTICA</div>
-      <button class="truth-entry" data-route="/the-assurer">TELL NO LIES</button>
+      <button class="opening-hotspot" aria-label="OPEN CHAOTICA" data-route="/the-assurer"></button>
     </section>
   `;
 }
