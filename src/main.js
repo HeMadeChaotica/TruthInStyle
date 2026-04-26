@@ -1,138 +1,129 @@
-import { CONTROL_PANEL_ORDER, ROUTE_MAP } from './config/sectionRegistry.js';
+import './styles/global.css';
 import { ACTION_MAP } from './config/actionMap.js';
-import { openingAssets, sectionAnchors, triggers } from './config/assetManifest.js';
-import { OPTION_SET_REGISTRY } from './clockit/dropdownOptions.js';
-import { summationPrompts } from './data/scaffoldData.js';
-import { buildSummationPayload, buildYearlyTrendScaffold } from './services/summationFlow.js';
+import { controlPanelGlyphs, openingAssets, sectionAnchorGlyphs, triggerGlyphs } from './config/assetManifest.js';
+import { CONTROL_PANEL_ORDER, ROUTE_MAP } from './config/sectionRegistry.js';
+import { getClockItRegistrySnapshot } from './clockit/dropdownOptions.js';
+import { archive_trend_intelligence } from './data/scaffoldData.js';
+import { sealTruthForActiveDay } from './services/summationFlow.js';
+import { appState, setActiveDay, setRoute, subscribe, toggleControlPanel } from './state/appState.js';
 
 const app = document.getElementById('app');
-const state = { currentRoute: '/', panelOpen: false, hopewoodEntries: [] };
 
-const routeTitles = {
-  '/': 'CHAOTICA',
-  '/the-assurer': 'THE.ASSURER',
-  '/the-summation': 'THE.SUMMATION',
-  '/hopewood': 'HOPEWOOD',
-  '/remember-me': 'REMEMBER.ME',
-  '/525600': '525,600',
-  '/clock-it': 'CLOCK.IT',
-  '/thicc-fitt': 'THICC.FITT',
-  '/da-eater': 'DA.EATER',
-  '/the-work': 'THE WORK'
-};
+function toISOFromMMDDYYYY(mmddyyyy) {
+  const [m, d, y] = mmddyyyy.split('/');
+  return `${y}-${m}-${d}`;
+}
 
-function route(path) {
-  if (!ROUTE_MAP[path]) return;
-  state.currentRoute = path;
-  render();
+function toMMDDYYYYFromISO(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${m}/${d}/${y}`;
 }
 
 function runAction(actionId) {
   const action = ACTION_MAP[actionId];
   if (!action) return;
 
-  if (action.type === 'router.back') {
-    history.back();
-    return;
-  }
-
-  if (action.type === 'open' && action.target === 'control.panel') {
-    state.panelOpen = !state.panelOpen;
-    render();
-    return;
-  }
-
-  if (action.type === 'trigger-summation-flow') {
-    route(action.target);
-    return;
-  }
-
-  if (action.type === 'route') {
-    route(action.target);
+  if (action.type === 'route') return setRoute(action.target);
+  if (action.type === 'back') return history.back();
+  if (action.type === 'control.panel.toggle') return toggleControlPanel();
+  if (action.type === 'route.current-day') return setRoute(action.target);
+  if (action.type === 'seal.summation') {
+    sealTruthForActiveDay();
+    setRoute('/hopewood');
   }
 }
 
 function renderOpening() {
   return `
-  <section class="opening">
-    <img class="opening-image" src="${openingAssets.scene0Entry}" alt="CHAOTICA opening wand" />
-    <h1>CHAOTICA</h1>
-    <button class="opening-glow" data-route="/the-assurer">TELL NO LIES</button>
-  </section>`;
+    <section class="opening-screen">
+      <img src="${openingAssets.scene0Entry}" alt="OPENING ASSET" />
+      <button class="truth-entry" data-route="/the-assurer">ENTER</button>
+    </section>
+  `;
+}
+
+function renderDayChangerPlugin() {
+  return `
+    <div class="day-plugin">
+      <input type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer />
+      <div class="day-stamp">${appState.activeDay.activeDate}</div>
+      <div class="weekday-stamp">${appState.activeDay.activeWeekday}</div>
+    </div>
+  `;
 }
 
 function renderControlPanel() {
-  const labelMap = {
-    'control-home': 'home',
-    'control-back': 'back',
-    'control-the-summation': 'the.summation',
-    'control-hopewood': 'hopewood',
-    'control-thicc-fitt': 'thicc.fitt',
-    'control-da-eater': 'da.eater',
-    'control-remember-me': 'remember.me',
-    'control-525600': '525,600',
-    'control-clock-it': 'clock.it',
-    'control-the-work': 'the work'
-  };
+  const ordered = CONTROL_PANEL_ORDER.map((actionKey) => {
+    if (actionKey === 'plugin-day-changer') return `<li>${renderDayChangerPlugin()}</li>`;
+    return `<li><button data-action="${actionKey}"><img src="${controlPanelGlyphs[actionKey]}" alt="${actionKey}" /></button></li>`;
+  }).join('');
 
-  const items = CONTROL_PANEL_ORDER.map((item) => (
-    `<li><button data-action="${item}">${labelMap[item]}</button></li>`
-  )).join('');
-
-  return `<aside class="control-panel ${state.panelOpen ? 'open' : ''}"><ul>${items}</ul></aside>`;
+  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><ul>${ordered}</ul></aside>`;
 }
 
-function renderSection() {
-  const title = routeTitles[state.currentRoute];
-  if (!title) return '';
+function renderSectionContent() {
+  const current = ROUTE_MAP[appState.route];
+  if (!current || current.path === '/') return '';
 
-  if (state.currentRoute === '/the-summation') {
-    return `<section><h2>${title}</h2><img class="center" src="${triggers.eyeOfTruth}" alt="Eye of Truth" /><button data-action="summate">Summate</button><ol>${summationPrompts.map((p) => `<li>${p}</li>`).join('')}</ol></section>`;
+  if (appState.route === '/clock-it') {
+    const registry = getClockItRegistrySnapshot().map((entry) => `<li>${entry.familyKey}: ${entry.values.length}</li>`).join('');
+    return `<ul>${registry}</ul>`;
   }
 
-  if (state.currentRoute === '/hopewood') {
-    const rows = state.hopewoodEntries.map((entry, i) => `<li>${i + 1}. ${entry.titleOfDay} + ${entry.dayDate}</li>`).join('');
-    return `<section><h2>${title}</h2><p>Read-only remembrance archive.</p><p>Search filters include all dropdown qualifiers except da.juice.</p><ul>${rows}</ul></section>`;
+  if (appState.route === '/hopewood') {
+    const entries = Object.values(archive_trend_intelligence.hopewood_entries)
+      .map((entry) => `<li>${entry.dateKey} ${entry.titleOfDay}</li>`)
+      .join('');
+    return `<ul>${entries}</ul>`;
   }
 
-  if (state.currentRoute === '/525600') {
-    const trend = buildYearlyTrendScaffold(state.hopewoodEntries, [{ workSignal: 'Deep architecture pass complete.' }]);
-    return `<section><h2>${title}</h2><pre>${JSON.stringify(trend, null, 2)}</pre></section>`;
+  if (appState.route === '/the-summation') {
+    return `<button class="trigger-button" data-action="trigger-seal-the-truth"><img src="${triggerGlyphs.sealTheTruth}" alt="SEAL THE TRUTH" /></button>`;
   }
 
-  if (state.currentRoute === '/clock-it') {
-    return `<section><h2>${title}</h2><p>Dropdown headquarters + utility control center.</p><p>Managed set count: ${OPTION_SET_REGISTRY.length}</p></section>`;
+  if (appState.route === '/thicc-fitt') {
+    return `<button class="trigger-button" data-action="trigger-crystal-dumbbell"><img src="${triggerGlyphs.crystalDumbbell}" alt="CRYSTAL DUMBBELL" /></button>`;
   }
 
-  if (state.currentRoute === '/the-assurer') {
-    return `<section><h2>${title}</h2><p>Unified inflow receiver with distributed assessment, writer, intake, moments, calendar, thicc.fitt, and work signal previews.</p><img class="center" src="${triggers.eyeOfTruth}" alt="Eye of Truth" /><button data-action="trigger-eye-of-truth">Go to Summation</button></section>`;
-  }
+  return '';
+}
 
-  return `<section><h2>${title}</h2><p>Section scaffold active.</p></section>`;
+function renderSectionShell() {
+  const current = ROUTE_MAP[appState.route];
+  const anchor = sectionAnchorGlyphs[appState.route];
+  const showEye = current?.hasEye;
+  const eyeAction = current?.eyeActive ? 'trigger-eye-of-truth' : '';
+
+  return `
+    ${renderControlPanel()}
+    <section class="section-screen">
+      <img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />
+      <h1>${current.title}</h1>
+      ${showEye ? `<button class="eye-of-truth ${current.eyeActive ? 'active' : 'inactive'}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button>` : ''}
+      <div class="section-content">${renderSectionContent()}</div>
+      <button class="wand" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>
+    </section>
+  `;
+}
+
+function bindEvents() {
+  app.querySelectorAll('[data-route]').forEach((node) => {
+    node.addEventListener('click', () => setRoute(node.dataset.route));
+  });
+
+  app.querySelectorAll('[data-action]').forEach((node) => {
+    node.addEventListener('click', () => runAction(node.dataset.action));
+  });
+
+  app.querySelector('[data-day-changer]')?.addEventListener('change', (event) => {
+    setActiveDay(toMMDDYYYYFromISO(event.target.value));
+  });
 }
 
 function render() {
-  if (state.currentRoute === '/') {
-    app.innerHTML = renderOpening();
-  } else {
-    app.innerHTML = `${renderControlPanel()}${renderSection()}<button class="truth-wand" data-action="anchor-control-panel-wand"><img src="${sectionAnchors.controlPanelWand}" alt="control.panel wand" /></button>`;
-  }
-
-  app.querySelectorAll('[data-route]').forEach((el) => {
-    el.addEventListener('click', () => route(el.getAttribute('data-route')));
-  });
-
-  app.querySelectorAll('[data-action]').forEach((el) => {
-    const actionId = el.getAttribute('data-action');
-    if (actionId === 'summate') return;
-    el.addEventListener('click', () => runAction(actionId));
-  });
-
-  app.querySelector('[data-action="summate"]')?.addEventListener('click', () => {
-    const payload = buildSummationPayload(['Defined by architecture discipline.', 'Horny for structural correctness.', 'Future me: keep layers separate.']);
-    state.hopewoodEntries.push(payload);
-    route('/hopewood');
-  });
+  app.innerHTML = appState.route === '/' ? renderOpening() : renderSectionShell();
+  bindEvents();
 }
 
-route('/');
+subscribe(render);
+setRoute('/');
