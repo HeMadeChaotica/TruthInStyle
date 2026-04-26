@@ -1,37 +1,52 @@
-// Rehoused controlled vocab inventory.
-// If an uploaded source dropdownOptions.js is provided later, replace item labels only,
-// keeping these set keys stable for DB + filters.
-
-export const OPTION_SET_REGISTRY = [
-  { key: 'assessment_mood', label: 'Assessment Mood', homeSection: 'the.assurer', active: true, displayOrder: 1 },
-  { key: 'assessment_era', label: 'Assessment Era', homeSection: 'the.assurer', active: true, displayOrder: 2 },
-  { key: 'assessment_singleness', label: 'Assessment Singleness', homeSection: 'the.assurer', active: true, displayOrder: 3 },
-  { key: 'lobito_check_in', label: 'Lobito Check-In', homeSection: 'the.assurer', active: true, displayOrder: 4 },
-  { key: 'ps_types', label: 'P.S. Types', homeSection: 'remember.me', active: true, displayOrder: 5 },
-  { key: 'moment_types', label: 'Moment Types', homeSection: 'remember.me', active: true, displayOrder: 6 },
-  { key: 'roid_season', label: 'Roid Season', homeSection: 'thicc.fitt', active: true, displayOrder: 7 },
-  { key: 'workout_duration', label: 'Workout Duration', homeSection: 'thicc.fitt', active: true, displayOrder: 8 },
-  { key: 'cardio_type', label: 'Cardio Type', homeSection: 'thicc.fitt', active: true, displayOrder: 9 },
-  { key: 'cardio_duration', label: 'Cardio Duration', homeSection: 'thicc.fitt', active: true, displayOrder: 10 },
-  { key: 'compound', label: 'Compound', homeSection: 'thicc.fitt', active: true, displayOrder: 11 },
-  { key: 'ester_form', label: 'Ester/Form', homeSection: 'thicc.fitt', active: true, displayOrder: 12 },
-  { key: 'amount', label: 'Amount', homeSection: 'thicc.fitt', active: true, displayOrder: 13 },
-  { key: 'estrogen_sensitivity', label: 'Estrogen Sensitivity', homeSection: 'thicc.fitt', active: true, displayOrder: 14 }
-];
-
-export const OPTION_ITEMS = {
-  assessment_mood: ['Focused', 'Unsteady', 'Lit', 'Tender', 'Ferocious'],
-  assessment_era: ['Rebuild', 'Expansion', 'Recovery', 'Chaos', 'Glow-Up'],
-  assessment_singleness: ['Single', 'Dating', 'Seeing Someone', 'Complicated'],
-  lobito_check_in: ['Quiet', 'Flirty', 'Hungry', 'Wild'],
-  ps_types: ['Reminder', 'Anchor', 'Micro-Note'],
-  moment_types: ['WOW', 'WTF', 'PLOT TWIST'],
-  roid_season: ['Cruise', 'Blast', 'Bridge', 'Off'],
-  workout_duration: ['20m', '40m', '60m', '90m+'],
-  cardio_type: ['Walk', 'Run', 'Cycle', 'Stair'],
-  cardio_duration: ['10m', '20m', '30m', '45m+'],
-  compound: ['Testosterone', 'Nandrolone', 'Primobolan', 'Masteron'],
-  ester_form: ['Enanthate', 'Cypionate', 'Propionate', 'Acetate'],
-  amount: ['Low', 'Medium', 'High'],
-  estrogen_sensitivity: ['Low', 'Moderate', 'High']
+const DEFAULT_DROPDOWNS = {
+  assessmentMood: ['FOCUSED', 'UNSTEADY', 'LIT', 'TENDER', 'FEROCIOUS'],
+  assessmentEra: ['REBUILD', 'EXPANSION', 'RECOVERY', 'CHAOS', 'GLOW-UP'],
+  assessmentSingleness: ['SINGLE', 'DATING', 'SEEING SOMEONE', 'COMPLICATED'],
+  lobitoCheckIn: ['QUIET', 'FLIRTY', 'HUNGRY', 'WILD'],
+  psTypes: ['REMINDER', 'ANCHOR', 'MICRO-NOTE'],
+  momentTypes: ['WOW', 'WTF', 'PLOT TWIST'],
+  roidSeason: ['CRUISE', 'BLAST', 'BRIDGE', 'OFF'],
+  roidWorkoutDuration: ['20M', '40M', '60M', '90M+'],
+  roidCardioType: ['WALK', 'RUN', 'CYCLE', 'STAIR'],
+  roidCardioDuration: ['10M', '20M', '30M', '45M+'],
+  roidCompound: ['TESTOSTERONE', 'NANDROLONE', 'PRIMOBOLAN', 'MASTERON'],
+  roidEster: ['ENANTHATE', 'CYPIONATE', 'PROPIONATE', 'ACETATE'],
+  roidAmount: ['LOW', 'MEDIUM', 'HIGH'],
+  roidSensitivity: ['LOW', 'MODERATE', 'HIGH']
 };
+
+const overrides = new Map();
+const listeners = new Set();
+
+export const OPTION_SET_FAMILY_KEYS = Object.keys(DEFAULT_DROPDOWNS);
+
+export function setOptionOverride(familyKey, options) {
+  if (!DEFAULT_DROPDOWNS[familyKey]) return;
+  overrides.set(familyKey, [...options]);
+  emitDropdownChanged(familyKey);
+}
+
+export function clearOptionOverride(familyKey) {
+  if (overrides.delete(familyKey)) emitDropdownChanged(familyKey);
+}
+
+export function getOptionsForFamily(familyKey) {
+  return overrides.get(familyKey) ?? DEFAULT_DROPDOWNS[familyKey] ?? [];
+}
+
+export function onDropdownOptionsChanged(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function emitDropdownChanged(familyKey) {
+  listeners.forEach((listener) => listener({ familyKey, values: getOptionsForFamily(familyKey) }));
+}
+
+export function getClockItRegistrySnapshot() {
+  return OPTION_SET_FAMILY_KEYS.map((familyKey) => ({
+    familyKey,
+    values: getOptionsForFamily(familyKey),
+    hasOverride: overrides.has(familyKey)
+  }));
+}
