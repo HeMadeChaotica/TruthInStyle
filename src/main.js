@@ -56,8 +56,8 @@ function renderOpening() {
 function renderDayChangerPlugin() {
   return `
     <div class="day-plugin">
-      <input type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer />
-      <div>${appState.activeDay.activeDate}</div>
+      <input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer />
+      <div class="day-date">${appState.activeDay.activeDate}</div>
       <div>${appState.activeDay.activeWeekday}</div>
     </div>
   `;
@@ -72,16 +72,16 @@ function renderControlPanel() {
   return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><ul>${ordered}</ul></aside>`;
 }
 
-function renderAssurerLayout() {
+function renderAssurerLayout(anchor) {
   return `
     <div class="zone assurer-slab">
-      <div class="zone crystal-title-wrap">TITLE OF THE DAY CLUSTER</div>
+      <div class="zone anchor-territory"><img class="assurer-anchor" src="${anchor}" alt="SECTION ANCHOR" /></div>
+      <div class="zone crystal-title-wrap">HEAD HUMMER · LIBIDO · MOOD · ERA · WORD OF THE DAY · SINGLENESS LEVEL</div>
       <div class="zone writer-cloud">HERE'S THE THING WRITER CLOUD</div>
-      <div class="zone assessment-distributed">HEAD HUMMER · LIBIDO · MOOD · ERA · WORD OF THE DAY · SINGLENESS LEVEL</div>
       <div class="zone remember-five-day">REMEMBER.ME 5-DAY PREVIEW</div>
-      <div class="zone standout-moment">STANDOUT MOMENT PRESENCE</div>
-      <div class="zone intake-summary">DA.EATER INTAKE SUMMARY</div>
-      <div class="zone macro-summary">DA.EATER MACRO PROGRESSION SUMMARY</div>
+      <div class="zone standout-moment">MOMENTS</div>
+      <div class="zone intake-summary">DA.EATER MEALS + PHOTO SUMMARY</div>
+      <div class="zone macro-summary">DA.EATER MACRO PROGRESSION BARS</div>
       <div class="zone thicc-summary">THICC.FITT PERSONAL SUMMARY</div>
     </div>
   `;
@@ -218,7 +218,7 @@ function renderWorkLayout() {
 }
 
 function renderSectionContent(route) {
-  if (route === '/the-assurer') return renderAssurerLayout();
+  if (route === '/the-assurer') return renderAssurerLayout(sectionAnchorGlyphs[route]);
   if (route === '/the-summation') return renderSummationLayout();
   if (route === '/hopewood') return renderHopewoodLayout();
   if (route === '/remember-me') return renderRememberLayout();
@@ -242,7 +242,7 @@ function renderSectionShell() {
   return `
     ${renderControlPanel()}
     <section class="section-screen">
-      <img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />
+      ${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}
       ${showEye ? `<button class="eye-of-truth ${isAssurer ? 'eye-center active' : `eye-floating inactive ${controlsClass}`}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer ${isAssurer ? 'center-shimmer' : 'floating-shimmer'}" aria-hidden="true"></div>` : ''}
       <div class="section-layout">${renderSectionContent(appState.route)}</div>
       <button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>

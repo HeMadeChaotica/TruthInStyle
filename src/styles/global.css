@@ -80,17 +80,18 @@ body {
 
 .control-panel ul {
   margin: 0;
-  padding: 0.28rem 0.12rem 0.4rem;
+  padding: 0.22rem 0.08rem 0.3rem;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.08rem;
   height: 100%;
+  overflow-y: auto;
 }
 
 .control-panel button {
   width: 100%;
-  min-height: 36px;
+  min-height: 30px;
   border: 0;
   background: transparent;
   padding: 0;
@@ -98,7 +99,7 @@ body {
 }
 
 .control-panel button img {
-  width: 78%;
+  width: 64%;
   margin: 0 auto;
   display: block;
   background: transparent;
@@ -107,26 +108,40 @@ body {
 
 .day-plugin {
   width: 100%;
-  font-size: 0.45rem;
+  font-size: 0.42rem;
   line-height: 1.2;
   text-align: center;
   margin-bottom: 0.14rem;
   background: rgba(255, 194, 222, 0.08);
   border: 1px solid rgba(255, 194, 222, 0.18);
+  position: relative;
+  padding: 0.18rem 0.08rem;
+}
+
+.day-date {
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+}
+
+.day-picker-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
 }
 
 .day-plugin input {
-  width: calc(var(--panel-width) - 5px);
-  max-width: calc(1in - 5px);
-  border: 1px solid rgba(255, 194, 222, 0.7);
-  background: rgba(0, 0, 0, 0.25);
+  border: 0;
+  background: transparent;
 }
 
 .section-anchor {
   position: absolute;
-  top: 0.9rem;
-  left: 0.9rem;
-  width: 92px;
+  top: 1.1rem;
+  left: 1.1rem;
+  width: 104px;
   z-index: 20;
   background: transparent;
   object-fit: contain;
@@ -234,16 +249,17 @@ body {
 
 .assurer-slab {
   position: absolute;
-  inset: 0.8rem 1.2rem 1.2rem 1.2rem;
+  inset: 1rem 1.45rem 1.35rem 1.2rem;
 }
 
-.crystal-title-wrap { position: absolute; top: 0; left: 3.2rem; width: 24rem; }
-.writer-cloud { position: absolute; top: 0.1rem; right: 0; width: 32%; min-height: 24%; border-radius: 45% 40% 42% 44%; }
-.assessment-distributed { position: absolute; top: 24%; left: 20%; right: 22%; min-height: 18%; }
-.remember-five-day { position: absolute; left: 0; bottom: 21%; width: 26%; min-height: 18%; }
-.standout-moment { position: absolute; left: 0; bottom: 0; width: 26%; min-height: 18%; }
-.intake-summary { position: absolute; right: 0; bottom: 38%; width: 28%; min-height: 17%; }
-.macro-summary { position: absolute; right: 0; bottom: 19%; width: 28%; min-height: 17%; }
+.anchor-territory { position: absolute; top: 0; left: 0; width: 18%; min-height: 23%; display: grid; place-items: start; border: 0; background: transparent; }
+.assurer-anchor { width: min(180px, 100%); height: auto; object-fit: contain; background: transparent; }
+.crystal-title-wrap { position: absolute; top: 0.2rem; left: 18%; right: 24%; min-height: 16%; }
+.writer-cloud { position: absolute; top: 0.1rem; right: 0; width: 24%; min-height: 25%; border-radius: 45% 40% 42% 44%; }
+.remember-five-day { position: absolute; left: 0; bottom: 26%; width: 23%; min-height: 16%; }
+.standout-moment { position: absolute; left: 0; bottom: 0; width: 23%; min-height: 25%; }
+.macro-summary { position: absolute; right: 0; top: 30%; width: 28%; min-height: 21%; }
+.intake-summary { position: absolute; right: 0; bottom: 20%; width: 28%; min-height: 18%; }
 .thicc-summary { position: absolute; right: 0; bottom: 0; width: 28%; min-height: 17%; }
 
 .summation-layout {
