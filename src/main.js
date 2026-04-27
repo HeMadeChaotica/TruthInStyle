@@ -20,6 +20,8 @@ let app;
 let previousRoute = '/';
 let floatingControlsVisible = true;
 let floatingControlsTimer = null;
+let assessmentDebounceTimer = null;
+let writerDebounceTimer = null;
 
 function showFloatingControlsTemporarily() {
   floatingControlsVisible = true;
@@ -38,6 +40,24 @@ function toISOFromMMDDYYYY(mmddyyyy) {
 function toMMDDYYYYFromISO(iso) {
   const [y, m, d] = iso.split('-');
   return `${m}/${d}/${y}`;
+}
+
+function shiftDateMMDDYYYY(mmddyyyy, deltaDays) {
+  const [month, day, year] = mmddyyyy.split('/').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + deltaDays));
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  const y = date.getUTCFullYear();
+  return `${m}/${d}/${y}`;
+}
+
+function getAssessmentValue(assessment, keys, fallback = '') {
+  for (const key of keys) {
+    if (assessment?.[key] !== undefined && assessment?.[key] !== null && assessment?.[key] !== '') {
+      return assessment[key];
+    }
+  }
+  return fallback;
 }
 
 function runAction(actionId) {
@@ -88,25 +108,33 @@ function renderAssurerLayout(anchor) {
   const writer = source_inputs.assurer_writer[activeDate] ?? { heresTheThing: '' };
   const macroSummary = source_inputs.da_eater_day[activeDate] ?? {};
   const thiccSummary = source_inputs.thicc_fitt_day[activeDate] ?? {};
-  const fiveDayPreview = source_inputs.remember_me_calendar[activeDate] ?? [];
   const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
+  const dropdownOptions = {
+    assessmentMood: ['STEADY', 'LIT', 'RAW', 'SOFT', 'HEAVY', 'CLEAR'],
+    assessmentEra: ['BUILDING', 'CUTTING', 'HEALING', 'EXPANSION', 'REFOCUS'],
+    lobitoCheckIn: ['LOW', 'MEDIUM', 'HIGH', 'VOLCANIC'],
+    assessmentSingleness: ['SOLO', 'OPEN', 'COMPLICATED', 'ALIGNED']
+  };
   const requiredAssessmentFields = [
-    ['titleOfDay', 'TITLE OF THE DAY'],
-    ['headHummer', 'HEAD HUMMER'],
-    ['wordOfDay', 'WORD OF THE DAY'],
-    ['mood', 'MOOD'],
-    ['era', 'ERA'],
-    ['libido', 'LIBIDO'],
-    ['singlenessLevel', 'SINGLENESS LEVEL']
+    { key: 'titleOfDay', label: 'TITLE OF THE DAY', type: 'text' },
+    { key: 'headHummer', label: 'HEAD HUMMER', type: 'text' },
+    { key: 'wordOfDay', label: 'WORD OF THE DAY', type: 'text' },
+    { key: 'assessmentMood', aliases: ['mood'], label: 'MOOD', type: 'dropdown' },
+    { key: 'assessmentEra', aliases: ['era'], label: 'ERA', type: 'dropdown' },
+    { key: 'lobitoCheckIn', aliases: ['libido'], label: 'LIBIDO', type: 'dropdown' },
+    { key: 'assessmentSingleness', aliases: ['singlenessLevel'], label: 'SINGLENESS LEVEL', type: 'dropdown' },
+    { key: 'location', label: 'LOCATION', type: 'text' }
   ];
+  const preservedKeys = new Set(requiredAssessmentFields.flatMap((field) => [field.key, ...(field.aliases ?? [])]));
   const legacyAssessment = Object.keys(assessment)
-    .filter((key) => !requiredAssessmentFields.some(([requiredKey]) => requiredKey === key))
+    .filter((key) => !preservedKeys.has(key))
     .map((key) => `<label class="assessment-pill legacy-item">${key}<input data-assessment-field="${key}" value="${assessment[key] ?? ''}" /></label>`)
     .join('');
   const macroBars = [
     ['protein', 'PROTEIN', macroSummary.proteinProgress ?? 0],
     ['carbs', 'CARBS', macroSummary.carbsProgress ?? 0],
     ['fats', 'FATS', macroSummary.fatsProgress ?? 0],
+    ['water', 'WATER', macroSummary.waterProgress ?? 0],
     ['calories', 'CALORIES', macroSummary.caloriesProgress ?? 0]
   ]
     .map(
@@ -118,6 +146,23 @@ function renderAssurerLayout(anchor) {
       `
     )
     .join('');
+  const fiveDayPreview = Array.from({ length: 5 }, (_, index) => {
+    const relativeOffset = index - 2;
+    const dateKey = shiftDateMMDDYYYY(activeDate, relativeOffset);
+    const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' })
+      .format(new Date(toISOFromMMDDYYYY(dateKey)))
+      .toUpperCase();
+    const calendarItem = source_inputs.remember_me_calendar[dateKey];
+    return {
+      dateKey,
+      weekday,
+      item: Array.isArray(calendarItem) ? calendarItem[0] : calendarItem
+    };
+  });
+  const macroSummaryRoute = ACTION_MAP['control-da-eater'] ? 'data-route="/da-eater"' : '';
+  const thiccMomentsRoute = ACTION_MAP['control-thicc-fitt'] ? 'data-route="/thicc-fitt"' : '';
+  const fiveDayRoute = ACTION_MAP['control-remember-me'] ? 'data-route="/remember-me"' : '';
+  const intakeRoute = ACTION_MAP['control-da-eater'] ? 'data-route="/da-eater"' : '';
 
   return `
     <div class="assurer-slab">
@@ -126,14 +171,24 @@ function renderAssurerLayout(anchor) {
         <div class="assessment-fusion-field">
           ${requiredAssessmentFields
             .map(
-              ([key, label]) =>
-                `<label class="assessment-pill">${label}<input data-assessment-field="${key}" value="${assessment[key] ?? ''}" /></label>`
+              ({ key, aliases = [], label, type }) =>
+                type === 'dropdown'
+                  ? `<label class="assessment-pill">${label}<select data-assessment-field="${key}"><option value="">SELECT</option>${dropdownOptions[key]
+                      .map((option) => {
+                        const selected = getAssessmentValue(assessment, [key, ...aliases]) === option ? 'selected' : '';
+                        return `<option value="${option}" ${selected}>${option}</option>`;
+                      })
+                      .join('')}</select></label>`
+                  : `<label class="assessment-pill">${label}<input data-assessment-field="${key}" value="${getAssessmentValue(
+                      assessment,
+                      [key, ...aliases]
+                    )}" /></label>`
             )
             .join('')}
           ${legacyAssessment}
         </div>
       </section>
-      <section class="macro-progression-band">${macroBars}</section>
+      <section class="macro-progression-band" ${macroSummaryRoute}>${macroBars}</section>
       <button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"></button>
       <section class="writer-cloud">
         <div class="cloud-lobe cloud-lobe-a"></div>
@@ -141,18 +196,32 @@ function renderAssurerLayout(anchor) {
         <div class="cloud-lobe cloud-lobe-c"></div>
         <label>HERE'S THE THING<textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></label>
       </section>
-      <section class="thicc-moments">
+      <section class="thicc-moments" ${thiccMomentsRoute}>
         <h3>THICC.FITT + MOMENTS</h3>
-        <p>PERSONAL SIGNALS: ${(thiccSummary.summary ?? '—').toString()}</p>
-        <ul>${standoutMoments.slice(0, 3).map((item) => `<li>${item?.title ?? item?.label ?? 'MOMENT'}</li>`).join('') || '<li>NO MOMENTS LOGGED</li>'}</ul>
+        <p>WORKOUT: ${(thiccSummary.workoutSignal ?? thiccSummary.workout ?? '—').toString()} · CARDIO: ${(thiccSummary.cardioSignal ?? thiccSummary.cardio ?? '—').toString()} · DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p>
+        <p>BODY/PERFORMANCE: ${(thiccSummary.performanceNote ?? thiccSummary.bodyNote ?? thiccSummary.summary ?? '—').toString()}</p>
+        <ul>${standoutMoments
+          .slice(0, 3)
+          .map((item) => `<li>${item?.type ?? item?.label ?? 'MOMENT'}: ${item?.title ?? item?.note ?? 'ENTRY'} ${item?.time ? `· ${item.time}` : ''}</li>`)
+          .join('') || '<li>NO MOMENTS LOGGED</li>'}</ul>
       </section>
-      <section class="remember-five-day">
+      <section class="remember-five-day" ${fiveDayRoute}>
         <h3>5-DAY PREVIEW</h3>
-        <ul>${fiveDayPreview.slice(0, 5).map((item, idx) => `<li>DAY ${idx + 1}: ${item?.label ?? item?.title ?? 'OPEN'}</li>`).join('') || '<li>NO CALENDAR FEED YET</li>'}</ul>
+        <ul>${fiveDayPreview
+          .map(
+            (item) =>
+              `<li>${item.weekday} ${item.dateKey}${item.dateKey === activeDate ? ' · NOW' : ''} — ${item.item?.label ?? item.item?.title ?? item.item?.mark ?? 'OPEN'}</li>`
+          )
+          .join('')}</ul>
       </section>
-      <section class="intake-summary">
+      <section class="intake-summary" ${intakeRoute}>
         <h3>DA.EATER SUMMARY</h3>
-        <p>MEALS: ${(macroSummary.mealsLogged ?? 0).toString()} · INTAKE: ${(macroSummary.intakeSignal ?? 'PENDING').toString()}</p>
+        <p>MEALS: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()} · INTAKE: ${(macroSummary.intakeSignal ?? 'PENDING').toString()}</p>
+        <p>LAST NOTE: ${(macroSummary.lastMealNote ?? macroSummary.lastMeal ?? '—').toString()}</p>
+        <p>CHEAT/FLEX: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()} · PHOTO: ${
+          macroSummary.mealPhotoPresent ?? macroSummary.photoPresent ? 'YES' : 'NO'
+        }</p>
+        <p>INTAKE NOTE: ${(macroSummary.intakeNote ?? '—').toString().slice(0, 72)}</p>
       </section>
     </div>
   `;
@@ -348,14 +417,26 @@ function bindEvents() {
     renameThiccDossier(appState.ui.thiccDossiers[0].id, event.target.value);
   });
   app.querySelectorAll('[data-assessment-field]').forEach((node) => {
-    node.addEventListener('change', (event) => {
-      updateAssurerAssessmentField(node.dataset.assessmentField, event.target.value);
+    if (node.tagName === 'SELECT') {
+      node.addEventListener('change', (event) => {
+        updateAssurerAssessmentField(node.dataset.assessmentField, event.target.value);
+      });
+      return;
+    }
+    const persist = () => updateAssurerAssessmentField(node.dataset.assessmentField, node.value);
+    node.addEventListener('input', () => {
+      clearTimeout(assessmentDebounceTimer);
+      assessmentDebounceTimer = setTimeout(persist, 280);
     });
+    node.addEventListener('blur', persist);
   });
   app.querySelectorAll('[data-writer-field]').forEach((node) => {
-    node.addEventListener('change', (event) => {
-      updateAssurerWriterField(node.dataset.writerField, event.target.value);
+    const persist = () => updateAssurerWriterField(node.dataset.writerField, node.value);
+    node.addEventListener('input', () => {
+      clearTimeout(writerDebounceTimer);
+      writerDebounceTimer = setTimeout(persist, 320);
     });
+    node.addEventListener('blur', persist);
   });
 
   app.querySelector('.section-screen')?.addEventListener('pointerdown', () => {
