@@ -1,9 +1,16 @@
 {
-  "name": "truth-in-style-zero-build",
+  "name": "truth-in-style-chaotica",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "check": "node --check src/main.js && node --check tools/generate-icons.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.10",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   }
 }
