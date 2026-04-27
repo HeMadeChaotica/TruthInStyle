@@ -149,17 +149,18 @@ body {
 
 .wand {
   position: absolute;
-  left: 1rem;
-  bottom: 1rem;
-  width: 88px;
-  height: 88px;
+  left: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 94px;
+  height: 320px;
   border: 0;
   background: transparent;
   z-index: 30;
-  padding: 7px;
+  padding: 6px;
   cursor: pointer;
   appearance: none;
-  transition: opacity 220ms ease, left 120ms ease;
+  transition: opacity 220ms ease, left 120ms ease, transform 120ms ease;
 }
 
 .wand img {
@@ -209,7 +210,8 @@ body {
 }
 
 .wand.panel-open {
-  left: calc(var(--panel-width) + 0.35rem);
+  left: calc(var(--panel-width) + 0.2rem);
+  transform: translateY(-50%) scaleX(0.94);
 }
 
 .eye-shimmer {
@@ -249,18 +251,155 @@ body {
 
 .assurer-slab {
   position: absolute;
-  inset: 1rem 1.45rem 1.35rem 1.2rem;
+  inset: 0.9rem 1rem 1.1rem 6.4rem;
+  border: 1px solid rgba(255, 194, 222, 0.35);
+  background: rgba(35, 16, 41, 0.28);
+  overflow: hidden;
 }
 
-.anchor-territory { position: absolute; top: 0; left: 0; width: 18%; min-height: 23%; display: grid; place-items: start; border: 0; background: transparent; }
-.assurer-anchor { width: min(180px, 100%); height: auto; object-fit: contain; background: transparent; }
-.crystal-title-wrap { position: absolute; top: 0.2rem; left: 18%; right: 24%; min-height: 16%; }
-.writer-cloud { position: absolute; top: 0.1rem; right: 0; width: 24%; min-height: 25%; border-radius: 45% 40% 42% 44%; }
-.remember-five-day { position: absolute; left: 0; bottom: 26%; width: 23%; min-height: 16%; }
-.standout-moment { position: absolute; left: 0; bottom: 0; width: 23%; min-height: 25%; }
-.macro-summary { position: absolute; right: 0; top: 30%; width: 28%; min-height: 21%; }
-.intake-summary { position: absolute; right: 0; bottom: 20%; width: 28%; min-height: 18%; }
-.thicc-summary { position: absolute; right: 0; bottom: 0; width: 28%; min-height: 17%; }
+.assurer-left-fused {
+  position: absolute;
+  inset: 0.5rem auto 0.5rem 0.55rem;
+  width: 35%;
+}
+
+.assurer-anchor-large {
+  width: 170px;
+  max-width: 52%;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.assessment-fusion-field {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 194, 222, 0.3);
+  background: rgba(32, 14, 40, 0.2);
+  padding: 0.6rem 0.55rem 0.45rem 0.58rem;
+  padding-top: 5.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.32rem;
+}
+
+.assessment-pill {
+  min-width: 31%;
+  font-size: 0.52rem;
+  letter-spacing: 0.04em;
+}
+
+.assessment-pill input {
+  width: 100%;
+  margin-top: 0.1rem;
+  border: 1px solid rgba(255, 194, 222, 0.32);
+  background: transparent;
+  font-size: 0.58rem;
+}
+
+.legacy-item { min-width: 48%; }
+
+.macro-progression-band {
+  position: absolute;
+  top: 0.55rem;
+  left: 38%;
+  right: 0.75rem;
+  min-height: 5.1rem;
+  border: 1px solid rgba(255, 194, 222, 0.38);
+  padding: 0.44rem 0.55rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.macro-bar-wrap { font-size: 0.54rem; }
+.macro-track { margin-top: 0.24rem; height: 0.58rem; border: 1px solid rgba(255, 194, 222, 0.48); }
+.macro-fill { height: 100%; background: rgba(255, 194, 222, 0.45); }
+
+.writer-cloud {
+  position: absolute;
+  top: 8.1rem;
+  right: 3.2rem;
+  width: 33%;
+  min-height: 15.2rem;
+  border: 0;
+  background: transparent;
+}
+
+.cloud-lobe {
+  position: absolute;
+  border: 1px solid rgba(255, 194, 222, 0.35);
+  background: rgba(35, 16, 41, 0.25);
+  border-radius: 50%;
+}
+
+.cloud-lobe-a { width: 96%; height: 72%; left: 4%; top: 16%; }
+.cloud-lobe-b { width: 52%; height: 50%; left: 0; top: 30%; }
+.cloud-lobe-c { width: 44%; height: 42%; right: -3%; top: 8%; }
+
+.writer-cloud label {
+  position: relative;
+  z-index: 2;
+  display: block;
+  padding: 3rem 1.35rem 0.7rem 1.5rem;
+  font-size: 0.8rem;
+}
+
+.writer-cloud textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+  min-height: 6.7rem;
+  resize: vertical;
+  border: 1px solid rgba(255, 194, 222, 0.35);
+  background: transparent;
+}
+
+.thicc-moments {
+  position: absolute;
+  left: 0.55rem;
+  bottom: 0.58rem;
+  width: 35%;
+  min-height: 10.6rem;
+  border: 1px solid rgba(255, 194, 222, 0.3);
+  background: rgba(35, 16, 41, 0.2);
+  padding: 0.5rem;
+}
+
+.remember-five-day {
+  position: absolute;
+  left: 39%;
+  bottom: 0.58rem;
+  width: 25%;
+  min-height: 8.4rem;
+  border: 1px solid rgba(255, 194, 222, 0.3);
+  background: rgba(35, 16, 41, 0.2);
+  padding: 0.5rem;
+}
+
+.intake-summary {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.58rem;
+  width: 30%;
+  min-height: 8.4rem;
+  border: 1px solid rgba(255, 194, 222, 0.3);
+  background: rgba(35, 16, 41, 0.2);
+  padding: 0.5rem;
+}
+
+.assurer-eye-bridge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 130px;
+  height: 130px;
+  opacity: 0;
+  border: 0;
+  background: transparent;
+}
 
 .summation-layout {
   position: absolute;
