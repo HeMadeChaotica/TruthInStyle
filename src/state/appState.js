@@ -1,4 +1,4 @@
-import { day_state } from '../data/scaffoldData.js';
+import { day_state, source_inputs } from '../data/scaffoldData.js';
 
 const listeners = new Set();
 
@@ -11,6 +11,13 @@ export const appState = {
     thiccDossiers: [{ id: 'thicc-info-1', label: 'THICC.INFO' }]
   }
 };
+
+function ensureDayBucket(scope, fallback = {}) {
+  if (!source_inputs[scope][appState.activeDay.activeDate]) {
+    source_inputs[scope][appState.activeDay.activeDate] = { ...fallback };
+  }
+  return source_inputs[scope][appState.activeDay.activeDate];
+}
 
 export function setRoute(route) {
   appState.route = route;
@@ -29,6 +36,18 @@ export function setActiveDay(nextDateMMDDYYYY) {
   const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' }).format(asDate).toUpperCase();
   appState.activeDay.activeDate = nextDateMMDDYYYY;
   appState.activeDay.activeWeekday = weekday;
+  notify();
+}
+
+export function updateAssurerAssessmentField(fieldKey, value) {
+  const target = ensureDayBucket('assurer_assessment');
+  target[fieldKey] = value;
+  notify();
+}
+
+export function updateAssurerWriterField(fieldKey, value) {
+  const target = ensureDayBucket('assurer_writer', { heresTheThing: '' });
+  target[fieldKey] = value;
   notify();
 }
 

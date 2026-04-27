@@ -2,9 +2,19 @@ import { ACTION_MAP } from './config/actionMap.js';
 import { controlPanelGlyphs, openingAssets, sectionAnchorGlyphs, triggerGlyphs } from './config/assetManifest.js';
 import { CONTROL_PANEL_ORDER, ROUTE_MAP } from './config/sectionRegistry.js';
 import { getClockItRegistrySnapshot } from './clockit/dropdownOptions.js';
-import { archive_trend_intelligence } from './data/scaffoldData.js';
+import { archive_trend_intelligence, source_inputs } from './data/scaffoldData.js';
 import { sealTruthForActiveDay } from './services/summationFlow.js';
-import { addThiccDossierTemplate, appState, renameThiccDossier, setActiveDay, setRoute, subscribe, toggleControlPanel } from './state/appState.js';
+import {
+  addThiccDossierTemplate,
+  appState,
+  renameThiccDossier,
+  setActiveDay,
+  setRoute,
+  subscribe,
+  toggleControlPanel,
+  updateAssurerAssessmentField,
+  updateAssurerWriterField
+} from './state/appState.js';
 
 let app;
 let previousRoute = '/';
@@ -73,16 +83,77 @@ function renderControlPanel() {
 }
 
 function renderAssurerLayout(anchor) {
+  const activeDate = appState.activeDay.activeDate;
+  const assessment = source_inputs.assurer_assessment[activeDate] ?? {};
+  const writer = source_inputs.assurer_writer[activeDate] ?? { heresTheThing: '' };
+  const macroSummary = source_inputs.da_eater_day[activeDate] ?? {};
+  const thiccSummary = source_inputs.thicc_fitt_day[activeDate] ?? {};
+  const fiveDayPreview = source_inputs.remember_me_calendar[activeDate] ?? [];
+  const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
+  const requiredAssessmentFields = [
+    ['titleOfDay', 'TITLE OF THE DAY'],
+    ['headHummer', 'HEAD HUMMER'],
+    ['wordOfDay', 'WORD OF THE DAY'],
+    ['mood', 'MOOD'],
+    ['era', 'ERA'],
+    ['libido', 'LIBIDO'],
+    ['singlenessLevel', 'SINGLENESS LEVEL']
+  ];
+  const legacyAssessment = Object.keys(assessment)
+    .filter((key) => !requiredAssessmentFields.some(([requiredKey]) => requiredKey === key))
+    .map((key) => `<label class="assessment-pill legacy-item">${key}<input data-assessment-field="${key}" value="${assessment[key] ?? ''}" /></label>`)
+    .join('');
+  const macroBars = [
+    ['protein', 'PROTEIN', macroSummary.proteinProgress ?? 0],
+    ['carbs', 'CARBS', macroSummary.carbsProgress ?? 0],
+    ['fats', 'FATS', macroSummary.fatsProgress ?? 0],
+    ['calories', 'CALORIES', macroSummary.caloriesProgress ?? 0]
+  ]
+    .map(
+      ([key, label, progress]) => `
+        <div class="macro-bar-wrap" data-macro="${key}">
+          <span>${label}</span>
+          <div class="macro-track"><div class="macro-fill" style="width:${Math.max(0, Math.min(100, Number(progress) || 0))}%"></div></div>
+        </div>
+      `
+    )
+    .join('');
+
   return `
-    <div class="zone assurer-slab">
-      <div class="zone anchor-territory"><img class="assurer-anchor" src="${anchor}" alt="SECTION ANCHOR" /></div>
-      <div class="zone crystal-title-wrap">HEAD HUMMER · LIBIDO · MOOD · ERA · WORD OF THE DAY · SINGLENESS LEVEL</div>
-      <div class="zone writer-cloud">HERE'S THE THING WRITER CLOUD</div>
-      <div class="zone remember-five-day">REMEMBER.ME 5-DAY PREVIEW</div>
-      <div class="zone standout-moment">MOMENTS</div>
-      <div class="zone intake-summary">DA.EATER MEALS + PHOTO SUMMARY</div>
-      <div class="zone macro-summary">DA.EATER MACRO PROGRESSION BARS</div>
-      <div class="zone thicc-summary">THICC.FITT PERSONAL SUMMARY</div>
+    <div class="assurer-slab">
+      <section class="assurer-left-fused">
+        <img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" />
+        <div class="assessment-fusion-field">
+          ${requiredAssessmentFields
+            .map(
+              ([key, label]) =>
+                `<label class="assessment-pill">${label}<input data-assessment-field="${key}" value="${assessment[key] ?? ''}" /></label>`
+            )
+            .join('')}
+          ${legacyAssessment}
+        </div>
+      </section>
+      <section class="macro-progression-band">${macroBars}</section>
+      <button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"></button>
+      <section class="writer-cloud">
+        <div class="cloud-lobe cloud-lobe-a"></div>
+        <div class="cloud-lobe cloud-lobe-b"></div>
+        <div class="cloud-lobe cloud-lobe-c"></div>
+        <label>HERE'S THE THING<textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></label>
+      </section>
+      <section class="thicc-moments">
+        <h3>THICC.FITT + MOMENTS</h3>
+        <p>PERSONAL SIGNALS: ${(thiccSummary.summary ?? '—').toString()}</p>
+        <ul>${standoutMoments.slice(0, 3).map((item) => `<li>${item?.title ?? item?.label ?? 'MOMENT'}</li>`).join('') || '<li>NO MOMENTS LOGGED</li>'}</ul>
+      </section>
+      <section class="remember-five-day">
+        <h3>5-DAY PREVIEW</h3>
+        <ul>${fiveDayPreview.slice(0, 5).map((item, idx) => `<li>DAY ${idx + 1}: ${item?.label ?? item?.title ?? 'OPEN'}</li>`).join('') || '<li>NO CALENDAR FEED YET</li>'}</ul>
+      </section>
+      <section class="intake-summary">
+        <h3>DA.EATER SUMMARY</h3>
+        <p>MEALS: ${(macroSummary.mealsLogged ?? 0).toString()} · INTAKE: ${(macroSummary.intakeSignal ?? 'PENDING').toString()}</p>
+      </section>
     </div>
   `;
 }
@@ -275,6 +346,16 @@ function bindEvents() {
 
   app.querySelector('[data-dossier-name]')?.addEventListener('change', (event) => {
     renameThiccDossier(appState.ui.thiccDossiers[0].id, event.target.value);
+  });
+  app.querySelectorAll('[data-assessment-field]').forEach((node) => {
+    node.addEventListener('change', (event) => {
+      updateAssurerAssessmentField(node.dataset.assessmentField, event.target.value);
+    });
+  });
+  app.querySelectorAll('[data-writer-field]').forEach((node) => {
+    node.addEventListener('change', (event) => {
+      updateAssurerWriterField(node.dataset.writerField, event.target.value);
+    });
   });
 
   app.querySelector('.section-screen')?.addEventListener('pointerdown', () => {
