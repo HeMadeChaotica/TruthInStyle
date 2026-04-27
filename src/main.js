@@ -109,9 +109,11 @@ function renderAssurerLayout(anchor) {
   const macroSummary = source_inputs.da_eater_day[activeDate] ?? {};
   const thiccSummary = source_inputs.thicc_fitt_day[activeDate] ?? {};
   const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
+  const mediaLibrary = source_inputs.media_library[activeDate] ?? source_inputs.media_library ?? {};
   const dropdownOptions = {
     assessmentMood: ['STEADY', 'LIT', 'RAW', 'SOFT', 'HEAVY', 'CLEAR'],
     assessmentEra: ['BUILDING', 'CUTTING', 'HEALING', 'EXPANSION', 'REFOCUS'],
+    assessmentLibido: ['LOW', 'RISING', 'HIGH', 'WILD'],
     lobitoCheckIn: ['LOW', 'MEDIUM', 'HIGH', 'VOLCANIC'],
     assessmentSingleness: ['SOLO', 'OPEN', 'COMPLICATED', 'ALIGNED']
   };
@@ -121,9 +123,9 @@ function renderAssurerLayout(anchor) {
     { key: 'wordOfDay', label: 'WORD OF THE DAY', type: 'text' },
     { key: 'assessmentMood', aliases: ['mood'], label: 'MOOD', type: 'dropdown' },
     { key: 'assessmentEra', aliases: ['era'], label: 'ERA', type: 'dropdown' },
-    { key: 'lobitoCheckIn', aliases: ['libido'], label: 'LIBIDO', type: 'dropdown' },
+    { key: 'assessmentLibido', aliases: ['libido'], label: 'LIBIDO', type: 'dropdown' },
     { key: 'assessmentSingleness', aliases: ['singlenessLevel'], label: 'SINGLENESS LEVEL', type: 'dropdown' },
-    { key: 'location', label: 'LOCATION', type: 'text' }
+    { key: 'lobitoCheckIn', aliases: ['lobito'], label: 'LOBITO CHECK-IN', type: 'dropdown' }
   ];
   const preservedKeys = new Set(requiredAssessmentFields.flatMap((field) => [field.key, ...(field.aliases ?? [])]));
   const legacyAssessment = Object.keys(assessment)
@@ -166,9 +168,9 @@ function renderAssurerLayout(anchor) {
 
   return `
     <div class="assurer-slab">
-      <section class="assurer-left-fused">
+      <section class="assessment-fusion-field stage-card">
         <img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" />
-        <div class="assessment-fusion-field">
+        <div class="assessment-grid">
           ${requiredAssessmentFields
             .map(
               ({ key, aliases = [], label, type }) =>
@@ -187,41 +189,49 @@ function renderAssurerLayout(anchor) {
             .join('')}
           ${legacyAssessment}
         </div>
+        <div class="moments-strip">
+          <div class="moments-heading">MOMENTS</div>
+          <ul>${standoutMoments
+            .slice(0, 3)
+            .map((item) => `<li>${item?.type ?? item?.label ?? 'MOMENT'} · ${item?.title ?? item?.note ?? 'ENTRY'}</li>`)
+            .join('') || '<li>NO MOMENTS LOGGED</li>'}</ul>
+        </div>
       </section>
-      <section class="macro-progression-band" ${macroSummaryRoute}>${macroBars}</section>
-      <button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"></button>
-      <section class="writer-cloud">
-        <div class="cloud-lobe cloud-lobe-a"></div>
-        <div class="cloud-lobe cloud-lobe-b"></div>
-        <div class="cloud-lobe cloud-lobe-c"></div>
-        <label>HERE'S THE THING<textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></label>
+      <section class="macro-progression-band stage-card" ${macroSummaryRoute}>${macroBars}</section>
+      <section class="writer-cloud stage-card">
+        <div class="cloud-shell">
+          <textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea>
+        </div>
       </section>
-      <section class="thicc-moments" ${thiccMomentsRoute}>
-        <h3>THICC.FITT + MOMENTS</h3>
-        <p>WORKOUT: ${(thiccSummary.workoutSignal ?? thiccSummary.workout ?? '—').toString()} · CARDIO: ${(thiccSummary.cardioSignal ?? thiccSummary.cardio ?? '—').toString()} · DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p>
-        <p>BODY/PERFORMANCE: ${(thiccSummary.performanceNote ?? thiccSummary.bodyNote ?? thiccSummary.summary ?? '—').toString()}</p>
-        <ul>${standoutMoments
-          .slice(0, 3)
-          .map((item) => `<li>${item?.type ?? item?.label ?? 'MOMENT'}: ${item?.title ?? item?.note ?? 'ENTRY'} ${item?.time ? `· ${item.time}` : ''}</li>`)
-          .join('') || '<li>NO MOMENTS LOGGED</li>'}</ul>
+      <section class="thicc-moments stage-card" ${thiccMomentsRoute}>
+        <h3>THICC.FITT</h3>
+        <p>WORKOUT: ${(thiccSummary.workoutSignal ?? thiccSummary.workout ?? '—').toString()}</p>
+        <p>CARDIO: ${(thiccSummary.cardioSignal ?? thiccSummary.cardio ?? '—').toString()}</p>
+        <p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p>
+        <p>BODY SIGNAL: ${(thiccSummary.bodySignal ?? thiccSummary.performanceNote ?? thiccSummary.bodyNote ?? '—').toString()}</p>
+        <p>NOTES: ${(thiccSummary.notes ?? thiccSummary.summary ?? '—').toString()}</p>
       </section>
       <section class="remember-five-day" ${fiveDayRoute}>
         <h3>5-DAY PREVIEW</h3>
-        <ul>${fiveDayPreview
+        <ul class="mini-day-cards">${fiveDayPreview
           .map(
             (item) =>
-              `<li>${item.weekday} ${item.dateKey}${item.dateKey === activeDate ? ' · NOW' : ''} — ${item.item?.label ?? item.item?.title ?? item.item?.mark ?? 'OPEN'}</li>`
+              `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.dateKey === activeDate ? 'TODAY' : item.item?.label ?? item.item?.title ?? item.item?.mark ?? 'OPEN'}</em></li>`
           )
           .join('')}</ul>
       </section>
-      <section class="intake-summary" ${intakeRoute}>
+      <section class="intake-summary stage-card" ${intakeRoute}>
         <h3>DA.EATER SUMMARY</h3>
-        <p>MEALS: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()} · INTAKE: ${(macroSummary.intakeSignal ?? 'PENDING').toString()}</p>
-        <p>LAST NOTE: ${(macroSummary.lastMealNote ?? macroSummary.lastMeal ?? '—').toString()}</p>
-        <p>CHEAT/FLEX: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()} · PHOTO: ${
-          macroSummary.mealPhotoPresent ?? macroSummary.photoPresent ? 'YES' : 'NO'
-        }</p>
+        <p>MEALS LOGGED: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p>
+        <p>LAST MEAL: ${(macroSummary.lastMealNote ?? macroSummary.lastMeal ?? '—').toString()}</p>
+        <p>CHEAT/FLEX: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()}</p>
+        <p>PHOTO LOG: ${(macroSummary.photoLogCount ?? (macroSummary.mealPhotoPresent ?? macroSummary.photoPresent ? 1 : 0)).toString()} TODAY</p>
         <p>INTAKE NOTE: ${(macroSummary.intakeNote ?? '—').toString().slice(0, 72)}</p>
+        <p>MEDIA: ${(mediaLibrary.latestMeal ?? mediaLibrary.lastImage ?? 'NOT LINKED').toString().slice(0, 42)}</p>
+      </section>
+      <section class="eye-overlay">
+        <button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"></button>
+        <span class="tell-no-lies">TELL NO LIES</span>
       </section>
     </div>
   `;
@@ -383,9 +393,9 @@ function renderSectionShell() {
     ${renderControlPanel()}
     <section class="section-screen">
       ${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}
-      ${showEye ? `<button class="eye-of-truth ${isAssurer ? 'eye-center active' : `eye-floating inactive ${controlsClass}`}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer ${isAssurer ? 'center-shimmer' : 'floating-shimmer'}" aria-hidden="true"></div>` : ''}
+      ${showEye && !isAssurer ? `<button class="eye-of-truth eye-floating inactive ${controlsClass}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer floating-shimmer" aria-hidden="true"></div>` : ''}
       <div class="section-layout">${renderSectionContent(appState.route)}</div>
-      <button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>
+      ${isAssurer ? '' : `<button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>`}
     </section>
   `;
 }
