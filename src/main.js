@@ -88,7 +88,7 @@ function renderOpening() {
 }
 
 function renderDayChangerPlugin() {
-  return `<div class="day-plugin"><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /><div class="day-date">${appState.activeDay.activeDate}</div><div>${appState.activeDay.activeWeekday}</div></div>`;
+  return `<div class="day-plugin"><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /><div class="day-date">DAY CHANGER</div><div>${appState.activeDay.activeWeekday}</div></div>`;
 }
 
 function renderControlPanel() {
@@ -97,7 +97,7 @@ function renderControlPanel() {
     return `<li><button data-action="${actionKey}"><img src="${controlPanelGlyphs[actionKey]}" alt="${actionKey}" /></button></li>`;
   }).join('');
 
-  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><ul>${ordered}<li class="panel-wand-filler" aria-hidden="true"><img src="${triggerGlyphs.controlWand}" alt="" /></li></ul></aside>`;
+  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><div class="control-date-tile"><span>${appState.activeDay.activeDate}</span><strong>${appState.activeDay.activeWeekday}</strong></div><ul>${ordered}<li class="panel-wand-filler" aria-hidden="true"><img src="${triggerGlyphs.controlWand}" alt="" /></li></ul></aside>`;
 }
 
 function renderAssurerLayout(anchor) {
@@ -141,9 +141,9 @@ function renderAssurerLayout(anchor) {
   return `
     <div class="assurer-slab">
       <section class="assessment-fusion-field stage-card">
-        <img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" />
-        <div class="glam-date-tile">${appState.activeDay.activeWeekday} · ${activeDate}</div>
         <div class="assessment-grid">
+          <div class="anchor-slot"><img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" /></div>
+          <div class="glam-date-tile">${appState.activeDay.activeWeekday} · ${activeDate}</div>
           ${requiredAssessmentFields
             .map(({ key, aliases = [], label, type }) =>
               type === 'dropdown'
@@ -160,7 +160,7 @@ function renderAssurerLayout(anchor) {
         </div>
       </section>
       <section class="macro-progression-band stage-card" data-route="/da-eater"><h3>MACRO PROGRESSION</h3>${macroBars}</section>
-      <section class="writer-cloud stage-card"><div class="cloud-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
+      <section class="writer-cloud"><div class="cloud-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
       <section class="thicc-moments stage-card" data-route="/thicc-fitt"><h3>THICC.FITT SUMMARY</h3><p>WORKOUT: ${(thiccSummary.workoutSignal ?? thiccSummary.workout ?? '—').toString()}</p><p>CARDIO: ${(thiccSummary.cardioSignal ?? thiccSummary.cardio ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>BODY SIGNAL: ${(thiccSummary.bodySignal ?? thiccSummary.performanceNote ?? thiccSummary.bodyNote ?? '—').toString()}</p><p>NOTES: ${(thiccSummary.notes ?? thiccSummary.summary ?? '—').toString()}</p></section>
       <section class="remember-five-day stage-card" data-route="/remember-me"><h3>5-DAY PREVIEW</h3><ul class="mini-day-cards">${fiveDayPreview
         .map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.dateKey === activeDate ? 'TODAY' : item.item?.label ?? item.item?.title ?? item.item?.mark ?? 'OPEN'}</em></li>`)
