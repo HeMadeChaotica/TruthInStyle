@@ -4,6 +4,7 @@ const listeners = new Set();
 
 export const appState = {
   route: '/',
+  routeHistory: ['/'],
   controlPanelOpen: false,
   activeDay: { ...day_state },
   ui: {
@@ -20,7 +21,23 @@ function ensureDayBucket(scope, fallback = {}) {
 }
 
 export function setRoute(route) {
+  if (appState.route !== route) {
+    appState.routeHistory.push(route);
+  }
   appState.route = route;
+  appState.controlPanelOpen = false;
+  notify();
+}
+
+export function routeBackInApp() {
+  if (appState.routeHistory.length <= 1) {
+    appState.route = '/the-assurer';
+    appState.routeHistory = ['/', '/the-assurer'];
+    notify();
+    return;
+  }
+  appState.routeHistory.pop();
+  appState.route = appState.routeHistory[appState.routeHistory.length - 1] ?? '/the-assurer';
   appState.controlPanelOpen = false;
   notify();
 }
