@@ -88,7 +88,7 @@ function renderOpening() {
 }
 
 function renderDayChangerPlugin() {
-  return `<div class="day-plugin"><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /><div class="day-date">DAY CHANGER</div><div>${appState.activeDay.activeWeekday}</div></div>`;
+  return `<div class="day-plugin"><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /><div class="day-date">DAY CHANGER</div></div>`;
 }
 
 function renderControlPanel() {
