@@ -93,7 +93,7 @@ function renderControlPanel() {
     return `<li><button data-action="${actionKey}"><img src="${controlPanelGlyphs[actionKey]}" alt="${actionKey}" /></button></li>`;
   }).join('');
 
-  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><div class="control-date-tile"><span>${appState.activeDay.activeDate}</span><strong>${appState.activeDay.activeWeekday}</strong></div><ul>${ordered}<li class="panel-wand-filler" aria-hidden="true"><img src="${triggerGlyphs.controlWand}" alt="" /></li></ul></aside>`;
+  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><ul>${ordered}<li class="panel-wand-filler" aria-hidden="true"><img src="${triggerGlyphs.controlWand}" alt="" /></li></ul></aside>`;
 }
 
 function renderAssurerLayout(anchor) {
@@ -104,16 +104,6 @@ function renderAssurerLayout(anchor) {
   const thiccSummary = source_inputs.thicc_fitt_day[activeDate] ?? {};
   const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
   const mediaLibrary = source_inputs.media_library[activeDate] ?? source_inputs.media_library ?? {};
-
-  const requiredAssessmentFields = [
-    { key: 'titleOfDay', label: 'TITLE OF THE DAY', type: 'text' },
-    { key: 'headHummer', label: 'HEAD HUMMER', type: 'text' },
-    { key: 'wordOfDay', label: 'WORD OF THE DAY', type: 'text' },
-    { key: 'assessmentMood', aliases: ['mood'], label: 'MOOD', type: 'dropdown' },
-    { key: 'assessmentEra', aliases: ['era'], label: 'ERA', type: 'dropdown' },
-    { key: 'assessmentSingleness', aliases: ['singlenessLevel'], label: 'SINGLENESS LEVEL', type: 'dropdown' },
-    { key: 'lobitoCheckIn', aliases: ['libido', 'lobito'], label: 'LIBIDO / LOBITO CHECK-IN', type: 'dropdown' }
-  ];
 
   const macroBars = [
     ['protein', 'PROTEIN', macroSummary.proteinProgress ?? 0],
@@ -139,23 +129,21 @@ function renderAssurerLayout(anchor) {
       <section class="assessment-fusion-field stage-card">
         <div class="assessment-grid">
           <div class="anchor-slot"><img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" /></div>
+          <label class="assessment-pill field-titleOfDay">TITLE OF THE DAY<input data-assessment-field="titleOfDay" value="${getAssessmentValue(assessment, ['titleOfDay'])}" /></label>
           <div class="glam-date-tile">${appState.activeDay.activeWeekday} · ${activeDate}</div>
-          ${requiredAssessmentFields
-            .map(({ key, aliases = [], label, type }) =>
-              type === 'dropdown'
-                ? `<label class="assessment-pill field-${key}">${label}<select data-assessment-field="${key}"><option value="">SELECT</option>${getOptionsForFamily(key)
-                    .map((option) => `<option value="${option}" ${getAssessmentValue(assessment, [key, ...aliases]) === option ? 'selected' : ''}>${option}</option>`)
-                    .join('')}</select></label>`
-                : `<label class="assessment-pill field-${key}">${label}<input data-assessment-field="${key}" value="${getAssessmentValue(assessment, [key, ...aliases])}" /></label>`
-            )
-            .join('')}
+          <label class="assessment-pill field-headHummer">HEAD HUMMER<input data-assessment-field="headHummer" value="${getAssessmentValue(assessment, ['headHummer'])}" /></label>
+          <label class="assessment-pill field-wordOfDay">WORD OF THE DAY<input data-assessment-field="wordOfDay" value="${getAssessmentValue(assessment, ['wordOfDay'])}" /></label>
+          <label class="assessment-pill field-assessmentMood">MOOD<select data-assessment-field="assessmentMood"><option value="">SELECT</option>${getOptionsForFamily('assessmentMood').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentMood','mood'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+          <label class="assessment-pill field-assessmentSingleness">SINGLENESS LEVEL<select data-assessment-field="assessmentSingleness"><option value="">SELECT</option>${getOptionsForFamily('assessmentSingleness').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentSingleness','singlenessLevel'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+          <label class="assessment-pill field-lobitoCheckIn">LOBITO CHECK-IN<select data-assessment-field="lobitoCheckIn"><option value="">SELECT</option>${getOptionsForFamily('lobitoCheckIn').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['lobitoCheckIn','lobito','libido'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+          <label class="assessment-pill field-assessmentEra">ERA<select data-assessment-field="assessmentEra"><option value="">SELECT</option>${getOptionsForFamily('assessmentEra').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentEra','era'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
           <div class="moments-strip"><ul>${standoutMoments
             .slice(0, 3)
             .map((item) => `<li><b>${item?.type ?? 'WOW'}</b> · ${item?.title ?? item?.note ?? 'ENTRY'}</li>`)
             .join('') || '<li><b>WOW</b> · NO MOMENTS LOGGED</li>'}</ul></div>
         </div>
       </section>
-      <section class="macro-progression-band stage-card" data-route="/da-eater"><h3>MACRO PROGRESSION</h3>${macroBars}</section>
+      <section class="macro-progression-band stage-card" data-route="/da-eater">${macroBars}</section>
       <section class="writer-cloud"><div class="cloud-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
       <section class="thicc-moments stage-card" data-route="/thicc-fitt"><h3>THICC.FITT SUMMARY</h3><p>WORKOUT: ${(thiccSummary.workoutSignal ?? thiccSummary.workout ?? '—').toString()}</p><p>CARDIO: ${(thiccSummary.cardioSignal ?? thiccSummary.cardio ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>BODY SIGNAL: ${(thiccSummary.bodySignal ?? thiccSummary.performanceNote ?? thiccSummary.bodyNote ?? '—').toString()}</p><p>NOTES: ${(thiccSummary.notes ?? thiccSummary.summary ?? '—').toString()}</p></section>
       <section class="remember-five-day stage-card" data-route="/remember-me"><h3>5-DAY PREVIEW</h3><ul class="mini-day-cards">${fiveDayPreview

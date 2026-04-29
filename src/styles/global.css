@@ -12,3 +12,37 @@
 .mini-day-cards{list-style:none;margin:.26rem 0 0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:.24rem}.mini-day-cards li{border:1px solid rgba(183,150,85,.76);padding:.28rem .14rem;display:grid;gap:.14rem;text-align:center;font-size:.5rem;color:#f4e7cc;background:rgba(41,61,30,.72)}.mini-day-cards li em{color:var(--truth-pink);font-style:normal}
 .eye-overlay{grid-area:intake;justify-self:end;align-self:end;display:grid;place-items:center;transform:translate(-1%,4%);z-index:5;pointer-events:none}.assurer-eye-bridge{width:104px;height:74px;border:0;background:transparent;padding:0;cursor:pointer;pointer-events:auto;filter:drop-shadow(0 0 10px rgba(244,167,202,.42))}.assurer-eye-bridge img{width:100%;height:100%;object-fit:contain;mix-blend-mode:screen}
 .summation-layout,.hopewood-layout,.remember-layout,.da-eater-layout,.thicc-layout,.its-thicc-layout,.annual-layout,.clock-layout,.work-layout{position:absolute;inset:1rem 1rem 1rem calc(var(--panel-width) + .8rem);color:#ead7b2}.summation-layout{display:grid;grid-template-columns:70% 30%;gap:.5rem}.summation-support{display:grid;grid-template-rows:1fr 1fr 1fr;gap:.5rem}.seal-zone{display:grid;place-items:center}.trigger-button{width:88px;border:0;background:transparent;padding:0}.trigger-button img{width:100%;object-fit:contain}.hopewood-layout{display:grid;grid-template-columns:12% 13% 75%;gap:.6rem}.remember-layout{display:grid;grid-template-columns:74% 26%;grid-template-rows:68% 32%;gap:.5rem}.calendar-wall{grid-column:1;grid-row:1/span 2;display:grid;grid-template-columns:repeat(7,1fr);gap:.15rem}.calendar-cell{border:1px solid rgba(255,194,222,.2);font-size:.5rem;padding:.2rem}.da-eater-layout{display:grid;grid-template-columns:24% 22% 22% 32%;grid-template-rows:42% 58%;gap:.5rem}.macro-progression{grid-column:1;grid-row:1/span 2}.meals-area{grid-column:2/span 2;grid-row:1}.flex-area{grid-column:2;grid-row:2}.intake-notes{grid-column:3;grid-row:2}.meal-photos{grid-column:4;grid-row:1/span 2}.thicc-layout{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:.5rem}.workout-log{grid-column:1/span 2}.media-zone{grid-column:3}.notes-zone{grid-column:4}.cardio-zone{grid-column:1;grid-row:2}.da-juice-zone{grid-column:2;grid-row:2}.performance-zone{grid-column:3/span 2;grid-row:2/span 2}.dumbbell-zone{grid-column:2;grid-row:3;justify-self:center;align-self:center}.its-thicc-layout{display:grid;grid-template-rows:auto 1fr;gap:.5rem}.dossier-toolbar{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}.dossier-tab,.dossier-plus{border:1px solid rgba(255,194,222,.55);background:rgba(30,12,35,.25)}.annual-layout.fixed-four{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:.5rem}.clock-layout{display:grid;grid-template-columns:32% 43% 25%;gap:.5rem}.clock-layout h3{margin:0 0 .5rem;color:#f4a7ca}.clock-layout input,.clock-layout select,.clock-layout button{width:100%;margin:.2rem 0;padding:.25rem;background:#1b2417;color:#ead7b2;border:1px solid rgba(183,150,85,.5)}.clock-option-list{list-style:none;padding:0;margin:0;display:grid;gap:.3rem}.clock-option-list li{display:grid;grid-template-columns:1fr auto auto auto;gap:.2rem;align-items:center}
+
+/* assurer annotation pass */
+.control-panel{width:152px;background:linear-gradient(180deg,#5d4a1e,#2c210f)}
+.control-date-tile{display:none}
+.control-panel ul{height:100%;padding:.25rem}
+.control-panel button{height:66px;padding:0;background:linear-gradient(180deg,rgba(20,14,8,.85),rgba(8,6,3,.95))}
+.control-panel button img{width:100%;height:100%;object-fit:contain;padding:.15rem}
+body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.mini-day-cards li,.thicc-moments p,.intake-summary p{color:#f4a7ca;text-transform:uppercase}
+.assurer-slab{grid-template-columns:46% 54%;grid-template-rows:20% 28% 30% 22%;grid-template-areas:"assessment macro" "assessment writer" "moments writer" "thicc intake"}
+.assessment-fusion-field{background:linear-gradient(165deg,#ead7b2,#dbc398)}
+.assessment-grid{grid-template-columns:33% repeat(3,1fr);gap:.4rem}
+.anchor-slot{grid-row:1/span 6;grid-column:1}
+.glam-date-tile{grid-column:2/-1;grid-row:2}
+.field-titleOfDay{grid-column:2/-1;grid-row:1}
+.field-headHummer{grid-column:2/-1;grid-row:3}
+.field-wordOfDay{grid-column:2/-1;grid-row:4}
+.field-assessmentMood{grid-column:2/-1;grid-row:5}
+.field-assessmentSingleness{grid-column:2/-1;grid-row:6}
+.field-lobitoCheckIn{grid-column:1/span 2;grid-row:7}
+.field-assessmentEra{grid-column:3/span 2;grid-row:7}
+.macro-progression-band{background:linear-gradient(165deg,#866a2b,#5f4b1e)}
+.macro-bar-wrap{grid-template-columns:86px 70px 1fr 52px 78px;font-size:.62rem}
+.macro-bar-wrap::before{content:attr(data-macro);display:none}
+.macro-bar-wrap span::after{content:' GOAL';margin-left:.2rem}
+.macro-bar-wrap strong::after{content:' LEFT';display:block;font-size:.48rem;color:#f4a7ca}
+.writer-cloud{grid-area:writer;background:linear-gradient(165deg,#151515,#060606);border:1px solid rgba(183,150,85,.7);padding:.8rem}
+.cloud-shell{mask:none;-webkit-mask:none;background:linear-gradient(165deg,#181818,#0d0d0d);padding:.5rem}
+.moments-strip{grid-area:moments;background:linear-gradient(165deg,#3f4f2f,#283620);padding:.6rem;border:1px solid rgba(183,150,85,.7)}
+.moments-strip li b{display:inline-block;background:#a8292a;color:#f4a7ca;padding:.15rem .35rem;border-radius:999px;margin-right:.25rem}
+.moments-strip li{background:#ead7b2;color:#2a2115;padding:.35rem .5rem;border:1px solid rgba(183,150,85,.5);margin-bottom:.2rem}
+.remember-five-day{background:linear-gradient(165deg,#ead7b2,#d8bf97)}
+.mini-day-cards li{background:#e6d0a8;font-size:.52rem}
+.thicc-moments{grid-area:thicc;background:linear-gradient(165deg,#5f7a43,#3d5129)}
+.intake-summary{grid-area:intake;background:linear-gradient(165deg,#ead7b2,#d8bf97)}
