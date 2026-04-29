@@ -87,13 +87,9 @@ function renderOpening() {
   return `<section class="opening-screen"><img src="${openingAssets.scene0Entry}" alt="OPENING ASSET" /><button class="opening-hotspot" aria-label="OPEN CHAOTICA" data-route="/the-assurer"></button></section>`;
 }
 
-function renderDayChangerPlugin() {
-  return `<div class="day-plugin"><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /><div class="day-date">DAY CHANGER</div></div>`;
-}
-
 function renderControlPanel() {
   const ordered = CONTROL_PANEL_ORDER.map((actionKey) => {
-    if (actionKey === 'plugin-day-changer') return `<li>${renderDayChangerPlugin()}</li>`;
+    if (actionKey === 'control-day-changer') return `<li><button class="day-plugin-button" aria-label="DAY CHANGER"><img src="${controlPanelGlyphs[actionKey]}" alt="day changer" /><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /></button></li>`;
     return `<li><button data-action="${actionKey}"><img src="${controlPanelGlyphs[actionKey]}" alt="${actionKey}" /></button></li>`;
   }).join('');
 

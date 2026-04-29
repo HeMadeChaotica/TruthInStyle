@@ -17,7 +17,7 @@ export const ROUTE_MAP = SECTION_REGISTRY.reduce((acc, section) => {
 }, { '/': { key: 'opening', path: '/', title: 'CHAOTICA' } });
 
 export const CONTROL_PANEL_ORDER = [
-  'plugin-day-changer',
+  'control-day-changer',
   'control-home',
   'control-back',
   'control-the-summation',

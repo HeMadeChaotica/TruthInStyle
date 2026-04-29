@@ -23,20 +23,21 @@ export const sectionAnchorGlyphs = {
 };
 
 export const controlPanelGlyphs = {
+  'control-day-changer': '/ui/glyphs/control-panel/control-day-changer.png',
   'control-home': '/ui/glyphs/control-panel/control-home.png',
   'control-back': '/ui/glyphs/control-panel/control-back.png',
   'control-the-summation': '/ui/glyphs/control-panel/control-the-summation.png',
   'control-hopewood': '/ui/glyphs/control-panel/control-hopewood.png',
-  'control-thicc-fitt': '/ui/glyphs/control-panel/control-thicc-fitt.PNG',
-  'control-da-eater': '/ui/glyphs/control-panel/control-da-eater.PNG',
-  'control-remember-me': '/ui/glyphs/control-panel/control-remember me.PNG',
-  'control-525600': '/ui/glyphs/control-panel/control-525600.PNG',
-  'control-clock-it': '/ui/glyphs/control-panel/control-clock-it.PNG',
+  'control-thicc-fitt': '/ui/glyphs/control-panel/control-thicc-fitt.png',
+  'control-da-eater': '/ui/glyphs/control-panel/control-da-eater.png',
+  'control-remember-me': '/ui/glyphs/control-panel/control-remember-me.png',
+  'control-525600': '/ui/glyphs/control-panel/control-525600.png',
+  'control-clock-it': '/ui/glyphs/control-panel/control-clock-it.png',
   'control-the-work': '/ui/glyphs/control-panel/control-the-work.png'
 };
 
 export const triggerGlyphs = {
-  controlWand: '/ui/glyphs/triggers/glyph-control-wand.png',
+  controlWand: '/ui/glyphs/control-panel/control-wand.png',
   eyeOfTruth: '/ui/glyphs/triggers/glyph-eye-of-truth.png',
   crystalDumbbell: '/ui/glyphs/triggers/glyph-crystal-dumbbell.png',
   sealTheTruth: '/ui/glyphs/triggers/seal-the-truth.png'
