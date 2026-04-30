@@ -192,7 +192,7 @@ function renderSectionShell() {
   const showEye = current?.hasEye;
   const eyeAction = current?.eyeActive ? 'trigger-eye-of-truth' : '';
   const controlsClass = floatingControlsVisible ? 'controls-visible' : 'controls-faded';
-  return `${renderControlPanel()}<section class="section-screen">${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}${showEye && !isAssurer ? `<button class="eye-of-truth eye-floating inactive ${controlsClass}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer floating-shimmer" aria-hidden="true"></div>` : ''}<div class="section-layout">${renderSectionContent(appState.route)}</div>${isAssurer ? '' : `<button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>`}</section>`;
+  return `${renderControlPanel()}<section class="section-screen">${appState.controlPanelOpen ? '<button class="panel-overlay" data-action="toggle-control-panel" aria-label="CLOSE CONTROL PANEL"></button>' : ''}${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}${showEye && !isAssurer ? `<button class="eye-of-truth eye-floating inactive ${controlsClass}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer floating-shimmer" aria-hidden="true"></div>` : ''}<div class="section-layout">${renderSectionContent(appState.route)}</div><button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button></section>`;
 }
 
 function bindEvents() {
@@ -234,7 +234,20 @@ function bindEvents() {
     render();
   }));
 
-  app.querySelector('.section-screen')?.addEventListener('pointerdown', showFloatingControlsTemporarily);
+
+  const sectionScreen = app.querySelector('.section-screen');
+  let swipeStartX = null;
+  sectionScreen?.addEventListener('pointerdown', (event) => {
+    showFloatingControlsTemporarily();
+    swipeStartX = event.clientX;
+  });
+  sectionScreen?.addEventListener('pointerup', (event) => {
+    if (swipeStartX === null) return;
+    const dx = event.clientX - swipeStartX;
+    if (!appState.controlPanelOpen && swipeStartX < 42 && dx > 48) runAction('toggle-control-panel');
+    if (appState.controlPanelOpen && dx < -48) runAction('toggle-control-panel');
+    swipeStartX = null;
+  });
 }
 
 function render() {

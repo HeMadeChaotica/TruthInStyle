@@ -33,3 +33,23 @@ body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.macr
 .thicc-fitt-summary-panel{grid-area:thicc;background:linear-gradient(160deg,#66824a,#42582f);padding:.62rem}
 .da-eater-summary-panel{grid-area:daeater;background:linear-gradient(160deg,#ead7b2,#d8bf97);padding:.62rem}
 .eye-truth-trigger{grid-area:eye;display:grid;place-items:end;pointer-events:none}.assurer-eye-bridge{width:130px;height:90px;pointer-events:auto}
+
+/* overlay control panel lock */
+.control-panel{left:0;top:0;width:170px;transform:translateX(-112%);transition:transform .24s ease;z-index:90;overflow:hidden}
+.control-panel.open{transform:translateX(0)}
+.control-panel ul{height:100%;overflow-y:auto;padding:.35rem .35rem .5rem;gap:.3rem}
+.control-panel button{height:74px}
+.control-panel button img{width:78%;height:78%}
+.panel-overlay{position:absolute;inset:0;border:0;background:rgba(0,0,0,.38);z-index:70}
+.wand{position:fixed;left:10px;bottom:14px;width:84px;height:84px;z-index:95;border:0;background:transparent;padding:0;display:grid;place-items:center}
+.wand img{width:78%;height:78%;object-fit:contain}
+.assurer-page{left:.25rem;width:calc(100vw - .5rem)}
+.anchor-field-grid{grid-template-columns:36% 32% 32%}
+.field-headHummer::before{content:'LOCATION';display:block;font-size:.52rem;opacity:.9;margin-bottom:.08rem}
+.field-wordOfDay{grid-column:1/4;grid-row:4}
+.field-assessmentMood{grid-column:2/4;grid-row:5}
+.field-lobitoCheckIn{grid-column:1/2;grid-row:5}
+.field-assessmentEra{grid-column:1/2;grid-row:6}
+.field-assessmentSingleness{grid-column:2/4;grid-row:6}
+.moments-top-row .moment-slot{clip-path:polygon(0 8%,72% 8%,72% 0,100% 50%,72% 100%,72% 92%,0 92%)}
+.writer-panel textarea{font-size:12pt;line-height:24px}
