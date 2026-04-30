@@ -105,17 +105,17 @@ function renderAssurerLayout(anchor) {
   const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
   const mediaLibrary = source_inputs.media_library[activeDate] ?? source_inputs.media_library ?? {};
 
-  const macroBars = [
-    ['protein', 'PROTEIN', macroSummary.proteinProgress ?? 0],
-    ['carbs', 'CARBS', macroSummary.carbsProgress ?? 0],
-    ['fats', 'FATS', macroSummary.fatsProgress ?? 0],
-    ['water', 'WATER', macroSummary.waterProgress ?? 0],
-    ['calories', 'CALORIES', macroSummary.caloriesProgress ?? 0]
-  ]
-    .map(
-      ([key, label, progress]) => `<div class="macro-bar-wrap" data-macro="${key}"><span>${label}</span><div class="macro-track"><div class="macro-fill" style="width:${Math.max(0, Math.min(100, Number(progress) || 0))}%"></div></div><strong>${Math.round(Number(progress) || 0)}%</strong></div>`
-    )
-    .join('');
+  const macroRows = [
+    ['PROTEIN', macroSummary.proteinGoal ?? '250G', macroSummary.proteinProgress ?? 0],
+    ['CARBS', macroSummary.carbsGoal ?? '220G', macroSummary.carbsProgress ?? 0],
+    ['FATS', macroSummary.fatsGoal ?? '70G', macroSummary.fatsProgress ?? 0],
+    ['WATER', macroSummary.waterGoal ?? '128OZ', macroSummary.waterProgress ?? 0],
+    ['CALORIES', macroSummary.caloriesGoal ?? '2400', macroSummary.caloriesProgress ?? 0]
+  ].map(([label, goal, progress]) => {
+    const pct = Math.max(0, Math.min(100, Number(progress) || 0));
+    const left = Math.max(0, 100 - Math.round(pct));
+    return `<div class="macro-row"><span>${label}</span><span>${goal}</span><div class="macro-track"><div class="macro-fill" style="width:${pct}%"></div></div><strong>${Math.round(pct)}%</strong><em>${left}% LEFT</em></div>`;
+  }).join('');
 
   const fiveDayPreview = Array.from({ length: 5 }, (_, index) => {
     const dateKey = shiftDateMMDDYYYY(activeDate, index);
@@ -124,34 +124,29 @@ function renderAssurerLayout(anchor) {
     return { dateKey, weekday, item: Array.isArray(calendarItem) ? calendarItem[0] : calendarItem };
   });
 
-  return `
-    <div class="assurer-slab">
-      <section class="assessment-fusion-field stage-card">
-        <div class="assessment-grid">
-          <div class="anchor-slot"><img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" /></div>
-          <label class="assessment-pill field-titleOfDay">TITLE OF THE DAY<input data-assessment-field="titleOfDay" value="${getAssessmentValue(assessment, ['titleOfDay'])}" /></label>
-          <div class="glam-date-tile">${appState.activeDay.activeWeekday} · ${activeDate}</div>
-          <label class="assessment-pill field-headHummer">HEAD HUMMER<input data-assessment-field="headHummer" value="${getAssessmentValue(assessment, ['headHummer'])}" /></label>
-          <label class="assessment-pill field-wordOfDay">WORD OF THE DAY<input data-assessment-field="wordOfDay" value="${getAssessmentValue(assessment, ['wordOfDay'])}" /></label>
-          <label class="assessment-pill field-assessmentMood">MOOD<select data-assessment-field="assessmentMood"><option value="">SELECT</option>${getOptionsForFamily('assessmentMood').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentMood','mood'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
-          <label class="assessment-pill field-assessmentSingleness">SINGLENESS LEVEL<select data-assessment-field="assessmentSingleness"><option value="">SELECT</option>${getOptionsForFamily('assessmentSingleness').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentSingleness','singlenessLevel'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
-          <label class="assessment-pill field-lobitoCheckIn">LOBITO CHECK-IN<select data-assessment-field="lobitoCheckIn"><option value="">SELECT</option>${getOptionsForFamily('lobitoCheckIn').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['lobitoCheckIn','lobito','libido'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
-          <label class="assessment-pill field-assessmentEra">ERA<select data-assessment-field="assessmentEra"><option value="">SELECT</option>${getOptionsForFamily('assessmentEra').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentEra','era'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
-          <div class="moments-strip"><ul>${standoutMoments
-            .slice(0, 3)
-            .map((item) => `<li><b>${item?.type ?? 'WOW'}</b> · ${item?.title ?? item?.note ?? 'ENTRY'}</li>`)
-            .join('') || '<li><b>WOW</b> · NO MOMENTS LOGGED</li>'}</ul></div>
-        </div>
-      </section>
-      <section class="macro-progression-band stage-card" data-route="/da-eater">${macroBars}</section>
-      <section class="writer-cloud"><div class="cloud-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
-      <section class="thicc-moments stage-card" data-route="/thicc-fitt"><h3>THICC.FITT SUMMARY</h3><p>WORKOUT: ${(thiccSummary.workoutSignal ?? thiccSummary.workout ?? '—').toString()}</p><p>CARDIO: ${(thiccSummary.cardioSignal ?? thiccSummary.cardio ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>BODY SIGNAL: ${(thiccSummary.bodySignal ?? thiccSummary.performanceNote ?? thiccSummary.bodyNote ?? '—').toString()}</p><p>NOTES: ${(thiccSummary.notes ?? thiccSummary.summary ?? '—').toString()}</p></section>
-      <section class="remember-five-day stage-card" data-route="/remember-me"><h3>5-DAY PREVIEW</h3><ul class="mini-day-cards">${fiveDayPreview
-        .map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.dateKey === activeDate ? 'TODAY' : item.item?.label ?? item.item?.title ?? item.item?.mark ?? 'OPEN'}</em></li>`)
-        .join('')}</ul></section>
-      <section class="intake-summary stage-card" data-route="/da-eater"><h3>DA.EATER SUMMARY</h3><p>MEALS LOGGED: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p><p>LAST MEAL: ${(macroSummary.lastMealNote ?? macroSummary.lastMeal ?? '—').toString()}</p><p>CHEAT/FLEX: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()}</p><p>PHOTO LOG: ${(macroSummary.photoLogCount ?? (macroSummary.mealPhotoPresent ?? macroSummary.photoPresent ? 1 : 0)).toString()} TODAY</p><p>INTAKE NOTE: ${(macroSummary.intakeNote ?? '—').toString().slice(0, 72)}</p><p>MEDIA: ${(mediaLibrary.latestMeal ?? mediaLibrary.lastImage ?? 'NOT LINKED').toString().slice(0, 42)}</p></section>
-      <section class="eye-overlay"><button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE" /></button></section>
-    </div>`;
+  const momentCards = standoutMoments.slice(0, 3).map((item) => `<article class="moment-slot"><header>${item?.type ?? 'WOW'}</header><p>${item?.title ?? item?.note ?? 'NO MOMENT LOGGED'}</p></article>`).join('') || '<article class="moment-slot"><header>WOW</header><p>NO MOMENTS LOGGED.</p></article><article class="moment-slot"><header>WTF</header><p>WAITING FOR ENTRY.</p></article><article class="moment-slot"><header>PLOT TWIST</header><p>WAITING FOR ENTRY.</p></article>';
+
+  return `<div class="assurer-page">
+    <section class="assurer-anchor-field stage-card">
+      <div class="anchor-field-grid">
+        <label class="assessment-pill field-titleOfDay">TITLE OF THE DAY<input data-assessment-field="titleOfDay" value="${getAssessmentValue(assessment, ['titleOfDay'])}" /></label>
+        <div class="glam-date-tile">${appState.activeDay.activeWeekday} / ${activeDate}</div>
+        <div class="anchor-slot"><img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" /></div>
+        <label class="assessment-pill field-headHummer">HEAD HUMMER<input data-assessment-field="headHummer" value="${getAssessmentValue(assessment, ['headHummer'])}" /></label>
+        <label class="assessment-pill field-wordOfDay">WORD OF THE DAY<input data-assessment-field="wordOfDay" value="${getAssessmentValue(assessment, ['wordOfDay'])}" /></label>
+        <label class="assessment-pill field-assessmentMood">MOOD<select data-assessment-field="assessmentMood"><option value="">SELECT</option>${getOptionsForFamily('assessmentMood').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentMood','mood'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+        <label class="assessment-pill field-assessmentSingleness">SINGLENESS LEVEL<select data-assessment-field="assessmentSingleness"><option value="">SELECT</option>${getOptionsForFamily('assessmentSingleness').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentSingleness','singlenessLevel'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+        <label class="assessment-pill field-lobitoCheckIn">LOBITO CHECK-IN<select data-assessment-field="lobitoCheckIn"><option value="">SELECT</option>${getOptionsForFamily('lobitoCheckIn').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['lobitoCheckIn','lobito','libido'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+        <label class="assessment-pill field-assessmentEra">ERA<select data-assessment-field="assessmentEra"><option value="">SELECT</option>${getOptionsForFamily('assessmentEra').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentEra','era'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
+      </div>
+    </section>
+    <section class="macro-progress-panel stage-card" data-route="/da-eater">${macroRows}</section>
+    <section class="moments-calendar-panel stage-card" data-route="/remember-me"><div class="moments-top-row">${momentCards}</div><ul class="five-day-grid">${fiveDayPreview.map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.item?.type ?? item.item?.label ?? 'OPEN'}</em><p>${item.item?.time ?? item.item?.description ?? item.item?.title ?? 'NO APPOINTMENT'}</p></li>`).join('')}</ul></section>
+    <section class="writer-panel"><div class="writer-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
+    <section class="thicc-fitt-summary-panel stage-card" data-route="/thicc-fitt"><p>TIME: ${(thiccSummary.workoutTime ?? thiccSummary.time ?? '—').toString()}</p><p>LOCATION: ${(thiccSummary.location ?? '—').toString()}</p><p>LENGTH: ${(thiccSummary.workoutLength ?? thiccSummary.length ?? '—').toString()}</p><p>SEASON: ${(thiccSummary.season ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>HIGHEST WEIGHT: ${(thiccSummary.highestWeight ?? '—').toString()}</p><p>REPS + EXERCISE: ${(thiccSummary.repsExercise ?? thiccSummary.topSet ?? '—').toString()}</p><p>PHOTO: ${(mediaLibrary.latestWorkout ?? thiccSummary.photo ?? 'NOT LINKED').toString().slice(0, 42)}</p></section>
+    <section class="da-eater-summary-panel stage-card" data-route="/da-eater"><p>MEALS LOGGED: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p><p>PHOTO: ${(mediaLibrary.latestMeal ?? mediaLibrary.lastImage ?? 'NOT LINKED').toString().slice(0, 42)}</p><p>CHEAT MEAL LOG: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()}</p><p>FOOD NOTES: ${(macroSummary.intakeNote ?? macroSummary.lastMealNote ?? '—').toString().slice(0, 98)}</p></section>
+    <section class="eye-truth-trigger"><button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE" /></button></section>
+  </div>`;
 }
 
 function renderSummationLayout() { return `<div class="summation-layout"><section class="zone summation-render"><header>TITLE OF THE DAY · ${appState.activeDay.activeWeekday} · ${appState.activeDay.activeDate}</header></section><aside class="summation-support"><section class="zone bonus-questions">BONUS QUESTIONS AREA</section><section class="zone version-selector">VERSION SELECTOR: VERSION 1 / VERSION 2 / VERSION 3</section><section class="zone seal-zone"><button class="trigger-button" data-action="trigger-seal-the-truth"><img src="${triggerGlyphs.sealTheTruth}" alt="SEAL THE TRUTH" /></button></section></aside></div>`; }
@@ -197,7 +192,7 @@ function renderSectionShell() {
   const showEye = current?.hasEye;
   const eyeAction = current?.eyeActive ? 'trigger-eye-of-truth' : '';
   const controlsClass = floatingControlsVisible ? 'controls-visible' : 'controls-faded';
-  return `${renderControlPanel()}<section class="section-screen">${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}${showEye && !isAssurer ? `<button class="eye-of-truth eye-floating inactive ${controlsClass}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer floating-shimmer" aria-hidden="true"></div>` : ''}<div class="section-layout">${renderSectionContent(appState.route)}</div>${isAssurer ? '' : `<button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button>`}</section>`;
+  return `${renderControlPanel()}<section class="section-screen">${appState.controlPanelOpen ? '<button class="panel-overlay" data-action="toggle-control-panel" aria-label="CLOSE CONTROL PANEL"></button>' : ''}${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}${showEye && !isAssurer ? `<button class="eye-of-truth eye-floating inactive ${controlsClass}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer floating-shimmer" aria-hidden="true"></div>` : ''}<div class="section-layout">${renderSectionContent(appState.route)}</div><button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button></section>`;
 }
 
 function bindEvents() {
@@ -239,7 +234,20 @@ function bindEvents() {
     render();
   }));
 
-  app.querySelector('.section-screen')?.addEventListener('pointerdown', showFloatingControlsTemporarily);
+
+  const sectionScreen = app.querySelector('.section-screen');
+  let swipeStartX = null;
+  sectionScreen?.addEventListener('pointerdown', (event) => {
+    showFloatingControlsTemporarily();
+    swipeStartX = event.clientX;
+  });
+  sectionScreen?.addEventListener('pointerup', (event) => {
+    if (swipeStartX === null) return;
+    const dx = event.clientX - swipeStartX;
+    if (!appState.controlPanelOpen && swipeStartX < 42 && dx > 48) runAction('toggle-control-panel');
+    if (appState.controlPanelOpen && dx < -48) runAction('toggle-control-panel');
+    swipeStartX = null;
+  });
 }
 
 function render() {

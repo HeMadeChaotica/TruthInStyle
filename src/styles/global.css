@@ -13,36 +13,43 @@
 .eye-overlay{grid-area:intake;justify-self:end;align-self:end;display:grid;place-items:center;transform:translate(-1%,4%);z-index:5;pointer-events:none}.assurer-eye-bridge{width:104px;height:74px;border:0;background:transparent;padding:0;cursor:pointer;pointer-events:auto;filter:drop-shadow(0 0 10px rgba(244,167,202,.42))}.assurer-eye-bridge img{width:100%;height:100%;object-fit:contain;mix-blend-mode:screen}
 .summation-layout,.hopewood-layout,.remember-layout,.da-eater-layout,.thicc-layout,.its-thicc-layout,.annual-layout,.clock-layout,.work-layout{position:absolute;inset:1rem 1rem 1rem calc(var(--panel-width) + .8rem);color:#ead7b2}.summation-layout{display:grid;grid-template-columns:70% 30%;gap:.5rem}.summation-support{display:grid;grid-template-rows:1fr 1fr 1fr;gap:.5rem}.seal-zone{display:grid;place-items:center}.trigger-button{width:88px;border:0;background:transparent;padding:0}.trigger-button img{width:100%;object-fit:contain}.hopewood-layout{display:grid;grid-template-columns:12% 13% 75%;gap:.6rem}.remember-layout{display:grid;grid-template-columns:74% 26%;grid-template-rows:68% 32%;gap:.5rem}.calendar-wall{grid-column:1;grid-row:1/span 2;display:grid;grid-template-columns:repeat(7,1fr);gap:.15rem}.calendar-cell{border:1px solid rgba(255,194,222,.2);font-size:.5rem;padding:.2rem}.da-eater-layout{display:grid;grid-template-columns:24% 22% 22% 32%;grid-template-rows:42% 58%;gap:.5rem}.macro-progression{grid-column:1;grid-row:1/span 2}.meals-area{grid-column:2/span 2;grid-row:1}.flex-area{grid-column:2;grid-row:2}.intake-notes{grid-column:3;grid-row:2}.meal-photos{grid-column:4;grid-row:1/span 2}.thicc-layout{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:.5rem}.workout-log{grid-column:1/span 2}.media-zone{grid-column:3}.notes-zone{grid-column:4}.cardio-zone{grid-column:1;grid-row:2}.da-juice-zone{grid-column:2;grid-row:2}.performance-zone{grid-column:3/span 2;grid-row:2/span 2}.dumbbell-zone{grid-column:2;grid-row:3;justify-self:center;align-self:center}.its-thicc-layout{display:grid;grid-template-rows:auto 1fr;gap:.5rem}.dossier-toolbar{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}.dossier-tab,.dossier-plus{border:1px solid rgba(255,194,222,.55);background:rgba(30,12,35,.25)}.annual-layout.fixed-four{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:.5rem}.clock-layout{display:grid;grid-template-columns:32% 43% 25%;gap:.5rem}.clock-layout h3{margin:0 0 .5rem;color:#f4a7ca}.clock-layout input,.clock-layout select,.clock-layout button{width:100%;margin:.2rem 0;padding:.25rem;background:#1b2417;color:#ead7b2;border:1px solid rgba(183,150,85,.5)}.clock-option-list{list-style:none;padding:0;margin:0;display:grid;gap:.3rem}.clock-option-list li{display:grid;grid-template-columns:1fr auto auto auto;gap:.2rem;align-items:center}
 
-/* assurer annotation pass */
-.control-panel{width:152px;background:linear-gradient(180deg,#5d4a1e,#2c210f)}
-.control-date-tile{display:none}
-.control-panel ul{height:100%;padding:.25rem}
-.control-panel button{height:66px;padding:0;background:linear-gradient(180deg,rgba(20,14,8,.85),rgba(8,6,3,.95))}
-.control-panel button img{width:100%;height:100%;object-fit:contain;padding:.15rem}
-body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.mini-day-cards li,.thicc-moments p,.intake-summary p{color:#f4a7ca;text-transform:uppercase}
-.assurer-slab{grid-template-columns:46% 54%;grid-template-rows:20% 28% 30% 22%;grid-template-areas:"assessment macro" "assessment writer" "moments writer" "thicc intake"}
-.assessment-fusion-field{background:linear-gradient(165deg,#ead7b2,#dbc398)}
-.assessment-grid{grid-template-columns:33% repeat(3,1fr);gap:.4rem}
-.anchor-slot{grid-row:1/span 6;grid-column:1}
-.glam-date-tile{grid-column:2/-1;grid-row:2}
-.field-titleOfDay{grid-column:2/-1;grid-row:1}
-.field-headHummer{grid-column:2/-1;grid-row:3}
-.field-wordOfDay{grid-column:2/-1;grid-row:4}
-.field-assessmentMood{grid-column:2/-1;grid-row:5}
-.field-assessmentSingleness{grid-column:2/-1;grid-row:6}
-.field-lobitoCheckIn{grid-column:1/span 2;grid-row:7}
-.field-assessmentEra{grid-column:3/span 2;grid-row:7}
-.macro-progression-band{background:linear-gradient(165deg,#866a2b,#5f4b1e)}
-.macro-bar-wrap{grid-template-columns:86px 70px 1fr 52px 78px;font-size:.62rem}
-.macro-bar-wrap::before{content:attr(data-macro);display:none}
-.macro-bar-wrap span::after{content:' GOAL';margin-left:.2rem}
-.macro-bar-wrap strong::after{content:' LEFT';display:block;font-size:.48rem;color:#f4a7ca}
-.writer-cloud{grid-area:writer;background:linear-gradient(165deg,#151515,#060606);border:1px solid rgba(183,150,85,.7);padding:.8rem}
-.cloud-shell{mask:none;-webkit-mask:none;background:linear-gradient(165deg,#181818,#0d0d0d);padding:.5rem}
-.moments-strip{grid-area:moments;background:linear-gradient(165deg,#3f4f2f,#283620);padding:.6rem;border:1px solid rgba(183,150,85,.7)}
-.moments-strip li b{display:inline-block;background:#a8292a;color:#f4a7ca;padding:.15rem .35rem;border-radius:999px;margin-right:.25rem}
-.moments-strip li{background:#ead7b2;color:#2a2115;padding:.35rem .5rem;border:1px solid rgba(183,150,85,.5);margin-bottom:.2rem}
-.remember-five-day{background:linear-gradient(165deg,#ead7b2,#d8bf97)}
-.mini-day-cards li{background:#e6d0a8;font-size:.52rem}
-.thicc-moments{grid-area:thicc;background:linear-gradient(165deg,#5f7a43,#3d5129)}
-.intake-summary{grid-area:intake;background:linear-gradient(165deg,#ead7b2,#d8bf97)}
+/* assurer final lock */
+.control-panel{width:152px;background:linear-gradient(180deg,#8a6a29,#4e3b16)}
+.control-panel button{height:72px;padding:0;background:linear-gradient(180deg,rgba(77,59,24,.95),rgba(45,34,13,.98))}
+.control-panel button img{width:82%;height:82%;object-fit:contain;margin:auto}
+body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.macro-row,.moment-slot,.five-day-grid li,.thicc-fitt-summary-panel p,.da-eater-summary-panel p,textarea{color:#f4a7ca;text-transform:uppercase;letter-spacing:.04em}
+.assurer-page{position:absolute;left:calc(var(--panel-width) + .25rem);top:.25rem;width:calc(100vw - var(--panel-width) - .5rem);height:calc(100vh - .5rem);display:grid;grid-template-columns:42% 30% 28%;grid-template-rows:34% 35% 31%;grid-template-areas:"anchor macro macro" "anchor moments writer" "thicc daeater eye";gap:.45rem;padding:.45rem;border:1px solid rgba(183,150,85,.8);border-radius:22px;background:linear-gradient(145deg,#2b2416,#16130c);overflow:hidden}
+.assurer-anchor-field{grid-area:anchor;background:linear-gradient(160deg,#ead7b2,#d9bf95);padding:.6rem}.anchor-field-grid{display:grid;grid-template-columns:34% 33% 33%;grid-template-rows:auto auto auto auto auto auto auto auto;gap:.35rem;height:100%}
+.field-titleOfDay{grid-column:2/4;grid-row:1}.glam-date-tile{grid-column:2/4;grid-row:2;border:1px solid rgba(143,117,67,.5);padding:.2rem .4rem}
+.anchor-slot{grid-column:1;grid-row:1/9;align-self:stretch;display:grid;place-items:center}.assurer-anchor-large{max-width:220px;width:100%}
+.field-headHummer{grid-column:2/4;grid-row:3}.field-wordOfDay{grid-column:2/4;grid-row:4}.field-assessmentMood{grid-column:2/4;grid-row:5}.field-assessmentSingleness{grid-column:2/4;grid-row:6}.field-lobitoCheckIn{grid-column:2/4;grid-row:7}.field-assessmentEra{grid-column:2/4;grid-row:8}
+.assessment-pill input,.assessment-pill select{height:28px;background:#f2dfba;color:#4a2d1a}
+.macro-progress-panel{grid-area:macro;background:linear-gradient(160deg,#8f6d2b,#5e471d);padding:.6rem .8rem;display:grid;gap:.34rem}
+.macro-row{display:grid;grid-template-columns:88px 76px 1fr 48px 84px;gap:.35rem;align-items:center;font-size:.64rem}.macro-track{height:.8rem}.macro-fill{background:linear-gradient(90deg,#72a455,#c2b24d,#e38bbb)}
+.moments-calendar-panel{grid-area:moments;background:linear-gradient(160deg,#4f6538,#374a27);padding:.58rem;display:grid;grid-template-rows:40% 60%;gap:.3rem}
+.moments-top-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.25rem}.moment-slot{border:1px solid rgba(183,150,85,.75);background:#ead7b2;padding:.25rem}.moment-slot header{display:inline-block;background:#9f2328;padding:.08rem .36rem;margin-bottom:.2rem}
+.five-day-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:.2rem}.five-day-grid li{background:#e8d0a8;border:1px solid rgba(143,117,67,.66);padding:.2rem;font-size:.52rem}
+.writer-panel{grid-area:writer;background:linear-gradient(160deg,#121212,#070707);border:1px solid rgba(183,150,85,.78);padding:.55rem}.writer-shell{height:100%;border:1px solid rgba(183,150,85,.45);background:repeating-linear-gradient(180deg,rgba(255,255,255,.01),rgba(255,255,255,.01) 23px,rgba(244,167,202,.08) 24px)}.writer-panel textarea{width:100%;height:100%;resize:none;background:transparent;border:0;outline:none;padding:.5rem;pointer-events:auto}
+.thicc-fitt-summary-panel{grid-area:thicc;background:linear-gradient(160deg,#66824a,#42582f);padding:.62rem}
+.da-eater-summary-panel{grid-area:daeater;background:linear-gradient(160deg,#ead7b2,#d8bf97);padding:.62rem}
+.eye-truth-trigger{grid-area:eye;display:grid;place-items:end;pointer-events:none}.assurer-eye-bridge{width:130px;height:90px;pointer-events:auto}
+
+/* overlay control panel lock */
+.control-panel{left:0;top:0;width:170px;transform:translateX(-112%);transition:transform .24s ease;z-index:90;overflow:hidden}
+.control-panel.open{transform:translateX(0)}
+.control-panel ul{height:100%;overflow-y:auto;padding:.35rem .35rem .5rem;gap:.3rem}
+.control-panel button{height:74px}
+.control-panel button img{width:78%;height:78%}
+.panel-overlay{position:absolute;inset:0;border:0;background:rgba(0,0,0,.38);z-index:70}
+.wand{position:fixed;left:10px;bottom:14px;width:84px;height:84px;z-index:95;border:0;background:transparent;padding:0;display:grid;place-items:center}
+.wand img{width:78%;height:78%;object-fit:contain}
+.assurer-page{left:.25rem;width:calc(100vw - .5rem)}
+.anchor-field-grid{grid-template-columns:36% 32% 32%}
+.field-headHummer::before{content:'LOCATION';display:block;font-size:.52rem;opacity:.9;margin-bottom:.08rem}
+.field-wordOfDay{grid-column:1/4;grid-row:4}
+.field-assessmentMood{grid-column:2/4;grid-row:5}
+.field-lobitoCheckIn{grid-column:1/2;grid-row:5}
+.field-assessmentEra{grid-column:1/2;grid-row:6}
+.field-assessmentSingleness{grid-column:2/4;grid-row:6}
+.moments-top-row .moment-slot{clip-path:polygon(0 8%,72% 8%,72% 0,100% 50%,72% 100%,72% 92%,0 92%)}
+.writer-panel textarea{font-size:12pt;line-height:24px}
