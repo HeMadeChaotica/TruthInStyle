@@ -88,12 +88,22 @@ function renderOpening() {
 }
 
 function renderControlPanel() {
-  const ordered = CONTROL_PANEL_ORDER.map((actionKey) => {
-    if (actionKey === 'control-day-changer') return `<li><button class="day-plugin-button" aria-label="DAY CHANGER"><img src="${controlPanelGlyphs[actionKey]}" alt="day changer" /><input class="day-picker-overlay" type="date" aria-label="DAY CHANGER" value="${toISOFromMMDDYYYY(appState.activeDay.activeDate)}" data-day-changer /></button></li>`;
-    return `<li><button data-action="${actionKey}"><img src="${controlPanelGlyphs[actionKey]}" alt="${actionKey}" /></button></li>`;
-  }).join('');
-
-  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><ul>${ordered}<li class="panel-wand-filler" aria-hidden="true"><img src="${triggerGlyphs.controlWand}" alt="" /></li></ul></aside>`;
+  const panelOrder = [
+    { key: 'trigger-eye-of-truth', icon: triggerGlyphs.eyeOfTruth, label: 'EYE OF TRUTH' },
+    { key: 'control-home', icon: controlPanelGlyphs['control-home'], label: 'HOME' },
+    { key: 'control-back', icon: controlPanelGlyphs['control-back'], label: 'BACK' },
+    { key: 'control-thicc-fitt', icon: controlPanelGlyphs['control-thicc-fitt'], label: 'THICC.FITT' },
+    { key: 'control-da-eater', icon: controlPanelGlyphs['control-da-eater'], label: 'DA.EATER' },
+    { key: 'control-remember-me', icon: controlPanelGlyphs['control-remember-me'], label: 'REMEMBER.ME' },
+    { key: 'control-hopewood', icon: controlPanelGlyphs['control-hopewood'], label: 'HOPEWOOD' },
+    { key: 'control-525600', icon: controlPanelGlyphs['control-525600'], label: '525,600' },
+    { key: 'control-the-summation', icon: controlPanelGlyphs['control-the-summation'], label: 'THE.SUMMATION' },
+    { key: 'control-clock-it', icon: controlPanelGlyphs['control-clock-it'], label: 'CLOCK.IT' },
+    { key: 'control-the-work', icon: controlPanelGlyphs['control-the-work'], label: 'THE.WORK' },
+    { key: 'toggle-control-panel', icon: triggerGlyphs.controlWand, label: 'CONTROL WAND' }
+  ];
+  const ordered = panelOrder.map((item) => `<li><button data-action="${item.key}" aria-label="${item.label}"><img src="${item.icon}" alt="${item.label}" /></button></li>`).join('');
+  return `<aside class="control-panel ${appState.controlPanelOpen ? 'open' : ''}"><ul>${ordered}</ul></aside>`;
 }
 
 function renderAssurerLayout(anchor) {
