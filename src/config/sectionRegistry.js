@@ -26,6 +26,5 @@ export const CONTROL_PANEL_ORDER = [
   'control-da-eater',
   'control-remember-me',
   'control-525600',
-  'control-clock-it',
-  'control-the-work'
+  'control-clock-it'
 ];
