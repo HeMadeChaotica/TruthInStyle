@@ -132,7 +132,7 @@ function renderAssurerLayout(anchor) {
         <label class="assessment-pill field-titleOfDay">TITLE OF THE DAY<input data-assessment-field="titleOfDay" value="${getAssessmentValue(assessment, ['titleOfDay'])}" /></label>
         <div class="glam-date-tile">${appState.activeDay.activeWeekday} / ${activeDate}</div>
         <div class="anchor-slot"><img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" /></div>
-        <label class="assessment-pill field-headHummer">HEAD HUMMER<input data-assessment-field="headHummer" value="${getAssessmentValue(assessment, ['headHummer'])}" /></label>
+        <label class="assessment-pill field-location">LOCATION<input data-assessment-field="location" value="${getAssessmentValue(assessment, ['location'])}" /></label><label class="assessment-pill field-headHummer">HEAD HUMMER<input data-assessment-field="headHummer" value="${getAssessmentValue(assessment, ['headHummer'])}" /></label>
         <label class="assessment-pill field-wordOfDay">WORD OF THE DAY<input data-assessment-field="wordOfDay" value="${getAssessmentValue(assessment, ['wordOfDay'])}" /></label>
         <label class="assessment-pill field-assessmentMood">MOOD<select data-assessment-field="assessmentMood"><option value="">SELECT</option>${getOptionsForFamily('assessmentMood').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentMood','mood'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
         <label class="assessment-pill field-assessmentSingleness">SINGLENESS LEVEL<select data-assessment-field="assessmentSingleness"><option value="">SELECT</option>${getOptionsForFamily('assessmentSingleness').map((option)=>`<option value="${option}" ${getAssessmentValue(assessment, ['assessmentSingleness','singlenessLevel'])===option?'selected':''}>${option}</option>`).join('')}</select></label>
@@ -141,11 +141,10 @@ function renderAssurerLayout(anchor) {
       </div>
     </section>
     <section class="macro-progress-panel stage-card" data-route="/da-eater">${macroRows}</section>
-    <section class="moments-calendar-panel stage-card" data-route="/remember-me"><div class="moments-top-row">${momentCards}</div><ul class="five-day-grid">${fiveDayPreview.map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.item?.type ?? item.item?.label ?? 'OPEN'}</em><p>${item.item?.time ?? item.item?.description ?? item.item?.title ?? 'NO APPOINTMENT'}</p></li>`).join('')}</ul></section>
+    <section class="moments-calendar-panel stage-card" data-route="/remember-me"><div class="moments-top-row">${momentCards}</div><ul class="five-day-grid">${fiveDayPreview.map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.item?.type ?? item.item?.label ?? 'OPEN'}</em><p>${item.item?.time ?? ''} ${(item.item?.description ?? item.item?.title ?? 'NO APPOINTMENT')}</p></li>`).join('')}</ul></section>
     <section class="writer-panel"><div class="writer-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
     <section class="thicc-fitt-summary-panel stage-card" data-route="/thicc-fitt"><p>TIME: ${(thiccSummary.workoutTime ?? thiccSummary.time ?? '—').toString()}</p><p>LOCATION: ${(thiccSummary.location ?? '—').toString()}</p><p>LENGTH: ${(thiccSummary.workoutLength ?? thiccSummary.length ?? '—').toString()}</p><p>SEASON: ${(thiccSummary.season ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>HIGHEST WEIGHT: ${(thiccSummary.highestWeight ?? '—').toString()}</p><p>REPS + EXERCISE: ${(thiccSummary.repsExercise ?? thiccSummary.topSet ?? '—').toString()}</p><p>PHOTO: ${(mediaLibrary.latestWorkout ?? thiccSummary.photo ?? 'NOT LINKED').toString().slice(0, 42)}</p></section>
     <section class="da-eater-summary-panel stage-card" data-route="/da-eater"><p>MEALS LOGGED: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p><p>PHOTO: ${(mediaLibrary.latestMeal ?? mediaLibrary.lastImage ?? 'NOT LINKED').toString().slice(0, 42)}</p><p>CHEAT MEAL LOG: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()}</p><p>FOOD NOTES: ${(macroSummary.intakeNote ?? macroSummary.lastMealNote ?? '—').toString().slice(0, 98)}</p></section>
-    <section class="eye-truth-trigger"><button class="assurer-eye-bridge" data-action="trigger-eye-of-truth" aria-label="ROUTE TO THE SUMMATION"><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE" /></button></section>
   </div>`;
 }
 
@@ -189,10 +188,7 @@ function renderSectionShell() {
   const current = ROUTE_MAP[appState.route];
   const anchor = sectionAnchorGlyphs[appState.route];
   const isAssurer = appState.route === '/the-assurer';
-  const showEye = current?.hasEye;
-  const eyeAction = current?.eyeActive ? 'trigger-eye-of-truth' : '';
-  const controlsClass = floatingControlsVisible ? 'controls-visible' : 'controls-faded';
-  return `${renderControlPanel()}<section class="section-screen">${appState.controlPanelOpen ? '<button class="panel-overlay" data-action="toggle-control-panel" aria-label="CLOSE CONTROL PANEL"></button>' : ''}${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}${showEye && !isAssurer ? `<button class="eye-of-truth eye-floating inactive ${controlsClass}" ${eyeAction ? `data-action="${eyeAction}"` : 'disabled'}><img src="${triggerGlyphs.eyeOfTruth}" alt="EYE OF TRUTH" /></button><div class="eye-shimmer floating-shimmer" aria-hidden="true"></div>` : ''}<div class="section-layout">${renderSectionContent(appState.route)}</div><button class="wand ${controlsClass} ${appState.controlPanelOpen ? 'panel-open' : ''}" data-action="toggle-control-panel"><img src="${triggerGlyphs.controlWand}" alt="CONTROL WAND" /></button></section>`;
+  return `${renderControlPanel()}<section class="section-screen">${appState.controlPanelOpen ? '<button class="panel-overlay" data-action="toggle-control-panel" aria-label="CLOSE CONTROL PANEL"></button>' : ''}${isAssurer ? '' : `<img class="section-anchor" src="${anchor}" alt="SECTION ANCHOR" />`}<div class="section-layout">${renderSectionContent(appState.route)}</div></section>`;
 }
 
 function bindEvents() {
