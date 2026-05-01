@@ -83,3 +83,13 @@ body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.macr
 .macro-fill{background:linear-gradient(90deg,#ff6aa8,#ffd36e,#9cffb0,#7ddfff,#d7a8ff,#ff6aa8);background-size:240% 100%;animation:macro-shimmer 4s linear infinite}
 @keyframes macro-shimmer{0%{background-position:0% 50%}100%{background-position:240% 50%}}
 .panel-overlay,.wand,.eye-of-truth,.eye-shimmer,.eye-truth-trigger,.writer-cloud,.cloud-shell{display:none !important}
+
+/* assurer correction pass 2 */
+.section-screen{overflow:auto}
+:root{--assurer-scale:min(calc(100vw / 1920), calc(100vh / 1080))}
+.assurer-page{position:relative;width:1920px;height:1080px;transform:scale(var(--assurer-scale));transform-origin:top left;left:0;top:0;padding:24px;grid-template-columns:780px 1068px;grid-template-rows:210px 320px 136px 304px;grid-template-areas:"anchor macro" "anchor writer" "anchor calendar" "thicc daeater";gap:24px;margin:0}
+.assurer-anchor-field{height:704px;align-self:start}.anchor-field-grid{grid-template-columns:260px 1fr 1fr;grid-template-rows:56px 36px 48px 48px 52px 52px 52px 52px;align-content:start}.anchor-slot{grid-column:1;grid-row:1/9;align-self:start;justify-self:start;padding-top:0}.assurer-anchor-large{width:260px;max-width:260px}.field-titleOfDay{grid-column:2/4;grid-row:1}.glam-date-tile{grid-column:2/4;grid-row:2}.field-location{grid-column:2/4;grid-row:3}.field-headHummer{grid-column:2/4;grid-row:4}.field-wordOfDay{grid-column:2/4;grid-row:5}.field-lobitoCheckIn{grid-column:2/3;grid-row:6}.field-assessmentMood{grid-column:3/4;grid-row:6}.field-assessmentEra{grid-column:2/3;grid-row:7}.field-assessmentSingleness{grid-column:3/4;grid-row:7}
+.moments-calendar-panel{grid-area:calendar;position:relative;left:0;top:0;width:1068px;height:136px;padding:.25rem;background:linear-gradient(165deg,#f0debc,#dcc29c)}
+.moments-top-row{display:none}
+.five-day-grid{height:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:0}.five-day-grid li{display:grid;grid-template-rows:auto auto auto 1fr;align-content:start;padding:.25rem .35rem;border:1px solid rgba(143,117,67,.66);border-right:0}.five-day-grid li:last-child{border-right:1px solid rgba(143,117,67,.66)}.five-day-grid li p{margin:.08rem 0 0;line-height:1.15}
+.field-headHummer::before{content:none !important}
