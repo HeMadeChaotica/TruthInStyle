@@ -93,3 +93,14 @@ body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.macr
 .moments-top-row{display:none}
 .five-day-grid{height:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:0}.five-day-grid li{display:grid;grid-template-rows:auto auto auto 1fr;align-content:start;padding:.25rem .35rem;border:1px solid rgba(143,117,67,.66);border-right:0}.five-day-grid li:last-child{border-right:1px solid rgba(143,117,67,.66)}.five-day-grid li p{margin:.08rem 0 0;line-height:1.15}
 .field-headHummer::before{content:none !important}
+
+/* assurer correction pass 3 */
+.assurer-page{gap:12px;padding:18px;grid-template-columns:820px 1068px;grid-template-rows:210px 320px 304px}
+.assurer-anchor-field{width:820px;height:704px;padding:.5rem .6rem .4rem}
+.anchor-field-grid{grid-template-columns:260px 1fr 1fr;grid-template-rows:52px 40px 44px 44px 46px 46px 46px 46px;gap:.22rem}
+.field-lobitoCheckIn{grid-column:2/3;grid-row:6}.field-assessmentEra{grid-column:2/3;grid-row:7}.field-assessmentMood{grid-column:3/4;grid-row:6}.field-assessmentSingleness{grid-column:3/4;grid-row:7}
+.macro-progress-panel{padding:.38rem .55rem;gap:.2rem}.macro-row{grid-template-columns:100px 82px 1fr 56px 110px;gap:.22rem;font-size:.58rem}.macro-track{height:.62rem}
+.writer-panel{pointer-events:auto;z-index:3}.writer-panel textarea{pointer-events:auto;position:relative;z-index:4;overflow-y:auto;min-height:0}
+.moments-top-row{display:grid !important;position:absolute;left:24px;top:500px;width:780px;height:210px;grid-template-columns:repeat(3,1fr);gap:.2rem;z-index:2}.moments-top-row .moment-slot{clip-path:none;padding:.18rem;border:1px solid rgba(143,117,67,.55)}
+.moments-calendar-panel{grid-area:calendar;position:relative;width:1068px;height:136px;margin-top:auto;padding:0;border:0;box-shadow:none}.five-day-grid{height:136px;border:0}.five-day-grid li{border-top:1px solid rgba(143,117,67,.55);border-bottom:1px solid rgba(143,117,67,.55);border-left:1px solid rgba(143,117,67,.55);border-right:0}.five-day-grid li:last-child{border-right:1px solid rgba(143,117,67,.55)}
+.stage-card{border:1px solid rgba(183,150,85,.52)}
