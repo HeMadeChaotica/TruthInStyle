@@ -21,7 +21,9 @@ import {
   setActiveDay,
   setRoute,
   subscribe,
-  toggleControlPanel
+  toggleControlPanel,
+  updateAssurerAssessmentField,
+  updateAssurerWriterField
 } from './state/appState.js';
 
 let app;
@@ -29,6 +31,9 @@ let previousRoute = '/';
 let floatingControlsVisible = true;
 let floatingControlsTimer = null;
 let selectedClockFamily = 'assessmentMood';
+let swipeStartX = null;
+let swipeTracking = false;
+let pointerListenersBound = false;
 
 function showFloatingControlsTemporarily() {
   floatingControlsVisible = true;
@@ -109,6 +114,7 @@ function renderAssurerLayout(anchor) {
   const thiccSummary = source_inputs.thicc_fitt_day[activeDate] ?? {};
   const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
   const mediaLibrary = source_inputs.media_library[activeDate] ?? source_inputs.media_library ?? {};
+  const writerState = source_inputs.assurer_writer[activeDate] ?? { heresTheThing: '' };
 
   const macroRows = [
     ['PROTEIN', macroSummary.proteinGoal ?? '250G', macroSummary.proteinProgress ?? 0],
@@ -147,9 +153,10 @@ function renderAssurerLayout(anchor) {
     </section>
     <section class="macro-progress-panel stage-card" data-route="/da-eater">${macroRows}</section>
     <section class="moments-calendar-panel stage-card" data-route="/remember-me"><div class="moments-top-row">${momentCards}</div><ul class="five-day-grid">${fiveDayPreview.map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.item?.type ?? item.item?.label ?? 'OPEN'}</em><p>${item.item?.time ?? ''} ${(item.item?.description ?? item.item?.title ?? 'NO APPOINTMENT')}</p></li>`).join('')}</ul></section>
-    <section class="writer-panel"><div class="writer-shell"><p>VIEW ONLY RECEIVER SHELL</p></div></section>
-    <section class="thicc-fitt-summary-panel stage-card" data-route="/thicc-fitt"><p>TIME: ${(thiccSummary.workoutTime ?? thiccSummary.time ?? '—').toString()}</p><p>LOCATION: ${(thiccSummary.location ?? '—').toString()}</p><p>LENGTH: ${(thiccSummary.workoutLength ?? thiccSummary.length ?? '—').toString()}</p><p>SEASON: ${(thiccSummary.season ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>HIGHEST WEIGHT: ${(thiccSummary.highestWeight ?? '—').toString()}</p><p>REPS + EXERCISE: ${(thiccSummary.repsExercise ?? thiccSummary.topSet ?? '—').toString()}</p><p>PHOTO: ${(mediaLibrary.latestWorkout ?? thiccSummary.photo ?? 'NOT LINKED').toString().slice(0, 42)}</p></section>
-    <section class="da-eater-summary-panel stage-card" data-route="/da-eater"><p>MEALS LOGGED: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p><p>PHOTO: ${(mediaLibrary.latestMeal ?? mediaLibrary.lastImage ?? 'NOT LINKED').toString().slice(0, 42)}</p><p>CHEAT MEAL LOG: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()}</p><p>FOOD NOTES: ${(macroSummary.intakeNote ?? macroSummary.lastMealNote ?? '—').toString().slice(0, 98)}</p></section>
+    <section class="writer-panel stage-card"><div class="writer-shell"><textarea data-writer-field="heresTheThing" placeholder="HERES THE THING...">${writerState.heresTheThing ?? ''}</textarea></div></section>
+    <section class="thicc-fitt-summary-panel stage-card" data-route="/thicc-fitt"><h3>THICC.FITT</h3><p>TIME: ${(thiccSummary.workoutTime ?? thiccSummary.time ?? '—').toString()}</p><p>LENGTH: ${(thiccSummary.workoutLength ?? thiccSummary.length ?? '—').toString()}</p><p>SEASON: ${(thiccSummary.season ?? '—').toString()}</p></section>
+    <section class="da-eater-summary-panel stage-card" data-route="/da-eater"><h3>DA.EATER</h3><p>MEALS: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p><p>PROTEIN: ${(macroSummary.proteinGoal ?? '—').toString()}</p><p>NOTES: ${(macroSummary.intakeNote ?? macroSummary.lastMealNote ?? '—').toString().slice(0, 64)}</p></section>
+    <section class="remember-summary-panel stage-card" data-route="/remember-me"><h3>REMEMBER.ME</h3><p>MOMENTS: ${standoutMoments.length}</p><p>LATEST: ${(standoutMoments[0]?.title ?? standoutMoments[0]?.note ?? '—').toString().slice(0, 72)}</p></section>
   </div>`;
 }
 
@@ -157,7 +164,7 @@ function renderSummationLayout() { return `<div class="summation-layout"><sectio
 function renderHopewoodLayout() { const entries = Object.values(archive_trend_intelligence.hopewood_entries).map((entry) => `<li>${entry.dateKey} ${entry.titleOfDay}</li>`).join(''); return `<div class="hopewood-layout"><section class="zone hopewood-search">SEARCH COLUMN</section><section class="zone hopewood-options">OPTIONS / SELECT COLUMN</section><section class="zone hopewood-book"><div>OPEN-BOOK DISPLAY AREA</div><ul>${entries}</ul></section></div>`; }
 function renderRememberLayout() { const days = Array.from({ length: 35 }, (_, i) => `<div class="calendar-cell">DAY ${i + 1}</div>`).join(''); return `<div class="remember-layout"><section class="zone calendar-wall">${days}</section><section class="zone moments-zone">WOW · WTF · PLOT TWIST · UP TO 3 MOMENTS · PHOTO + DESCRIPTION</section><section class="zone remember-photo-zone">INTEGRATED PHOTO ZONES</section></div>`; }
 function renderDaEaterLayout() { return `<div class="da-eater-layout"><section class="zone macro-progression">MACRO PROGRESSION</section><section class="zone meals-area">MEALS AREA</section><section class="zone flex-area">WEDNESDAY/SATURDAY CHEAT LOGS</section><section class="zone meal-photos">MEAL PHOTO LOG + UPLOAD ZONES</section><section class="zone intake-notes">ADDITIONAL INTAKE NOTES</section></div>`; }
-function renderThiccFittLayout() { return `<div class="thicc-layout"><p>THICC.FITT MOVED TO THE REAL ROUTE.</p><button data-route="/thicc-fitt">OPEN THICC.FITT</button></div>`; }
+function renderThiccFittLayout() { return `<div class="thicc-layout"><section class="thicc-header stage-card"><div class="thicc-anchor-slot"><img class="section-anchor-static" src="${sectionAnchorGlyphs['/thicc-fitt']}" alt="SECTION ANCHOR" /></div><button class="thicc-trigger" data-route="/its-getting-thicc" aria-label="ITS GETTING THICC"><img src="${triggerGlyphs.crystalDumbbell}" alt="CRYSTAL DUMBBELL" /></button><label>GYM LOCATION<input value="" placeholder="GYM LOCATION" /></label><label>GPS/MANUAL<select><option>USE GPS</option><option>MANUAL</option></select></label><label>SEASON<input value="" placeholder="SEASON" /></label><label>WORKOUT LENGTH<input value="" placeholder="LENGTH" /></label><label>ARRIVAL TIME<input value="" placeholder="ARRIVAL" /></label></section><section class="workout-log stage-card"><h3>1. EXERCISE LOG</h3></section><section class="media-zone stage-card"><h3>2. MEDIA</h3></section><section class="notes-zone stage-card"><h3>3. NOTES + SO HOW YOU DOIN 🫪⁉️</h3></section><section class="da-juice-zone stage-card"><h3>4. THE VAULT</h3></section><section class="cardio-zone stage-card"><h3>5. CARDIO</h3></section><section class="performance-zone stage-card"><h3>6. BODY MEASUREMENTS</h3></section></div>`; }
 function renderItsGettingThiccLayout() { const dossierTabs = appState.ui.thiccDossiers.map((item) => `<button class="dossier-tab">${item.label}</button>`).join(''); return `<div class="its-thicc-layout"><section class="zone dossier-toolbar">${dossierTabs}<button class="dossier-plus" data-action="clone-thicc-template">+</button></section><section class="zone dossier-grid"><div>IDENTITY BLOCK <input data-dossier-name placeholder="CLIENT NAME" /></div><div>PHOTO BLOCK</div><div>WEIGHT / BMI BLOCK</div><div>MACRO BLOCK</div></section></div>`; }
 
 function render525600Layout() {
@@ -218,21 +225,24 @@ function bindEvents() {
     setOptionActiveState(getCurrentFamily(), index, !active);
     render();
   }));
+  app.querySelectorAll('[data-assessment-field]').forEach((node) => node.addEventListener('input', () => updateAssurerAssessmentField(node.dataset.assessmentField, node.value)));
+  app.querySelectorAll('[data-writer-field]').forEach((node) => node.addEventListener('input', () => updateAssurerWriterField(node.dataset.writerField, node.value)));
 
+}
 
-  let swipeStartX = null;
-  let swipeTracking = false;
+function bindGlobalPointerEventsOnce() {
+  if (pointerListenersBound) return;
+  pointerListenersBound = true;
   window.addEventListener('pointerdown', (event) => {
     showFloatingControlsTemporarily();
-    swipeTracking = event.clientX <= 64 || appState.controlPanelOpen;
-    if (!swipeTracking) return;
-    swipeStartX = event.clientX;
+    swipeTracking = event.clientX <= 80 || appState.controlPanelOpen;
+    swipeStartX = swipeTracking ? event.clientX : null;
   });
   window.addEventListener('pointerup', (event) => {
-    if (swipeStartX === null || !swipeTracking) return;
+    if (!swipeTracking || swipeStartX === null) return;
     const dx = event.clientX - swipeStartX;
-    if (!appState.controlPanelOpen && swipeStartX < 64 && dx > 36) runAction('toggle-control-panel');
-    if (appState.controlPanelOpen && dx < -36) runAction('toggle-control-panel');
+    if (!appState.controlPanelOpen && swipeStartX <= 80 && dx >= 25) runAction('toggle-control-panel');
+    if (appState.controlPanelOpen && dx <= -25) runAction('toggle-control-panel');
     swipeStartX = null;
     swipeTracking = false;
   });
@@ -245,8 +255,8 @@ function render() {
     previousRoute = appState.route;
   }
   if (appState.route === '/') app.innerHTML = renderOpening();
-  else if (appState.route === '/thicc-fitt') { window.location.assign('/thicc-fitt'); return; }
   else app.innerHTML = renderSectionShell();
+  bindGlobalPointerEventsOnce();
   bindEvents();
 }
 

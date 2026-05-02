@@ -104,3 +104,27 @@ body,.zone,.assessment-pill,.assessment-pill input,.assessment-pill select,.macr
 .moments-top-row{display:grid !important;position:absolute;left:24px;top:500px;width:780px;height:210px;grid-template-columns:repeat(3,1fr);gap:.2rem;z-index:2}.moments-top-row .moment-slot{clip-path:none;padding:.18rem;border:1px solid rgba(143,117,67,.55)}
 .moments-calendar-panel{grid-area:calendar;position:relative;width:1068px;height:136px;margin-top:auto;padding:0;border:0;box-shadow:none}.five-day-grid{height:136px;border:0}.five-day-grid li{border-top:1px solid rgba(143,117,67,.55);border-bottom:1px solid rgba(143,117,67,.55);border-left:1px solid rgba(143,117,67,.55);border-right:0}.five-day-grid li:last-child{border-right:1px solid rgba(143,117,67,.55)}
 .stage-card{border:1px solid rgba(183,150,85,.52)}
+
+/* master repair pass */
+.panel-overlay{pointer-events:auto}
+.assurer-page{position:absolute;left:calc(var(--panel-width) + .5rem);top:.5rem;width:calc(100vw - var(--panel-width) - 1rem);height:calc(100vh - 1rem);display:grid;grid-template-columns:1.1fr 1fr 1fr;grid-template-rows:auto auto 1fr;grid-template-areas:"anchor macro macro" "anchor moments writer" "thicc daeater remember";gap:.5rem;padding:.5rem;overflow:hidden}
+.anchor-field-grid{grid-template-columns:30% 35% 35%;gap:.3rem}
+.writer-panel,.thicc-fitt-summary-panel,.da-eater-summary-panel,.remember-summary-panel,.macro-progress-panel,.moments-calendar-panel,.assurer-anchor-field{min-width:0;min-height:0}
+.writer-shell{height:100%}
+.writer-panel textarea{width:100%;height:100%;resize:none;background:transparent;border:0;padding:.4rem;color:#f4a7ca;text-transform:none}
+.remember-summary-panel{grid-area:remember;padding:.62rem;cursor:pointer}
+.thicc-fitt-summary-panel,.da-eater-summary-panel,.remember-summary-panel{cursor:pointer}
+
+.thicc-layout{position:absolute;inset:.6rem .6rem .6rem calc(var(--panel-width) + .6rem);display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:auto 1fr 1fr;grid-template-areas:"header header header" "workout media notes" "vault cardio body";gap:.55rem;padding:.55rem;background:url('/backgrounds/thicc-fitt-bg.png') center/cover no-repeat;border:1px solid rgba(255,120,188,.65);border-radius:18px;overflow:auto}
+.thicc-layout .stage-card{border:1px solid transparent;border-radius:14px;background:linear-gradient(rgba(16,13,24,.32),rgba(16,13,24,.32)) padding-box,linear-gradient(90deg,#ff6fbe,#f8b8ff,#ffd36d,#ffa76f,#ff6fbe) border-box;color:#f4a7ca;text-transform:uppercase;letter-spacing:.04em}
+.thicc-layout h3{margin:0;font-size:.95rem;color:#f4a7ca;font-variant:all-small-caps}
+.thicc-header{grid-area:header;display:grid;grid-template-columns:92px 112px repeat(5,minmax(110px,1fr));gap:.45rem;align-items:center;padding:.45rem}
+.thicc-anchor-slot{display:grid;place-items:center}
+.section-anchor-static{width:72px;height:72px;object-fit:contain}
+.thicc-trigger{height:62px;border:1px solid rgba(255,160,210,.55);background:rgba(255,255,255,.06);border-radius:12px;cursor:pointer}
+.thicc-trigger img{width:100%;height:100%;object-fit:contain}
+.thicc-header label{display:grid;gap:.12rem;font-size:.56rem;color:#f4a7ca}
+.thicc-header input,.thicc-header select{height:32px;border:1px solid rgba(255,160,210,.45);background:rgba(12,10,18,.42);color:#f4a7ca;padding:0 .35rem}
+.workout-log{grid-area:workout}.media-zone{grid-area:media}.notes-zone{grid-area:notes}.da-juice-zone{grid-area:vault}.cardio-zone{grid-area:cardio}.performance-zone{grid-area:body}
+
+:root{--gold:transparent;--smoke-gold:transparent}
