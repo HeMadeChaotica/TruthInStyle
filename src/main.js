@@ -21,17 +21,13 @@ import {
   setActiveDay,
   setRoute,
   subscribe,
-  toggleControlPanel,
-  updateAssurerAssessmentField,
-  updateAssurerWriterField
+  toggleControlPanel
 } from './state/appState.js';
 
 let app;
 let previousRoute = '/';
 let floatingControlsVisible = true;
 let floatingControlsTimer = null;
-let assessmentDebounceTimer = null;
-let writerDebounceTimer = null;
 let selectedClockFamily = 'assessmentMood';
 
 function showFloatingControlsTemporarily() {
@@ -109,8 +105,7 @@ function renderControlPanel() {
 function renderAssurerLayout(anchor) {
   const activeDate = appState.activeDay.activeDate;
   const assessment = source_inputs.assurer_assessment[activeDate] ?? {};
-  const writer = source_inputs.assurer_writer[activeDate] ?? { heresTheThing: '' };
-  const macroSummary = source_inputs.da_eater_day[activeDate] ?? {};
+    const macroSummary = source_inputs.da_eater_day[activeDate] ?? {};
   const thiccSummary = source_inputs.thicc_fitt_day[activeDate] ?? {};
   const standoutMoments = source_inputs.remember_me_moments[activeDate] ?? [];
   const mediaLibrary = source_inputs.media_library[activeDate] ?? source_inputs.media_library ?? {};
@@ -139,7 +134,7 @@ function renderAssurerLayout(anchor) {
   return `<div class="assurer-page">
     <section class="assurer-anchor-field stage-card">
       <div class="anchor-field-grid">
-        <label class="assessment-pill field-titleOfDay">TITLE OF THE DAY<input data-assessment-field="titleOfDay" value="${getAssessmentValue(assessment, ['titleOfDay'])}" /></label>
+        <div class="assessment-pill field-titleOfDay">TITLE OF THE DAY<div>${getAssessmentValue(assessment, ['titleOfDay'], '—')}</div></div>
         <div class="glam-date-tile">${appState.activeDay.activeWeekday} / ${activeDate}</div>
         <div class="anchor-slot"><img class="assurer-anchor assurer-anchor-large" src="${anchor}" alt="SECTION ANCHOR" /></div>
         <label class="assessment-pill field-location">LOCATION<input data-assessment-field="location" value="${getAssessmentValue(assessment, ['location'])}" /></label><label class="assessment-pill field-headHummer">HEAD HUMMER<input data-assessment-field="headHummer" value="${getAssessmentValue(assessment, ['headHummer'])}" /></label>
@@ -152,7 +147,7 @@ function renderAssurerLayout(anchor) {
     </section>
     <section class="macro-progress-panel stage-card" data-route="/da-eater">${macroRows}</section>
     <section class="moments-calendar-panel stage-card" data-route="/remember-me"><div class="moments-top-row">${momentCards}</div><ul class="five-day-grid">${fiveDayPreview.map((item) => `<li><strong>${item.weekday}</strong><span>${item.dateKey}</span><em>${item.item?.type ?? item.item?.label ?? 'OPEN'}</em><p>${item.item?.time ?? ''} ${(item.item?.description ?? item.item?.title ?? 'NO APPOINTMENT')}</p></li>`).join('')}</ul></section>
-    <section class="writer-panel"><div class="writer-shell"><textarea data-writer-field="heresTheThing">${writer.heresTheThing ?? ''}</textarea></div></section>
+    <section class="writer-panel"><div class="writer-shell"><p>VIEW ONLY RECEIVER SHELL</p></div></section>
     <section class="thicc-fitt-summary-panel stage-card" data-route="/thicc-fitt"><p>TIME: ${(thiccSummary.workoutTime ?? thiccSummary.time ?? '—').toString()}</p><p>LOCATION: ${(thiccSummary.location ?? '—').toString()}</p><p>LENGTH: ${(thiccSummary.workoutLength ?? thiccSummary.length ?? '—').toString()}</p><p>SEASON: ${(thiccSummary.season ?? '—').toString()}</p><p>DA.JUICE: ${(thiccSummary.daJuice ?? thiccSummary.juice ?? '—').toString()}</p><p>HIGHEST WEIGHT: ${(thiccSummary.highestWeight ?? '—').toString()}</p><p>REPS + EXERCISE: ${(thiccSummary.repsExercise ?? thiccSummary.topSet ?? '—').toString()}</p><p>PHOTO: ${(mediaLibrary.latestWorkout ?? thiccSummary.photo ?? 'NOT LINKED').toString().slice(0, 42)}</p></section>
     <section class="da-eater-summary-panel stage-card" data-route="/da-eater"><p>MEALS LOGGED: ${(macroSummary.mealsLogged ?? macroSummary.mealCount ?? 0).toString()}</p><p>PHOTO: ${(mediaLibrary.latestMeal ?? mediaLibrary.lastImage ?? 'NOT LINKED').toString().slice(0, 42)}</p><p>CHEAT MEAL LOG: ${(macroSummary.cheatSignal ?? macroSummary.flexSignal ?? '—').toString()}</p><p>FOOD NOTES: ${(macroSummary.intakeNote ?? macroSummary.lastMealNote ?? '—').toString().slice(0, 98)}</p></section>
   </div>`;
@@ -162,7 +157,7 @@ function renderSummationLayout() { return `<div class="summation-layout"><sectio
 function renderHopewoodLayout() { const entries = Object.values(archive_trend_intelligence.hopewood_entries).map((entry) => `<li>${entry.dateKey} ${entry.titleOfDay}</li>`).join(''); return `<div class="hopewood-layout"><section class="zone hopewood-search">SEARCH COLUMN</section><section class="zone hopewood-options">OPTIONS / SELECT COLUMN</section><section class="zone hopewood-book"><div>OPEN-BOOK DISPLAY AREA</div><ul>${entries}</ul></section></div>`; }
 function renderRememberLayout() { const days = Array.from({ length: 35 }, (_, i) => `<div class="calendar-cell">DAY ${i + 1}</div>`).join(''); return `<div class="remember-layout"><section class="zone calendar-wall">${days}</section><section class="zone moments-zone">WOW · WTF · PLOT TWIST · UP TO 3 MOMENTS · PHOTO + DESCRIPTION</section><section class="zone remember-photo-zone">INTEGRATED PHOTO ZONES</section></div>`; }
 function renderDaEaterLayout() { return `<div class="da-eater-layout"><section class="zone macro-progression">MACRO PROGRESSION</section><section class="zone meals-area">MEALS AREA</section><section class="zone flex-area">WEDNESDAY/SATURDAY CHEAT LOGS</section><section class="zone meal-photos">MEAL PHOTO LOG + UPLOAD ZONES</section><section class="zone intake-notes">ADDITIONAL INTAKE NOTES</section></div>`; }
-function renderThiccFittLayout() { return `<div class="thicc-layout"><section class="zone workout-log">WORKOUT LOG</section><section class="zone media-zone">MEDIA</section><section class="zone notes-zone">NOTES</section><section class="zone cardio-zone">CARDIO</section><section class="zone da-juice-zone">DA.JUICE</section><section class="zone performance-zone">BODY / PERFORMANCE RECORDS</section><button class="trigger-button dumbbell-zone" data-action="trigger-crystal-dumbbell"><img src="${triggerGlyphs.crystalDumbbell}" alt="CRYSTAL DUMBBELL" /></button></div>`; }
+function renderThiccFittLayout() { return `<div class="thicc-layout"><p>THICC.FITT MOVED TO THE REAL ROUTE.</p><button data-route="/thicc-fitt">OPEN THICC.FITT</button></div>`; }
 function renderItsGettingThiccLayout() { const dossierTabs = appState.ui.thiccDossiers.map((item) => `<button class="dossier-tab">${item.label}</button>`).join(''); return `<div class="its-thicc-layout"><section class="zone dossier-toolbar">${dossierTabs}<button class="dossier-plus" data-action="clone-thicc-template">+</button></section><section class="zone dossier-grid"><div>IDENTITY BLOCK <input data-dossier-name placeholder="CLIENT NAME" /></div><div>PHOTO BLOCK</div><div>WEIGHT / BMI BLOCK</div><div>MACRO BLOCK</div></section></div>`; }
 
 function render525600Layout() {
@@ -209,22 +204,6 @@ function bindEvents() {
   app.querySelector('[data-day-changer]')?.addEventListener('change', (event) => setActiveDay(toMMDDYYYYFromISO(event.target.value)));
   app.querySelector('[data-dossier-name]')?.addEventListener('change', (event) => renameThiccDossier(appState.ui.thiccDossiers[0].id, event.target.value));
 
-  app.querySelectorAll('[data-assessment-field]').forEach((node) => {
-    if (node.tagName === 'SELECT') {
-      node.addEventListener('change', (event) => updateAssurerAssessmentField(node.dataset.assessmentField, event.target.value));
-      return;
-    }
-    const persist = () => updateAssurerAssessmentField(node.dataset.assessmentField, node.value);
-    node.addEventListener('input', () => { clearTimeout(assessmentDebounceTimer); assessmentDebounceTimer = setTimeout(persist, 280); });
-    node.addEventListener('blur', persist);
-  });
-
-  app.querySelectorAll('[data-writer-field]').forEach((node) => {
-    const persist = () => updateAssurerWriterField(node.dataset.writerField, node.value);
-    node.addEventListener('input', () => { clearTimeout(writerDebounceTimer); writerDebounceTimer = setTimeout(persist, 320); });
-    node.addEventListener('blur', persist);
-  });
-
   const getCurrentFamily = () => app.querySelector('[data-clock-family]')?.value || selectedClockFamily;
   app.querySelector('[data-clock-family]')?.addEventListener('change', (event) => { selectedClockFamily = event.target.value; render(); });
   app.querySelector('[data-clock-action="add"]')?.addEventListener('click', () => { addOptionToFamily(getCurrentFamily(), app.querySelector('[data-clock-new]')?.value ?? ''); render(); });
@@ -241,18 +220,21 @@ function bindEvents() {
   }));
 
 
-  const sectionScreen = app.querySelector('.section-screen');
   let swipeStartX = null;
-  sectionScreen?.addEventListener('pointerdown', (event) => {
+  let swipeTracking = false;
+  window.addEventListener('pointerdown', (event) => {
     showFloatingControlsTemporarily();
+    swipeTracking = event.clientX <= 64 || appState.controlPanelOpen;
+    if (!swipeTracking) return;
     swipeStartX = event.clientX;
   });
-  sectionScreen?.addEventListener('pointerup', (event) => {
-    if (swipeStartX === null) return;
+  window.addEventListener('pointerup', (event) => {
+    if (swipeStartX === null || !swipeTracking) return;
     const dx = event.clientX - swipeStartX;
-    if (!appState.controlPanelOpen && swipeStartX < 42 && dx > 48) runAction('toggle-control-panel');
-    if (appState.controlPanelOpen && dx < -48) runAction('toggle-control-panel');
+    if (!appState.controlPanelOpen && swipeStartX < 64 && dx > 36) runAction('toggle-control-panel');
+    if (appState.controlPanelOpen && dx < -36) runAction('toggle-control-panel');
     swipeStartX = null;
+    swipeTracking = false;
   });
 }
 
@@ -262,7 +244,9 @@ function render() {
     showFloatingControlsTemporarily();
     previousRoute = appState.route;
   }
-  app.innerHTML = appState.route === '/' ? renderOpening() : renderSectionShell();
+  if (appState.route === '/') app.innerHTML = renderOpening();
+  else if (appState.route === '/thicc-fitt') { window.location.assign('/thicc-fitt'); return; }
+  else app.innerHTML = renderSectionShell();
   bindEvents();
 }
 
