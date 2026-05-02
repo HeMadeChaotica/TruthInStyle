@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getOptionsForFamily } from '../../src/clockit/dropdownOptions';
+import { source_inputs } from '../../src/data/scaffoldData';
 import styles from './ThiccFittSection.module.css';
 
-const STORAGE_KEY = 'thicc_fitt_day';
 const SO_HOW_YOU_DOIN = getOptionsForFamily('roidPromptedNotes');
 const SEASONS = getOptionsForFamily('roidSeason');
 const WORKOUT_DURATION = getOptionsForFamily('roidWorkoutDuration');
@@ -21,12 +21,10 @@ const emptyVault = { compound: '', ester: '', amount: '', shots: '', cycle: '', 
 const initial = { gym_location: '', gym_location_source: '', arrival_time: '', season: '', workout_length: '', exercise_log: [emptyExercise], media_refs: [], notes_prompt_key: '', notes_text: '', vault_entries: [emptyVault], cardio_type: '', cardio_duration: '', cardio_intensity: '', cardio_location: '', cardio_location_source: '', cardio_notes: '', body_measurements: { weight_lb: '', body_fat_percent: '', chest: '', waist: '', hips: '', arms_left: '', arms_right: '', thighs_left: '', thighs_right: '', glutes: '', notes: '' } };
 
 export default function ThiccFittSection() {
-  const [data, setData] = useState(initial);
-  useEffect(() => { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setData((p) => ({ ...p, ...JSON.parse(raw) })); }, []);
-  useEffect(() => { const t = setTimeout(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(data)), 250); return () => clearTimeout(t); }, [data]);
+  const [data, setData] = useState(() => ({ ...initial, ...(source_inputs.thicc_fitt_day?.['04/03/2026'] || {}) }));
   const set = (k, v) => setData((p) => ({ ...p, [k]: v }));
   const gps = (field, source) => navigator.geolocation?.getCurrentPosition((p) => { set(field, `${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`); set(source, 'gps'); });
-  const upload = (e) => { const refs = Array.from(e.target.files || []).map((f) => ({ id: crypto.randomUUID(), name: f.name, type: f.type, url: URL.createObjectURL(f) })); set('media_refs', [...data.media_refs, ...refs]); localStorage.setItem('media_library', JSON.stringify([...(JSON.parse(localStorage.getItem('media_library') || '[]')), ...refs])); };
+  const upload = (e) => { const refs = Array.from(e.target.files || []).map((f) => ({ id: crypto.randomUUID(), name: f.name, type: f.type, url: URL.createObjectURL(f) })); set('media_refs', [...data.media_refs, ...refs]); };
 
   return <main className={styles.page}><div className={styles.swirl} /><section className={styles.grid}>
     <header className={styles.header}><div><h1 className={styles.anchor}>THICC.FITT</h1><p className={styles.sub}>ROIDBOI PERFORMANCE LAB</p></div><Link href="/its-getting-thicc" className={styles.dumbbell}>💎 CRYSTAL DUMBBELL</Link>
