@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../styles/sections/thicc-fitt.css';
 
 const opts = {
@@ -26,8 +26,20 @@ export default function ThiccFittSection() {
   });
   const [vaultRows, setVaultRows] = useState(Array.from({ length: 3 }, () => ({ compound: '', ester: '', amount: '', shots: '', cycle: '', sensitivity: '' })));
   const [mediaPreview, setMediaPreview] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
 
-  const previewUrls = useMemo(() => mediaPreview.slice(0, 6).map((f) => URL.createObjectURL(f)), [mediaPreview]);
+  useEffect(() => {
+    const urls = mediaPreview
+      .slice(0, 6)
+      .filter((file) => file instanceof File)
+      .map((file) => URL.createObjectURL(file));
+
+    setPreviewUrls(urls);
+
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mediaPreview]);
 
   const updateField = (key, value) => setForm((p) => ({ ...p, [key]: value }));
   const updateExercise = (idx, key, value) => setExerciseRows((p) => p.map((r, i) => (i === idx ? { ...r, [key]: value } : r)));

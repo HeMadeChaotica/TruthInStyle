@@ -1,4 +1,4 @@
-.tf-page{min-height:100vh;background:url('/backgrounds/thicc-fitt-bg.png') center/cover no-repeat fixed;color:#f58dbf;padding:18px;font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:.4px;position:relative}
+.tf-page{min-height:100vh;background:url('/backgrounds/thicc-fitt/thicc-fitt-bg.jpg') center/cover no-repeat fixed;color:#f58dbf;padding:18px;font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:.4px;position:relative}
 .tf-overlay{position:absolute;inset:0;background:radial-gradient(circle at 20% 5%,rgba(248,179,70,.18),transparent 45%),repeating-radial-gradient(circle at 10% 10%,rgba(255,170,55,.08) 0 25px,transparent 25px 50px);pointer-events:none}
 .tf-page>*{position:relative;z-index:1}.tf-panel{background:rgba(62,35,12,.34);backdrop-filter:blur(2px);border:1px solid rgba(255,255,255,.5);box-shadow:0 0 0 1px rgba(255,120,220,.6),inset 0 0 0 1px rgba(110,255,255,.25);border-radius:14px}
 .tf-header{display:grid;grid-template-columns:120px 1fr 1fr auto 1fr 1fr 1fr auto;gap:10px;align-items:end;padding:10px}.tf-header h1{margin:0;font-size:64px;line-height:1}.tf-anchor{width:120px;height:120px;object-fit:contain;grid-row:1/3}
