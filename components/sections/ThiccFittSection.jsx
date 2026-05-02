@@ -62,7 +62,7 @@ export default function ThiccFittSection() {
         <label>SEASON<select value={form.season} onChange={(e) => updateField('season', e.target.value)}><option value="">SELECT SEASON</option>{opts.roidSeason.map((o) => <option key={o}>{o}</option>)}</select></label>
         <label>WORKOUT LENGTH<select value={form.workoutLength} onChange={(e) => updateField('workoutLength', e.target.value)}><option value="">SELECT DURATION</option>{opts.roidWorkoutDuration.map((o) => <option key={o}>{o}</option>)}</select></label>
         <label>ARRIVAL TIME<input type="time" value={form.arrivalTime} onChange={(e) => updateField('arrivalTime', e.target.value)} /></label>
-        <Link href="/its-getting-thicc" className="tf-client-link"><img src="/ui/glyphs/control-panel/control-thicc-fitt.png" alt="Client System" /><span>CLIENT SYSTEM<br />ITS.GETTING.THICC</span></Link>
+        <Link href="/its-getting-thicc" className="tf-client-link"><img src="/ui/glyphs/triggers/glyph-crystal-dumbbell.png" alt="Crystal dumbbell trigger" /><span>CLIENT SYSTEM<br />ITS.GETTING.THICC</span></Link>
       </header>
 
       <main className="tf-grid">
