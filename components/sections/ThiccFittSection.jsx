@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import '@/styles/sections/thicc-fitt.css';
+import '../../styles/sections/thicc-fitt.css';
 
 const opts = {
   roidSeason: ['Bulking', 'Cutting', 'Recomp', 'Maintenance'],
