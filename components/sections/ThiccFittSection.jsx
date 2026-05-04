@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 import '../../styles/sections/thicc-fitt.css';
 
 const STORAGE_KEY = 'thicc-fitt-deeperdaddy';
-const DAILY_SEND_KEY = 'thicc-fitt-vault-sends';
 
 const opts = {
   roidSeason: ['Bulking', 'Cutting', 'Recomp', 'Maintenance'],
@@ -43,16 +42,10 @@ export default function ThiccFittSection() {
   const [state, setState] = useState(initialState);
   const [mediaPreview, setMediaPreview] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
-  const [sendCount, setSendCount] = useState(0);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) setState((prev) => ({ ...prev, ...JSON.parse(saved) }));
-    const stamp = localStorage.getItem(DAILY_SEND_KEY);
-    if (stamp) {
-      const parsed = JSON.parse(stamp);
-      if (parsed?.date === new Date().toISOString().slice(0, 10)) setSendCount(parsed.count || 0);
-    }
   }, []);
 
   useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(state)), [state]);
@@ -61,25 +54,10 @@ export default function ThiccFittSection() {
     setPreviewUrls(urls);
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, [mediaPreview]);
-
-  const canSend = sendCount < 2;
   const updateField = (key, value) => setState((p) => ({ ...p, form: { ...p.form, [key]: value } }));
   const updateExercise = (idx, key, value) => setState((p) => ({ ...p, exerciseRows: p.exerciseRows.map((r, i) => (i === idx ? { ...r, [key]: value } : r)) }));
   const updateVault = (idx, key, value) => setState((p) => ({ ...p, vaultRows: p.vaultRows.map((r, i) => (i === idx ? { ...r, [key]: value } : r)) }));
   const addExerciseRow = () => setState((p) => ({ ...p, exerciseRows: [...p.exerciseRows, { ...emptyExercise }] }));
-
-  const sendToAssurer = () => {
-    if (!canSend) return;
-    const next = sendCount + 1;
-    setSendCount(next);
-    localStorage.setItem(DAILY_SEND_KEY, JSON.stringify({ date: new Date().toISOString().slice(0, 10), count: next }));
-    window.location.href = '/the-assurer';
-  };
-
-  const resetSends = () => {
-    setSendCount(0);
-    localStorage.removeItem(DAILY_SEND_KEY);
-  };
 
   const statFields = useMemo(() => [['weight', 'WEIGHT'], ['bodyFat', 'BODY FAT %'], ['chest', 'CHEST'], ['waist', 'WAIST'], ['hips', 'HIPS'], ['armsL', 'ARMS L'], ['armsR', 'ARMS R'], ['thighsL', 'THIGHS L'], ['thighsR', 'THIGHS R'], ['glutes', 'GLUTES']], []);
 
@@ -99,8 +77,8 @@ export default function ThiccFittSection() {
       <section className="tf-panel tf-exercises"><h2>EXERCISE LOG</h2>{state.exerciseRows.map((row, i) => <div key={i} className="tf-row"><input placeholder="EXERCISE" value={row.exercise} onChange={(e) => updateExercise(i, 'exercise', e.target.value)} /><input placeholder="WEIGHT" value={row.weight} onChange={(e) => updateExercise(i, 'weight', e.target.value)} /><input placeholder="REPS" value={row.reps} onChange={(e) => updateExercise(i, 'reps', e.target.value)} /><input placeholder="SETS" value={row.sets} onChange={(e) => updateExercise(i, 'sets', e.target.value)} /><select value={row.failure} onChange={(e) => updateExercise(i, 'failure', e.target.value)}><option value="">FAILURE Y/N</option><option>Y</option><option>N</option></select></div>)}<button className="tf-add-row" type="button" onClick={addExerciseRow}>+ ADD EXERCISE RPM</button></section>
       <section className="tf-panel tf-notes"><h2>SO HOW YOU DOIN 🫪⁉️</h2><div className="tf-notes-stack"><select value={state.form.notesPrompt} onChange={(e) => updateField('notesPrompt', e.target.value)}>{opts.approvedPrompts.map((o) => <option key={o}>{o}</option>)}</select><textarea value={state.form.notesText} onChange={(e) => updateField('notesText', e.target.value)} placeholder="WRITE YOUR THOUGHTS HERE..." /></div></section>
       <section className="tf-panel tf-body"><h2>MEDIA</h2><div className="tf-media-grid"><label className="tf-upload">UPLOAD<input type="file" accept="image/*" onChange={(e) => setMediaPreview([...(mediaPreview.slice(1)), ...(e.target.files?.[0] ? [e.target.files[0]] : [])].slice(0, 3))} /></label>{[0, 1].map((slot) => <label key={slot} className="tf-upload">{previewUrls[slot] ? <img src={previewUrls[slot]} alt="Preview" /> : 'MEDIA'}<input type="file" accept="image/*" onChange={(e) => { if (!e.target.files?.[0]) return; const next = [...mediaPreview]; next[slot + 1] = e.target.files[0]; setMediaPreview(next.slice(0, 3)); }} /></label>)}</div></section>
-      <section className="tf-panel tf-left-stack"><section className="tf-panel tf-stats"><h2>STATS</h2><div className="tf-stats-scroll"><div className="tf-stats-grid">{statFields.map(([k, l]) => <input key={k} placeholder={l} value={state.form[k]} onChange={(e) => updateField(k, e.target.value)} />)}</div><textarea value={state.form.bodyNotes} onChange={(e) => updateField('bodyNotes', e.target.value)} placeholder="NOTES" /></div></section><section className="tf-panel tf-cardio"><h2>CARDIO</h2><div className="tf-row"><select value={state.form.cardioType} onChange={(e) => updateField('cardioType', e.target.value)}><option value="">TYPE</option>{opts.roidCardioType.map((o) => <option key={o}>{o}</option>)}</select><select value={state.form.cardioDuration} onChange={(e) => updateField('cardioDuration', e.target.value)}><option value="">DURATION</option>{opts.roidCardioDuration.map((o) => <option key={o}>{o}</option>)}</select><select value={state.form.cardioIntensity} onChange={(e) => updateField('cardioIntensity', e.target.value)}><option value="">INTENSITY</option>{opts.roidIntensity.map((o) => <option key={o}>{o}</option>)}</select></div><input placeholder="CARDIO LOCATION" value={state.form.cardioLocation} onChange={(e) => updateField('cardioLocation', e.target.value)} /><textarea value={state.form.cardioNotes} onChange={(e) => updateField('cardioNotes', e.target.value)} placeholder="NOTES" /></section><section className="tf-panel tf-vault"><h2>THE VAULT</h2>{state.vaultRows.map((row, i) => <div key={i} className="tf-vault-row"><select value={row.compound} onChange={(e) => updateVault(i, 'compound', e.target.value)}><option value="">COMPOUND</option>{opts.roidCompound.map((o) => <option key={o}>{o}</option>)}</select><select value={row.ester} onChange={(e) => updateVault(i, 'ester', e.target.value)}><option value="">ESTER</option>{opts.roidEster.map((o) => <option key={o}>{o}</option>)}</select><select value={row.amount} onChange={(e) => updateVault(i, 'amount', e.target.value)}><option value="">AMOUNT</option>{opts.roidAmount.map((o) => <option key={o}>{o}</option>)}</select><input placeholder="SHOT __ OF __" value={row.shotOf} onChange={(e) => updateVault(i, 'shotOf', e.target.value)} /><input placeholder="CYCLE LENGTH" value={row.cycleLength} onChange={(e) => updateVault(i, 'cycleLength', e.target.value)} /><select value={row.sensitivity} onChange={(e) => updateVault(i, 'sensitivity', e.target.value)}><option value="">SENSITIVITY</option>{opts.roidSensitivity.map((o) => <option key={o}>{o}</option>)}</select><input className="tf-span" placeholder="CYCLE WEEK __ OF __" value={row.weekOf} onChange={(e) => updateVault(i, 'weekOf', e.target.value)} /></div>)}
-        <div className="tf-pump-wrap"><img src="/backgrounds/THICC-FITT/pump-it.PNG" alt="PUMP-IT GLYPH" /><button type="button" onClick={sendToAssurer} disabled={!canSend}>SEND TO /THE-ASSURER ({sendCount}/2)</button><button type="button" onClick={resetSends}>RESET</button></div></section></section>
+      <section className="tf-panel tf-left-stack"><section className="tf-panel tf-stats"><h2>STATS</h2><div className="tf-stats-scroll"><div className="tf-stats-grid">{statFields.map(([k, l]) => <input key={k} placeholder={l} value={state.form[k]} onChange={(e) => updateField(k, e.target.value)} />)}</div><textarea value={state.form.bodyNotes} onChange={(e) => updateField('bodyNotes', e.target.value)} placeholder="NOTES" /></div></section><section className="tf-panel tf-vault"><h2>THE VAULT</h2><div className="tf-vault-scroll">{state.vaultRows.map((row, i) => <div key={i} className="tf-vault-row"><select value={row.compound} onChange={(e) => updateVault(i, 'compound', e.target.value)}><option value="">COMPOUND</option>{opts.roidCompound.map((o) => <option key={o}>{o}</option>)}</select><select value={row.ester} onChange={(e) => updateVault(i, 'ester', e.target.value)}><option value="">ESTER</option>{opts.roidEster.map((o) => <option key={o}>{o}</option>)}</select><select value={row.amount} onChange={(e) => updateVault(i, 'amount', e.target.value)}><option value="">AMOUNT</option>{opts.roidAmount.map((o) => <option key={o}>{o}</option>)}</select><input placeholder="SHOT __ OF __" value={row.shotOf} onChange={(e) => updateVault(i, 'shotOf', e.target.value)} /><input placeholder="CYCLE LENGTH" value={row.cycleLength} onChange={(e) => updateVault(i, 'cycleLength', e.target.value)} /><select value={row.sensitivity} onChange={(e) => updateVault(i, 'sensitivity', e.target.value)}><option value="">SENSITIVITY</option>{opts.roidSensitivity.map((o) => <option key={o}>{o}</option>)}</select><input className="tf-span" placeholder="CYCLE WEEK __ OF __" value={row.weekOf} onChange={(e) => updateVault(i, 'weekOf', e.target.value)} /></div>)}
+        <div className="tf-pump-wrap"><img src="/backgrounds/THICC-FITT/pump-it.PNG" alt="PUMP-IT GLYPH" /><span>PUMP IT</span></div></div></section><section className="tf-panel tf-cardio"><h2>CARDIO</h2><div className="tf-row"><select value={state.form.cardioType} onChange={(e) => updateField('cardioType', e.target.value)}><option value="">TYPE</option>{opts.roidCardioType.map((o) => <option key={o}>{o}</option>)}</select><select value={state.form.cardioDuration} onChange={(e) => updateField('cardioDuration', e.target.value)}><option value="">DURATION</option>{opts.roidCardioDuration.map((o) => <option key={o}>{o}</option>)}</select><select value={state.form.cardioIntensity} onChange={(e) => updateField('cardioIntensity', e.target.value)}><option value="">INTENSITY</option>{opts.roidIntensity.map((o) => <option key={o}>{o}</option>)}</select></div><input placeholder="CARDIO LOCATION" value={state.form.cardioLocation} onChange={(e) => updateField('cardioLocation', e.target.value)} /><textarea value={state.form.cardioNotes} onChange={(e) => updateField('cardioNotes', e.target.value)} placeholder="NOTES" /></section></section>
     </main>
   </section>;
 }
