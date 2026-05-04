@@ -36,7 +36,7 @@ const initialState = {
     notesPrompt: opts.approvedPrompts[0], notesText: '', cardioType: '', cardioDuration: '', cardioIntensity: '', cardioLocation: '', cardioNotes: '',
     weight: '', bodyFat: '', chest: '', waist: '', hips: '', armsL: '', armsR: '', thighsL: '', thighsR: '', glutes: '', bodyNotes: ''
   },
-  vaultRows: Array.from({ length: 2 }, () => ({ ...emptyVault }))
+  vaultRows: Array.from({ length: 1 }, () => ({ ...emptyVault }))
 };
 
 export default function ThiccFittSection() {
