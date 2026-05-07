@@ -1,22 +1,22 @@
-.tf-page{height:1024px;width:1366px;max-width:1366px;overflow:hidden;margin:0 auto;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg.jpeg') center/cover no-repeat;color:#f58dbf;padding:4px 8px;font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:.2px;position:relative}
+.tf-page{height:min(1024px,100vh);width:min(1366px,100vw);max-width:1366px;overflow:auto;margin:0 auto;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg.jpeg') center/cover no-repeat;color:#f58dbf;padding:4px 8px;font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:.2px;position:relative}
 .tf-overlay{position:absolute;inset:0;background:radial-gradient(circle at 20% 5%,rgba(248,179,70,.18),transparent 45%),repeating-radial-gradient(circle at 10% 10%,rgba(255,170,55,.08) 0 25px,transparent 25px 50px);pointer-events:none}
 .tf-page>*{position:relative;z-index:1}
-.tf-panel{background:rgba(62,35,12,.34);backdrop-filter:blur(2px);border:1px solid rgba(255,255,255,.5);box-shadow:0 0 0 1px rgba(255,120,220,.6),inset 0 0 0 1px rgba(110,255,255,.25);border-radius:12px}
+.tf-panel{background:rgba(62,35,12,.34);backdrop-filter:blur(2px);border:1px solid rgba(255,95,179,.5);box-shadow:0 0 0 1px rgba(255,120,220,.6),inset 0 0 0 1px rgba(110,255,255,.25);border-radius:12px}
 .tf-title-glyph{position:absolute;top:6px;left:14px;width:282px;height:74px;object-fit:contain;z-index:3}
 .tf-client-link{position:absolute;top:8px;right:14px;display:flex;z-index:3}
 .tf-client-link img{width:102px;height:102px}
 
 .tf-header{display:grid;grid-template-columns:1.35fr .72fr .85fr .8fr .9fr;gap:4px;align-items:center;padding:3px 5px;margin-top:84px;height:36px}
-.tf-header input,.tf-header select,.tf-grid input,.tf-grid select,.tf-grid textarea,.tf-grid button{background:rgba(130,100,65,.28);border:1px solid rgba(240,240,240,.55);color:#ffd4e6;padding:2px 6px;border-radius:9px;font-size:14px;height:30px;min-width:0}
+.tf-header input,.tf-header select,.tf-grid input,.tf-grid select,.tf-grid textarea,.tf-grid button{background:rgba(130,100,65,.28);border:1px solid rgba(255,95,179,.45);color:#ffd4e6;padding:2px 6px;border-radius:9px;font-size:14px;height:30px;min-width:0}
 
-.tf-grid{display:grid;grid-template-columns:410px 938px;grid-template-rows:312px 268px 206px;grid-template-areas:'left exercises' 'left notes' 'left media';gap:4px;margin-top:5px;height:806px;align-items:stretch}
+.tf-grid{display:grid;grid-template-columns:minmax(350px,410px) minmax(0,1fr);grid-template-rows:minmax(250px,1fr) minmax(220px,.85fr) minmax(220px,.8fr);grid-template-areas:'left exercises' 'left notes' 'left media';gap:4px;margin-top:5px;min-height:806px;align-items:stretch}
 .tf-grid section{padding:4px;min-width:0}
 .tf-panel h2{margin:0 0 3px;font-size:25px;line-height:1;text-align:center}
 .tf-exercises{grid-area:exercises;overflow:hidden}
 .tf-notes{grid-area:notes;overflow:hidden}
 .tf-body{grid-area:media;overflow:hidden}
 
-.tf-left-stack{grid-area:left;display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,1.22fr) minmax(0,220px);gap:8px;padding:0;background:transparent;border:none;box-shadow:none;overflow:hidden}
+.tf-left-stack{grid-area:left;display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,1.22fr) minmax(220px,auto);gap:8px;padding:0;background:transparent;border:none;box-shadow:none;overflow:visible}
 .tf-stats,.tf-vault,.tf-cardio{height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:12px}
 .tf-stats-scroll,.tf-vault-scroll{overflow:auto;display:grid;gap:3px;min-height:0;padding-right:1px}
 .tf-stats-grid{display:grid;grid-template-columns:1fr;gap:4px}.tf-labeled{display:grid;grid-template-rows:auto 30px;gap:2px}.tf-labeled span{font-size:13px;color:#ffd4e6}
