@@ -50,3 +50,7 @@
 .tf-vault-stack{display:grid;grid-template-columns:1fr;gap:4px}
 
 .tf-mantra{display:grid;align-content:start;gap:6px;padding:10px}.tf-mantra p{margin:0;font-size:18px;text-align:center}.tf-pump-wrap img{width:130px;height:130px}
+
+.tf-clockit-link{position:absolute;top:14px;right:14px;z-index:4;padding:6px 10px;font-size:12px;letter-spacing:.8px;color:#ff7fcd;text-decoration:none;background:rgba(15,10,12,.24);border:1px solid transparent;border-radius:8px}
+.tf-clockit-link::before{content:'';position:absolute;inset:-1px;border-radius:8px;padding:1px;background:linear-gradient(90deg,#ff69c6,#ffc14b,#74f5ff,#ff69c6);background-size:200% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:tfClockShimmer 3s linear infinite;pointer-events:none}
+@keyframes tfClockShimmer{to{background-position:200% 0}}

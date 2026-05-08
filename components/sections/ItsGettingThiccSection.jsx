@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import '../../styles/sections/its-getting-thicc.css';
 import { addClient, appendLog, loadClients, readMedia, saveClients, upsertMedia } from '../../src/services/itsGettingThiccService';
@@ -33,6 +34,7 @@ export default function ItsGettingThiccSection() {
   const glancePhoto = active.photo || readMedia(active.id, 'photo');
 
   return <section className="igt-page"><div className="igt-shell">
+    <Link href="/clock-it" className="igt-clockit-link" aria-label="Clock.It temporary access">🐝 CLOCK.IT</Link>
     <header className="igt-panel igt-topbar"><button className="igt-thicc-info">THICC.INFO</button>
       <select value={active.id} onChange={(e) => setActiveId(e.target.value)}>{clients.map((c) => <option key={c.id} value={c.id}>{c.name || c.id}</option>)}</select>
       <button onClick={() => { const c = addClient(); const next = [...clients, c]; persist(next, 'create-client'); setActiveId(c.id); }}>+</button>

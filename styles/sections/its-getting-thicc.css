@@ -10,3 +10,8 @@
 .fields,.glance{display:grid;gap:5px}.row{display:flex;gap:4px;align-items:center}.wide{grid-column:span 4}.full{grid-column:1/-1}.compact{grid-column:span 2}.compact-small{grid-column:span 2;max-width:220px}.hz{grid-column:span 4}.scroll{max-height:260px;overflow:auto}.igt-question{display:grid;gap:4px;margin-bottom:6px}.igt-question label{font-size:12px}.igt-hz-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.igt-hz-days .day{display:grid;gap:4px}
 .thoughts{height:120px;overflow:auto}.cele{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}.slot{height:80px;border:1px dashed #ff61b3;display:flex;align-items:center;justify-content:center}.slot input{display:none}.delete{color:#ff5a8b;font-size:28px}
 @keyframes igtShimmer{0%{box-shadow:0 0 0 1px rgba(90,255,226,.22) inset,0 0 12px rgba(255,95,179,.25)}50%{box-shadow:0 0 0 1px rgba(255,95,179,.26) inset,0 0 14px rgba(105,90,255,.35)}100%{box-shadow:0 0 0 1px rgba(90,255,226,.22) inset,0 0 12px rgba(255,95,179,.25)}}
+
+.igt-clockit-link{position:absolute;top:12px;right:16px;padding:5px 10px;font-size:12px;color:#ff74cd;text-decoration:none;background:rgba(12,10,14,.22);border-radius:8px;border:1px solid transparent;letter-spacing:.7px}
+.igt-shell{position:relative}
+.igt-clockit-link::before{content:'';position:absolute;inset:-1px;border-radius:8px;padding:1px;background:linear-gradient(90deg,#ff69c6,#ffc14b,#74f5ff,#ff69c6);background-size:210% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:igtClockShimmer 3s linear infinite;pointer-events:none}
+@keyframes igtClockShimmer{to{background-position:210% 0}}
