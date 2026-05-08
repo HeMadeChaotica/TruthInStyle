@@ -57,11 +57,13 @@ export default function ThiccFittSection() {
     setPreviewUrls(urls);
     return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, [mediaPreview]);
+
   const canSend = sendCount < 2;
   const updateField = (key, value) => setState((p) => ({ ...p, form: { ...p.form, [key]: value } }));
   const updateExercise = (idx, key, value) => setState((p) => ({ ...p, exerciseRows: p.exerciseRows.map((r, i) => (i === idx ? { ...r, [key]: value } : r)) }));
   const updateVault = (idx, key, value) => setState((p) => ({ ...p, vaultRows: p.vaultRows.map((r, i) => (i === idx ? { ...r, [key]: value } : r)) }));
   const addExerciseRow = () => setState((p) => ({ ...p, exerciseRows: [...p.exerciseRows, { ...emptyExercise }] }));
+
   const sendToAssurer = () => {
     if (!canSend) return;
     const next = sendCount + 1;
@@ -81,13 +83,13 @@ export default function ThiccFittSection() {
     <img className="tf-title-glyph" src="/backgrounds/THICC-FITT/thicc-title.png" alt="THICC.FITT" />
     <Link href="/its-getting-thicc" className="tf-client-link" aria-label="Crystal dumbbell link"><img src="/ui/glyphs/triggers/glyph-crystal-dumbbell.png" alt="Crystal dumbbell" /></Link>
     <Link href="/clock-it" className="tf-clockit-link" aria-label="Clock.It temporary access">🐝 CLOCK.IT</Link>
+
     <header className="tf-header tf-panel">
       <input value={state.form.gymLocation} onChange={(e) => updateField('gymLocation', e.target.value)} placeholder="GYM LOCATION" />
       <input type="time" value={state.form.arrivalTime} onChange={(e) => updateField('arrivalTime', e.target.value)} />
       <select value={state.form.workoutLength} onChange={(e) => updateField('workoutLength', e.target.value)}><option value="">WORKOUT LENGTH</option>{opts.roidWorkoutDuration.map((o) => <option key={o}>{o}</option>)}</select>
       <select value={state.form.season} onChange={(e) => updateField('season', e.target.value)}><option value="">SEASON</option>{opts.roidSeason.map((o) => <option key={o}>{o}</option>)}</select>
       <select value={state.form.soreness} onChange={(e) => updateField('soreness', e.target.value)}><option value="">SORENESS LEVEL</option>{opts.soreness.map((o) => <option key={o}>{o}</option>)}</select>
-      
     </header>
 
     <main className="tf-grid">

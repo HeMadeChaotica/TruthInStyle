@@ -1,1 +1,54 @@
-/* Temporary scaffold file for local implementation. */
+.remember-page{
+  min-height:100vh;
+  width:100%;
+  margin:0 auto;
+  position:relative;
+  background-image:var(--remember-bg-image);
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:left 32% center;
+  overflow:hidden;
+  color:#ff69c6;
+  font-family:Impact,'Arial Narrow',sans-serif;
+  text-transform:uppercase;
+}
+
+.remember-overlay{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.18) 36%,rgba(0,0,0,.58) 64%,rgba(0,0,0,.86) 100%),
+    radial-gradient(140% 120% at 94% 50%,rgba(255,0,132,.22),rgba(0,0,0,0));
+}
+
+.remember-content{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;padding:1rem 1.25rem}
+.remember-head{display:flex;justify-content:flex-end}
+.remember-head h1{margin:0;color:#ff4ba8;letter-spacing:1.3px}
+
+.remember-main{display:grid;grid-template-columns:minmax(560px,1fr) 88px;gap:14px;max-width:860px;width:100%;margin-left:auto}
+.remember-calendar-panel{background:rgba(0,0,0,.66);border:1px solid rgba(255,73,167,.85);border-radius:18px;padding:12px;backdrop-filter:blur(2px)}
+.remember-month-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.remember-month-row h2{margin:0;color:#ff8bcb;letter-spacing:1px;font-size:1.8rem}
+.remember-month-row button,.remember-rail button,.remember-day{font:inherit;text-transform:inherit;color:#ff8bcb;background:rgba(2,2,2,.72);border:1px solid rgba(255,73,167,.7);border-radius:10px}
+.remember-month-row button{width:36px;height:36px;font-size:1.4rem;line-height:1;cursor:pointer}
+.remember-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:10px}
+.remember-weekdays span{text-align:center;font-size:.95rem;color:#ff91cc}
+.remember-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:8px}
+.remember-day{height:84px;text-align:left;padding:8px;font-size:1.6rem;cursor:pointer;background:linear-gradient(170deg,rgba(7,7,7,.86),rgba(0,0,0,.68));border-radius:0}
+.remember-day.remember-selected{box-shadow:0 0 0 2px rgba(255,74,174,.95),0 0 16px rgba(255,74,174,.65) inset;background:linear-gradient(170deg,rgba(58,0,35,.8),rgba(8,0,7,.76));color:#ffd2ec}
+.remember-day.remember-outside{opacity:.36;cursor:not-allowed}
+
+.remember-rail{display:flex;flex-direction:column;gap:12px}
+.remember-rail button{min-height:92px;padding:8px;font-size:1.2rem;letter-spacing:.4px;border-radius:14px;background:linear-gradient(180deg,rgba(7,7,7,.9),rgba(0,0,0,.8))}
+
+@media (max-width:1100px){
+  .remember-main{max-width:100%;grid-template-columns:minmax(0,1fr) 80px}
+  .remember-day{height:72px}
+}
+
+@media (max-width:860px){
+  .remember-page{background-position:left 26% center}
+  .remember-main{grid-template-columns:minmax(0,1fr);margin-left:0}
+  .remember-rail{flex-direction:row;overflow:auto}
+  .remember-rail button{min-height:68px;min-width:150px}
+}
