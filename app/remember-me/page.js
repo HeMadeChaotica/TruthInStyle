@@ -1,1 +1,5 @@
-// Temporary scaffold file for local implementation.
+import RememberMeSection from '../../components/sections/RememberMeSection';
+
+export default function RememberMePage() {
+  return <RememberMeSection />;
+}
