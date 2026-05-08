@@ -84,6 +84,7 @@ export default function ThiccFittSection() {
   return <section className="tf-page"><div className="tf-overlay" />
     <img className="tf-title-glyph" src="/backgrounds/THICC-FITT/thicc-title.png" alt="THICC.FITT" />
     <Link href="/its-getting-thicc" className="tf-client-link" aria-label="Crystal dumbbell link"><img src="/ui/glyphs/triggers/glyph-crystal-dumbbell.png" alt="Crystal dumbbell" /></Link>
+    <Link href="/clock-it" className="tf-clockit-link" aria-label="Clock.It temporary access">🐝 CLOCK.IT</Link>
     <header className="tf-header tf-panel">
       <input value={state.form.gymLocation} onChange={(e) => updateField('gymLocation', e.target.value)} placeholder="GYM LOCATION" />
       <input type="time" value={state.form.arrivalTime} onChange={(e) => updateField('arrivalTime', e.target.value)} />
