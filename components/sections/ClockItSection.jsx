@@ -11,7 +11,7 @@ const PANEL_ROWS = [
       { title: 'THICC.FITT DROPDOWNS', items: [['ROID SEASON', ...optionRegistry.thiccFitt.roidSeason], ['WORKOUT LENGTH', ...optionRegistry.thiccFitt.roidWorkoutDuration], ['CARDIO TYPE', ...optionRegistry.thiccFitt.roidCardioType], ['CARDIO DURATION', ...optionRegistry.thiccFitt.roidCardioDuration], ['COMPOUND', ...optionRegistry.thiccFitt.roidCompound], ['ESTER / FORM', ...optionRegistry.thiccFitt.roidEster], ['AMOUNT', ...optionRegistry.thiccFitt.roidAmount], ['ESTROGEN SENSITIVITY', ...optionRegistry.thiccFitt.roidSensitivity], ['SO HOW YOU DOIN 🫪⁉️', ...optionRegistry.thiccFitt.soHowYouDoin]] },
       { title: 'THE.ASSURER LOOKUPS', items: [['MOOD', ...optionRegistry.assessment.mood], ['ERA', ...optionRegistry.assessment.era], ['SINGLENESS LEVEL', ...optionRegistry.assessment.singlenessLevel], ['LOBITO CHECK-IN', ...optionRegistry.assessment.libidoCheckIn]] },
       { title: 'REMEMBER.ME (FUTURE SOURCE)', items: [['P.S. TYPES', ...optionRegistry.rememberMeFuture.psTypes], ['MOMENT TYPES', ...optionRegistry.rememberMeFuture.momentTypes]] },
-      { title: 'THICC.FITT QUOTE FAMILY', items: [['QUOTE OF THE DAY / ROTATING QUOTES', ...optionRegistry.thiccFitt.quoteOfDay]] }
+      { title: 'THICC.FITT QUOTE FAMILY', items: [['THICC.FITT QUOTE FAMILY', ...optionRegistry.thiccFitt.quoteOfDay]] }
     ]
   }
 ];
