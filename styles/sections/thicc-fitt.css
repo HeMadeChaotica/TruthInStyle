@@ -1,7 +1,8 @@
 .tf-page{height:min(1024px,100vh);width:min(1366px,100vw);max-width:1366px;overflow:auto;margin:0 auto;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg.jpeg') center/cover no-repeat;color:#f58dbf;padding:4px 8px;font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:.2px;position:relative}
 .tf-overlay{position:absolute;inset:0;background:radial-gradient(circle at 20% 5%,rgba(248,179,70,.18),transparent 45%),repeating-radial-gradient(circle at 10% 10%,rgba(255,170,55,.08) 0 25px,transparent 25px 50px);pointer-events:none}
 .tf-page>*{position:relative;z-index:1}
-.tf-panel{background:rgba(62,35,12,.34);backdrop-filter:blur(2px);border:1px solid rgba(255,95,179,.5);box-shadow:0 0 0 1px rgba(255,120,220,.6),inset 0 0 0 1px rgba(110,255,255,.25);border-radius:12px}
+.tf-panel{background:rgba(62,35,12,.24);backdrop-filter:blur(2px);border:1px solid transparent;border-radius:10px;position:relative}
+.tf-panel::before{content:'';position:absolute;inset:0;border-radius:10px;padding:1px;background:linear-gradient(90deg,#ff69c6,#ffc14b,#74f5ff,#ff69c6);background-size:220% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:tfClockShimmer 3.5s linear infinite;pointer-events:none}
 .tf-title-glyph{position:absolute;top:12px;left:16px;width:360px;height:96px;object-fit:contain;z-index:3}
 .tf-client-link{position:absolute;top:20px;right:18px;display:flex;z-index:3}
 .tf-client-link img{width:132px;height:132px}
@@ -9,7 +10,7 @@
 .tf-header{display:grid;grid-template-columns:1.35fr .72fr .85fr .8fr .9fr;gap:4px;align-items:center;padding:3px 5px;margin-top:128px;height:42px}
 .tf-header input,.tf-header select,.tf-grid input,.tf-grid select,.tf-grid textarea,.tf-grid button{background:rgba(130,100,65,.28);border:1px solid rgba(255,95,179,.45);color:#ffd4e6;padding:2px 6px;border-radius:9px;font-size:14px;height:30px;min-width:0}
 
-.tf-grid{display:grid;grid-template-columns:minmax(350px,410px) minmax(0,1fr);grid-template-rows:minmax(280px,.8fr) minmax(165px,.45fr) minmax(155px,.4fr) minmax(160px,.45fr);grid-template-areas:'left exercises' 'left cardio' 'left notes' 'left media';gap:4px;margin-top:5px;min-height:806px;align-items:stretch}
+.tf-grid{display:grid;grid-template-columns:minmax(350px,410px) minmax(0,1fr);grid-template-rows:minmax(230px,.7fr) minmax(140px,.4fr) minmax(130px,.35fr) minmax(116px,.3fr);grid-template-areas:'left exercises' 'left cardio' 'left notes' 'left media';gap:4px;margin-top:5px;min-height:640px;align-items:start}
 .tf-grid section{padding:4px;min-width:0}
 .tf-panel h2{margin:0 0 3px;font-size:25px;line-height:1;text-align:center}
 .tf-exercises{grid-area:exercises;overflow:hidden}
@@ -40,8 +41,8 @@
 .tf-notes-stack{display:grid;grid-template-rows:30px 1fr;gap:3px;height:calc(100% - 30px)}
 .tf-notes textarea{height:100%;resize:none;overflow:auto;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 28px,rgba(255,255,255,.2) 29px);line-height:29px;padding-top:6px}
 
-.tf-media-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;min-height:76px;align-items:start}
-.tf-upload{display:grid;place-items:center;border:1px dashed #f7d4a6;border-radius:10px;height:72px;font-size:24px;position:relative;text-align:center;min-width:0}
+.tf-media-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;min-height:64px;align-items:start}
+.tf-upload{display:grid;place-items:center;border:1px dashed #f7d4a6;border-radius:10px;height:60px;font-size:24px;position:relative;text-align:center;min-width:0}
 .tf-upload img{width:100%;height:100%;object-fit:cover;border-radius:9px}
 .tf-upload input{position:absolute;inset:0;opacity:0;height:100%}
 
@@ -49,7 +50,11 @@
 
 .tf-vault-stack{display:grid;grid-template-columns:1fr;gap:4px}
 
-.tf-mantra{display:grid;align-content:start;gap:6px;padding:8px;min-height:120px}.tf-mantra p{margin:0;font-size:16px;text-align:center}.tf-quote-note{font-size:12px;opacity:.85}.tf-pump-wrap img{width:130px;height:130px}
+.tf-mantra{display:grid;align-content:start;gap:4px;padding:4px;min-height:0}
+.tf-quote-frame{display:grid;gap:4px;min-height:110px;padding:8px;background:rgba(255,86,176,.09);border:1px solid rgba(255,119,204,.75);border-radius:0;box-shadow:inset 0 0 0 1px rgba(255,220,245,.38)}
+.tf-quote-frame select{height:28px}
+.tf-mantra p{margin:0;font-size:16px;text-align:center;display:grid;place-items:center;min-height:66px;border:1px solid rgba(255,192,223,.45);background:rgba(22,10,18,.35);padding:6px}
+.tf-pump-wrap img{width:130px;height:130px}
 
 .tf-clockit-link{position:absolute;top:14px;right:14px;z-index:4;padding:6px 10px;font-size:12px;letter-spacing:.8px;color:#ff7fcd;text-decoration:none;background:rgba(15,10,12,.24);border:1px solid transparent;border-radius:8px}
 .tf-clockit-link::before{content:'';position:absolute;inset:-1px;border-radius:8px;padding:1px;background:linear-gradient(90deg,#ff69c6,#ffc14b,#74f5ff,#ff69c6);background-size:200% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:tfClockShimmer 3s linear infinite;pointer-events:none}
