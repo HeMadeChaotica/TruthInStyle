@@ -1,4 +1,4 @@
-.clockit-page{width:min(1366px,100vw);height:min(1024px,100vh);margin:0 auto;background:url('/backgrounds/CLOCK-IT/clock-it.PNG') left center/cover no-repeat;color:#ff69c6;font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;overflow:auto}
+.clockit-page{width:min(1366px,100vw);height:min(1024px,100vh);margin:0 auto;background:url('/backgrounds/CLOCK-IT/clock-it-bg-v2.png') left center/cover no-repeat;color:#ff69c6;font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;overflow:auto}
 .clockit-layout{display:grid;grid-template-columns:30% 70%;min-height:100%;padding:10px}
 .clockit-art{min-height:100%}
 .clockit-controls{display:grid;gap:8px;align-content:start}
