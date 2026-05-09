@@ -1,18 +1,18 @@
-.igt-page{width:min(1366px,100vw);height:min(1024px,100vh);max-width:1366px;overflow:auto;margin:0 auto;background:url('/background/ITS-GETTING-THICC/its-getting-thicc-bg.jpg') left center/cover no-repeat;color:#ff61b3;font-family:Impact,sans-serif}
-.igt-shell{width:100%;min-height:100%;padding:12px 10px 10px;display:flex;flex-direction:column;gap:8px;position:relative}
-.igt-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;overflow:visible;margin-top:4px}
-.igt-panel{background:rgba(16,20,18,.12);border:1px solid rgba(255,95,179,.75);box-shadow:0 0 0 1px rgba(90,255,226,.28) inset,0 0 12px rgba(255,95,179,.28),0 0 16px rgba(105,90,255,.25);padding:6px;border-radius:8px;backdrop-filter:blur(1px);animation:igtShimmer 5s linear infinite}
-.igt-panel h3{margin:0 0 4px;font-size:20px;letter-spacing:.5px}.igt-topbar{display:flex;gap:8px;align-items:center;grid-column:1/-1}
-.igt-topbar .igt-thicc-info{font-size:30px;color:#ff61b3;background:transparent;border:none}.igt-topbar select,.igt-topbar button{height:38px}
-.igt-panel input,.igt-panel select,.igt-panel textarea,.igt-panel button{background:rgba(10,14,12,.3);color:#ffc0de;border:1px solid rgba(255,95,179,.45);border-radius:6px;padding:6px;text-transform:uppercase}.igt-panel *:focus{outline:none;box-shadow:0 0 10px rgba(255,89,184,.5), inset 0 0 8px rgba(82,230,255,.25)}
-.igt-panel input::placeholder,.igt-panel textarea::placeholder{color:rgba(255,125,188,.6)}
-.two{display:grid;grid-template-columns:150px 1fr;gap:8px}.upload{height:150px;display:flex;align-items:center;justify-content:center}.upload img,.slot img{width:100%;height:100%;object-fit:cover}
-.fields,.glance{display:grid;gap:5px}.row{display:flex;gap:4px;align-items:center}.wide{grid-column:span 6}.full{grid-column:1/-1}.compact{grid-column:span 2}.compact-small{grid-column:span 2;max-width:220px}.hz{grid-column:span 4}
-.pin-scroll{max-height:320px;overflow:auto;padding-right:2px}.igt-question{display:grid;gap:4px;margin-bottom:8px}.igt-question label{font-size:16px;line-height:1.1;position:sticky;top:0;background:rgba(10,14,12,.7);z-index:2;padding-bottom:2px}
-.igt-hz-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.igt-hz-days .day{display:grid;gap:4px}
-.thoughts{height:120px;overflow:auto}.cele{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}.slot{height:80px;border:1px dashed #ff61b3;display:flex;align-items:center;justify-content:center}.slot input{display:none}.delete-inline{margin-left:auto;font-size:12px;letter-spacing:.8px;padding:4px 8px;color:#ff89bf}
-@keyframes igtShimmer{0%{box-shadow:0 0 0 1px rgba(90,255,226,.22) inset,0 0 12px rgba(255,95,179,.25)}50%{box-shadow:0 0 0 1px rgba(255,95,179,.26) inset,0 0 14px rgba(105,90,255,.35)}100%{box-shadow:0 0 0 1px rgba(90,255,226,.22) inset,0 0 12px rgba(255,95,179,.25)}}
-
-.igt-clockit-link{position:absolute;top:12px;right:16px;padding:5px 10px;font-size:12px;color:#ff74cd;text-decoration:none;background:rgba(12,10,14,.22);border-radius:8px;border:1px solid transparent;letter-spacing:.7px}
-.igt-clockit-link::before{content:'';position:absolute;inset:-1px;border-radius:8px;padding:1px;background:linear-gradient(90deg,#ff69c6,#ffc14b,#74f5ff,#ff69c6);background-size:210% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:igtClockShimmer 3s linear infinite;pointer-events:none}
-@keyframes igtClockShimmer{to{background-position:210% 0}}
+.igtv2-page{height:100vh;width:100%;background:url('/backgrounds/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center/cover no-repeat;color:#ff7bcf;text-transform:uppercase;overflow:hidden}
+.igtv2-shell{height:100%;display:flex;gap:8px;padding:8px}
+.igtv2-left{width:30%;min-width:320px;position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:8px}
+.igtv2-right{width:70%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;overflow:auto;padding:6px}
+.glass{background:rgba(7,9,17,.15);backdrop-filter:blur(1px);position:relative}
+.glass::before{content:'';position:absolute;inset:0;border:1px solid transparent;background:linear-gradient(90deg,#ff67c7,#7cf8ff,#ffd36f,#ff67c7) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;background-size:220% 100%;animation:sh 4s linear infinite;pointer-events:none}
+@keyframes sh{to{background-position:220% 0}}
+.igtv2-clock,.igtv2-thicc,button,input,select,textarea{background:rgba(8,10,16,.22);color:#ff8ad5;border:1px solid rgba(255,138,213,.4);font:inherit;text-transform:uppercase}
+.igtv2-left-top{display:flex;gap:6px;align-items:center;position:relative}.igtv2-clock{padding:5px 8px;text-decoration:none}.igtv2-thicc{padding:5px 8px}
+.igtv2-roster{position:absolute;top:34px;left:0;padding:6px;display:grid;gap:6px;z-index:5;min-width:220px}
+.section{padding:6px;display:grid;gap:4px;align-content:start;max-height:300px;overflow:auto}
+.section h3{margin:0;font-size:14px}.section label{display:grid;gap:2px;font-size:11px}
+.row,.hz{display:grid;gap:4px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.hz{grid-template-columns:repeat(7,minmax(90px,1fr));overflow:auto}
+.upload,.slot{min-height:72px;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(255,138,213,.45)}
+.upload input,.slot input{display:none}.upload img,.slot img,.thumb{width:100%;height:100%;object-fit:cover}
+.thumb{max-height:130px}.big{min-height:140px}.cele{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.inline-del{justify-self:start;padding:4px 8px;font-size:11px}.igtv2-dossier-title{font-size:18px;letter-spacing:1px}.igtv2-worldcopy{font-size:12px;max-width:26ch}
