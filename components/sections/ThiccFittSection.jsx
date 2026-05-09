@@ -5,98 +5,99 @@ import { useEffect, useMemo, useState } from 'react';
 import '../../styles/sections/thicc-fitt.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 
-const STORAGE_KEY = 'thicc-fitt-deeperdaddy';
-const DAILY_SEND_KEY = 'thicc-fitt-vault-sends';
+const STORAGE_KEY = 'thicc_fitt_day';
 
-const opts = {
-  roidSeason: optionRegistry.thiccFitt.roidSeason,
-  roidWorkoutDuration: optionRegistry.thiccFitt.roidWorkoutDuration,
-  roidCardioType: optionRegistry.thiccFitt.roidCardioType,
-  roidCardioDuration: optionRegistry.thiccFitt.roidCardioDuration,
-  roidIntensity: ['LOW', 'MODERATE', 'HIGH', 'MAX'],
-  roidCompound: optionRegistry.thiccFitt.roidCompound,
-  roidEster: optionRegistry.thiccFitt.roidEster,
-  roidAmount: optionRegistry.thiccFitt.roidAmount,
-  roidSensitivity: optionRegistry.thiccFitt.roidSensitivity,
-  soreness: ['FRESH', 'MILD', 'MODERATE', 'HEAVY', 'WRECKED'],
-  approvedPrompts: optionRegistry.thiccFitt.soHowYouDoin
-};
+const EXERCISE_COUNT = 6;
+const initialExercise = { exercise: '', weight: '', reps: '', sets: '', failure: 'N', notes: '' };
 
-const emptyExercise = { exercise: '', weight: '', reps: '', sets: '', failure: '' };
-const emptyVault = { compound: '', ester: '', amount: '', shotOf: '', cycleLength: '', sensitivity: '', weekOf: '' };
+const measurementFields = [
+  ['weight', 'WEIGHT'], ['bodyFat', 'BODY FAT %'], ['chest', 'CHEST'], ['waist', 'WAIST'], ['hips', 'HIPS'],
+  ['armsL', 'ARMS L'], ['armsR', 'ARMS R'], ['thighsL', 'THIGHS L'], ['thighsR', 'THIGHS R'], ['glutes', 'GLUTES']
+];
 
 const initialState = {
-  exerciseRows: Array.from({ length: 5 }, () => ({ ...emptyExercise })),
-  form: {
-    gymLocation: '', season: '', workoutLength: '', arrivalTime: '', soreness: '',
-    notesPrompt: opts.approvedPrompts[0], notesText: '', cardioType: '', cardioDuration: '', cardioIntensity: '', cardioLocation: '', cardioNotes: '', activeQuote: optionRegistry.thiccFitt.quoteOfDay[0],
-    weight: '', bodyFat: '', chest: '', waist: '', hips: '', armsL: '', armsR: '', thighsL: '', thighsR: '', glutes: '', bodyNotes: ''
-  },
-  vaultRows: Array.from({ length: 1 }, () => ({ ...emptyVault }))
+  control: { gymLocation: '', arrivalTime: '', workoutLength: '', seasonPhase: '', sorenessRecovery: '', prepStatus: '' },
+  exerciseRows: Array.from({ length: EXERCISE_COUNT }, () => ({ ...initialExercise })),
+  coreFocus: '',
+  coreMinutes: '15',
+  trainingDuration: '',
+  sessionTotal: '',
+  sessionCompleted: false,
+  cardio: { type: '', duration: '', intensity: '', location: '', notes: '', weeklyDone: 0 },
+  soHowYouDoin: optionRegistry.thiccFitt.soHowYouDoin[0],
+  soHowYouDoinNotes: '',
+  body: Object.fromEntries(measurementFields.map(([k]) => [k, ''])),
+  bodyNotes: '',
+  inbodyLastScan: '',
+  inbodyWoW: '',
+  inbodyWatchItems: '',
+  vault: { compound: '', ester: '', amount: '', shotCurrent: '', shotTotal: '', sensitivity: '', cycleWeekCurrent: '', cycleWeekTotal: '' },
+  quoteOfDay: optionRegistry.thiccFitt.quoteOfDay[0],
+  photo: { nextShoot: '', daysRemaining: '', submissionStatus: 'NOT SUBMITTED', lastSubmitted: '', targetMonth: '' }
 };
 
 export default function ThiccFittSection() {
   const [state, setState] = useState(initialState);
-  const [mediaPreview, setMediaPreview] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
-  const [sendCount, setSendCount] = useState(0);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setState((prev) => ({ ...prev, ...JSON.parse(saved) }));
-    const stamp = localStorage.getItem(DAILY_SEND_KEY);
-    if (stamp) {
-      const parsed = JSON.parse(stamp);
-      if (parsed?.date === new Date().toISOString().slice(0, 10)) setSendCount(parsed.count || 0);
-    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) setState((prev) => ({ ...prev, ...JSON.parse(raw) }));
   }, []);
-
-  useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(state)), [state]);
   useEffect(() => {
-    const urls = mediaPreview.slice(0, 3).filter((file) => file instanceof File).map((file) => URL.createObjectURL(file));
-    setPreviewUrls(urls);
-    return () => urls.forEach((url) => URL.revokeObjectURL(url));
-  }, [mediaPreview]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
 
-  const canSend = sendCount < 2;
-  const updateField = (key, value) => setState((p) => ({ ...p, form: { ...p.form, [key]: value } }));
+  const update = (section, key, value) => setState((p) => ({ ...p, [section]: { ...p[section], [key]: value } }));
   const updateExercise = (idx, key, value) => setState((p) => ({ ...p, exerciseRows: p.exerciseRows.map((r, i) => (i === idx ? { ...r, [key]: value } : r)) }));
-  const updateVault = (idx, key, value) => setState((p) => ({ ...p, vaultRows: p.vaultRows.map((r, i) => (i === idx ? { ...r, [key]: value } : r)) }));
-  const addExerciseRow = () => setState((p) => ({ ...p, exerciseRows: [...p.exerciseRows, { ...emptyExercise }] }));
 
-  const sendToAssurer = () => {
-    if (!canSend) return;
-    const next = sendCount + 1;
-    setSendCount(next);
-    localStorage.setItem(DAILY_SEND_KEY, JSON.stringify({ date: new Date().toISOString().slice(0, 10), count: next }));
-    window.location.href = '/the-assurer';
-  };
+  const cardioComplianceLabel = useMemo(() => `${state.cardio.weeklyDone} / 3`, [state.cardio.weeklyDone]);
 
-  const resetSends = () => {
-    setSendCount(0);
-    localStorage.removeItem(DAILY_SEND_KEY);
-  };
+  return (
+    <section className="tf30-shell">
+      <div className="tf30-bg" />
+      <aside className="tf30-left">
+        <div className="tf30-left-fade" />
+        <Link href="/its-getting-thicc" className="tf30-crystal" aria-label="CRYSTAL DUMBBELL ACCESS">
+          <img src="/ui/glyphs/triggers/glyph-crystal-dumbbell.png" alt="CRYSTAL DUMBBELL" />
+          <span>CLIENT SYSTEM ACCESS</span>
+        </Link>
+      </aside>
 
-  const statFields = useMemo(() => [['weight', 'WEIGHT'], ['bodyFat', 'BODY FAT %'], ['chest', 'CHEST'], ['waist', 'WAIST'], ['hips', 'HIPS'], ['armsL', 'ARMS L'], ['armsR', 'ARMS R'], ['thighsL', 'THIGHS L'], ['thighsR', 'THIGHS R'], ['glutes', 'GLUTES']], []);
+      <section className="tf30-right">
+        <header className="tf30-panel tf30-band">
+          <h1>THICC.FITT</h1>
+          <div><label>GYM</label><input value={state.control.gymLocation} onChange={(e) => update('control', 'gymLocation', e.target.value)} /></div>
+          <div><label>ARRIVAL</label><input type="time" value={state.control.arrivalTime} onChange={(e) => update('control', 'arrivalTime', e.target.value)} /></div>
+          <div><label>WORKOUT LENGTH</label><select value={state.control.workoutLength} onChange={(e) => update('control', 'workoutLength', e.target.value)}><option value="">--</option>{optionRegistry.thiccFitt.roidWorkoutDuration.map((o) => <option key={o}>{o}</option>)}</select></div>
+          <div><label>SEASON / PHASE</label><select value={state.control.seasonPhase} onChange={(e) => update('control', 'seasonPhase', e.target.value)}><option value="">--</option>{optionRegistry.thiccFitt.roidSeason.map((o) => <option key={o}>{o}</option>)}</select></div>
+          <div><label>SORENESS / RECOVERY</label><input value={state.control.sorenessRecovery} onChange={(e) => update('control', 'sorenessRecovery', e.target.value)} /></div>
+          <div><label>PREP STATUS</label><input value={state.control.prepStatus} onChange={(e) => update('control', 'prepStatus', e.target.value)} /></div>
+          <Link href="/clock-it" className="tf30-clock">CLOCK.IT</Link>
+        </header>
 
-  return <section className="tf-page"><div className="tf-overlay" />
-    <img className="tf-title-glyph" src="/backgrounds/THICC-FITT/thicc-title.png" alt="THICC.FITT" />
-    <Link href="/its-getting-thicc" className="tf-client-link" aria-label="Crystal dumbbell link"><img src="/ui/glyphs/triggers/glyph-crystal-dumbbell.png" alt="Crystal dumbbell" /></Link>
-    <Link href="/clock-it" className="tf-clockit-link" aria-label="Clock.It temporary access">🐝 CLOCK.IT</Link>
+        <main className="tf30-grid">
+          <section className="tf30-panel tf30-exercise"><h2>EXERCISE LOG 2.0</h2><p>6 EXERCISES PER SESSION · CORE 15 MIN · SESSION 75-120 MIN</p>
+            <div className="tf30-table-head"><span>#</span><span>EXERCISE</span><span>WEIGHT</span><span>REPS</span><span>SETS</span><span>FAILURE</span><span>NOTES</span></div>
+            {state.exerciseRows.map((row, i) => <div className="tf30-table-row" key={i}><span>{i + 1}</span><input value={row.exercise} onChange={(e) => updateExercise(i, 'exercise', e.target.value)} /><input value={row.weight} onChange={(e) => updateExercise(i, 'weight', e.target.value)} /><input value={row.reps} onChange={(e) => updateExercise(i, 'reps', e.target.value)} /><input value={row.sets} onChange={(e) => updateExercise(i, 'sets', e.target.value)} /><select value={row.failure} onChange={(e) => updateExercise(i, 'failure', e.target.value)}><option>Y</option><option>N</option></select><input value={row.notes} onChange={(e) => updateExercise(i, 'notes', e.target.value)} /></div>)}
+            <div className="tf30-core"><strong>CORE WORK (15 MINUTES)</strong><input placeholder="CORE FOCUS" value={state.coreFocus} onChange={(e) => setState((p) => ({ ...p, coreFocus: e.target.value }))} /><input value={state.coreMinutes} onChange={(e) => setState((p) => ({ ...p, coreMinutes: e.target.value }))} /></div>
+            <div className="tf30-duration"><label>TRAINING DURATION<input value={state.trainingDuration} onChange={(e) => setState((p) => ({ ...p, trainingDuration: e.target.value }))} /></label><label>SESSION TOTAL<input value={state.sessionTotal} onChange={(e) => setState((p) => ({ ...p, sessionTotal: e.target.value }))} /></label><label>COMPLETED<input type="checkbox" checked={state.sessionCompleted} onChange={(e) => setState((p) => ({ ...p, sessionCompleted: e.target.checked }))} /></label></div>
+          </section>
 
-    <header className="tf-header tf-panel">
-      <input value={state.form.gymLocation} onChange={(e) => updateField('gymLocation', e.target.value)} placeholder="GYM LOCATION" />
-      <input type="time" value={state.form.arrivalTime} onChange={(e) => updateField('arrivalTime', e.target.value)} />
-      <select value={state.form.workoutLength} onChange={(e) => updateField('workoutLength', e.target.value)}><option value="">WORKOUT LENGTH</option>{opts.roidWorkoutDuration.map((o) => <option key={o}>{o}</option>)}</select>
-      <select value={state.form.season} onChange={(e) => updateField('season', e.target.value)}><option value="">SEASON</option>{opts.roidSeason.map((o) => <option key={o}>{o}</option>)}</select>
-      <select value={state.form.soreness} onChange={(e) => updateField('soreness', e.target.value)}><option value="">SORENESS LEVEL</option>{opts.soreness.map((o) => <option key={o}>{o}</option>)}</select>
-    </header>
+          <section className="tf30-panel tf30-vault"><h2>VAULT 2.0</h2><label>COMPOUND<select value={state.vault.compound} onChange={(e) => update('vault', 'compound', e.target.value)}><option value="">--</option>{optionRegistry.thiccFitt.roidCompound.map((o) => <option key={o}>{o}</option>)}</select></label><label>ESTER / FORM<select value={state.vault.ester} onChange={(e) => update('vault', 'ester', e.target.value)}><option value="">--</option>{optionRegistry.thiccFitt.roidEster.map((o) => <option key={o}>{o}</option>)}</select></label><label>AMOUNT<select value={state.vault.amount} onChange={(e) => update('vault', 'amount', e.target.value)}><option value="">--</option>{optionRegistry.thiccFitt.roidAmount.map((o) => <option key={o}>{o}</option>)}</select></label><label>SHOT __ OF __<div><input value={state.vault.shotCurrent} onChange={(e) => update('vault', 'shotCurrent', e.target.value)} /><input value={state.vault.shotTotal} onChange={(e) => update('vault', 'shotTotal', e.target.value)} /></div></label><label>SENSITIVITY<select value={state.vault.sensitivity} onChange={(e) => update('vault', 'sensitivity', e.target.value)}><option value="">--</option>{optionRegistry.thiccFitt.roidSensitivity.map((o) => <option key={o}>{o}</option>)}</select></label><label>CYCLE WEEK __ OF __<div><input value={state.vault.cycleWeekCurrent} onChange={(e) => update('vault', 'cycleWeekCurrent', e.target.value)} /><input value={state.vault.cycleWeekTotal} onChange={(e) => update('vault', 'cycleWeekTotal', e.target.value)} /></div></label></section>
 
-    <main className="tf-grid">
-      <section className="tf-panel tf-exercises"><h2>EXERCISE LOG</h2>{state.exerciseRows.map((row, i) => <div key={i} className="tf-row"><input placeholder="EXERCISE" value={row.exercise} onChange={(e) => updateExercise(i, 'exercise', e.target.value)} /><input placeholder="WEIGHT" value={row.weight} onChange={(e) => updateExercise(i, 'weight', e.target.value)} /><input placeholder="REPS" value={row.reps} onChange={(e) => updateExercise(i, 'reps', e.target.value)} /><input placeholder="SETS" value={row.sets} onChange={(e) => updateExercise(i, 'sets', e.target.value)} /><select value={row.failure} onChange={(e) => updateExercise(i, 'failure', e.target.value)}><option value="">FAILURE Y/N</option><option>Y</option><option>N</option></select></div>)}<button className="tf-add-row" type="button" onClick={addExerciseRow}>+ ADD EXERCISE RPM</button></section>
-      <section className="tf-panel tf-cardio-mid"><h2>CARDIO</h2><div className="tf-row"><select value={state.form.cardioType} onChange={(e) => updateField('cardioType', e.target.value)}><option value="">TYPE</option>{opts.roidCardioType.map((o) => <option key={o}>{o}</option>)}</select><select value={state.form.cardioDuration} onChange={(e) => updateField('cardioDuration', e.target.value)}><option value="">DURATION</option>{opts.roidCardioDuration.map((o) => <option key={o}>{o}</option>)}</select><select value={state.form.cardioIntensity} onChange={(e) => updateField('cardioIntensity', e.target.value)}><option value="">INTENSITY</option>{opts.roidIntensity.map((o) => <option key={o}>{o}</option>)}</select></div><div className="tf-row"><input placeholder="CARDIO LOCATION" value={state.form.cardioLocation} onChange={(e) => updateField('cardioLocation', e.target.value)} /><textarea value={state.form.cardioNotes} onChange={(e) => updateField('cardioNotes', e.target.value)} placeholder="NOTES" /></div></section>
-      <section className="tf-panel tf-notes"><h2>SO HOW YOU DOIN 🫪⁉️</h2><div className="tf-notes-stack"><select value={state.form.notesPrompt} onChange={(e) => updateField('notesPrompt', e.target.value)}>{opts.approvedPrompts.map((o) => <option key={o}>{o}</option>)}</select><textarea value={state.form.notesText} onChange={(e) => updateField('notesText', e.target.value)} placeholder="WRITE YOUR THOUGHTS HERE..." /></div></section>
-      <section className="tf-panel tf-left-stack"><section className="tf-panel tf-stats"><h2>STATS</h2><div className="tf-stats-scroll"><div className="tf-stats-grid">{statFields.map(([k, l]) => <label key={k} className="tf-labeled"><span>{l}</span><input value={state.form[k]} onChange={(e) => updateField(k, e.target.value)} /></label>)}</div><textarea value={state.form.bodyNotes} onChange={(e) => updateField('bodyNotes', e.target.value)} placeholder="NOTES" /></div></section><section className="tf-panel tf-vault"><h2>THE VAULT</h2><div className="tf-vault-scroll">{state.vaultRows.map((row, i) => <div key={i} className="tf-vault-stack"><label className="tf-labeled"><span>COMPOUND</span><select value={row.compound} onChange={(e) => updateVault(i, 'compound', e.target.value)}><option value=""></option>{opts.roidCompound.map((o) => <option key={o}>{o}</option>)}</select></label><label className="tf-labeled"><span>ESTER</span><select value={row.ester} onChange={(e) => updateVault(i, 'ester', e.target.value)}><option value=""></option>{opts.roidEster.map((o) => <option key={o}>{o}</option>)}</select></label><label className="tf-labeled"><span>AMOUNT</span><select value={row.amount} onChange={(e) => updateVault(i, 'amount', e.target.value)}><option value=""></option>{opts.roidAmount.map((o) => <option key={o}>{o}</option>)}</select></label><label className="tf-labeled tf-inline-fill"><span>SHOT __ OF __</span><input value={row.shotOf} onChange={(e) => updateVault(i, 'shotOf', e.target.value)} /></label><label className="tf-labeled"><span>SENSITIVITY</span><select value={row.sensitivity} onChange={(e) => updateVault(i, 'sensitivity', e.target.value)}><option value=""></option>{opts.roidSensitivity.map((o) => <option key={o}>{o}</option>)}</select></label><label className="tf-labeled tf-inline-fill"><span>CYCLE WEEK __ OF __</span><input value={row.weekOf} onChange={(e) => updateVault(i, 'weekOf', e.target.value)} /></label></div>)}<div className="tf-pump-wrap"><button type="button" className="tf-pump-trigger" onClick={sendToAssurer} onDoubleClick={resetSends} disabled={!canSend} aria-label="Pump It send trigger"><img src="/backgrounds/THICC-FITT/pump-it.PNG" alt="PUMP-IT GLYPH" /></button></div></div></section><section className="tf-panel tf-mantra"><h2>THICC.FITT QUOTE</h2><div className="tf-quote-frame"><select value={state.form.activeQuote} onChange={(e) => updateField('activeQuote', e.target.value)}>{optionRegistry.thiccFitt.quoteOfDay.map((o) => <option key={o}>{o}</option>)}</select><p>{state.form.activeQuote}</p></div></section><section className="tf-panel tf-body"><h2>MEDIA</h2><div className="tf-media-grid"><label className="tf-upload">UPLOAD<input type="file" accept="image/*" onChange={(e) => setMediaPreview([...(mediaPreview.slice(1)), ...(e.target.files?.[0] ? [e.target.files[0]] : [])].slice(0, 3))} /></label>{[0, 1].map((slot) => <label key={slot} className="tf-upload">{previewUrls[slot] ? <img src={previewUrls[slot]} alt="Preview" /> : 'MEDIA'}<input type="file" accept="image/*" onChange={(e) => { if (!e.target.files?.[0]) return; const next = [...mediaPreview]; next[slot + 1] = e.target.files[0]; setMediaPreview(next.slice(0, 3)); }} /></label>)}</div></section></section>
-    </main>
-  </section>;
+          <section className="tf30-panel"><h2>CARDIO / CONDITIONING</h2><div className="tf30-split"><select value={state.cardio.type} onChange={(e) => update('cardio', 'type', e.target.value)}><option value="">CARDIO TYPE</option>{optionRegistry.thiccFitt.roidCardioType.map((o) => <option key={o}>{o}</option>)}</select><select value={state.cardio.duration} onChange={(e) => update('cardio', 'duration', e.target.value)}><option value="">CARDIO DURATION</option>{optionRegistry.thiccFitt.roidCardioDuration.map((o) => <option key={o}>{o}</option>)}</select><select value={state.cardio.intensity} onChange={(e) => update('cardio', 'intensity', e.target.value)}><option value="">CARDIO INTENSITY</option><option>LOW</option><option>MODERATE</option><option>HIGH</option><option>MAX</option></select><input placeholder="CARDIO LOCATION" value={state.cardio.location} onChange={(e) => update('cardio', 'location', e.target.value)} /><textarea placeholder="CARDIO NOTES" value={state.cardio.notes} onChange={(e) => update('cardio', 'notes', e.target.value)} /><label>WEEKLY COMPLIANCE (3X/WEEK)<input type="number" min="0" max="3" value={state.cardio.weeklyDone} onChange={(e) => update('cardio', 'weeklyDone', Number(e.target.value) || 0)} /><span>{cardioComplianceLabel}</span></label></div></section>
+
+          <section className="tf30-panel"><h2>SO HOW YOU DOIN 🫪⁉️</h2><select value={state.soHowYouDoin} onChange={(e) => setState((p) => ({ ...p, soHowYouDoin: e.target.value }))}>{optionRegistry.thiccFitt.soHowYouDoin.map((o) => <option key={o}>{o}</option>)}</select><textarea value={state.soHowYouDoinNotes} onChange={(e) => setState((p) => ({ ...p, soHowYouDoinNotes: e.target.value }))} placeholder="NOTES" /></section>
+
+          <section className="tf30-panel"><h2>BODY / GROWTH TRACKING</h2><div className="tf30-metrics">{measurementFields.map(([k, l]) => <label key={k}>{l}<input value={state.body[k]} onChange={(e) => setState((p) => ({ ...p, body: { ...p.body, [k]: e.target.value } }))} /></label>)}</div><textarea placeholder="NOTES" value={state.bodyNotes} onChange={(e) => setState((p) => ({ ...p, bodyNotes: e.target.value }))} /><div className="tf30-week"><strong>INBODY SATURDAY</strong><input placeholder="LAST SCAN" value={state.inbodyLastScan} onChange={(e) => setState((p) => ({ ...p, inbodyLastScan: e.target.value }))} /><input placeholder="WEEK-OVER-WEEK" value={state.inbodyWoW} onChange={(e) => setState((p) => ({ ...p, inbodyWoW: e.target.value }))} /><input placeholder="SPIKES / WATCH ITEMS" value={state.inbodyWatchItems} onChange={(e) => setState((p) => ({ ...p, inbodyWatchItems: e.target.value }))} /></div></section>
+
+          <section className="tf30-panel"><h2>THICC.QUOTE OF THE DAY</h2><select value={state.quoteOfDay} onChange={(e) => setState((p) => ({ ...p, quoteOfDay: e.target.value }))}>{optionRegistry.thiccFitt.quoteOfDay.map((o) => <option key={o}>{o}</option>)}</select><blockquote>{state.quoteOfDay}</blockquote></section>
+
+          <section className="tf30-panel"><h2>PHOTO SHOOT COUNTDOWN</h2><div className="tf30-split"><input placeholder="NEXT SHOOT" value={state.photo.nextShoot} onChange={(e) => update('photo', 'nextShoot', e.target.value)} /><input placeholder="TARGET MONTH (LAST SATURDAY)" value={state.photo.targetMonth} onChange={(e) => update('photo', 'targetMonth', e.target.value)} /><input placeholder="DAYS REMAINING" value={state.photo.daysRemaining} onChange={(e) => update('photo', 'daysRemaining', e.target.value)} /><input placeholder="SUBMISSION STATUS" value={state.photo.submissionStatus} onChange={(e) => update('photo', 'submissionStatus', e.target.value)} /><input placeholder="LAST SUBMITTED" value={state.photo.lastSubmitted} onChange={(e) => update('photo', 'lastSubmitted', e.target.value)} /></div></section>
+
+          <section className="tf30-panel"><h2>MEDIA</h2><div className="tf30-media"><div>PROGRESS PHOTOS</div><div>GYM PHOTOS</div><div>CHECKPOINT PHOTOS</div></div></section>
+        </main>
+      </section>
+    </section>
+  );
 }
