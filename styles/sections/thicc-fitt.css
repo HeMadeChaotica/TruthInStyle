@@ -1,8 +1,7 @@
-.tf30-shell{position:relative;height:100vh;min-height:768px;max-height:1024px;aspect-ratio:4/3;overflow:hidden;color:#ff4fb6;font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.4px;display:grid;grid-template-columns:30% 70%;margin:0 auto}
-.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg-v3.png') center center/cover no-repeat;z-index:0;transform:scale(1.02)}
+.tf30-shell{position:relative;width:100vw;height:100vh;overflow:hidden;color:#ff4fb6;font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.4px;display:grid;grid-template-columns:30% 70%;margin:0 auto}
+.tf30-bg{position:absolute;inset:0;background:url('/background/THICC-FITT/thicc-fitt-bg-v3.png') center center/cover no-repeat;z-index:0}
 .tf30-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,0,4,.12) 0%,rgba(5,0,4,.1) 32%,rgba(8,0,6,.5) 55%,rgba(10,0,8,.72) 100%);z-index:0}
-.tf30-left,.tf30-right,.tf30-clock{position:relative;z-index:1}.tf30-left{display:flex;flex-direction:column;justify-content:space-between;padding:.7rem .55rem .8rem}
-.tf30-mark{font-size:2.8rem;line-height:.92;color:#ff4fb6;text-shadow:0 0 12px rgba(255,79,182,.45)}
+.tf30-left,.tf30-right,.tf30-clock{position:relative;z-index:1}.tf30-left{display:flex;flex-direction:column;justify-content:flex-end;padding:.7rem .55rem .8rem}
 .tf30-crystal{display:flex;flex-direction:column;gap:.2rem;align-items:center;text-decoration:none;color:#ff9fda;font-size:.7rem;padding:.35rem;background:rgba(35,8,16,.35);max-width:155px}
 .tf30-crystal img{width:60px;height:60px}.tf30-clock{position:absolute;top:.45rem;right:.55rem;text-decoration:none;color:#ff9fda;background:rgba(35,8,16,.35);padding:.26rem .55rem;font-size:.66rem}
 .tf30-panel,.tf30-crystal,.tf30-clock{border:1px solid transparent;background-clip:padding-box;border-radius:10px;position:relative}
