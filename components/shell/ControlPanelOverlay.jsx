@@ -71,7 +71,7 @@ export default function ControlPanelOverlay({
           position: 'absolute',
           top: 0,
           left: 0,
-          width: 'min(84vw, 96px)',
+          width: 'min(84vw, 320px)',
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
