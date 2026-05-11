@@ -1,27 +1,10 @@
-.tf30-shell{position:relative;min-height:100vh;display:grid;place-items:center;color:#ff79cd;text-transform:uppercase;font-family:Impact,'Arial Narrow',sans-serif;letter-spacing:.6px}
+.tf30-shell{color:#ff79cd}
 .tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg-v3.png') center center/contain no-repeat}
 .tf30-overlay{position:absolute;inset:0;background:rgba(8,0,7,.35)}
-.tf30-content-shell{position:relative;z-index:1;width:768px;height:686px;display:grid;grid-template-columns:30% 70%;gap:8px;padding:10px}
-.tf30-left,.tf30-right{position:relative;min-width:0}
-.tf30-clock{position:absolute;left:8px;bottom:8px;width:56px;height:56px;display:grid;place-items:center;text-decoration:none;color:#ffd2ee;font-size:.56rem}
-.tf30-crystal{position:absolute;left:8px;bottom:74px;width:72px;text-align:center;text-decoration:none;color:#ffd2ee;font-size:.56rem;display:grid;gap:4px}
+.tf30-left{position:relative}.tf30-crystal{position:absolute;left:8px;bottom:74px;width:72px;text-align:center;text-decoration:none;color:#ffd2ee;font-size:.56rem;display:grid;gap:4px}
 .tf30-crystal img{width:32px;height:32px;justify-self:center}
-.tf30-right{display:grid;grid-template-rows:56px 1fr 42px;gap:8px;overflow:hidden}
-.tf30-island{position:relative;background:rgba(25,6,18,.15);backdrop-filter:blur(1.2px);padding:6px;overflow:hidden}
-.tf30-island::before,.tf30-clock::before,.tf30-crystal::before{content:'';position:absolute;inset:0;border:1px solid transparent;background:linear-gradient(90deg,#ff63c5,#8bf2ff,#ffcd64,#ff63c5) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;background-size:220% 100%;animation:tfsh 4.5s linear infinite;pointer-events:none}
-@keyframes tfsh{to{background-position:220% 0}}
-.tf30-band{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
-.tf30-grid{display:grid;grid-template-columns:1.5fr 1.5fr 1fr;grid-template-rows:1.2fr 1fr 1fr .95fr;grid-template-areas:'exercise exercise vault' 'cardio body photo' 'doin doin inbody' 'media media media';gap:8px;overflow:auto;padding-right:2px}
-.tf30-exercise{grid-area:exercise}.tf30-vault{grid-area:vault}.tf30-cardio{grid-area:cardio}.tf30-body{grid-area:body}.tf30-doin{grid-area:doin}.tf30-photo{grid-area:photo}.tf30-inbody{grid-area:inbody}.tf30-media{grid-area:media}
-label,span,strong,input,select,textarea{font-size:.58rem}
-input,select,textarea{width:100%;background:rgba(14,0,11,.45);border:1px solid rgba(255,121,205,.45);color:#ffd4ef;padding:2px 4px}
-textarea{min-height:32px}
-h2{margin:0 0 4px;font-size:.75rem}
+label,span,strong,input,select,textarea{font-size:.58rem} input,select,textarea{width:100%;background:rgba(14,0,11,.45);border:1px solid rgba(255,121,205,.45);color:#ffd4ef;padding:2px 4px}
+h2{margin:0 0 4px;font-size:.75rem}.tf30-band{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
 .tf30-table-head,.tf30-table-row{display:grid;grid-template-columns:16px 1.2fr repeat(4,.52fr) .8fr;gap:3px;align-items:center}
-.tf30-core,.tf30-duration,.tf30-vault label>div,.tf30-split,.tf30-metric-head,.tf30-metric-row,.tf30-media-grid{display:grid;gap:4px}
-.tf30-core,.tf30-duration{grid-template-columns:repeat(3,minmax(0,1fr))}
-.tf30-vault-glyph{text-align:center;font-size:1.8rem;line-height:1;margin:2px 0}
-.tf30-vault label>div{grid-template-columns:1fr 1fr}.tf30-split{grid-template-columns:1.2fr .8fr}.tf30-metric-head,.tf30-metric-row{grid-template-columns:1fr .6fr .6fr .5fr;align-items:center}
-.tf30-media-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-.tf30-media-grid div{min-height:48px;display:grid;place-items:center;border:1px dashed rgba(255,121,205,.5)}
-.tf30-footer{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;text-align:center;font-size:.55rem}
+.tf30-metric-row,.tf30-media-grid,.tf30-footer{display:grid;gap:4px}.tf30-metric-row{grid-template-columns:1fr .6fr}.tf30-media-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tf30-media-grid div{min-height:48px;display:grid;place-items:center;border:1px dashed rgba(255,121,205,.5)}.tf30-footer{grid-template-columns:repeat(6,minmax(0,1fr));text-align:center;font-size:.55rem}
