@@ -1,1 +1,10 @@
-/* Temporary scaffold file for local implementation. */
+html,
+body,
+body > div:first-child {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+}
