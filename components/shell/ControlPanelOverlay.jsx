@@ -71,7 +71,7 @@ export default function ControlPanelOverlay({
           position: 'absolute',
           top: 0,
           left: 0,
-          width: 'min(84vw, 110px)',
+          width: 'min(84vw, 96px)',
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
@@ -80,10 +80,10 @@ export default function ControlPanelOverlay({
           borderImage: 'linear-gradient(180deg, #56e8ff, #fd5fff, #ffd54f, #56e8ff) 1',
           transform: isOpen ? 'translateX(0)' : 'translateX(-112%)',
           transition: 'transform 180ms ease-out',
-          padding: '8px 6px',
+          padding: '0',
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px'
+          gap: '0'
         }}
       >
         {CONTROL_ITEMS.map((item) => (
@@ -98,8 +98,6 @@ export default function ControlPanelOverlay({
               display: 'block',
               width: '100%',
               background: 'transparent',
-              border: '1px solid transparent',
-              borderImage: 'linear-gradient(120deg, #56e8ff, #fd5fff, #ffd54f) 1',
               padding: '0',
               cursor: 'pointer',
               outlineOffset: '2px'
