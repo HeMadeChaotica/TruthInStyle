@@ -50,6 +50,7 @@ export default function AppShell({ children }) {
 
   return (
     <div
+      style={{ height: '100%' }}
       onTouchStart={(e) => setTouchStartX(e.touches[0]?.clientX ?? null)}
       onTouchMove={(e) => {
         const currentX = e.touches[0]?.clientX ?? 0;

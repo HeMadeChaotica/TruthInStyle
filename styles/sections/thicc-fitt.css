@@ -1,5 +1,5 @@
 .tf30-shell{color:#ff79cd}
-.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg-v3.png') center center/contain no-repeat}
+.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg-v3.png') center center/cover no-repeat}
 .tf30-overlay{position:absolute;inset:0;background:rgba(8,0,7,.35)}
 .tf30-left{position:relative}.tf30-crystal{position:absolute;left:8px;bottom:74px;width:72px;text-align:center;text-decoration:none;color:#ffd2ee;font-size:.56rem;display:grid;gap:4px}
 .tf30-crystal img{width:32px;height:32px;justify-self:center}
