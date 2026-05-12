@@ -9,7 +9,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export const createClientTemplate = () => ({
   id: `THICC-${Date.now().toString().slice(-6)}`,
   name: 'thicc.fitt',
-  phone: '', sex: '', orientation: '', heightFt: '', heightIn: '', heightCm: '', age: '', email: '', married: false, single: true,
+  phone: '', sex: '', sexualOrientation: '', height: '', age: '', email: '', relationshipStatus: 'SINGLE', clientColorOptionKey:'cobalt', clientColorValue:'#3b82f6',
   photo: '', currentWeight: '', goalWeight: '', currentBmi: '', goalBmi: '',
   food1: '', food2: '', food3: '', food4: '', food5: '',
   move1: '', move2: '', move3: '', move4: '', activity: '',
@@ -23,7 +23,7 @@ export const createClientTemplate = () => ({
   upcomingEvents: [{ type: 'WEDDING', custom: '', date: '' }, { type: 'BIRTHDAY', custom: '', date: '' }],
   paymentSchedule: '', paymentDate: '', paymentNotes: '', thoughts: '',
   myfitMeals: '', myfitVerified: false, myfitNotes: '',
-  celebration: Array.from({ length: 9 }, () => ''),
+  celebration: Array.from({ length: 10 }, () => ''),
 });
 
 const get = (k, fb) => {
