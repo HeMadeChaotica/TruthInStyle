@@ -4,92 +4,42 @@ import { useEffect, useMemo, useState } from 'react';
 import '../../styles/sections/its-getting-thicc.css';
 import '../../styles/sections/universal-frame.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
-import { addClient, appendLog, loadClients, readMedia, saveClients, upsertMedia } from '../../src/services/itsGettingThiccService';
+import {
+  addClient, appendLog, loadAssignments, loadClients, loadForms, loadScheduleEntries, readMedia, resolveClientColor,
+  saveAssignments, saveClients, saveScheduleEntries, upsertMedia,
+} from '../../src/services/itsGettingThiccService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 
 const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const tabs = ['THICC.INFO', 'THICC.PEOPLE', 'THICC.FORMS', 'THICC.TIME'];
+const foodPrompts = ['WHAT DO YOU STRUGGLE THE HARDEST TO STAY AWAY FROM', 'WHEN DO YOU USUALLY REACH FOR IT (TIME, MOOD, SITUATION)', 'GROWING UP, WERE YOU FORCED TO FINISH YOUR PLATE, AND HOW HAS THAT AFFECTED YOUR EATING HABITS IN ADULTHOOD?', 'WERE THERE FOOD RULES, PUNISHMENTS, PRESSURE, OR EMOTIONALLY CHARGED EXPERIENCES AROUND EATING GROWING UP THAT STILL AFFECT HOW YOU EAT NOW?', 'HOW DO YOUR EMOTIONS AND FOOD INTERACT TODAY'];
+const movementPrompts = ['WALK ME THROUGH A TYPICAL DAY OF EATING', 'WALK ME THROUGH A NORMAL DAY IN YOUR BODY', 'HOW MUCH OF YOUR DAY IS SITTING VS ACTUALLY MOVING', 'WHEN DO YOU FEEL MOST PHYSICALLY ALIVE'];
+const medicalPrompts = ['EMERGENCY CONTACT NAME / NUMBER', 'PAST / CURRENT INJURIES', 'PAST / UPCOMING SURGERIES', 'RECURRING SEASONAL ISSUES / ALLERGIES', 'MEDICATIONS THAT COULD CAUSE COMPLICATIONS, LIKE BLOOD PRESSURE MEDS', 'PHYSICAL LIMITATIONS', 'MOVEMENTS THAT CAUSE PAIN', 'LEVEL OF FLEXIBILITY, RANGE FROM RIGAMORTUS TO SIMONE BILES WISHES', 'HARD NO’S', 'TRAINING FEARS'];
 
 export default function ItsGettingThiccSection() {
-  const [clients, setClients] = useState([]);
-  const [activeId, setActiveId] = useState('');
-  const [activeTab, setActiveTab] = useState('THICC.INFO');
-  const [forms, setForms] = useState([{ id: 'intake', formName: 'INTAKE DOSSIER', formCategory: 'OPERATIONS', active: true }]);
-  const [assignments, setAssignments] = useState([]);
-  const [calendar, setCalendar] = useState([]);
+  const [clients, setClients] = useState([]); const [activeId, setActiveId] = useState(''); const [activeTab, setActiveTab] = useState('THICC.INFO');
+  const [forms, setForms] = useState([]); const [assignments, setAssignments] = useState([]); const [calendar, setCalendar] = useState([]);
   const active = useMemo(() => clients.find((c) => c.id === activeId) || clients[0], [clients, activeId]);
 
-  useEffect(() => {
-    const seeded = loadClients();
-    setClients(seeded);
-    setActiveId(seeded[0]?.id || '');
-  }, []);
-
-  const persist = (next, event = 'autosave') => {
-    setClients(next);
-    saveClients(next);
-    appendLog(event, { activeId });
-  };
-
-  const update = (key, value) => {
-    if (!active) return;
-    const next = clients.map((c) => (c.id === active.id ? { ...c, [key]: value } : c));
-    persist(next, `field:${key}`);
-  };
-
+  useEffect(() => { const seeded = loadClients(); setClients(seeded); setForms(loadForms()); setAssignments(loadAssignments()); setCalendar(loadScheduleEntries()); setActiveId(seeded[0]?.id || ''); }, []);
+  const persist = (next, event = 'autosave') => { setClients(next); saveClients(next); appendLog(event, { activeId }); };
+  const update = (key, value) => { if (!active) return; persist(clients.map((c) => (c.id === active.id ? { ...c, [key]: value } : c)), `field:${key}`); };
   const updateArray = (key, i, value) => update(key, (active[key] || []).map((v, idx) => (idx === i ? value : v)));
-
-  const onUpload = (slot) => (e) => {
-    const f = e.target.files?.[0];
-    if (!f || !active) return;
-    const fr = new FileReader();
-    fr.onload = () => {
-      const dataUrl = upsertMedia(active.id, slot, fr.result);
-      if (slot === 'photo') update('photo', dataUrl);
-      else updateArray('celebration', Number(slot), dataUrl);
-    };
-    fr.readAsDataURL(f);
-  };
-
+  const onUpload = (slot) => (e) => { const f = e.target.files?.[0]; if (!f || !active) return; const fr = new FileReader(); fr.onload = () => { const d = upsertMedia(active.id, slot, fr.result); if (slot === 'photo') update('photo', d); else update('celebration', (active.celebration || []).map((t, i) => (i === Number(slot) ? { ...t, media: d } : t))); }; fr.readAsDataURL(f); };
+  const color = resolveClientColor(active?.clientColorOptionKey);
   if (!active) return null;
   const glancePhoto = active.photo || readMedia(active.id, 'photo');
 
-  const infoShelves = [
-    { id: 'A', columns: 1, panels: [{ id: 'identity', token: 'tall', content: <Identity /> }] },
-    { id: 'B', columns: 2, panels: [{ id: 'body', token: 'standard', content: <Body /> }, { id: 'glance', token: 'standard', content: <Glance /> }] },
-    { id: 'C', columns: 1, panels: [{ id: 'food', token: 'tall', content: <Food /> }] },
-    { id: 'D', columns: 2, panels: [{ id: 'move', token: 'tall', content: <Movement /> }, { id: 'med', token: 'tall', content: <Medical /> }] },
-    { id: 'E', columns: 2, panels: [{ id: 'macro', token: 'standard', content: <Macro /> }, { id: 'juice', token: 'standard', content: <Juice /> }, { id: 'season', token: 'compact', content: <Season /> }, { id: 'ref', token: 'standard', content: <Referrals /> }] },
-    { id: 'F', columns: 1, panels: [{ id: 'tr', token: 'tall', content: <TrainingRest /> }, { id: 'split', token: 'tall', content: <Split /> }] },
-    { id: 'G', columns: 2, panels: [{ id: 'event', token: 'standard', content: <Events /> }, { id: 'pay', token: 'standard', content: <Payment /> }] },
-    { id: 'H', columns: 2, panels: [{ id: 'thoughts', token: 'standard', content: <Thoughts /> }, { id: 'check', token: 'standard', content: <Checkin /> }] },
-    { id: 'I', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <Celebration /> }] },
-  ];
+  function Food() { return <><h3>FOOD: THE GOOD, THE BAD & THE “I DESERVE THIS”</h3>{foodPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={active[`food${i + 1}`] || ''} onChange={(e) => update(`food${i + 1}`, e.target.value)} /></label>)}</>; }
+  function Movement() { return <><h3>MOVEMENT: THE MEASURE AND THE PRESSURES</h3>{movementPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}{i === 1 && <small>THINK WORK, ERRANDS, SITTING, STANDING, STEPS, STRESS, AND HOW OFTEN YOUR BODY IS ACTUALLY IN MOTION, NOT JUST HOW OFTEN YOU MEANT TO WORK OUT.</small>}<textarea value={active[`move${i + 1}`] || ''} onChange={(e) => update(`move${i + 1}`, e.target.value)} /></label>)}<label>5. SELECT CURRENT OVERALL LEVEL OF ACTIVITY<select value={active.activity || ''} onChange={(e) => update('activity', e.target.value)}>{['SEDENTARY', 'LIGHTLY', 'MODERATELY', 'ACTIVE', 'I DO THIS S@$&!', 'I SWEAR I’M ACTIVE BUT MY APPLE WATCH SAYS OTHERWISE'].map((o) => <option key={o}>{o}</option>)}</select></label></>; }
+  function Medical() { return <><h3>MEDICAL ADVISORY</h3>{medicalPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={active[['emergencyContact', 'injuries', 'surgeries', 'allergies', 'medications', 'limits', 'painfulMovements', 'flexibility', 'hardNos', 'trainingFears'][i]] || ''} onChange={(e) => update(['emergencyContact', 'injuries', 'surgeries', 'allergies', 'medications', 'limits', 'painfulMovements', 'flexibility', 'hardNos', 'trainingFears'][i], e.target.value)} /></label>)}</>; }
 
-  function Identity() { return <><h3>CLIENT IDENTITY</h3><label className="upload">{glancePhoto ? <img src={glancePhoto} alt="client" /> : 'PHOTO UPLOAD FROM LIBRARY'}<input type="file" accept="image/*" onChange={onUpload('photo')} /></label>{['name', 'id', 'phone', 'sex', 'sexualOrientation', 'height', 'age', 'email'].map((k) => <label key={k}>{k.toUpperCase()}<input value={active[k] || ''} onChange={(e) => update(k, e.target.value)} /></label>)}<label>MARRIED / SINGLE<select value={active.relationshipStatus || ''} onChange={(e) => update('relationshipStatus', e.target.value)}>{optionRegistry.itsGettingThicc.marriedSingle.map((o) => <option key={o}>{o}</option>)}</select></label><label>CLIENT COLOR<select value={active.clientColorOptionKey || ''} onChange={(e) => update('clientColorOptionKey', e.target.value)}>{optionRegistry.itsGettingThicc.clientColors.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}</select></label></>; }
-  function Body() { return <><h3>BODY / GOAL</h3>{['currentWeight', 'goalWeight', 'currentBmi', 'goalBmi'].map((k) => <label key={k}>{k.toUpperCase()}<input value={active[k] || ''} onChange={(e) => update(k, e.target.value)} /></label>)}</>; }
-  function Glance() { return <><h3>AT A GLANCE</h3>{glancePhoto && <img src={glancePhoto} className="thumb" alt="preview" />}<p>HEIGHT {active.height}</p><p>CURRENT WEIGHT {active.currentWeight}</p><p>GOAL WEIGHT {active.goalWeight}</p><p>CURRENT BMI {active.currentBmi}</p><p>GOAL BMI {active.goalBmi}</p></>; }
-  function Food() { return <><h3>FOOD: THE GOOD, THE BAD & THE “I DESERVE THIS”</h3>{[1, 2, 3, 4, 5].map((n) => <label key={n}>PROMPT {n}<textarea value={active[`food${n}`] || ''} onChange={(e) => update(`food${n}`, e.target.value)} /></label>)}</>; }
-  function Movement() { return <><h3>MOVEMENT: THE MEASURE AND THE PRESSURES</h3>{[1, 2, 3, 4].map((n) => <label key={n}>PROMPT {n}<textarea value={active[`move${n}`] || ''} onChange={(e) => update(`move${n}`, e.target.value)} /></label>)}<label>SELECT CURRENT OVERALL LEVEL OF ACTIVITY<select value={active.activity || ''} onChange={(e) => update('activity', e.target.value)}>{optionRegistry.itsGettingThicc.activityLevel.map((o) => <option key={o}>{o}</option>)}</select></label></>; }
-  function Medical() { return <><h3>MEDICAL ADVISORY</h3>{['emergencyContact', 'injuries', 'surgeries', 'allergies', 'medications', 'limits', 'painfulMovements', 'flexibility', 'hardNos', 'trainingFears'].map((k) => <label key={k}>{k.toUpperCase()}<textarea value={active[k] || ''} onChange={(e) => update(k, e.target.value)} /></label>)}</>; }
-  function Macro() { return <><h3>MACRO TARGETS</h3><div className="inline-macro">{['PROTEIN', 'CARBS', 'FATS', 'WATER', 'CALORIES'].map((k) => <label key={k}>{k}<input value={active[`macro_${k.toLowerCase()}`] || ''} onChange={(e) => update(`macro_${k.toLowerCase()}`, e.target.value)} /></label>)}</div></>; }
-  function Juice() { return <><h3>DA.JUICE MIRROR</h3>{['substance', 'amount', 'cycle', 'location', 'notes'].map((k) => <label key={k}>{k.toUpperCase()}<input value={active[`juice_${k}`] || ''} onChange={(e) => update(`juice_${k}`, e.target.value)} /></label>)}</>; }
-  function Season() { return <><h3>SEASONS PER WEEK</h3><input type="number" value={active.seasonsPerWeek || ''} onChange={(e) => update('seasonsPerWeek', e.target.value)} /></>; }
-  function Referrals() { return <><h3>REFERRAL TRACKER</h3><button onClick={() => update('referrals', [...(active.referrals || []), { name: '', date: '', status: '', notes: '' }])}>ADD REFERRAL</button></>; }
-  const Seven = ({ k, choices }) => <div className="hz">{days.map((d, i) => <label key={d}>{d}<select value={active[k]?.[i] || choices[0]} onChange={(e) => updateArray(k, i, e.target.value)}>{choices.map((o) => <option key={o}>{o}</option>)}</select></label>)}</div>;
-  function TrainingRest() { return <><h3>TRAINING / REST CALENDAR</h3><Seven k="trainingRest" choices={optionRegistry.itsGettingThicc.trainingRest} /></>; }
-  function Split() { return <><h3>CURRENT EXERCISE PROGRAM SPLIT</h3><Seven k="programSplit" choices={optionRegistry.itsGettingThicc.programSplit} /></>; }
-  function Events() { return <><h3>UPCOMING TRAINING FOCUS EVENTS</h3><textarea value={active.eventNotes || ''} onChange={(e) => update('eventNotes', e.target.value)} /></>; }
-  function Payment() { return <><h3>PAYMENT</h3><input type="date" value={active.paymentDate || ''} onChange={(e) => update('paymentDate', e.target.value)} /></>; }
-  function Thoughts() { return <><h3>THICC THOUGHTS</h3><textarea className="big" value={active.thoughts || ''} onChange={(e) => update('thoughts', e.target.value)} /></>; }
-  function Checkin() { return <><h3>MYFITFOODS CHECK-IN</h3><label>HOW MANY MEALS WEEKLY<input value={active.myfitMeals || ''} onChange={(e) => update('myfitMeals', e.target.value)} /></label><label>VERIFY WITH ANTHONY THEY ARE LOGGED<select value={String(active.myfitVerified || false)} onChange={(e) => update('myfitVerified', e.target.value === 'true')}><option value="false">NO</option><option value="true">YES</option></select></label></>; }
-  function Celebration() { return <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((img, i) => <label key={i} className="slot">{img ? <img src={img} alt="" /> : `${i + 1}`}<input type="file" accept="image/*" onChange={onUpload(String(i))} /><button className="inline-del" onClick={(e) => { e.preventDefault(); updateArray('celebration', i, ''); }}>×</button></label>)}</div></>; }
+  const infoShelves = [{ id: 'A', columns: 1, panels: [{ id: 'identity', token: 'tall', content: <><h3>CLIENT IDENTITY</h3><label className="upload">{glancePhoto ? <img src={glancePhoto} alt="client" /> : 'PHOTO UPLOAD FROM LIBRARY'}<input type="file" accept="image/*" onChange={onUpload('photo')} /></label>{['name', 'id', 'phone', 'sex', 'sexualOrientation', 'height', 'age', 'email'].map((k) => <label key={k}>{k.toUpperCase()}<input value={active[k] || ''} onChange={(e) => update(k, e.target.value)} /></label>)}<label>CLIENT COLOR<select value={active.clientColorOptionKey || ''} onChange={(e) => update('clientColorOptionKey', e.target.value)}>{optionRegistry.itsGettingThicc.clientColors.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}</select></label></> }] }, { id: 'B', columns: 2, panels: [{ id: 'body', token: 'standard', content: <><h3>BODY / GOAL</h3>{['currentWeight', 'goalWeight', 'currentBmi', 'goalBmi'].map((k) => <label key={k}>{k.toUpperCase()}<input value={active[k] || ''} onChange={(e) => update(k, e.target.value)} /></label>)}</> }, { id: 'glance', token: 'standard', content: <><h3>AT A GLANCE</h3>{glancePhoto && <img src={glancePhoto} className="thumb" alt="preview" />}<p>HEIGHT {active.height}</p><p>CURRENT WEIGHT {active.currentWeight}</p><p>GOAL WEIGHT {active.goalWeight}</p><p>CURRENT BMI {active.currentBmi}</p><p>GOAL BMI {active.goalBmi}</p><p>CLIENT COLOR ACCENT <b style={{ color: color.value }}>{color.label}</b></p></> }] }, { id: 'C', columns: 1, panels: [{ id: 'food', token: 'tall', content: <Food /> }] }, { id: 'D', columns: 2, panels: [{ id: 'move', token: 'tall', content: <Movement /> }, { id: 'med', token: 'tall', content: <Medical /> }] }, { id: 'F', columns: 1, panels: [{ id: 'tr', token: 'tall', content: <><h3>TRAINING / REST CALENDAR</h3><div className="hz">{days.map((d, i) => <label key={d}>{d}<select value={active.trainingRest?.[i] || 'TRAINING'} onChange={(e) => updateArray('trainingRest', i, e.target.value)}>{optionRegistry.itsGettingThicc.trainingRest.map((o) => <option key={o}>{o}</option>)}</select></label>)}</div></> }, { id: 'split', token: 'tall', content: <><h3>CURRENT EXERCISE PROGRAM SPLIT</h3><div className="hz">{days.map((d, i) => <label key={d}>{d}<select value={active.programSplit?.[i] || 'FULLBODY'} onChange={(e) => updateArray('programSplit', i, e.target.value)}>{optionRegistry.itsGettingThicc.programSplit.map((o) => <option key={o}>{o}</option>)}</select></label>)}</div></> }] }, { id: 'I', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /><button className="inline-del" onClick={() => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: '', media: '' } : t)))}>×</button></div>)}</div></> }] }];
 
-  const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'tall', content: <><h3>THICC.PEOPLE</h3><div className="people-list">{clients.map((c) => <button key={c.id} className="people-item" style={{ borderLeftColor: c.clientColorValue || '#91a7ff' }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><span>{c.name}</span><span>{c.id}</span><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></button>)}</div></> }] }];
-  const formsShelves = [{ id: 'forms', columns: 1, panels: [{ id: 'f1', token: 'tall', content: <><h3>THICC.FORMS</h3>{forms.map((f) => <div key={f.id}>{f.formName} · {f.formCategory}</div>)}<button onClick={() => setAssignments([...assignments, { id: Date.now(), clientId: active.id, formId: forms[0].id, status: 'assigned', response_json: {}, notes: '' }])}>ASSIGN FORM TO CLIENT</button><p>ASSIGNMENTS {assignments.length}</p></> }] }];
-  const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'tall', content: <><h3>THICC.TIME</h3><div className="month">{Array.from({ length: 35 }).map((_, i) => <div key={i} className="day">{i + 1 <= 31 ? i + 1 : ''}</div>)}</div><button onClick={() => setCalendar([...calendar, { id: Date.now(), client_id: active.id, entry_type: 'client', entry_date: new Date().toISOString().slice(0, 10), color_option_key: active.clientColorOptionKey || 'cobalt' }])}>ADD ENTRY</button><p>ENTRIES {calendar.length}</p></> }] }];
+  const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'tall', content: <><h3>THICC.PEOPLE</h3><div className="people-list">{clients.map((c) => { const cc = resolveClientColor(c.clientColorOptionKey); return <button key={c.id} className="people-item" style={{ borderLeftColor: cc.value }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><div><strong>{c.name}</strong><span>{c.id}</span></div><div><em style={{ color: cc.value }}>{cc.label}</em><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></div></button>; })}</div></> }] }];
+  const formsShelves = [{ id: 'forms', columns: 1, panels: [{ id: 'f1', token: 'tall', content: <><h3>THICC.FORMS</h3>{forms.map((f) => <div key={f.id} className="form-row"><strong>{f.formName}</strong><span>{f.formCategory}</span><button onClick={() => { const next = [...assignments, { id: Date.now(), clientId: active.id, formId: f.id, status: 'assigned', response_json: {}, notes: '' }]; setAssignments(next); saveAssignments(next); }}>ASSIGN</button></div>)}<p>ASSIGNMENTS {assignments.filter((a) => a.clientId === active.id).length}</p></> }] }];
+  const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'tall', content: <><h3>THICC.TIME</h3><div className="month">{Array.from({ length: 35 }).map((_, i) => <div key={i} className="day"><b>{i + 1 <= 31 ? i + 1 : ''}</b>{calendar.filter((r) => Number(r.entry_date?.slice(-2)) === i + 1).map((r) => <div key={r.id} className="booking" style={{ background: r.entry_type === 'personal' ? '#ff4db8' : resolveClientColor(r.color_option_key).value }}>{r.workout_label || 'BOOKING'}</div>)}</div>)}</div><button onClick={() => { const next = [...calendar, { id: String(Date.now()), client_id: active.id, entry_type: 'client', entry_date: new Date().toISOString().slice(0, 10), workout_label: active.programSplit?.[new Date().getDay()] || 'SESSION', source_split_day: days[new Date().getDay()], color_option_key: active.clientColorOptionKey || 'cobalt' }]; setCalendar(next); saveScheduleEntries(next); }}>ADD ENTRY</button></> }] }];
 
   const shelves = activeTab === 'THICC.INFO' ? infoShelves : activeTab === 'THICC.PEOPLE' ? peopleShelves : activeTab === 'THICC.FORMS' ? formsShelves : timeShelves;
-
-  return <SectionShell className="igtv2-page"><ScenePlate><div className="igtv2-bg" /><div className="igtv2-shade" /></ScenePlate><SectionOverlay><ArtLane className="igtv2-left"><div className="igtv2-glyph">ITS</div>{tabs.map((tab) => <button key={tab} className={`igtv2-cabinet-btn ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>{tab}</button>)}<button className="igtv2-cabinet-btn" onClick={() => { const fresh = addClient(); const next = [...clients, fresh]; persist(next, 'new-client'); setActiveId(fresh.id); setActiveTab('THICC.INFO'); }}>NEW CLIENT</button></ArtLane><ContentScroller><BlueprintStack shelves={shelves} /></ContentScroller></SectionOverlay></SectionShell>;
+  return <SectionShell className="igtv2-page"><ScenePlate><div className="igtv2-bg" /><div className="igtv2-shade" /></ScenePlate><SectionOverlay><ArtLane className="igtv2-left"><div className="igtv2-glyph">ITS</div>{tabs.map((tab) => <button key={tab} className={`igtv2-cabinet-btn ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>{tab}</button>)}</ArtLane><ContentScroller><BlueprintStack shelves={shelves} /></ContentScroller></SectionOverlay></SectionShell>;
 }
