@@ -1,10 +1,12 @@
 .igtv2-page{color:#ffd6f0}
 .igtv2-bg{position:absolute;inset:0;background:url('/background/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center center/cover no-repeat fixed}
-.igtv2-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,0,10,.28),rgba(8,0,10,.44))}
-.igtv2-left{display:flex;flex-direction:column;gap:8px;padding-top:8px;transform:translateY(-8px)}
+.igtv2-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,0,10,.14),rgba(8,0,10,.24))}
+.igtv2-left{display:block;position:relative;overflow:visible}
 .igtv2-glyph{color:#ffd3ee;font-size:.95rem;letter-spacing:.28em}
+.igtv2-cabinet{position:absolute;left:10px;bottom:14%;display:grid;gap:8px;max-width:180px}
 .igtv2-cabinet-btn{background:rgba(20,0,20,.34);color:#ffd7ef;border:1px solid rgba(255,138,213,.55);font:inherit;font-size:.72rem;padding:10px 8px;text-align:left}
 .igtv2-cabinet-btn.active{background:rgba(255,126,209,.28)}
+.igtv2-time-panel{min-height:74dvh}
 button,input,select,textarea{background:rgba(14,0,14,.42);color:#ffd5ee;border:1px solid rgba(255,138,213,.45);font:inherit;font-size:.66rem}
 textarea{min-height:76px}
 .hz{display:grid;grid-template-columns:repeat(7,minmax(96px,1fr));gap:8px}
@@ -19,3 +21,7 @@ textarea{min-height:76px}
 .inline-del{position:absolute;top:4px;right:4px;min-width:20px;line-height:1}
 .form-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,138,213,.2)}
 small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
+
+.igtv2-page .usf-stack{gap:6px}
+.igtv2-page .usf-shelf{gap:6px}
+.igtv2-page .usf-panel{padding:8px}

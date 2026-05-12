@@ -63,6 +63,38 @@ export const saveAssignments = (assignments) => set(ASSIGNMENTS_KEY, assignments
 export const loadScheduleEntries = () => get(SCHEDULE_KEY, []);
 export const saveScheduleEntries = (entries) => set(SCHEDULE_KEY, entries);
 
+const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const sbHeaders = { apikey: sbAnon || '', Authorization: `Bearer ${sbAnon || ''}`, 'Content-Type': 'application/json' };
+const hasSupabase = Boolean(sbUrl && sbAnon);
+
+export async function fetchScheduleEntries() {
+  if (!hasSupabase) return loadScheduleEntries();
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc`, { headers: sbHeaders, cache: 'no-store' });
+  if (!res.ok) return loadScheduleEntries();
+  return res.json();
+}
+
+export async function upsertScheduleEntry(entry) {
+  if (!hasSupabase) {
+    const next = [...loadScheduleEntries(), entry];
+    saveScheduleEntries(next);
+    return entry;
+  }
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([entry]) });
+  if (!res.ok) throw new Error('Schedule upsert failed');
+  const rows = await res.json();
+  return rows[0];
+}
+
+export async function fetchClientColors() {
+  if (!hasSupabase) return CONTROLLED_CLIENT_COLORS;
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_colors?select=*`, { headers: sbHeaders, cache: 'no-store' });
+  if (!res.ok) return CONTROLLED_CLIENT_COLORS;
+  const rows = await res.json();
+  return rows.map((r) => ({ key: r.color_option_key, label: r.color_label, value: r.color_hex }));
+}
+
 export function addClient() {
   const clients = loadClients();
   const fresh = createClientTemplate();

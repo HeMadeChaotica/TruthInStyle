@@ -5,6 +5,7 @@ const TOKEN_MIN_HEIGHT = {
   standard: '180px',
   medium: '240px',
   tall: '320px',
+  ultra: '520px',
   strip: '72px',
   'hero-strip': '96px'
 };
