@@ -1,5 +1,5 @@
 .igtv2-page{color:#ff7ed1}
-.igtv2-bg{position:absolute;inset:0;background:url('/background/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center center/cover no-repeat}
+.igtv2-bg{position:absolute;inset:0;background:url('/backgrounds/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center center/cover no-repeat}
 .igtv2-shade{position:absolute;inset:0;background:rgba(10,0,10,.35)}
 .igtv2-left{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding-top:12px}
 .igtv2-glyph{color:#ffd3ee;font-size:.8rem;letter-spacing:.2em;margin-bottom:4px}
