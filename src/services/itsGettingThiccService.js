@@ -35,7 +35,7 @@ export const createClientTemplate = () => ({
   food1: '', food2: '', food3: '', food4: '', food5: '', move1: '', move2: '', move3: '', move4: '', activity: '',
   emergencyContact: '', injuries: '', surgeries: '', allergies: '', medications: '', limits: '', painfulMovements: '', flexibility: '', hardNos: '', trainingFears: '',
   macro_protein: '', macro_carbs: '', macro_fats: '', macro_water: '', macro_calories: '',
-  juice_substance: '', juice_amount: '', juice_cycle: '', juice_location: '', juice_notes: '',
+  juice_substance: '', juice_ester: '', juice_amount: '', juice_shot: '', juice_sensitivity: '', juice_cycle: '', juice_location: '', juice_notes: '',
   seasonsPerWeek: '', referrals: [{ name: '', date: '', status: '', notes: '' }],
   trainingRest: Array.from({ length: 7 }, () => 'TRAINING'), programSplit: Array.from({ length: 7 }, () => 'FULLBODY'),
   eventNotes: '', paymentDate: '', thoughts: '', myfitMeals: '', myfitVerified: false, celebration: createCelebration(), active: true,
