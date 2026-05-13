@@ -25,3 +25,9 @@ small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
 .igtv2-page .usf-stack{gap:6px}
 .igtv2-page .usf-shelf{gap:6px}
 .igtv2-page .usf-panel{padding:8px}
+
+.igtv2-client-core .client-core-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.igtv2-client-core .upload{min-height:320px}
+.notes{min-height:180px}
+.igtv2-cabinet{left:8px;bottom:10%}
+.igtv2-page .usf-panel{height:auto;min-height:0}
