@@ -3,7 +3,7 @@
 .igtv2-bg{background:url('/backgrounds/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center center/cover no-repeat fixed}
 .igtv2-left{display:block;position:relative;overflow:visible}
 .igtv2-glyph{color:#ffd3ee;font-size:.95rem;letter-spacing:.28em}
-.igtv2-cabinet{position:absolute;left:12px;bottom:18%;display:grid;gap:8px;max-width:180px}
+.igtv2-cabinet{position:absolute;left:10px;bottom:24%;display:grid;gap:8px;max-width:180px}
 .igtv2-cabinet-btn{background:rgba(20,0,20,.34);color:#ffd7ef;border:1px solid rgba(255,138,213,.55);font:inherit;font-size:.72rem;padding:10px 8px;text-align:left}
 .igtv2-cabinet-btn.active{background:rgba(255,126,209,.28)}
 .igtv2-time-panel{min-height:74dvh}
@@ -18,6 +18,9 @@ textarea{min-height:76px;resize:vertical}
 .month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{min-height:128px;border:1px solid rgba(255,138,213,.35);padding:6px;background:rgba(15,0,17,.28)}
 .booking{margin-top:4px;padding:3px 6px;color:#fff;border-radius:4px;font-size:.58rem;font-weight:700}
 .inline-del{position:absolute;top:4px;right:4px;min-width:20px;line-height:1;padding:0 6px;background:rgba(16,0,16,.55)}
+.inline-glyph-del{top:auto;bottom:4px;right:4px;background:transparent;border:none;padding:0;min-width:0}
+.inline-glyph-del img{display:block;width:24px;height:24px;object-fit:contain}
+.booking-del{margin-left:6px;background:transparent;border:none;color:#fff;cursor:pointer}
 .form-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,138,213,.2)}
 small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
 
