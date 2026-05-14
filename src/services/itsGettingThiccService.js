@@ -106,6 +106,11 @@ export async function fetchScheduleEntries() {
 }
 
 export async function upsertScheduleEntry(entry) {
+  if (hasSupabase) {
+    if (entry?.entry_type === 'client' && !isUuid(entry?.client_id)) {
+      throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');
+    }
+  }
   if (!hasSupabase) {
     const next = [...loadScheduleEntries(), entry];
     saveScheduleEntries(next);
