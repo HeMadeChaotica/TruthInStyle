@@ -87,12 +87,48 @@ export async function upsertScheduleEntry(entry) {
   return rows[0];
 }
 
+export async function deleteScheduleEntry(id) {
+  if (!hasSupabase) {
+    const next = loadScheduleEntries().filter((row) => row.id !== id);
+    saveScheduleEntries(next);
+    return true;
+  }
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' } });
+  return res.ok;
+}
+
 export async function fetchClientColors() {
   if (!hasSupabase) return CONTROLLED_CLIENT_COLORS;
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_colors?select=*`, { headers: sbHeaders, cache: 'no-store' });
   if (!res.ok) return CONTROLLED_CLIENT_COLORS;
   const rows = await res.json();
   return rows.map((r) => ({ key: r.color_option_key, label: r.color_label, value: r.color_hex }));
+}
+
+export async function fetchForms() {
+  if (!hasSupabase) return loadForms();
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_forms?select=*`, { headers: sbHeaders, cache: 'no-store' });
+  if (!res.ok) return loadForms();
+  return res.json();
+}
+
+export async function fetchFormAssignments() {
+  if (!hasSupabase) return loadAssignments();
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_form_assignments?select=*`, { headers: sbHeaders, cache: 'no-store' });
+  if (!res.ok) return loadAssignments();
+  return res.json();
+}
+
+export async function upsertFormAssignment(assignment) {
+  if (!hasSupabase) {
+    const next = [...loadAssignments(), assignment];
+    saveAssignments(next);
+    return assignment;
+  }
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_form_assignments`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([assignment]) });
+  if (!res.ok) throw new Error('Assignment upsert failed');
+  const rows = await res.json();
+  return rows[0];
 }
 
 export function addClient() {
