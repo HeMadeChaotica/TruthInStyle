@@ -67,6 +67,36 @@ const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const sbHeaders = { apikey: sbAnon || '', Authorization: `Bearer ${sbAnon || ''}`, 'Content-Type': 'application/json' };
 const hasSupabase = Boolean(sbUrl && sbAnon);
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const isUuid = (value) => typeof value === 'string' && UUID_REGEX.test(value.trim());
+
+export function getClientDbId(client) {
+  if (!client || typeof client !== 'object') return null;
+  const candidates = [client.dbId, client.db_id, client.client_id, client.uuid];
+  for (const candidate of candidates) {
+    if (isUuid(candidate)) return candidate;
+  }
+  return isUuid(client.id) ? client.id : null;
+}
+
+export function normalizeForm(row = {}) {
+  return {
+    ...row,
+    dbId: row.id,
+    formName: row.form_name ?? row.formName ?? row.form_key,
+    formCategory: row.form_category ?? row.formCategory ?? '',
+    formKey: row.form_key ?? row.formKey ?? row.id,
+  };
+}
+
+export function normalizeAssignment(row = {}) {
+  return {
+    ...row,
+    clientId: row.clientId ?? row.client_id ?? '',
+    formId: row.formId ?? row.form_id ?? '',
+  };
+}
 
 export async function fetchScheduleEntries() {
   if (!hasSupabase) return loadScheduleEntries();
@@ -109,14 +139,16 @@ export async function fetchForms() {
   if (!hasSupabase) return loadForms();
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_forms?select=*`, { headers: sbHeaders, cache: 'no-store' });
   if (!res.ok) return loadForms();
-  return res.json();
+  const rows = await res.json();
+  return rows.map(normalizeForm);
 }
 
 export async function fetchFormAssignments() {
   if (!hasSupabase) return loadAssignments();
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_form_assignments?select=*`, { headers: sbHeaders, cache: 'no-store' });
   if (!res.ok) return loadAssignments();
-  return res.json();
+  const rows = await res.json();
+  return rows.map(normalizeAssignment);
 }
 
 export async function upsertFormAssignment(assignment) {
@@ -125,11 +157,25 @@ export async function upsertFormAssignment(assignment) {
     saveAssignments(next);
     return assignment;
   }
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_form_assignments`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([assignment]) });
+  const clientId = getClientDbId(assignment?.client);
+  if (!clientId) throw new Error('Cannot assign form: active client is missing a database UUID.');
+  const formId = assignment?.formDbId ?? assignment?.form_id ?? assignment?.formId;
+  if (!formId) throw new Error('Cannot assign form: missing form ID.');
+  const payload = {
+    client_id: clientId,
+    form_id: formId,
+    status: assignment?.status || 'assigned',
+    response_json: assignment?.response_json || assignment?.responseJson || {},
+    notes: assignment?.notes || '',
+    assigned_at: assignment?.assigned_at || assignment?.assignedAt || new Date().toISOString(),
+  };
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_form_assignments`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([payload]) });
   if (!res.ok) throw new Error('Assignment upsert failed');
   const rows = await res.json();
-  return rows[0];
+  return normalizeAssignment(rows[0]);
 }
+
+export const isSupabaseEnabled = () => hasSupabase;
 
 export function addClient() {
   const clients = loadClients();
