@@ -129,10 +129,24 @@ export async function ensureClientDbId(client) {
   return { ...client, dbId: created.id };
 }
 
+
+async function readErrorBody(res) {
+  try {
+    return (await res.text()) || '<empty body>';
+  } catch {
+    return '<unreadable body>';
+  }
+}
+
+async function throwSupabaseError(action, res) {
+  const body = await readErrorBody(res);
+  throw new Error(`THICC.TIME ${action} FAILED: ${res.status} ${body}`);
+}
+
 export async function fetchScheduleEntries() {
   if (!hasSupabase) return loadScheduleEntries();
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc`, { headers: sbHeaders, cache: 'no-store' });
-  if (!res.ok) return loadScheduleEntries();
+  if (!res.ok) await throwSupabaseError('LOAD', res);
   return res.json();
 }
 
@@ -150,7 +164,7 @@ export async function upsertScheduleEntry(entry) {
   const hasExistingId = isUuid(entry?.id);
   const payload = hasExistingId ? entry : Object.fromEntries(Object.entries(entry || {}).filter(([key]) => key !== 'id'));
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([payload]) });
-  if (!res.ok) throw new Error('Schedule upsert failed');
+  if (!res.ok) await throwSupabaseError(hasExistingId ? 'EDIT' : 'SAVE', res);
   const rows = await res.json();
   return rows[0];
 }
@@ -162,7 +176,8 @@ export async function deleteScheduleEntry(id) {
     return true;
   }
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' } });
-  return res.ok;
+  if (!res.ok) await throwSupabaseError('DELETE', res);
+  return true;
 }
 
 export async function fetchClientColors() {
