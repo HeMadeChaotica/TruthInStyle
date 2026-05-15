@@ -53,7 +53,12 @@ export function loadClients() {
     set(CLIENTS_KEY, seeded);
     return seeded;
   }
-  return clients.map((c) => ({ ...c, celebration: Array.isArray(c.celebration) ? c.celebration : createCelebration() }));
+  return clients
+  .filter(Boolean)
+  .map((c) => ({
+    ...c,
+    celebration: Array.isArray(c.celebration) ? c.celebration : createCelebration(),
+  }));
 }
 export const saveClients = (clients) => set(CLIENTS_KEY, clients);
 export const loadForms = () => get(FORMS_KEY, DEFAULT_FORMS);
