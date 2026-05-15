@@ -33,7 +33,7 @@ export default function ClockItSection() {
                       {panel.items.map(([family, ...values]) => (
                         <label key={family}>
                           <span>{family}</span>
-                          <select defaultValue={values[0] || ''}>{values.map((v) => <option key={v}>{v}</option>)}</select>
+                          <select defaultValue={(values[0] && (values[0].text || values[0])) || ''}>{values.map((v) => { const value = v?.text || v; const key = v?.id || value; return <option key={key}>{value}</option>; })}</select>
                         </label>
                       ))}
                     </div>
