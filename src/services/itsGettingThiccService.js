@@ -29,7 +29,7 @@ const DEFAULT_FORMS = [
 const createCelebration = () => Array.from({ length: 10 }, (_, i) => ({ id: `tile-${i + 1}`, text: '', media: '' }));
 
 export const createClientTemplate = () => ({
-  id: `THICC-${Date.now().toString().slice(-6)}`,
+  id: `local_${uid()}`,
   name: 'thicc.fitt', phone: '', sex: '', sexualOrientation: '', height: '', age: '', email: '', relationshipStatus: 'SINGLE',
   clientColorOptionKey: 'cobalt', photo: '', currentWeight: '', goalWeight: '', currentBmi: '', goalBmi: '',
   food1: '', food2: '', food3: '', food4: '', food5: '', move1: '', move2: '', move3: '', move4: '', activity: '',
@@ -185,7 +185,7 @@ export const isSupabaseEnabled = () => hasSupabase;
 export function addClient() {
   const clients = loadClients();
   const fresh = createClientTemplate();
-  fresh.id = `THICC-${uid().toUpperCase()}`;
+  fresh.id = `local_${uid()}`;
   fresh.name = `client-${clients.length + 1}`;
   const next = [...clients, fresh];
   saveClients(next);
