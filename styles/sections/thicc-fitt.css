@@ -21,3 +21,7 @@
 .tf30-featured-photo img{width:100%;max-height:180px;object-fit:cover;border-radius:8px}
 .tf30-footer{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;text-align:center}
 @media (max-width:1200px){.tf30-grid-6{grid-template-columns:repeat(3,minmax(0,1fr))}.tf30-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.tf30-shelf-b{grid-template-columns:1.85fr .95fr !important}
+.tf30-shelf-c{grid-template-columns:1.35fr 1fr !important}
+.tf30-shelf-f{grid-template-columns:.9fr 1.6fr !important}
