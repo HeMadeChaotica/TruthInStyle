@@ -98,6 +98,43 @@ export function normalizeAssignment(row = {}) {
   };
 }
 
+
+async function fetchClientByName(name) {
+  const safeName = encodeURIComponent(name || '');
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_clients?select=*&name=eq.${safeName}&order=created_at.desc&limit=1`, { headers: sbHeaders, cache: 'no-store' });
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return rows[0] || null;
+}
+
+export async function ensureClientDbId(client) {
+  if (!hasSupabase) return client;
+  if (!client || typeof client !== 'object') throw new Error('Cannot resolve client UUID: missing active client.');
+  const existing = getClientDbId(client);
+  if (existing) return { ...client, dbId: existing, id: existing };
+
+  const byName = await fetchClientByName(client.name);
+  if (byName?.id && isUuid(byName.id)) {
+    return { ...client, dbId: byName.id, id: byName.id };
+  }
+
+  const payload = {
+    name: client.name || 'THICC CLIENT',
+    phone: client.phone || '',
+    email: client.email || '',
+    client_color_option_key: client.clientColorOptionKey || 'cobalt',
+    active: client.active !== false,
+  };
+  const createRes = await fetch(`${sbUrl}/rest/v1/thicc_clients`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation' }, body: JSON.stringify([payload]) });
+  if (!createRes.ok) {
+    throw new Error('Cannot resolve client UUID: failed creating thicc_clients row.');
+  }
+  const createdRows = await createRes.json();
+  const created = createdRows[0];
+  if (!isUuid(created?.id)) throw new Error('Cannot resolve client UUID: invalid database ID.');
+  return { ...client, dbId: created.id, id: created.id };
+}
+
 export async function fetchScheduleEntries() {
   if (!hasSupabase) return loadScheduleEntries();
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc`, { headers: sbHeaders, cache: 'no-store' });
@@ -134,10 +171,10 @@ export async function deleteScheduleEntry(id) {
 
 export async function fetchClientColors() {
   if (!hasSupabase) return CONTROLLED_CLIENT_COLORS;
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_colors?select=*`, { headers: sbHeaders, cache: 'no-store' });
+  const res = await fetch(`${sbUrl}/rest/v1/clockit_option_sets?select=option_key,option_label,option_value&group_key=eq.thicc_client_colors&active=eq.true&order=display_order.asc`, { headers: sbHeaders, cache: 'no-store' });
   if (!res.ok) return CONTROLLED_CLIENT_COLORS;
   const rows = await res.json();
-  return rows.map((r) => ({ key: r.color_option_key, label: r.color_label, value: r.color_hex }));
+  return rows.map((r) => ({ key: r.option_key, label: r.option_label, value: r.option_value }));
 }
 
 export async function fetchForms() {
