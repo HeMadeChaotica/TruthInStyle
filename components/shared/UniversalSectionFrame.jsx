@@ -22,7 +22,7 @@ export function BlueprintStack({ shelves }) {
 
 export function BlueprintShelf({ shelf }) {
   const cols = shelf.columns || shelf.panels.length;
-  return <div className="usf-shelf" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{shelf.panels.map((panel) => <BlueprintPanel key={panel.id} {...panel} />)}</div>;
+  return <div className={`usf-shelf ${shelf.className || ""}`.trim()} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>{shelf.panels.map((panel) => <BlueprintPanel key={panel.id} {...panel} />)}</div>;
 }
 
 export function BlueprintPanel({ token = 'standard', content, className = '' }) {
