@@ -99,30 +99,24 @@ export function normalizeAssignment(row = {}) {
 }
 
 
-async function fetchClientByName(name) {
-  const safeName = encodeURIComponent(name || '');
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_clients?select=*&name=eq.${safeName}&order=created_at.desc&limit=1`, { headers: sbHeaders, cache: 'no-store' });
-  if (!res.ok) return null;
-  const rows = await res.json();
-  return rows[0] || null;
-}
-
 export async function ensureClientDbId(client) {
   if (!hasSupabase) return client;
   if (!client || typeof client !== 'object') throw new Error('Cannot resolve client UUID: missing active client.');
   const existing = getClientDbId(client);
-  if (existing) return { ...client, dbId: existing, id: existing };
+  if (existing) return { ...client, dbId: existing };
 
-  const byName = await fetchClientByName(client.name);
-  if (byName?.id && isUuid(byName.id)) {
-    return { ...client, dbId: byName.id, id: byName.id };
+  const displayName = client.name || client.display_name || 'THICC CLIENT';
+  const safeDisplayName = encodeURIComponent(displayName);
+  const lookupRes = await fetch(`${sbUrl}/rest/v1/thicc_clients?select=id,display_name&display_name=eq.${safeDisplayName}&order=created_at.desc&limit=1`, { headers: sbHeaders, cache: 'no-store' });
+  if (lookupRes.ok) {
+    const rows = await lookupRes.json();
+    const match = rows?.[0];
+    if (isUuid(match?.id)) return { ...client, dbId: match.id };
   }
 
   const payload = {
-    name: client.name || 'THICC CLIENT',
-    phone: client.phone || '',
-    email: client.email || '',
-    client_color_option_key: client.clientColorOptionKey || 'cobalt',
+    display_name: displayName,
+    status: client.active === false ? 'inactive' : 'active',
     active: client.active !== false,
   };
   const createRes = await fetch(`${sbUrl}/rest/v1/thicc_clients`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation' }, body: JSON.stringify([payload]) });
@@ -132,7 +126,7 @@ export async function ensureClientDbId(client) {
   const createdRows = await createRes.json();
   const created = createdRows[0];
   if (!isUuid(created?.id)) throw new Error('Cannot resolve client UUID: invalid database ID.');
-  return { ...client, dbId: created.id, id: created.id };
+  return { ...client, dbId: created.id };
 }
 
 export async function fetchScheduleEntries() {
@@ -153,7 +147,9 @@ export async function upsertScheduleEntry(entry) {
     saveScheduleEntries(next);
     return entry;
   }
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([entry]) });
+  const hasExistingId = isUuid(entry?.id);
+  const payload = hasExistingId ? entry : Object.fromEntries(Object.entries(entry || {}).filter(([key]) => key !== 'id'));
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([payload]) });
   if (!res.ok) throw new Error('Schedule upsert failed');
   const rows = await res.json();
   return rows[0];
