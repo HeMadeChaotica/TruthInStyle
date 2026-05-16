@@ -47,7 +47,16 @@
 .tf30-shell input,.tf30-shell select,.tf30-shell textarea{width:100%;background:rgba(33,9,24,.58);border:1px solid rgba(255,180,232,.55);color:#fff0fb;border-radius:9px;padding:8px;box-shadow:inset 0 0 0 1px rgba(255,227,247,.12)}
 .tf30-shell textarea{min-height:68px;resize:vertical}
 .tf30-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tf30-shelf-a{grid-template-columns:minmax(280px,.55fr) 1fr!important}
+.tf30-shelf-a{grid-template-columns:minmax(0,1fr) minmax(340px,440px)!important}
+
+.tf30-training-panel{grid-column:2;justify-self:end;width:min(100%,440px)}
+.tf30-sohow-panel{min-height:clamp(500px,58vh,720px)!important;display:grid;grid-template-rows:auto auto 1fr;align-content:stretch}
+.tf30-sohow-panel label{display:grid;grid-template-rows:auto 1fr;min-height:100%}
+.tf30-sohow-panel .tf30-lined-notes{min-height:clamp(340px,42vh,560px);height:100%;resize:vertical}
+.tf30-art-wrap-unlabeled{margin-top:0}
+.tf30-shell .usf-stack{gap:8px}
+.tf30-shell .usf-shelf{align-items:start;gap:8px}
+.tf30-shell .usf-panel{align-content:start}
 .tf30-table-head,.tf30-table-row{display:grid;grid-template-columns:minmax(0,24px) minmax(0,2fr) repeat(4,minmax(0,.74fr)) minmax(0,.9fr);gap:6px;align-items:center;min-width:0}
 .tf30-table-row{padding:8px;border:1px solid rgba(255,166,228,.42);border-radius:10px;margin-bottom:8px;background:rgba(56,17,36,.44)}
 .tf30-table-head{opacity:.96;margin-bottom:8px;font-weight:700;color:#ffe9f8}
@@ -61,9 +70,9 @@
 .tf30-quote-panel blockquote{margin:0;padding:14px;border-radius:12px;background:rgba(45,12,30,.52);border:1px solid rgba(255,154,220,.85);font-size:.78rem;line-height:1.38;position:relative;z-index:1;color:#fff2fb}
 .tf30-quote-panel::before{content:'';position:absolute;inset:4px;padding:3px;border-radius:14px;background:radial-gradient(circle at 15% 20%,rgba(255,70,178,.95) 0 18%,transparent 20%),radial-gradient(circle at 78% 30%,rgba(255,89,191,.82) 0 15%,transparent 17%),radial-gradient(circle at 40% 80%,rgba(152,38,112,.84) 0 20%,transparent 22%),linear-gradient(120deg,rgba(255,87,196,.68),rgba(247,198,109,.56));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:2}
 .tf30-quote-meta,.tf30-quote-tag{position:relative;z-index:3;display:block;margin-top:8px;color:#ffe5f6}
-.tf30-art-wrap{min-height:230px;border:1px solid rgba(255,170,228,.4);border-radius:12px;overflow:hidden;background:rgba(24,8,19,.45);box-shadow:0 0 20px rgba(255,119,203,.25)}
-.tf30-art-wrap img{width:100%;height:100%;min-height:230px;object-fit:cover}
-.tf30-lined-notes{min-height:320px;background-color:rgba(28,8,20,.6);background-image:repeating-linear-gradient(to bottom,transparent 0 24px,rgba(255,170,227,.3) 25px);line-height:24px}
+.tf30-art-wrap{min-height:230px;height:auto;border:1px solid rgba(255,170,228,.4);border-radius:12px;overflow:hidden;background:rgba(24,8,19,.45);box-shadow:0 0 20px rgba(255,119,203,.25)}
+.tf30-art-wrap img{width:100%;height:100%;min-height:230px;object-fit:cover;display:block}
+.tf30-lined-notes{min-height:320px;background-color:rgba(28,8,20,.66);background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 27px,rgba(255,188,234,.34) 28px,transparent 29px);line-height:28px;padding-top:10px}
 .tf30-history-btn{margin-top:6px;justify-self:start;padding:8px 12px;background:rgba(255,144,217,.2);border:1px solid rgba(255,176,232,.66);color:#ffeefe;border-radius:8px}
 .tf30-featured-photo{display:grid;gap:8px;border:1px dashed rgba(255,174,230,.62);border-radius:12px;padding:10px;min-height:180px;align-content:center;text-align:center;overflow:hidden;background:rgba(36,10,27,.48)}
 .tf30-featured-photo img{width:100%;max-height:220px;object-fit:cover;border-radius:8px}
@@ -72,4 +81,4 @@
 .tf30-shelf-b{grid-template-columns:1.85fr .95fr!important}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
-@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
+@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
