@@ -36,6 +36,10 @@
   filter: drop-shadow(0 0 12px rgba(255, 77, 184, 0.65));
   pointer-events: none;
 }
+
+.tf30-crystal::before,.tf30-crystal::after{content:none!important;display:none!important}
+.tf30-crystal{border:0!important;background:transparent!important;box-shadow:none!important;outline:none!important}
+.tf30-crystal img{border:0!important;background:transparent!important;box-shadow:none!important}
 .tf30-shell h2{margin:0 0 10px;font-size:.9rem;letter-spacing:1px;color:#ffe3f7;text-shadow:0 0 16px rgba(255,78,186,.65)}
 .tf30-shell h3{margin:14px 0 8px;font-size:.75rem;color:#ffe5f5;text-shadow:0 0 12px rgba(255,89,201,.45)}
 .tf30-shell label,.tf30-shell span,.tf30-shell strong,.tf30-shell input,.tf30-shell select,.tf30-shell textarea,.tf30-shell button{font-size:.69rem;max-width:100%;min-width:0}
@@ -68,4 +72,4 @@
 .tf30-shelf-b{grid-template-columns:1.85fr .95fr!important}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
-@media (max-width:1200px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}}
+@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
