@@ -156,19 +156,48 @@ export async function fetchScheduleEntries() {
 }
 
 export async function upsertScheduleEntry(entry) {
+  const allowedScheduleKeys = [
+    'id',
+    'client_id',
+    'client_name',
+    'entry_type',
+    'entry_date',
+    'start_time',
+    'end_time',
+    'workout_label',
+    'source_split_day',
+    'location',
+    'notes',
+    'color_option_key',
+    'created_at',
+    'updated_at',
+  ];
+  const cleanPayload = Object.fromEntries(
+    Object.entries(entry || {}).filter(([key, value]) => allowedScheduleKeys.includes(key) && value !== undefined),
+  );
+
   if (hasSupabase) {
-    if (entry?.entry_type === 'client' && !isUuid(entry?.client_id)) {
+    if (cleanPayload.entry_type === 'client' && !isUuid(cleanPayload.client_id)) {
       throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');
     }
   }
   if (!hasSupabase) {
-    const next = [...loadScheduleEntries(), entry];
+    const safeEntry = {
+      ...cleanPayload,
+      id: cleanPayload.id || `local_schedule_${uid()}`,
+      created_at: cleanPayload.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const existing = loadScheduleEntries();
+    const next = existing.some((row) => row.id === safeEntry.id)
+      ? existing.map((row) => (row.id === safeEntry.id ? safeEntry : row))
+      : [...existing, safeEntry];
     saveScheduleEntries(next);
-    return entry;
+    return safeEntry;
   }
-  const hasExistingId = isUuid(entry?.id);
-  const payload = hasExistingId ? entry : Object.fromEntries(Object.entries(entry || {}).filter(([key]) => key !== 'id'));
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([payload]) });
+  const hasExistingId = isUuid(cleanPayload.id);
+  if (!hasExistingId) delete cleanPayload.id;
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([cleanPayload]) });
   if (!res.ok) await throwSupabaseError(hasExistingId ? 'EDIT' : 'SAVE', res);
   const rows = await res.json();
   return rows[0];
