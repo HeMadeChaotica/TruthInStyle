@@ -156,6 +156,51 @@ export async function fetchScheduleEntries() {
   return res.json();
 }
 
+export async function fetchScheduleEntriesSafe() {
+  if (!hasSupabase) {
+    return {
+      rows: loadScheduleEntries(),
+      error: null,
+      source: 'local',
+    };
+  }
+
+  try {
+    const res = await fetch(
+      `${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc`,
+      { headers: sbHeaders, cache: 'no-store' },
+    );
+
+    if (!res.ok) {
+      const body = await readErrorBody(res);
+      const message = `THICC.TIME LOAD FAILED: ${res.status} ${body}`;
+      console.error('[THICC.TIME LOAD]', message);
+
+      return {
+        rows: loadScheduleEntries(),
+        error: message,
+        source: 'local-fallback',
+      };
+    }
+
+    const rows = await res.json();
+    return {
+      rows: Array.isArray(rows) ? rows : [],
+      error: null,
+      source: 'supabase',
+    };
+  } catch (error) {
+    const message = `THICC.TIME LOAD FAILED: ${error?.message || 'Unknown calendar load error'}`;
+    console.error('[THICC.TIME LOAD]', error);
+
+    return {
+      rows: loadScheduleEntries(),
+      error: message,
+      source: 'local-fallback',
+    };
+  }
+}
+
 export async function upsertScheduleEntry(entry) {
   const allowedScheduleKeys = [
     'id',
