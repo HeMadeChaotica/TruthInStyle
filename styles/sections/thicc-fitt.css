@@ -4,8 +4,38 @@
 .tf30-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(34,10,22,.58),rgba(16,6,13,.24))}
 .tf30-left{position:relative}
 .tf30-content{padding-top:var(--thicc-fitt-content-peep-offset)}
-.tf30-crystal{position:absolute;left:10px;bottom:46px;width:96px;height:96px;display:grid;place-items:center;background:transparent;border:none;outline:none}
-.tf30-crystal img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,126,213,.9))}
+.thicc-fitt-access-trigger {
+  position: absolute;
+  left: 10px;
+  bottom: 46px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(86px, 8vw, 112px);
+  height: clamp(86px, 8vw, 112px);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  pointer-events: auto;
+}
+
+.thicc-fitt-access-trigger::before,
+.thicc-fitt-access-trigger::after {
+  content: none !important;
+}
+
+.thicc-fitt-access-trigger img {
+  width: clamp(72px, 7vw, 100px);
+  height: auto;
+  display: block;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 0 12px rgba(255, 77, 184, 0.65));
+  pointer-events: none;
+}
 .tf30-shell h2{margin:0 0 10px;font-size:.9rem;letter-spacing:1px;color:#ffe3f7;text-shadow:0 0 16px rgba(255,78,186,.65)}
 .tf30-shell h3{margin:14px 0 8px;font-size:.75rem;color:#ffe5f5;text-shadow:0 0 12px rgba(255,89,201,.45)}
 .tf30-shell label,.tf30-shell span,.tf30-shell strong,.tf30-shell input,.tf30-shell select,.tf30-shell textarea,.tf30-shell button{font-size:.69rem;max-width:100%;min-width:0}
