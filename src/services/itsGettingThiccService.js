@@ -8,6 +8,7 @@ const ASSIGNMENTS_KEY = 'thicc_client_form_assignments';
 const SCHEDULE_KEY = 'thicc_client_schedule_entries';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const createLocalScheduleId = () => `local_schedule_${Date.now()}_${uid()}`;
 
 export const CONTROLLED_CLIENT_COLORS = [
   ['cobalt', 'COBALT', '#3b82f6'], ['emerald', 'EMERALD', '#10b981'], ['amber', 'AMBER', '#f59e0b'], ['violet', 'VIOLET', '#8b5cf6'],
@@ -184,7 +185,7 @@ export async function upsertScheduleEntry(entry) {
   if (!hasSupabase) {
     const safeEntry = {
       ...cleanPayload,
-      id: cleanPayload.id || `local_schedule_${uid()}`,
+      id: cleanPayload.id || createLocalScheduleId(),
       created_at: cleanPayload.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
