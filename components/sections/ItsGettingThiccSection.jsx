@@ -5,8 +5,8 @@ import '../../styles/sections/its-getting-thicc.css';
 import '../../styles/sections/universal-frame.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import {
-  appendLog, deleteScheduleEntry, fetchClientColors, fetchFormAssignments, fetchForms, fetchScheduleEntriesSafe, loadClients, readMedia, resolveClientColor,
-  saveClients, upsertFormAssignment, upsertMedia, upsertScheduleEntry, getClientDbId, isSupabaseEnabled, ensureClientDbId,
+  appendLog, deleteScheduleEntry, fetchClientColors, fetchFormAssignments, fetchForms, fetchScheduleEntries, groupScheduleEntriesByDate, loadClients, readMedia, resolveClientColor,
+  saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry,
 } from '../../src/services/itsGettingThiccService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 
@@ -18,46 +18,36 @@ const medicalPrompts = ['EMERGENCY CONTACT NAME / NUMBER', 'PAST / CURRENT INJUR
 
 export default function ItsGettingThiccSection() {
   const [clients, setClients] = useState([]); const [activeId, setActiveId] = useState(''); const [activeTab, setActiveTab] = useState('THICC.INFO');
-  const [forms, setForms] = useState([]); const [assignments, setAssignments] = useState([]); const [calendar, setCalendar] = useState([]); const [colorMap, setColorMap] = useState([]);
-  const [formsError, setFormsError] = useState(''); const [timeError, setTimeError] = useState('');
-  const [scheduleType, setScheduleType] = useState('client');
-  const [editorMode, setEditorMode] = useState('new');
+  const [forms, setForms] = useState([]); const [assignments, setAssignments] = useState([]); const [colorMap, setColorMap] = useState([]);
+  const [formsError, setFormsError] = useState('');
+  const [selectedTimeDate, setSelectedTimeDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [entriesByDate, setEntriesByDate] = useState({});
+  const [timeLoadStatus, setTimeLoadStatus] = useState('idle');
+  const [timeError, setTimeError] = useState('');
   const [editingEntryId, setEditingEntryId] = useState('');
-  const [entryForm, setEntryForm] = useState({ entry_type: 'client', entry_date: '', start_time: '09:00', end_time: '10:00', workout_label: '', location: '', notes: '' });
+  const [timeDraft, setTimeDraft] = useState({ entry_type: 'client', client_id: '', client_name: '', entry_date: '', start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: '', location: '', notes: '', color_option_key: 'cobalt' });
   const active = useMemo(() => clients.find((c) => c.id === activeId) || clients[0], [clients, activeId]);
   const activeClientDbId = useMemo(() => getClientDbId(active), [active]);
   const isSupabase = isSupabaseEnabled();
 
-  const loadCalendar = async () => {
-    console.info('[THICC.TIME LOAD REQUEST]', {
-      table: 'thicc_client_schedule_entries',
-      hasSupabase: isSupabaseEnabled(),
-    });
-
-    const result = await fetchScheduleEntriesSafe();
-    setCalendar((prev) => {
-      const nextRows = Array.isArray(result.rows) ? result.rows : [];
-      if (result.error && result.source === 'local-fallback' && nextRows.length === 0 && prev.length > 0) {
-        return prev;
-      }
-      return nextRows;
-    });
-
-    if (result.error) {
-      console.error('[THICC.TIME LOAD FAILED]', result.error);
-      setTimeError(result.error);
-    } else {
+  const loadTimeEntries = async () => {
+    try {
       setTimeError('');
+      setTimeLoadStatus('loading');
+      const rows = await fetchScheduleEntries();
+      setEntriesByDate(groupScheduleEntriesByDate(rows));
+      setTimeLoadStatus('loaded');
+    } catch (error) {
+      setTimeLoadStatus('error');
+      setTimeError(error?.message || 'THICC.TIME LOAD FAILED: Unknown error');
     }
-
-    return result;
   };
 
   useEffect(() => {
     const seeded = loadClients();
     setClients(seeded);
     setActiveId(seeded[0]?.id || '');
-    loadCalendar();
+    loadTimeEntries();
     fetchClientColors().then(setColorMap);
     fetchForms().then(setForms);
     fetchFormAssignments().then(setAssignments);
@@ -73,25 +63,27 @@ export default function ItsGettingThiccSection() {
   const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'medium', content: <><h3>THICC.PEOPLE</h3><div className="people-list">{clients.map((c) => { const cc = resolveClientColor(c.clientColorOptionKey); return <button key={c.id} className="people-item" style={{ borderLeftColor: cc.value }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><div><strong>{c.name}</strong><span>{c.id}</span></div><div><em style={{ color: cc.value }}>{cc.label}</em><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></div></button>; })}</div></> }] }];
   const canAssignInSupabase = !isSupabase || Boolean(activeClientDbId);
   const formsShelves = [{ id: 'forms', columns: 1, panels: [{ id: 'f1', token: 'medium', content: <><h3>THICC.FORMS</h3>{forms.map((f) => <div key={f.id} className="form-row"><strong>{f.formName}</strong><span>{f.formCategory}</span><button disabled={!canAssignInSupabase} title={!canAssignInSupabase ? 'ASSIGN disabled: active client is missing a database UUID.' : ''} onClick={async () => { try { setFormsError(''); const ensuredClient = isSupabase ? await ensureClientDbId(active) : active; if (isSupabase && ensuredClient.dbId && ensuredClient.dbId !== active.dbId) { const nextClients = clients.map((c) => (c.id === active.id ? ensuredClient : c)); setClients(nextClients); saveClients(nextClients); } const created = await upsertFormAssignment({ client: ensuredClient, client_id: ensuredClient.dbId || ensuredClient.id, formDbId: f.dbId || f.id, form_id: f.id, status: 'assigned', response_json: {}, notes: '', assigned_at: new Date().toISOString() }); setAssignments((prev) => [...prev, created]); } catch (error) { setFormsError(error?.message || 'Unable to assign form.'); } }}>ASSIGN</button></div>)}{formsError ? <p>{formsError}</p> : null}<p>ASSIGNMENTS {assignments.filter((a) => (isSupabase ? a.client_id === activeClientDbId : (a.client_id || a.clientId) === active.id)).length}</p></> }] }];
-  const resetEntryForm = () => {
+  const resetTimeDraft = () => {
     const now = new Date();
-    setEditorMode('new');
     setEditingEntryId('');
-    setEntryForm({
-      entry_type: scheduleType,
+    setTimeDraft({
+      entry_type: 'client',
+      client_id: '',
+      client_name: '',
       entry_date: now.toISOString().slice(0, 10),
       start_time: '09:00',
       end_time: '10:00',
-      workout_label: active?.programSplit?.[now.getDay()] || (scheduleType === 'personal' ? 'PERSONAL' : 'SESSION'),
+      workout_label: active?.programSplit?.[now.getDay()] || 'SESSION',
+      source_split_day: days[now.getDay()],
+      color_option_key: active?.clientColorOptionKey || 'cobalt',
       location: '',
       notes: '',
     });
   };
 
   const openEditor = (row) => {
-    setEditorMode('edit');
     setEditingEntryId(row.id);
-    setEntryForm({
+    setTimeDraft({
       entry_type: row.entry_type || 'client',
       entry_date: row.entry_date || '',
       start_time: row.start_time || '09:00',
@@ -102,11 +94,10 @@ export default function ItsGettingThiccSection() {
     });
   };
 
-  const normalizeSchedulePayload = ({ currentEntryForm, currentActive, currentScheduleType }) => {
+  const normalizeSchedulePayload = ({ currentEntryForm, currentActive }) => {
     const now = new Date();
     const today = now.toISOString().slice(0, 10);
-    const fallbackEntryType = currentScheduleType || 'client';
-    const entryType = currentEntryForm.entry_type || fallbackEntryType;
+    const entryType = currentEntryForm.entry_type || 'client';
     const safeDate = currentEntryForm.entry_date || today;
     const parsedDayIndex = new Date(safeDate).getDay();
     const fallbackDayIndex = now.getDay();
@@ -126,7 +117,7 @@ export default function ItsGettingThiccSection() {
     };
   };
 
-  useEffect(() => { resetEntryForm(); }, [scheduleType, activeId]);
+  useEffect(() => { resetTimeDraft(); }, [activeId]);
 
   if (!active) return null;
 
@@ -151,7 +142,9 @@ export default function ItsGettingThiccSection() {
       { id: 'H', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /></div>)}</div></> }] },
   ];
 
-  const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: <><h3>THICC.TIME</h3><label>SCHEDULE TYPE<select value={scheduleType} onChange={(e) => setScheduleType(e.target.value)}><option value="personal">MISTA.THICC</option><option value="client">CLIENT</option></select></label><div className="month">{Array.from({ length: 35 }).map((_, i) => <div key={i} className="day"><b>{i + 1 <= 31 ? i + 1 : ''}</b>{calendar.filter((r) => Number(r.entry_date?.slice(-2)) === i + 1).map((r) => { const isPersonal = r.entry_type === 'personal'; const bookingLabel = isPersonal ? (r.client_name || 'Mista.THICC') : (r.client_name || r.workout_label || 'BOOKING'); return <button type="button" key={r.id} className="booking" onClick={() => openEditor(r)} style={{ background: isPersonal ? '#ff4db8' : (colorMap.find((c) => c.key === r.color_option_key)?.value || resolveClientColor(r.color_option_key).value) }}>{bookingLabel}</button>; })}</div>)}</div><div className="form-grid"><label>ENTRY TYPE<select value={entryForm.entry_type} onChange={(e) => setEntryForm((prev) => ({ ...prev, entry_type: e.target.value }))}><option value="personal">MISTA.THICC</option><option value="client">CLIENT</option></select></label><label>DATE<input type="date" value={entryForm.entry_date} onChange={(e) => setEntryForm((prev) => ({ ...prev, entry_date: e.target.value }))} /></label><label>START<input type="time" value={entryForm.start_time} onChange={(e) => setEntryForm((prev) => ({ ...prev, start_time: e.target.value }))} /></label><label>END<input type="time" value={entryForm.end_time} onChange={(e) => setEntryForm((prev) => ({ ...prev, end_time: e.target.value }))} /></label><label>WORKOUT LABEL<input value={entryForm.workout_label} onChange={(e) => setEntryForm((prev) => ({ ...prev, workout_label: e.target.value }))} /></label><label>LOCATION<input value={entryForm.location} onChange={(e) => setEntryForm((prev) => ({ ...prev, location: e.target.value }))} /></label><label>NOTES<textarea value={entryForm.notes} onChange={(e) => setEntryForm((prev) => ({ ...prev, notes: e.target.value }))} /></label></div><div className="form-row"><button onClick={async () => { try { setTimeError(''); const now = new Date(); const isEditing = editorMode === 'edit' && editingEntryId; let payload = { ...normalizeSchedulePayload({ currentEntryForm: entryForm, currentActive: active, currentScheduleType: scheduleType }), updated_at: now.toISOString() }; if (payload.entry_type === 'personal') { payload = { ...payload, client_id: null, client_name: 'Mista.THICC', color_option_key: 'mista-thicc-pink', entry_type: 'personal' }; } else { const ensuredClient = isSupabase ? await ensureClientDbId(active) : active; if (isSupabase && ensuredClient.dbId && ensuredClient.dbId !== active.dbId) { const nextClients = clients.map((c) => (c.id === active.id ? ensuredClient : c)); setClients(nextClients); saveClients(nextClients); } const scheduleClientId = isSupabase ? getClientDbId(ensuredClient) : ensuredClient.id; if (isSupabase && !scheduleClientId) throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.'); const activeColor = ensuredClient.clientColorOptionKey || 'cobalt'; payload = { ...payload, client_id: scheduleClientId || null, client_name: ensuredClient.name || ensuredClient.display_name || 'THICC CLIENT', color_option_key: activeColor === 'mista-thicc-pink' ? 'cobalt' : activeColor, entry_type: 'client' }; } if (isEditing) payload.id = editingEntryId; else payload.created_at = now.toISOString(); console.info('[THICC.TIME SAVE PAYLOAD]', payload); const saved = await upsertScheduleEntry(payload); setCalendar((prev) => { const exists = prev.some((x) => x.id === saved.id); return exists ? prev.map((x) => (x.id === saved.id ? saved : x)) : [...prev, saved]; }); const result = await loadCalendar(); if (result.error) { setTimeError(`SAVED LOCALLY/VISIBLY, BUT SUPABASE CALENDAR LOAD FAILED: ${result.error}`); } resetEntryForm(); } catch (error) { console.error('[THICC.TIME SAVE FAILED]', error); setTimeError(error?.message || 'Unable to save entry.'); } }}>SAVE</button><button onClick={async () => { try { if (!editingEntryId) return; setTimeError(''); await deleteScheduleEntry(editingEntryId); setCalendar((prev) => prev.filter((x) => x.id !== editingEntryId)); const result = await loadCalendar(); if (result.error) { console.error('[THICC.TIME LOAD FAILED]', result.error); } resetEntryForm(); } catch (error) { setTimeError(error?.message || 'Unable to delete entry.'); } }}>DELETE</button><button onClick={() => resetEntryForm()}>CANCEL</button></div>{timeError ? <pre className="time-error">{timeError}</pre> : null}</> }] }];
+  const monthDates = useMemo(() => Array.from({ length: 31 }, (_, i) => `2026-01-${String(i + 1).padStart(2, '0')}`), []);
+  const selectedEntries = entriesByDate[selectedTimeDate] || [];
+  const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: <><h3>THICC.TIME</h3><div className="form-grid"><label>SELECTED DATE<input type="date" value={selectedTimeDate} onChange={(e)=>setSelectedTimeDate(e.target.value)} /></label><label>SCHEDULE TYPE<select value={timeDraft.entry_type} onChange={(e)=>setTimeDraft((prev)=>({...prev,entry_type:e.target.value}))}><option value="personal">MISTA.THICC</option><option value="client">CLIENT</option></select></label></div><div className="month">{monthDates.map((dateKey)=>{const dayRows=entriesByDate[dateKey]||[];return <div key={dateKey} className="day"><b>{Number(dateKey.slice(-2))}</b>{dayRows.map((r)=>{const isPersonal=r.entry_type==='personal';const bookingLabel=isPersonal?(r.client_name||'Mista.THICC'):(r.client_name||r.workout_label||'BOOKING');return <button type="button" key={r.id} className="booking" onClick={()=>openEditor(r)} style={{background:isPersonal?'#ff4db8':(colorMap.find((c)=>c.key===r.color_option_key)?.value||resolveClientColor(r.color_option_key).value)}}>{bookingLabel}</button>;})}</div>;})}</div><div className="form-grid"><label>DATE<input type="date" value={timeDraft.entry_date} onChange={(e)=>setTimeDraft((prev)=>({...prev,entry_date:e.target.value}))} /></label><label>START TIME<input type="time" value={timeDraft.start_time} onChange={(e)=>setTimeDraft((prev)=>({...prev,start_time:e.target.value}))} /></label><label>END TIME<input type="time" value={timeDraft.end_time} onChange={(e)=>setTimeDraft((prev)=>({...prev,end_time:e.target.value}))} /></label><label>WORKOUT LABEL<input value={timeDraft.workout_label} onChange={(e)=>setTimeDraft((prev)=>({...prev,workout_label:e.target.value}))} /></label><label>LOCATION<input value={timeDraft.location} onChange={(e)=>setTimeDraft((prev)=>({...prev,location:e.target.value}))} /></label><label>NOTES<textarea value={timeDraft.notes} onChange={(e)=>setTimeDraft((prev)=>({...prev,notes:e.target.value}))} /></label></div><div className="form-row"><button onClick={async()=>{try{setTimeError('');const now=new Date();let payload=normalizeSchedulePayload({currentEntryForm:timeDraft,currentActive:active});if(payload.entry_type==='personal'){payload={...payload,client_id:null,client_name:'Mista.THICC',color_option_key:'mista-thicc-pink',entry_type:'personal'};}else{const ensuredClient=isSupabase?await ensureClientDbId(active):active;if(isSupabase&&ensuredClient.dbId&&ensuredClient.dbId!==active.dbId){const nextClients=clients.map((c)=>(c.id===active.id?ensuredClient:c));setClients(nextClients);saveClients(nextClients);}const scheduleClientId=isSupabase?getClientDbId(ensuredClient):ensuredClient.id;if(isSupabase&&!scheduleClientId)throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');const activeColor=ensuredClient.clientColorOptionKey||'cobalt';payload={...payload,client_id:scheduleClientId||null,client_name:ensuredClient.name||ensuredClient.display_name||'THICC CLIENT',color_option_key:activeColor==='mista-thicc-pink'?'cobalt':activeColor,entry_type:'client'};}if(editingEntryId)payload.id=editingEntryId;payload.updated_at=now.toISOString();const saved=normalizeScheduleEntry(await saveScheduleEntry(payload));setEntriesByDate((prev)=>{const key=saved.entry_date;const dayRows=prev[key]||[];const exists=dayRows.some((x)=>x.id===saved.id);return {...prev,[key]:exists?dayRows.map((x)=>x.id===saved.id?saved:x):[...dayRows,saved]};});resetTimeDraft();await loadTimeEntries();}catch(error){setTimeError(error?.message||'Unable to save entry.');}}}>SAVE ENTRY</button>{editingEntryId?<button onClick={async()=>{try{setTimeError('');await deleteScheduleEntry(editingEntryId);await loadTimeEntries();resetTimeDraft();}catch(error){setTimeError(error?.message||'Unable to delete entry.');}}}>DELETE ENTRY</button>:null}{editingEntryId?<button onClick={resetTimeDraft}>CANCEL EDIT</button>:null}</div><div>{selectedEntries.map((entry)=><button type="button" key={entry.id} onClick={()=>openEditor(entry)}>{entry.workout_label||entry.client_name||entry.id}</button>)}</div>{timeLoadStatus==='loading'?<p>LOADING…</p>:null}{timeError ? <pre className="time-error">{timeError}</pre> : null}</> }] }];
   const nomoShelves = [{ id: 'nomo', columns: 1, panels: [{ id: 'n1', token: 'medium', content: <><h3>THICC.NOMO</h3><p>Deactivate/archive current client from active roster.</p><button onClick={() => { if (!window.confirm('THICC.NOMO this client?')) return; const nextClients = clients.map((c) => (c.id === active.id ? { ...c, active: false } : c)); persist(nextClients, 'client:nomo'); const nextActive = nextClients.find((c) => c.active !== false); setActiveId(nextActive?.id || ''); setActiveTab('THICC.INFO'); }}>THICC.NOMO</button></> }] }];
 
   const shelves = activeTab === 'THICC.INFO' ? infoShelves : activeTab === 'THICC.PEOPLE' ? peopleShelves : activeTab === 'THICC.FORMS' ? formsShelves : activeTab === 'THICC.TIME' ? timeShelves : nomoShelves;
