@@ -18,79 +18,101 @@ const MONTH_BACKGROUND_BY_INDEX = {
   11: 'remember-me-12-december-mista-thicc-birthday-bg.png'
 };
 
-const MONTH_VISUAL_CONFIG = Object.fromEntries(Array.from({ length: 12 }, (_, month) => [month, {
-  showLargeMonthLabel: false,
-  backgroundPosition: 'left 28% center',
-  backgroundSize: 'contain'
-}]));
+const MONTH_VISUAL_CONFIG = Object.fromEntries(Array.from({ length: 12 }, (_, month) => [month, { showLargeMonthLabel: false, backgroundPosition: 'left 28% center', backgroundSize: 'contain' }]));
+const EVENT_TYPES = ['SOMETHING NEW DAY', 'APPOINTMENT', 'REMINDER', 'JOB INTERVIEW', 'BIRTHDAY', 'ANNIVERSARY', 'MEETING DEADLINE', 'EVENT', 'TRAVEL', 'CALL', 'WORKOUT', 'SOCIAL', 'PERSONAL', 'HEALTH', 'FINANCE'];
+const STANDOUT_TYPES = ['WOW', 'WTF', 'PLOT TWIST'];
+const WEEKDAY_HEADERS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 const REMEMBER_ME_OBSERVANCES = [
-  { id: 'jan-cream', month: 0, day: 11, allMonth: false, chip: 'CREAM', title: 'National Milk Day', tone: 'SPICY', description: 'A messy, cheeky celebration of cream-themed innuendo and adult-only indulgence.', adultOnly: true, consentRequired: true },
-  { id: 'jan-hugs', month: 0, day: 21, allMonth: false, chip: 'HUGS', title: 'National Hug Day', tone: 'ROMANCE', description: 'Cozy grown-folk cuddling, skin-to-skin comfort, and full-body closeness.', adultOnly: true, consentRequired: true },
-  { id: 'jan-praise', month: 0, day: 24, allMonth: false, chip: 'PRAISE', title: 'National Compliment Day', tone: 'SPICY', description: 'A day for bold, consensual praise, flirting, and celebrating someone’s best assets.', adultOnly: true, consentRequired: true },
-  { id: 'jan-gorilla', month: 0, day: 31, allMonth: false, chip: 'GORILLA', title: 'National Gorilla Suit Day', tone: 'CHAOS', description: 'Furry-adjacent chaos, costume play, and ridiculous adult roleplay energy.', adultOnly: true, consentRequired: true },
-  { id: 'feb-noclothes', month: 1, day: 7, allMonth: false, chip: 'NO CLOTHES', title: 'Work Naked Day', tone: 'CHAOS', description: 'Liberation-from-clothes energy while pretending to remain professional.', adultOnly: true, consentRequired: true },
-  { id: 'feb-gals', month: 1, day: 13, allMonth: false, chip: 'GALS', title: 'Galentine’s Day', tone: 'ROMANCE', description: 'Sisterhood, vibes, adult toy talk, and celebrating your favorite girls.', adultOnly: true, consentRequired: true },
-  { id: 'feb-valentine', month: 1, day: 14, allMonth: false, chip: 'VALENTINE', title: 'Valentine’s Day', tone: 'ROMANCE', description: 'Leather, lace, romance, hotel-room energy, and grown-folk intimacy.', adultOnly: true, consentRequired: true },
-  { id: 'feb-pet', month: 1, day: 20, allMonth: false, chip: 'PET PLAY', title: 'National Love Your Pet Day', tone: 'KINK', description: 'Consensual human pet-play only: leashes, praise, and negotiated roleplay.', adultOnly: true, consentRequired: true },
-  { id: 'mar-bossy', month: 2, day: 2, allMonth: false, chip: 'BOSSY', title: 'National Bitch Day', tone: 'ROLEPLAY', description: 'Fierce power-play energy with clear consent, boundaries, and negotiated roles.', adultOnly: true, consentRequired: true },
-  { id: 'mar-steakb', month: 2, day: 14, allMonth: false, chip: 'STEAK+B', title: 'Steak and BJ Day', tone: 'SPICY', description: 'A raunchy, adult-only celebration of appetite, indulgence, and oral pleasure.', adultOnly: true, consentRequired: true },
-  { id: 'mar-fetish', month: 2, day: 20, allMonth: false, chip: 'FETISH', title: 'National Fetish Day', tone: 'KINK', description: 'Latex, gear, restraints, and consensual kink exploration with boundaries honored.', adultOnly: true, consentRequired: true },
-  { id: 'mar-diy', month: 2, day: 26, allMonth: false, chip: 'DIY DAY', title: 'National Make Up Your Own Holiday Day', tone: 'CHAOS', description: 'Invent your own adult holiday script and invite your partner into negotiated roleplay.', adultOnly: true, consentRequired: true },
-  { id: 'apr-fools', month: 3, day: 1, allMonth: false, chip: 'FOOLS', title: 'April Fools’ Day', tone: 'CHAOS', description: 'Playful adult prank energy, funny positions, and safewords fully respected.', adultOnly: true, consentRequired: true },
-  { id: 'apr-pajamas', month: 3, day: 16, allMonth: false, chip: 'PAJAMAS', title: 'National Wear Your Pajamas to Work Day', tone: 'SPICY', description: 'Pajamas, commando energy, or whatever makes the workday feel less boring.', adultOnly: true, consentRequired: true },
-  { id: 'apr-nudes', month: 3, day: 18, allMonth: false, chip: 'NUDES', title: 'National Send Nudes Day', tone: 'SPICY', description: 'Consensual adult photo exchange only, with privacy and permission locked in.', adultOnly: true, consentRequired: true },
-  { id: 'apr-lover', month: 3, day: 23, allMonth: false, chip: 'LOVER', title: 'Lover’s Day', tone: 'ROMANCE', description: 'A sweaty, intimate evening dedicated to romance, stamina, and grown-folk attention.', adultOnly: true, consentRequired: true },
-  { id: 'may-nopants', month: 4, day: 6, allMonth: false, chip: 'NO PANTS', title: 'National No Pants Day', tone: 'SPICY', description: 'Ditch the trousers and let spring breathe a little.', adultOnly: true, consentRequired: true },
-  { id: 'may-weird', month: 4, day: 11, allMonth: false, chip: 'WEIRD', title: 'National Twilight Zone Day', tone: 'CHAOS', description: 'Surreal, mind-bending, weird-but-consensual bedroom energy.', adultOnly: true, consentRequired: true },
-  { id: 'may-boricua', month: 4, day: 23, allMonth: false, chip: 'BORICUA', title: 'National Gay Boricua Day', tone: 'PRIDE', description: 'A spicy, vibrant celebration of Afro-Latino queer energy, pride, and pleasure.', adultOnly: true, consentRequired: true },
-  { id: 'may-buns', month: 4, day: 28, allMonth: false, chip: 'BUNS', title: 'National Burger Day', tone: 'SPICY', description: 'A cheeky buns-appreciation day with juicy innuendo.', adultOnly: true, consentRequired: true },
-  { id: 'june-pride', month: 5, day: null, allMonth: true, chip: 'PRIDE', title: 'Gay Pride', tone: 'PRIDE', description: 'A full month of queer celebration, jockstraps, leather, joy, and unapologetic visibility.', adultOnly: true, consentRequired: true },
-  { id: 'june-69', month: 5, day: 9, allMonth: false, chip: '69', title: 'National 69 Day', tone: 'SPICY', description: 'Mutual pleasure, coordination, and adult-only upside-down logistics.', adultOnly: true, consentRequired: true },
-  { id: 'june-nopanty', month: 5, day: 22, allMonth: false, chip: 'NO PANTY', title: 'National No Panty Day', tone: 'SPICY', description: 'A cheeky summer day for leaving underwear at home.', adultOnly: true, consentRequired: true },
-  { id: 'june-camera', month: 5, day: 29, allMonth: false, chip: 'CAMERA', title: 'Camera Day', tone: 'SPICY', description: 'Consensual adult recording or photo-play only, with privacy and permission first.', adultOnly: true, consentRequired: true },
-  { id: 'jul-kiss', month: 6, day: 6, allMonth: false, chip: 'KISS', title: 'International Kissing Day', tone: 'ROMANCE', description: 'French kissing, neck kisses, and aggressive make-out energy.', adultOnly: true, consentRequired: true },
-  { id: 'jul-hands', month: 6, day: 21, allMonth: false, chip: 'HANDS', title: 'National Handjob Day', tone: 'SPICY', description: 'Manual labor, friction, grip, and adult-only satisfaction.', adultOnly: true, consentRequired: true },
-  { id: 'jul-bdsm', month: 6, day: 24, allMonth: false, chip: 'BDSM', title: 'World BDSM Day', tone: 'KINK', description: 'Tied up, disciplined, and consensually dominated with safe words and aftercare.', adultOnly: true, consentRequired: true },
-  { id: 'jul-climax', month: 6, day: 31, allMonth: false, chip: 'CLIMAX', title: 'International Orgasm Day', tone: 'SPICY', description: 'A pleasure-forward day for climax, stamina, and grown-folk celebration.', adultOnly: true, consentRequired: true },
-  { id: 'aug-gf', month: 7, day: 1, allMonth: false, chip: 'GIRLFRIEND', title: 'National Girlfriend Day', tone: 'ROMANCE', description: 'Spoiling her with attention, affection, and adult-only pleasure.', adultOnly: true, consentRequired: true },
-  { id: 'aug-zucchini', month: 7, day: 8, allMonth: false, chip: 'ZUCCHINI', title: 'National Zucchini Day', tone: 'CHAOS', description: 'Phallic produce humor and visual innuendo, kept playful and ridiculous.', adultOnly: true, consentRequired: true },
-  { id: 'aug-relax', month: 7, day: 15, allMonth: false, chip: 'RELAX', title: 'National Relaxation Day', tone: 'SPICY', description: 'Naked-in-bed, no-plans, exhausted-from-pleasure relaxation energy.', adultOnly: true, consentRequired: true },
-  { id: 'aug-thong', month: 7, day: 29, allMonth: false, chip: 'THONG', title: 'National Thong Day', tone: 'SPICY', description: 'Minimal fabric, maximum cheek, and visual appreciation.', adultOnly: true, consentRequired: true },
-  { id: 'sep-global', month: 8, day: 4, allMonth: false, chip: 'GLOBAL', title: 'Global Sex World Day', tone: 'SPICY', description: 'A global celebration of adult intimacy, pleasure, and trying something new.', adultOnly: true, consentRequired: true },
-  { id: 'sep-blame', month: 8, day: 13, allMonth: false, chip: 'BLAME', title: 'National Blame Someone Else Day', tone: 'CHAOS', description: 'Blame your partner for ruining the sheets, then both of you laugh about it.', adultOnly: true, consentRequired: true },
-  { id: 'sep-pirate', month: 8, day: 19, allMonth: false, chip: 'PIRATE', title: 'Talk Like a Pirate Day', tone: 'ROLEPLAY', description: 'Pirate roleplay, dramatic accents, and consensual bedroom theatrics.', adultOnly: true, consentRequired: true },
-  { id: 'sep-diary', month: 8, day: 22, allMonth: false, chip: 'DIARY', title: 'Dear Diary Day', tone: 'SPICY', description: 'Writing down the unfiltered adult details of memorable weekends and wild stories.', adultOnly: true, consentRequired: true },
-  { id: 'oct-bf', month: 9, day: 3, allMonth: false, chip: 'BOYFRIEND', title: 'National Boyfriend Day', tone: 'ROMANCE', description: 'Shower your man with attention, affection, and adult-only devotion.', adultOnly: true, consentRequired: true },
-  { id: 'oct-dessert', month: 9, day: 14, allMonth: false, chip: 'DESSERT', title: 'National Dessert Day', tone: 'SPICY', description: 'Whipped cream, chocolate syrup, caramel, and dessert-themed body-play.', adultOnly: true, consentRequired: true },
-  { id: 'oct-rim', month: 9, day: 21, allMonth: false, chip: 'RIM', title: 'National Rim Day', tone: 'KINK', description: 'A raunchy, intimate adult-only day for consensual rim-themed pleasure.', adultOnly: true, consentRequired: true },
-  { id: 'oct-halloween', month: 9, day: 31, allMonth: false, chip: 'HALLOWEEN', title: 'Halloween', tone: 'CHAOS', description: 'Costumes, himbos, flirts, and the sluttiest spooky-season energy imaginable.', adultOnly: true, consentRequired: true },
-  { id: 'nov-loosen', month: 10, day: 14, allMonth: false, chip: 'LOOSEN UP', title: 'National Loosen Up Day', tone: 'KINK', description: 'Loosening attitude, clothes, and stretching into negotiated adult play.', adultOnly: true, consentRequired: true },
-  { id: 'nov-absurd', month: 10, day: 20, allMonth: false, chip: 'ABSURD', title: 'National Absurdity Day', tone: 'CHAOS', description: 'Try the bizarre position, laugh through it, and make the memory count.', adultOnly: true, consentRequired: true },
-  { id: 'nov-cake', month: 10, day: 26, allMonth: false, chip: 'CAKE', title: 'National Cake Day', tone: 'SPICY', description: 'Not bakery cake. This one is for big-butt worship and cheek appreciation.', adultOnly: true, consentRequired: true },
-  { id: 'nov-sexts', month: 10, day: 29, allMonth: false, chip: 'SEXTS', title: 'Electronic Greetings Day', tone: 'SPICY', description: 'Consensual adult sexts, voice notes, and roster communication chaos.', adultOnly: true, consentRequired: true },
-  { id: 'dec-bathtub', month: 11, day: 5, allMonth: false, chip: 'BATHTUB', title: 'National Bathtub Party Day', tone: 'SPICY', description: 'Slippery bath intimacy, with safety first because tile has no mercy.', adultOnly: true, consentRequired: true },
-  { id: 'dec-gingerbread', month: 11, day: 12, allMonth: false, chip: 'GINGERBREAD', title: 'Gingerbread House Day', tone: 'CHAOS', description: 'A structurally unstable, hilariously suggestive gingerbread display.', adultOnly: true, consentRequired: true },
-  { id: 'dec-sweater', month: 11, day: 16, allMonth: false, chip: 'SWEATER', title: 'Ugly Christmas Sweater Day', tone: 'SPICY', description: 'Wear the ugly sweater with a festive surprise underneath.', adultOnly: true, consentRequired: true },
-  { id: 'dec-flashlight', month: 11, day: 21, allMonth: false, chip: 'FLASHLIGHT', title: 'National Flashlight Day', tone: 'SPICY', description: 'Lights out, touch-first navigation, and grown-folk sensory play.', adultOnly: true, consentRequired: true }
+  { id: 'feb-pizza', month: 1, day: 9, chip: 'PIZZA', title: 'National Pizza Day', funFact: 'Pizza became one of America\'s favorite comfort foods after Italian immigrants popularized it.', assurerReflection: 'Comfort food and comfort chaos can both be valid coping strategies.', tone: 'FUNNY' },
+  { id: 'mar-steakb', month: 2, day: 14, chip: 'STEAK+B', title: 'Steak and BJ Day', funFact: 'A modern cheeky observance that spread online as a tongue-in-cheek holiday.', assurerReflection: 'Reminder: humor plus consent equals memorable fun.', tone: 'SPICY' },
+  { id: 'june-pride', month: 5, day: null, allMonth: true, chip: 'PRIDE', title: 'Pride Month', funFact: 'Pride honors LGBTQ+ history and protest roots while celebrating identity and joy.', assurerReflection: 'Lead with joy, protect your people, and keep your boundaries sacred.', tone: 'PRIDE' },
+  { id: 'oct-halloween', month: 9, day: 31, chip: 'HALLOWEEN', title: 'Halloween', funFact: 'Halloween evolved from ancient festivals and became a giant costume tradition.', assurerReflection: 'Costume confidence is still confidence; own the bit.', tone: 'CHAOS' }
 ];
-const PS_TYPES = ['SOMETHING NEW DAY','APPOINTMENT','REMINDER','JOB INTERVIEW','BIRTHDAY','ANNIVERSARY','MEETING DEADLINE','EVENT','TRAVEL','CALL','WORKOUT','SOCIAL','PERSONAL','HEALTH','FINANCE'];
-const MOMENT_TYPES = ['WOW', 'WTF', 'PLOT TWIST'];
-const WEEKDAY_HEADERS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-const toDateKey=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-const buildMonthGrid=(v)=>{const y=v.getFullYear(),m=v.getMonth(),f=new Date(y,m,1),w=f.getDay(),dim=new Date(y,m+1,0).getDate(),dip=new Date(y,m,0).getDate(),cells=[];for(let i=w-1;i>=0;i--)cells.push({day:dip-i,inMonth:false,dateKey:toDateKey(y,m-1,dip-i)});for(let d=1;d<=dim;d++)cells.push({day:d,inMonth:true,dateKey:toDateKey(y,m,d)});for(let t=1;cells.length%7!==0;t++)cells.push({day:t,inMonth:false,dateKey:toDateKey(y,m+1,t)});return cells;};
 
-export default function RememberMeSection(){
-const [viewDate,setViewDate]=useState(()=>new Date());const [selectedDay,setSelectedDay]=useState(()=>new Date().getDate());
-const [entriesByDate,setEntriesByDate]=useState({});const [momentsByDate,setMomentsByDate]=useState({});const [activeMomentByDate,setActiveMomentByDate]=useState({});
-const [entryDraft,setEntryDraft]=useState({type:PS_TYPES[0],time:'',detail:'',description:''});const [momentDraft,setMomentDraft]=useState({type:'WOW',time:'',description:'',mediaRef:''});
-const monthIndex=viewDate.getMonth(),year=viewDate.getFullYear(),monthName=viewDate.toLocaleString('en-US',{month:'long'}).toUpperCase();
-const monthVisual=MONTH_VISUAL_CONFIG[monthIndex]; const monthGrid=useMemo(()=>buildMonthGrid(viewDate),[viewDate]); const selectedDateKey=toDateKey(year,monthIndex,selectedDay); const today=new Date(); const todayKey=toDateKey(today.getFullYear(),today.getMonth(),today.getDate());
-const selectedObservances = useMemo(()=>REMEMBER_ME_OBSERVANCES.filter((o)=>o.month===monthIndex && (o.allMonth || o.day===selectedDay)),[monthIndex,selectedDay]);
-const selectedEntries=entriesByDate[selectedDateKey]??[]; const selectedMoments=momentsByDate[selectedDateKey]??[];
-const standoutPostcards = useMemo(()=> (momentsByDate && Object.entries(momentsByDate).flatMap(([date,m])=>m.map((moment)=>({date,moment}))).filter(({date,moment})=> date.startsWith(`${year}-${String(monthIndex+1).padStart(2,'0')}`) && moment.stamped).slice(0,6)), [momentsByDate, year, monthIndex]);
-const saveEntry=()=>{const payload={...entryDraft,id:crypto.randomUUID()};setEntriesByDate((c)=>({...c,[selectedDateKey]:[...(c[selectedDateKey]??[]),payload]}));setEntryDraft((d)=>({...d,time:'',detail:'',description:''}));};
-const addOrUpdateMoment=(forcedType)=>{const draft={...momentDraft,type:forcedType??momentDraft.type};const dayMoments=momentsByDate[selectedDateKey]??[];const activeId=activeMomentByDate[selectedDateKey];if(activeId){setMomentsByDate((c)=>({...c,[selectedDateKey]:(c[selectedDateKey]??[]).map((m)=>m.id===activeId?{...m,...draft}:m)}));}else if(dayMoments.length<3){const newMoment={id:crypto.randomUUID(),...draft,stamped:false};setMomentsByDate((c)=>({...c,[selectedDateKey]:[...(c[selectedDateKey]??[]),newMoment]}));setActiveMomentByDate((c)=>({...c,[selectedDateKey]:newMoment.id}));}};
-const stampActiveMoment=()=>{const id=activeMomentByDate[selectedDateKey];if(!id)return;setMomentsByDate((c)=>({...c,[selectedDateKey]:(c[selectedDateKey]??[]).map((m)=>m.id===id?{...m,stamped:true}:m)}));};
-return <section className="remember-page" style={{'--remember-bg-image':`url('/backgrounds/REMEMBER-ME/${MONTH_BACKGROUND_BY_INDEX[monthIndex]}')`,'--remember-bg-position':monthVisual.backgroundPosition,'--remember-bg-size':monthVisual.backgroundSize}}><div className="remember-overlay" aria-hidden="true"/><div className="remember-content"><header className="remember-head"><h1>REMEMBER.ME</h1></header><main className="remember-main"><section className="remember-calendar-panel" aria-label="Month calendar"><div className="remember-month-row"><button type="button" onClick={()=>{setViewDate((c)=>new Date(c.getFullYear(),c.getMonth()-1,1));setSelectedDay(1);}} aria-label="Previous month">‹</button><h2 className="remember-sr-only">{monthName} {year}</h2><span className="remember-month-mini">{monthName} {year}</span><button type="button" onClick={()=>{setViewDate((c)=>new Date(c.getFullYear(),c.getMonth()+1,1));setSelectedDay(1);}} aria-label="Next month">›</button></div><div className="remember-weekdays">{WEEKDAY_HEADERS.map((d)=><span key={d}>{d}</span>)}</div><div className="remember-grid">{monthGrid.map((cell,idx)=>{const obs=REMEMBER_ME_OBSERVANCES.filter((o)=>{const [_,m,d]=cell.dateKey.split('-').map(Number);return o.month===m-1 && (o.allMonth || o.day===d);});const entries=entriesByDate[cell.dateKey]??[];const moments=momentsByDate[cell.dateKey]??[];const chips=[...obs.map((o)=>({tone:'observance',label:o.chip})),...entries.map((e)=>({tone:'entry',label:e.type.replace('MEETING DEADLINE','DEADLINE')})),...moments.map((m)=>({tone:'moment',label:m.type}))];const visible=chips.slice(0,3);const hidden=Math.max(0,chips.length-3);return <button key={`${idx}-${cell.day}`} type="button" className={`remember-day ${cell.inMonth?'':'remember-outside'} ${cell.inMonth&&selectedDay===cell.day?'remember-selected':''} ${cell.dateKey===todayKey?'remember-today':''}`.trim()} onClick={()=>cell.inMonth&&setSelectedDay(cell.day)} disabled={!cell.inMonth}><span className="remember-day-num">{cell.day}</span><span className="remember-day-chips">{visible.map((chip,i)=><span key={`${chip.label}-${i}`} className={`remember-chip remember-chip-${chip.tone}`}>{chip.label}</span>)}{hidden>0&&<span className="remember-chip remember-chip-more">+{hidden}</span>}</span></button>;})}</div></section></main><section className="remember-editor" aria-label="Day postcard editor"><h3>{selectedDateKey}</h3><div className="remember-editor-grid"><div className="remember-card"><h4>P.S.</h4><select value={entryDraft.type} onChange={(e)=>setEntryDraft((d)=>({...d,type:e.target.value}))}>{PS_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select><input type="time" value={entryDraft.time} onChange={(e)=>setEntryDraft((d)=>({...d,time:e.target.value}))}/><input type="text" placeholder="short detail" value={entryDraft.detail} onChange={(e)=>setEntryDraft((d)=>({...d,detail:e.target.value}))}/><textarea placeholder="description" value={entryDraft.description} onChange={(e)=>setEntryDraft((d)=>({...d,description:e.target.value}))}/><button type="button" onClick={saveEntry}>SAVE</button></div><div className="remember-card"><h4>MOMENTS</h4><select value={momentDraft.type} onChange={(e)=>setMomentDraft((d)=>({...d,type:e.target.value}))}>{MOMENT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select><input type="time" value={momentDraft.time} onChange={(e)=>setMomentDraft((d)=>({...d,time:e.target.value}))}/><textarea placeholder="moment description" value={momentDraft.description} onChange={(e)=>setMomentDraft((d)=>({...d,description:e.target.value}))}/><input type="text" placeholder="optional media/photo ref" value={momentDraft.mediaRef} onChange={(e)=>setMomentDraft((d)=>({...d,mediaRef:e.target.value}))}/><button type="button" onClick={()=>addOrUpdateMoment()}>SAVE/UPDATE MOMENT</button><button type="button" onClick={stampActiveMoment}>STAMP IT</button></div><div className="remember-card"><h4>OBSERVANCE CHIPS</h4>{selectedObservances.map((o)=><div key={o.id} className="remember-observance-row"><span className="remember-chip remember-chip-observance">{o.chip}</span><strong>{o.title}</strong><p>{o.description}</p><button type="button" onClick={()=>setEntryDraft((d)=>({...d,detail:o.title}))}>ADD TO P.S.</button><button type="button" onClick={()=>setMomentDraft((d)=>({...d,description:o.description}))}>ADD TO MOMENT</button></div>)}</div><div className="remember-card remember-postcards"><h4>STANDOUT POSTCARDS</h4>{standoutPostcards.length===0?<p>STAMP MOMENTS TO CREATE POSTCARDS.</p>:standoutPostcards.map(({date,moment})=><article key={moment.id} className="remember-postcard"><span>{date}</span><strong>{moment.type}</strong><p>{moment.description || 'STAMPED MEMORY'}</p>{moment.mediaRef && <small>{moment.mediaRef}</small>}<em>STAMPED</em></article>)}</div></div></section></div></section>;
+const toDateKey = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+const buildMonthGrid = (v) => { const y = v.getFullYear(), m = v.getMonth(), f = new Date(y, m, 1), w = f.getDay(), dim = new Date(y, m + 1, 0).getDate(), dip = new Date(y, m, 0).getDate(), cells = []; for (let i = w - 1; i >= 0; i--) cells.push({ day: dip - i, inMonth: false, dateKey: toDateKey(y, m - 1, dip - i) }); for (let d = 1; d <= dim; d++) cells.push({ day: d, inMonth: true, dateKey: toDateKey(y, m, d) }); for (let t = 1; cells.length % 7 !== 0; t++) cells.push({ day: t, inMonth: false, dateKey: toDateKey(y, m + 1, t) }); return cells; };
+
+const emptyEventDraft = { eventType: EVENT_TYPES[0], time: '', location: '', description: '' };
+const emptyStandoutDraft = { standoutType: STANDOUT_TYPES[0], time: '', location: '', description: '', photoRef: '' };
+
+export default function RememberMeSection() {
+  const [viewDate, setViewDate] = useState(() => new Date());
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const [postcardOpen, setPostcardOpen] = useState(false);
+  const [postcardMode, setPostcardMode] = useState('EVENT');
+  const [eventsByDate, setEventsByDate] = useState({});
+  const [standoutsByDate, setStandoutsByDate] = useState({});
+  const [eventDraft, setEventDraft] = useState(emptyEventDraft);
+  const [standoutDraft, setStandoutDraft] = useState(emptyStandoutDraft);
+
+  const monthIndex = viewDate.getMonth(), year = viewDate.getFullYear(), monthName = viewDate.toLocaleString('en-US', { month: 'long' }).toUpperCase();
+  const monthVisual = MONTH_VISUAL_CONFIG[monthIndex];
+  const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate]);
+  const selectedDateKey = toDateKey(year, monthIndex, selectedDay);
+
+  const selectedObservances = useMemo(() => REMEMBER_ME_OBSERVANCES.filter((o) => o.month === monthIndex && (o.allMonth || o.day === selectedDay)), [monthIndex, selectedDay]);
+  const standoutPostcards = useMemo(() => Object.entries(standoutsByDate).flatMap(([date, list]) => list.map((s) => ({ date, standout: s }))).filter(({ date }) => date.startsWith(`${year}-${String(monthIndex + 1).padStart(2, '0')}`)), [standoutsByDate, year, monthIndex]);
+
+  const onDayClick = (day) => { setSelectedDay(day); setPostcardMode('EVENT'); setPostcardOpen(true); setEventDraft(emptyEventDraft); setStandoutDraft(emptyStandoutDraft); };
+  const closePostcard = () => setPostcardOpen(false);
+
+  const saveEvent = () => {
+    const payload = { id: crypto.randomUUID(), date: selectedDateKey, mode: 'EVENT', ...eventDraft, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    setEventsByDate((c) => ({ ...c, [selectedDateKey]: [...(c[selectedDateKey] ?? []), payload] }));
+    closePostcard();
+  };
+
+  const saveStandout = (stamped = false) => {
+    const dayStandouts = standoutsByDate[selectedDateKey] ?? [];
+    if (dayStandouts.length >= 3) return;
+    const payload = { id: crypto.randomUUID(), date: selectedDateKey, mode: 'STANDOUT', ...standoutDraft, stamped, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    setStandoutsByDate((c) => ({ ...c, [selectedDateKey]: [...(c[selectedDateKey] ?? []), payload] }));
+    closePostcard();
+  };
+
+  const deleteLatestByMode = () => {
+    if (postcardMode === 'EVENT') {
+      setEventsByDate((c) => ({ ...c, [selectedDateKey]: (c[selectedDateKey] ?? []).slice(0, -1) }));
+    } else {
+      setStandoutsByDate((c) => ({ ...c, [selectedDateKey]: (c[selectedDateKey] ?? []).slice(0, -1) }));
+    }
+    closePostcard();
+  };
+
+  return <section className="remember-page" style={{ '--remember-bg-image': `url('/backgrounds/REMEMBER-ME/${MONTH_BACKGROUND_BY_INDEX[monthIndex]}')`, '--remember-bg-position': monthVisual.backgroundPosition, '--remember-bg-size': monthVisual.backgroundSize }}>
+    <div className="remember-overlay" aria-hidden="true" />
+    <div className="remember-content">
+      <header className="remember-head"><h1>REMEMBER.ME</h1></header>
+      <main className="remember-main">
+        <section className="remember-calendar-panel" aria-label="Month calendar">
+          <div className="remember-month-row"><button type="button" onClick={() => { setViewDate((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1)); setSelectedDay(1); setPostcardOpen(false); }} aria-label="Previous month">‹</button><h2 className="remember-sr-only">{monthName} {year}</h2><span className="remember-month-mini">{monthName} {year}</span><button type="button" onClick={() => { setViewDate((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1)); setSelectedDay(1); setPostcardOpen(false); }} aria-label="Next month">›</button></div>
+          <div className="remember-weekdays">{WEEKDAY_HEADERS.map((d) => <span key={d}>{d}</span>)}</div>
+          <div className="remember-grid">{monthGrid.map((cell, idx) => {
+            const [_, mm, dd] = cell.dateKey.split('-').map(Number);
+            const events = eventsByDate[cell.dateKey] ?? [];
+            const standouts = standoutsByDate[cell.dateKey] ?? [];
+            const observances = REMEMBER_ME_OBSERVANCES.filter((o) => o.month === mm - 1 && (o.allMonth || o.day === dd));
+            const chips = [
+              ...standouts.map((s) => ({ tone: s.stamped ? 'stamped' : 'moment', label: s.stamped ? `★ ${s.standoutType}` : s.standoutType })),
+              ...events.map((e) => ({ tone: 'entry', label: e.time ? `${e.time} ${e.eventType}` : e.eventType })),
+              ...observances.map((o) => ({ tone: 'observance', label: o.chip }))
+            ];
+            const visible = chips.slice(0, 3);
+            const hidden = Math.max(0, chips.length - 3);
+            return <button key={`${idx}-${cell.day}`} type="button" className={`remember-day ${cell.inMonth ? '' : 'remember-outside'} ${cell.inMonth && selectedDay === cell.day ? 'remember-selected' : ''}`.trim()} onClick={() => cell.inMonth && onDayClick(cell.day)} disabled={!cell.inMonth}><span className="remember-day-num">{cell.day}</span><span className="remember-day-chips">{visible.map((chip, i) => <span key={`${chip.label}-${i}`} className={`remember-chip remember-chip-${chip.tone}`}>{chip.label}</span>)}{hidden > 0 && <span className="remember-chip remember-chip-more">+{hidden}</span>}</span></button>;
+          })}</div>
+        </section>
+
+        <section className="remember-postcards-pane"><h3>STANDOUT POSTCARDS</h3>{standoutPostcards.length === 0 ? <p>Saved and stamped standouts for this month will appear here.</p> : standoutPostcards.map(({ date, standout }) => <article key={standout.id} className="remember-postcard"><span>{date}</span><strong>{standout.standoutType}</strong><p>{standout.description || 'Stamped memory.'}</p>{standout.photoRef && <small>{standout.photoRef}</small>}{standout.stamped && <em>STAMPED</em>}</article>)}</section>
+      </main>
+
+      {postcardOpen && <div className="remember-popout-wrap" role="dialog" aria-modal="true"><section className="remember-popout"><header><h3>{selectedDateKey}</h3><div className="remember-type-switch"><span>TYPE:</span><button type="button" className={postcardMode === 'EVENT' ? 'active' : ''} onClick={() => setPostcardMode('EVENT')}>EVENT</button><button type="button" className={postcardMode === 'STANDOUT' ? 'active' : ''} onClick={() => setPostcardMode('STANDOUT')}>STANDOUT</button></div></header>
+        {selectedObservances.length > 0 && <div className="remember-observance-strip">{selectedObservances.map((o) => <article key={o.id} className="remember-sticky"><strong>{o.title}</strong><p>Fun fact: {o.funFact}</p><small>{o.assurerReflection}</small></article>)}</div>}
+
+        {postcardMode === 'EVENT' ? <div className="remember-form"><select value={eventDraft.eventType} onChange={(e) => setEventDraft((d) => ({ ...d, eventType: e.target.value }))}>{EVENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select><input type="text" value={selectedDateKey} disabled /><input type="time" value={eventDraft.time} onChange={(e) => setEventDraft((d) => ({ ...d, time: e.target.value }))} /><input type="text" placeholder="Location" value={eventDraft.location} onChange={(e) => setEventDraft((d) => ({ ...d, location: e.target.value }))} /><textarea placeholder="Description" value={eventDraft.description} onChange={(e) => setEventDraft((d) => ({ ...d, description: e.target.value }))} /><div className="remember-actions"><button type="button" onClick={saveEvent}>SAVE</button><button type="button" onClick={deleteLatestByMode}>DELETE</button><button type="button" onClick={closePostcard}>CLOSE</button></div></div> :
+          <div className="remember-form"><select value={standoutDraft.standoutType} onChange={(e) => setStandoutDraft((d) => ({ ...d, standoutType: e.target.value }))}>{STANDOUT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select><input type="text" value={selectedDateKey} disabled /><input type="time" value={standoutDraft.time} onChange={(e) => setStandoutDraft((d) => ({ ...d, time: e.target.value }))} /><input type="text" placeholder="Location" value={standoutDraft.location} onChange={(e) => setStandoutDraft((d) => ({ ...d, location: e.target.value }))} /><textarea placeholder="Description" value={standoutDraft.description} onChange={(e) => setStandoutDraft((d) => ({ ...d, description: e.target.value }))} /><input type="text" placeholder="Photo (optional)" value={standoutDraft.photoRef} onChange={(e) => setStandoutDraft((d) => ({ ...d, photoRef: e.target.value }))} /><div className="remember-actions"><button type="button" onClick={() => saveStandout(false)}>SAVE</button><button type="button" onClick={() => saveStandout(true)}>STAMP IT</button><button type="button" onClick={deleteLatestByMode}>DELETE</button><button type="button" onClick={closePostcard}>CLOSE</button></div></div>}
+      </section></div>}
+    </div>
+  </section>;
 }
