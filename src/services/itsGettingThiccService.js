@@ -150,58 +150,42 @@ async function throwSupabaseError(action, res) {
 }
 
 export async function fetchScheduleEntries() {
-  if (!hasSupabase) return loadScheduleEntries();
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc`, { headers: sbHeaders, cache: 'no-store' });
+  if (!hasSupabase) return loadScheduleEntries().map(normalizeScheduleEntry);
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc,start_time.asc`, { headers: sbHeaders, cache: 'no-store' });
   if (!res.ok) await throwSupabaseError('LOAD', res);
-  return res.json();
+  const rows = await res.json();
+  return (Array.isArray(rows) ? rows : []).map(normalizeScheduleEntry);
 }
 
-export async function fetchScheduleEntriesSafe() {
-  if (!hasSupabase) {
-    return {
-      rows: loadScheduleEntries(),
-      error: null,
-      source: 'local',
-    };
-  }
-
-  try {
-    const res = await fetch(
-      `${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc`,
-      { headers: sbHeaders, cache: 'no-store' },
-    );
-
-    if (!res.ok) {
-      const body = await readErrorBody(res);
-      const message = `THICC.TIME LOAD FAILED: ${res.status} ${body}`;
-      console.error('[THICC.TIME LOAD]', message);
-
-      return {
-        rows: loadScheduleEntries(),
-        error: message,
-        source: 'local-fallback',
-      };
-    }
-
-    const rows = await res.json();
-    return {
-      rows: Array.isArray(rows) ? rows : [],
-      error: null,
-      source: 'supabase',
-    };
-  } catch (error) {
-    const message = `THICC.TIME LOAD FAILED: ${error?.message || 'Unknown calendar load error'}`;
-    console.error('[THICC.TIME LOAD]', error);
-
-    return {
-      rows: loadScheduleEntries(),
-      error: message,
-      source: 'local-fallback',
-    };
-  }
+export function normalizeScheduleEntry(row = {}) {
+  return {
+    id: row.id || createLocalScheduleId(),
+    client_id: row.client_id ?? null,
+    client_name: row.client_name || '',
+    entry_type: row.entry_type || 'client',
+    entry_date: row.entry_date || '',
+    start_time: row.start_time || '',
+    end_time: row.end_time || '',
+    workout_label: row.workout_label || '',
+    source_split_day: row.source_split_day || '',
+    location: row.location || '',
+    notes: row.notes || '',
+    color_option_key: row.color_option_key || 'cobalt',
+    created_at: row.created_at || new Date().toISOString(),
+    updated_at: row.updated_at || new Date().toISOString(),
+  };
 }
 
-export async function upsertScheduleEntry(entry) {
+export function groupScheduleEntriesByDate(rows = []) {
+  return (rows || []).reduce((acc, row) => {
+    const normalized = normalizeScheduleEntry(row);
+    if (!normalized.entry_date) return acc;
+    acc[normalized.entry_date] = [...(acc[normalized.entry_date] || []), normalized];
+    return acc;
+  }, {});
+}
+
+export async function saveScheduleEntry(entry) {
   const allowedScheduleKeys = [
     'id',
     'client_id',
@@ -244,7 +228,7 @@ export async function upsertScheduleEntry(entry) {
   const hasExistingId = isUuid(cleanPayload.id);
   if (!hasExistingId) delete cleanPayload.id;
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([cleanPayload]) });
-  if (!res.ok) await throwSupabaseError(hasExistingId ? 'EDIT' : 'SAVE', res);
+  if (!res.ok) await throwSupabaseError('SAVE', res);
   const rows = await res.json();
   return rows[0];
 }
