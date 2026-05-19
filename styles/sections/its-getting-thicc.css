@@ -15,8 +15,11 @@ textarea{min-height:76px;resize:vertical}
 .cele{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch}
 .people-list{display:grid;gap:8px}.people-item{display:grid;grid-template-columns:1fr auto;padding:10px;border-left:6px solid #3b82f6;background:rgba(16,0,18,.4)}
 .people-item div{display:grid;gap:4px}
-.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{min-height:128px;border:1px solid rgba(255,138,213,.35);padding:6px;background:rgba(15,0,17,.28)}
-.booking{margin-top:4px;padding:3px 6px;color:#fff;border-radius:4px;font-size:.58rem;font-weight:700}
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{min-height:128px;border:1px solid rgba(255,138,213,.35);padding:6px;background:rgba(15,0,17,.28);display:grid;align-content:start;text-align:left;gap:4px}.day.selected{border-color:#ff78cb;box-shadow:0 0 0 1px rgba(255,120,203,.55) inset}
+.booking{margin-top:4px;padding:3px 6px;color:#fff;border-radius:4px;font-size:.58rem;font-weight:700;cursor:pointer;border:0}
+.time-month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.time-selected-date,.time-editor-date{margin:0 0 8px;font-weight:700;letter-spacing:.08em}
+.time-editor{border:1px solid rgba(255,138,213,.35);padding:8px;background:rgba(20,0,22,.32);margin-top:10px}
 .booking-del{margin-left:6px;background:transparent;border:none;color:#fff;cursor:pointer}
 .form-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,138,213,.2)}
 small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
