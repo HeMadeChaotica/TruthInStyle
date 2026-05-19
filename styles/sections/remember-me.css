@@ -47,3 +47,10 @@
 .remember-screecher-photo-empty{min-height:220px;display:grid;place-items:center;text-align:center;color:#ffe8f2;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 .remember-screecher-copy{display:grid;gap:8px;align-content:start;padding-top:44px}
 .remember-screecher-copy p{margin:0;text-transform:uppercase}
+
+.remember-moment-photo-preview img{width:100%;max-height:220px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,124,209,.72)}
+.assurer-section{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.assurer-flip-card{background:rgba(12,0,10,.44);border:1px solid rgba(255,94,190,.58);border-radius:12px;padding:0;overflow:hidden}
+.assurer-flip-card img{width:100%;height:100%;min-height:220px;object-fit:cover;display:block}
+.assurer-flip-back{padding:10px;display:grid;gap:6px;text-align:left;color:#ffd8ec}
+.assurer-flip-back p{margin:0;text-transform:none}
