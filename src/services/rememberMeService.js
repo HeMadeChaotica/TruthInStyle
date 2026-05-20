@@ -37,6 +37,9 @@ function normalizeRow(row = {}) {
     time_value: row.time_value || '',
     detail: row.detail || '',
     description: row.description || '',
+    recurrence_type: row.recurrence_type || 'none',
+    recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [],
+    recurrence_active: Boolean(row.recurrence_active),
     updated_at: row.updated_at || new Date().toISOString(),
   };
 }
@@ -75,6 +78,9 @@ export async function upsertRememberMeEntry(entry) {
     time_value: localSaved.time_value || null,
     detail: localSaved.detail || null,
     description: localSaved.description || null,
+    recurrence_type: localSaved.recurrence_type || 'none',
+    recurrence_days: Array.isArray(localSaved.recurrence_days) ? localSaved.recurrence_days : [],
+    recurrence_active: Boolean(localSaved.recurrence_active),
     updated_at: new Date().toISOString(),
   };
   if (!payload.id) delete payload.id;
