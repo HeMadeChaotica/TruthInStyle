@@ -48,7 +48,8 @@ export default function ItsGettingThiccSection() {
       setTimeError('');
       setTimeLoadStatus('loading');
       const rows = await fetchScheduleEntries();
-      setEntriesByDate(groupScheduleEntriesByDate(rows));
+      const safeRows = Array.isArray(rows) ? rows : [];
+      setEntriesByDate(groupScheduleEntriesByDate(safeRows));
       setTimeLoadStatus('loaded');
     } catch (error) {
       setTimeLoadStatus('error');
@@ -58,12 +59,22 @@ export default function ItsGettingThiccSection() {
 
   useEffect(() => {
     const seeded = loadClients();
-    setClients(seeded);
-    setActiveId(seeded[0]?.id || '');
+    const safeSeeded = Array.isArray(seeded) ? seeded : [];
+    setClients(safeSeeded);
+    setActiveId(safeSeeded[0]?.id || '');
     loadTimeEntries();
-    fetchClientColors().then(setColorMap);
-    fetchForms().then(setForms);
-    fetchFormAssignments().then(setAssignments);
+    fetchClientColors().then((rows) => setColorMap(Array.isArray(rows) ? rows : [])).catch((error) => {
+      console.error('ITS.GETTING.THICC color load failed', error);
+      setColorMap([]);
+    });
+    fetchForms().then((rows) => setForms(Array.isArray(rows) ? rows : [])).catch((error) => {
+      console.error('ITS.GETTING.THICC forms load failed', error);
+      setForms([]);
+    });
+    fetchFormAssignments().then((rows) => setAssignments(Array.isArray(rows) ? rows : [])).catch((error) => {
+      console.error('ITS.GETTING.THICC assignments load failed', error);
+      setAssignments([]);
+    });
   }, []);
   const persist = (next, event = 'autosave') => { setClients(next); saveClients(next); appendLog(event, { activeId }); };
   const update = (key, value) => { if (!active) return; persist(clients.map((c) => (c.id === active.id ? { ...c, [key]: value } : c)), `field:${key}`); };
@@ -157,8 +168,9 @@ export default function ItsGettingThiccSection() {
       { id: 'H', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /></div>)}</div></> }] },
   ];
 
-  const viewedMonthDate = useMemo(() => { const [y,m] = selectedTimeDate.split('-'); return new Date(Number(y), Number(m)-1, 1); }, [selectedTimeDate]);
-  const monthDates = useMemo(() => {
+  const [y,m] = String(selectedTimeDate || '').split('-');
+  const viewedMonthDate = new Date(Number(y) || new Date().getFullYear(), (Number(m) || 1)-1, 1);
+  const monthDates = (() => {
     const year = viewedMonthDate.getFullYear();
     const month = viewedMonthDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -166,7 +178,7 @@ export default function ItsGettingThiccSection() {
       const day = String(i + 1).padStart(2, '0');
       return `${year}-${String(month + 1).padStart(2, '0')}-${day}`;
     });
-  }, [viewedMonthDate]);
+  })();
   const selectedEntries = Array.isArray(entriesByDate[selectedTimeDate]) ? entriesByDate[selectedTimeDate] : [];
   const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: <><h3>THICC.TIME</h3><div className="time-month-nav"><button type="button" onClick={() => setSelectedTimeDate((prev) => { const d = new Date(`${prev}T12:00:00`); const next = new Date(d.getFullYear(), d.getMonth()-1, 1); return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-01`; })}>PREV</button><strong>{viewedMonthDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong><button type="button" onClick={() => setSelectedTimeDate((prev) => { const d = new Date(`${prev}T12:00:00`); const next = new Date(d.getFullYear(), d.getMonth()+1, 1); return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-01`; })}>NEXT</button></div><p className="time-selected-date">SELECTED DATE: {formatDisplayDate(selectedTimeDate)}</p><div className="month">{monthDates.map((dateKey)=>{const dayRows=entriesByDate[dateKey]||[];return <button type="button" key={dateKey} className={`day ${selectedTimeDate===dateKey?'selected':''}`} onClick={()=>{setSelectedTimeDate(dateKey);setEditingEntryId('');setTimeDraft((prev)=>({...prev,entry_date:dateKey,source_split_day:days[new Date(`${dateKey}T12:00:00`).getDay()]}));}}><b>{Number(dateKey.slice(-2))}</b>{dayRows.map((r)=>{const isPersonal=r.entry_type==='personal';const bookingLabel=isPersonal?(r.workout_label||'MISTA.THICC'):(r.client_name||r.workout_label||'BOOKING');return <span key={r.id} className="booking" onClick={(event)=>{event.stopPropagation();openEditor(r);}} style={{background:isPersonal?'#ff4db8':(colorMap.find((c)=>c.key===r.color_option_key)?.value||resolveClientColor(r.color_option_key).value)}}>{bookingLabel}</span>;})}</button>;})}</div>{timeDraft.entry_date?<div className="time-editor"><p className="time-editor-date">{formatDisplayDate(timeDraft.entry_date)}</p><div className="form-grid"><label>ENTRY TYPE<select value={timeDraft.entry_type} onChange={(e)=>setTimeDraft((prev)=>({...prev,entry_type:e.target.value}))}><option value="personal">PERSONAL MISTA.THICC</option><option value="client">CLIENT</option></select></label>{timeDraft.entry_type==='client'?<label>CLIENT<span>{active ? active.name : 'SELECT CLIENT IN THICC.PEOPLE'}</span></label>:null}<label>START TIME<input type="time" value={timeDraft.start_time} onChange={(e)=>setTimeDraft((prev)=>({...prev,start_time:e.target.value}))} /></label><label>END TIME<input type="time" value={timeDraft.end_time} onChange={(e)=>setTimeDraft((prev)=>({...prev,end_time:e.target.value}))} /></label><label>WORKOUT LABEL<input value={timeDraft.workout_label} onChange={(e)=>setTimeDraft((prev)=>({...prev,workout_label:e.target.value}))} /></label><label>LOCATION<input value={timeDraft.location} onChange={(e)=>setTimeDraft((prev)=>({...prev,location:e.target.value}))} /></label><label>NOTES<textarea value={timeDraft.notes} onChange={(e)=>setTimeDraft((prev)=>({...prev,notes:e.target.value}))} /></label></div><div className="form-row"><button onClick={async()=>{try{setTimeError('');const now=new Date();let payload=normalizeSchedulePayload({currentEntryForm:timeDraft,currentActive:active});if(payload.entry_type==='personal'){payload={...payload,client_id:null,client_name:'Mista.THICC',color_option_key:'mista-thicc-pink',entry_type:'personal'};}else{if(!active){setTimeError('Select a client before saving a CLIENT entry.');return;}const ensuredClient=isSupabase?await ensureClientDbId(active):active;if(isSupabase&&ensuredClient.dbId&&ensuredClient.dbId!==active.dbId){const nextClients=clients.map((c)=>(c.id===active.id?ensuredClient:c));setClients(nextClients);saveClients(nextClients);}const scheduleClientId=isSupabase?getClientDbId(ensuredClient):ensuredClient.id;if(!scheduleClientId)throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');const activeColor=ensuredClient.clientColorOptionKey||'cobalt';payload={...payload,client_id:scheduleClientId,client_name:ensuredClient.name||ensuredClient.display_name||'THICC CLIENT',color_option_key:activeColor==='mista-thicc-pink'?'cobalt':activeColor,entry_type:'client'};}if(editingEntryId)payload.id=editingEntryId;payload.updated_at=now.toISOString();const saved=normalizeScheduleEntry(await saveScheduleEntry(payload));setEntriesByDate((prev)=>{const key=saved.entry_date;const dayRows=prev[key]||[];const exists=dayRows.some((x)=>x.id===saved.id);return {...prev,[key]:exists?dayRows.map((x)=>x.id===saved.id?saved:x):[...dayRows,saved]};});setTimeDraft((prev)=>({...prev,entry_date:selectedTimeDate}));setEditingEntryId('');await loadTimeEntries();}catch(error){console.error('THICC.TIME save failed', error);setTimeError('Unable to save THICC.TIME entry.');}}}>SAVE</button>{editingEntryId?<button onClick={async()=>{try{setTimeError('');await deleteScheduleEntry(editingEntryId);await loadTimeEntries();setEditingEntryId('');setTimeDraft((prev)=>({...prev,entry_date:selectedTimeDate}));}catch(error){console.error('THICC.TIME delete failed', error);setTimeError('Unable to delete THICC.TIME entry.');}}}>DELETE</button>:null}<button onClick={()=>{setEditingEntryId('');setTimeDraft((prev)=>({...prev,entry_date:selectedTimeDate}));}}>CLOSE</button></div></div>:null}<div>{selectedEntries.map((entry)=><button type="button" key={entry.id} onClick={()=>openEditor(entry)}>{formatDisplayDate(entry.entry_date)} · {entry.workout_label||entry.client_name||entry.id}</button>)}</div>{timeLoadStatus==='loading'?<p>LOADING…</p>:null}{timeError ? <p className="time-error">{timeError}</p> : null}</> }] }];
   const nomoShelves = [{ id: 'nomo', columns: 1, panels: [{ id: 'n1', token: 'medium', content: <><h3>THICC.NOMO</h3><p>Deactivate/archive current client from active roster.</p><button onClick={() => { if (!window.confirm('THICC.NOMO this client?')) return; const nextClients = clients.map((c) => (c.id === active.id ? { ...c, active: false } : c)); persist(nextClients, 'client:nomo'); const nextActive = nextClients.find((c) => c.active !== false); setActiveId(nextActive?.id || ''); setActiveTab('THICC.INFO'); }}>THICC.NOMO</button></> }] }];
