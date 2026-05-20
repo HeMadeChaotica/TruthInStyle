@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 const CONTROL_ITEMS = [
   { key: 'home', src: '/control-panel/control-home.PNG', alt: 'Home' },
   { key: 'back', src: '/control-panel/control-back.png', alt: 'Back' },
+  { key: 'its-getting-thicc', src: '/control-panel/control-its-getting-thicc.png', alt: 'Its Getting Thicc' },
   { key: 'the-summation', src: '/control-panel/control-the-summation.png', alt: 'The Summation' },
   { key: 'thicc-fitt', src: '/control-panel/control-thicc-fitt.png', alt: 'Thicc Fitt' },
   { key: 'da-eater', src: '/control-panel/control-da-eater.png', alt: 'Da Eater' },
@@ -71,7 +72,7 @@ export default function ControlPanelOverlay({
           position: 'absolute',
           top: 0,
           left: 0,
-          width: 'min(84vw, 320px)',
+          width: 'min(72vw, 252px)',
           height: '100%',
           overflowY: 'auto',
           overflowX: 'hidden',
@@ -80,10 +81,10 @@ export default function ControlPanelOverlay({
           borderImage: 'linear-gradient(180deg, #56e8ff, #fd5fff, #ffd54f, #56e8ff) 1',
           transform: isOpen ? 'translateX(0)' : 'translateX(-112%)',
           transition: 'transform 180ms ease-out',
-          padding: '0',
+          padding: '4px 0',
           display: 'flex',
           flexDirection: 'column',
-          gap: '0'
+          gap: '2px'
         }}
       >
         {CONTROL_ITEMS.map((item) => (
@@ -98,7 +99,7 @@ export default function ControlPanelOverlay({
               display: 'block',
               width: '100%',
               background: 'transparent',
-              padding: '0',
+              padding: '4px 0',
               cursor: 'pointer',
               outlineOffset: '2px'
             }}
@@ -109,6 +110,8 @@ export default function ControlPanelOverlay({
               draggable={false}
               style={{
                 width: '100%',
+                maxWidth: '230px',
+                margin: '0 auto',
                 height: 'auto',
                 display: 'block',
                 objectFit: 'contain',
