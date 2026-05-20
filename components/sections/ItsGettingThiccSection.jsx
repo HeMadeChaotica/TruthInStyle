@@ -38,6 +38,11 @@ export default function ItsGettingThiccSection() {
   const [timeLoadStatus, setTimeLoadStatus] = useState('idle');
   const [timeError, setTimeError] = useState('');
   const [editingEntryId, setEditingEntryId] = useState('');
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [editorOpen, setEditorOpen] = useState(false);
   const [timeDraft, setTimeDraft] = useState({ entry_type: 'client', client_id: '', client_name: '', entry_date: '', start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: '', location: '', notes: '', color_option_key: 'cobalt' });
   const active = useMemo(() => clients.find((c) => c.id === activeId) || clients[0], [clients, activeId]);
   const activeClientDbId = useMemo(() => getClientDbId(active), [active]);
@@ -91,32 +96,26 @@ export default function ItsGettingThiccSection() {
     const now = new Date();
     setEditingEntryId('');
     setTimeDraft({
-      entry_type: 'client',
-      client_id: '',
+      entry_type: 'personal',
+      schedule_layer: 'mista_thicc',
+      client_id: null,
       client_name: '',
+      prospect_name: '',
+      prospect_contact: '',
       entry_date: now.toISOString().slice(0, 10),
       start_time: '09:00',
       end_time: '10:00',
       workout_label: active?.programSplit?.[now.getDay()] || 'SESSION',
       source_split_day: days[now.getDay()],
-      color_option_key: active?.clientColorOptionKey || 'cobalt',
+      color_option_key: 'mista-thicc-pink',
+      recurrence_type: 'none',
+      recurrence_days: [],
+      recurrence_active: false,
       location: '',
       notes: '',
     });
   };
 
-  const openEditor = (row) => {
-    setEditingEntryId(row.id);
-    setTimeDraft({
-      entry_type: row.entry_type || 'client',
-      entry_date: row.entry_date || '',
-      start_time: row.start_time || '09:00',
-      end_time: row.end_time || '10:00',
-      workout_label: row.workout_label || '',
-      location: row.location || '',
-      notes: row.notes || '',
-    });
-  };
 
   const normalizeSchedulePayload = ({ currentEntryForm, currentActive }) => {
     const now = new Date();
@@ -168,19 +167,64 @@ export default function ItsGettingThiccSection() {
       { id: 'H', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /></div>)}</div></> }] },
   ];
 
-  const [y,m] = String(selectedTimeDate || '').split('-');
-  const viewedMonthDate = new Date(Number(y) || new Date().getFullYear(), (Number(m) || 1)-1, 1);
-  const monthDates = (() => {
-    const year = viewedMonthDate.getFullYear();
-    const month = viewedMonthDate.getMonth();
+  const weekdayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const getLayerFromEntry = (entry = {}) => entry.schedule_layer || (entry.entry_type === 'personal' ? 'mista_thicc' : 'the_thiccens');
+  const entryColor = (entry = {}) => {
+    if (entry.schedule_layer === 'mista_thicc') return '#ff4db8';
+    if (entry.schedule_layer === 'new_client') return '#f8f8f8';
+    return colorMap.find((c) => c.key === entry.color_option_key)?.value || resolveClientColor(entry.color_option_key).value;
+  };
+  const getChipLabel = (entry = {}) => {
+    if (entry.schedule_layer === 'mista_thicc') return entry.workout_label || 'MISTA.THICC';
+    if (entry.schedule_layer === 'new_client') return entry.prospect_name || 'NEW CLIENT';
+    return entry.client_name || entry.workout_label || 'THE.THICCENS';
+  };
+
+  const openNewEditor = (dateKey) => {
+    setSelectedTimeDate(dateKey);
+    setEditingEntryId('');
+    setEditorOpen(true);
+    setTimeDraft({ entry_type: 'personal', schedule_layer: 'mista_thicc', client_id: null, client_name: '', prospect_name: '', prospect_contact: '', entry_date: dateKey, start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: days[new Date(`${dateKey}T12:00:00`).getDay()], location: '', notes: '', color_option_key: 'mista-thicc-pink', recurrence_type: 'none', recurrence_days: [], recurrence_active: false });
+  };
+  const openEditor = (row) => {
+    setSelectedTimeDate(row.entry_date);
+    setEditingEntryId(row.id);
+    setEditorOpen(true);
+    setTimeDraft({ ...row, schedule_layer: getLayerFromEntry(row), recurrence_type: row.recurrence_type || 'none', recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [], recurrence_active: Boolean(row.recurrence_active) });
+  };
+
+  const monthDates = useMemo(() => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const day = String(i + 1).padStart(2, '0');
-      return `${year}-${String(month + 1).padStart(2, '0')}-${day}`;
+    return Array.from({ length: daysInMonth }, (_, i) => `${year}-${String(month + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
+  }, [viewDate]);
+
+  const visibleEntriesByDate = useMemo(() => {
+    const grouped = {};
+    Object.entries(entriesByDate || {}).forEach(([dateKey, rows]) => {
+      (rows || []).forEach((entry) => {
+        const normalized = normalizeScheduleEntry(entry);
+        const sourceDate = new Date(`${normalized.entry_date}T12:00:00`);
+        if (!Number.isNaN(sourceDate.getTime())) {
+          grouped[normalized.entry_date] = [...(grouped[normalized.entry_date] || []), normalized];
+          if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && Array.isArray(normalized.recurrence_days)) {
+            monthDates.forEach((mk) => {
+              if (mk < normalized.entry_date) return;
+              const d = new Date(`${mk}T12:00:00`);
+              const key = weekdayKeys[d.getDay()];
+              if (normalized.recurrence_days.includes(key) && mk !== normalized.entry_date) {
+                grouped[mk] = [...(grouped[mk] || []), { ...normalized, id: `${normalized.id}__${mk}`, original_entry_id: normalized.id, entry_date: mk, derived_recurrence: true }];
+              }
+            });
+          }
+        }
+      });
     });
-  })();
-  const selectedEntries = Array.isArray(entriesByDate[selectedTimeDate]) ? entriesByDate[selectedTimeDate] : [];
-  const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: <><h3>THICC.TIME</h3><div className="time-month-nav"><button type="button" onClick={() => setSelectedTimeDate((prev) => { const d = new Date(`${prev}T12:00:00`); const next = new Date(d.getFullYear(), d.getMonth()-1, 1); return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-01`; })}>PREV</button><strong>{viewedMonthDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong><button type="button" onClick={() => setSelectedTimeDate((prev) => { const d = new Date(`${prev}T12:00:00`); const next = new Date(d.getFullYear(), d.getMonth()+1, 1); return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}-01`; })}>NEXT</button></div><p className="time-selected-date">SELECTED DATE: {formatDisplayDate(selectedTimeDate)}</p><div className="month">{monthDates.map((dateKey)=>{const dayRows=entriesByDate[dateKey]||[];return <button type="button" key={dateKey} className={`day ${selectedTimeDate===dateKey?'selected':''}`} onClick={()=>{setSelectedTimeDate(dateKey);setEditingEntryId('');setTimeDraft((prev)=>({...prev,entry_date:dateKey,source_split_day:days[new Date(`${dateKey}T12:00:00`).getDay()]}));}}><b>{Number(dateKey.slice(-2))}</b>{dayRows.map((r)=>{const isPersonal=r.entry_type==='personal';const bookingLabel=isPersonal?(r.workout_label||'MISTA.THICC'):(r.client_name||r.workout_label||'BOOKING');return <span key={r.id} className="booking" onClick={(event)=>{event.stopPropagation();openEditor(r);}} style={{background:isPersonal?'#ff4db8':(colorMap.find((c)=>c.key===r.color_option_key)?.value||resolveClientColor(r.color_option_key).value)}}>{bookingLabel}</span>;})}</button>;})}</div>{timeDraft.entry_date?<div className="time-editor"><p className="time-editor-date">{formatDisplayDate(timeDraft.entry_date)}</p><div className="form-grid"><label>ENTRY TYPE<select value={timeDraft.entry_type} onChange={(e)=>setTimeDraft((prev)=>({...prev,entry_type:e.target.value}))}><option value="personal">PERSONAL MISTA.THICC</option><option value="client">CLIENT</option></select></label>{timeDraft.entry_type==='client'?<label>CLIENT<span>{active ? active.name : 'SELECT CLIENT IN THICC.PEOPLE'}</span></label>:null}<label>START TIME<input type="time" value={timeDraft.start_time} onChange={(e)=>setTimeDraft((prev)=>({...prev,start_time:e.target.value}))} /></label><label>END TIME<input type="time" value={timeDraft.end_time} onChange={(e)=>setTimeDraft((prev)=>({...prev,end_time:e.target.value}))} /></label><label>WORKOUT LABEL<input value={timeDraft.workout_label} onChange={(e)=>setTimeDraft((prev)=>({...prev,workout_label:e.target.value}))} /></label><label>LOCATION<input value={timeDraft.location} onChange={(e)=>setTimeDraft((prev)=>({...prev,location:e.target.value}))} /></label><label>NOTES<textarea value={timeDraft.notes} onChange={(e)=>setTimeDraft((prev)=>({...prev,notes:e.target.value}))} /></label></div><div className="form-row"><button onClick={async()=>{try{setTimeError('');const now=new Date();let payload=normalizeSchedulePayload({currentEntryForm:timeDraft,currentActive:active});if(payload.entry_type==='personal'){payload={...payload,client_id:null,client_name:'Mista.THICC',color_option_key:'mista-thicc-pink',entry_type:'personal'};}else{if(!active){setTimeError('Select a client before saving a CLIENT entry.');return;}const ensuredClient=isSupabase?await ensureClientDbId(active):active;if(isSupabase&&ensuredClient.dbId&&ensuredClient.dbId!==active.dbId){const nextClients=clients.map((c)=>(c.id===active.id?ensuredClient:c));setClients(nextClients);saveClients(nextClients);}const scheduleClientId=isSupabase?getClientDbId(ensuredClient):ensuredClient.id;if(!scheduleClientId)throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');const activeColor=ensuredClient.clientColorOptionKey||'cobalt';payload={...payload,client_id:scheduleClientId,client_name:ensuredClient.name||ensuredClient.display_name||'THICC CLIENT',color_option_key:activeColor==='mista-thicc-pink'?'cobalt':activeColor,entry_type:'client'};}if(editingEntryId)payload.id=editingEntryId;payload.updated_at=now.toISOString();const saved=normalizeScheduleEntry(await saveScheduleEntry(payload));setEntriesByDate((prev)=>{const key=saved.entry_date;const dayRows=prev[key]||[];const exists=dayRows.some((x)=>x.id===saved.id);return {...prev,[key]:exists?dayRows.map((x)=>x.id===saved.id?saved:x):[...dayRows,saved]};});setTimeDraft((prev)=>({...prev,entry_date:selectedTimeDate}));setEditingEntryId('');await loadTimeEntries();}catch(error){console.error('THICC.TIME save failed', error);setTimeError('Unable to save THICC.TIME entry.');}}}>SAVE</button>{editingEntryId?<button onClick={async()=>{try{setTimeError('');await deleteScheduleEntry(editingEntryId);await loadTimeEntries();setEditingEntryId('');setTimeDraft((prev)=>({...prev,entry_date:selectedTimeDate}));}catch(error){console.error('THICC.TIME delete failed', error);setTimeError('Unable to delete THICC.TIME entry.');}}}>DELETE</button>:null}<button onClick={()=>{setEditingEntryId('');setTimeDraft((prev)=>({...prev,entry_date:selectedTimeDate}));}}>CLOSE</button></div></div>:null}<div>{selectedEntries.map((entry)=><button type="button" key={entry.id} onClick={()=>openEditor(entry)}>{formatDisplayDate(entry.entry_date)} · {entry.workout_label||entry.client_name||entry.id}</button>)}</div>{timeLoadStatus==='loading'?<p>LOADING…</p>:null}{timeError ? <p className="time-error">{timeError}</p> : null}</> }] }];
+    return grouped;
+  }, [entriesByDate, monthDates]);
+
+  const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: <><h3>THICC.TIME</h3><div className="time-month-nav"><button type="button" onClick={() => setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>PREV</button><strong>{viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong><button type="button" onClick={() => setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>NEXT</button></div><p className="time-selected-date">SELECTED DATE: {formatDisplayDate(selectedTimeDate)}</p><div className="month">{monthDates.map((dateKey) => { const dayRows = visibleEntriesByDate[dateKey] || []; return <button type="button" key={dateKey} className={`day ${selectedTimeDate === dateKey ? 'selected' : ''}`} onClick={() => openNewEditor(dateKey)}><b>{Number(dateKey.slice(-2))}</b>{dayRows.slice(0, 4).map((r) => <span key={r.id} className="booking" onClick={(event) => { event.stopPropagation(); openEditor(r.derived_recurrence ? (entriesByDate[r.entry_date]?.find((x) => x.id === r.original_entry_id) || r) : r); }} style={{ background: entryColor(r), color: r.schedule_layer === 'new_client' ? '#120014' : '#fff' }}>{getChipLabel(r)}</span>)}{dayRows.length > 4 ? <span className="booking-more">+{dayRows.length - 4} MORE</span> : null}</button>; })}</div>{editorOpen && timeDraft.entry_date ? <div className="time-editor"><p className="time-editor-date">{formatDisplayDate(timeDraft.entry_date)}</p><div className="form-grid"><label>LAYER<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : layer === 'new_client' ? 'new_client' : 'personal', client_id: layer === 'the_thiccens' ? getClientDbId(active) : null, client_name: layer === 'the_thiccens' ? (active?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : layer === 'new_client' ? 'new-client-white' : (active?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">MISTA.THICC</option><option value="new_client">NEW CLIENT</option><option value="the_thiccens">THE.THICCENS</option></select></label>{timeDraft.schedule_layer === 'new_client' ? <><label>PROSPECT NAME<input value={timeDraft.prospect_name || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, prospect_name: e.target.value }))} /></label><label>PROSPECT CONTACT<input value={timeDraft.prospect_contact || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, prospect_contact: e.target.value }))} /></label></> : null}<label>START TIME<input type="time" value={timeDraft.start_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, start_time: e.target.value }))} /></label><label>END TIME<input type="time" value={timeDraft.end_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, end_time: e.target.value }))} /></label><label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label><label>LOCATION<input value={timeDraft.location || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, location: e.target.value }))} /></label><label>NOTES<textarea value={timeDraft.notes || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, notes: e.target.value }))} /></label><label>SCHEDULE MODE<select value={timeDraft.recurrence_type || 'none'} onChange={(e) => setTimeDraft((prev) => ({ ...prev, recurrence_type: e.target.value, recurrence_active: e.target.value === 'weekly', recurrence_days: e.target.value === 'weekly' ? (prev.recurrence_days?.length ? prev.recurrence_days : [weekdayKeys[new Date(`${prev.entry_date}T12:00:00`).getDay()]]) : [] }))}><option value="none">ONE AND DONE</option><option value="weekly">RECURRING</option></select></label>{timeDraft.recurrence_type === 'weekly' ? <div className="weekday-grid">{weekdayKeys.map((k) => <button type="button" key={k} className={`weekday-pill ${(timeDraft.recurrence_days || []).includes(k) ? 'active' : ''}`} onClick={() => setTimeDraft((prev) => ({ ...prev, recurrence_days: (prev.recurrence_days || []).includes(k) ? prev.recurrence_days.filter((d) => d !== k) : [...(prev.recurrence_days || []), k] }))}>{k.toUpperCase()}</button>)}</div> : null}</div><div className="form-row"><button onClick={async () => { try { setTimeError(''); if (!timeDraft.start_time) { setTimeError('Set START TIME first.'); return; } if (timeDraft.schedule_layer === 'the_thiccens' && !active) { setTimeError('Select a logged client for THE.THICCENS.'); return; } if (timeDraft.schedule_layer === 'new_client' && !timeDraft.prospect_name) { setTimeError('Prospect name required for NEW CLIENT.'); return; } const base = normalizeSchedulePayload({ currentEntryForm: timeDraft, currentActive: active }); let payload = { ...base, schedule_layer: timeDraft.schedule_layer, prospect_name: timeDraft.prospect_name || '', prospect_contact: timeDraft.prospect_contact || '', recurrence_type: timeDraft.recurrence_type || 'none', recurrence_days: timeDraft.recurrence_type === 'weekly' ? (timeDraft.recurrence_days || []) : [], recurrence_active: timeDraft.recurrence_type === 'weekly' && Boolean((timeDraft.recurrence_days || []).length) }; if (timeDraft.schedule_layer === 'mista_thicc') payload = { ...payload, entry_type: 'personal', client_id: null, client_name: '', color_option_key: 'mista-thicc-pink' }; else if (timeDraft.schedule_layer === 'new_client') payload = { ...payload, entry_type: 'new_client', client_id: null, client_name: '', color_option_key: 'new-client-white' }; else { const ensuredClient = isSupabase ? await ensureClientDbId(active) : active; const scheduleClientId = isSupabase ? getClientDbId(ensuredClient) : ensuredClient.id; payload = { ...payload, entry_type: 'client', client_id: scheduleClientId, client_name: ensuredClient.name || 'THICC CLIENT', color_option_key: ensuredClient.clientColorOptionKey || 'cobalt' }; } if (editingEntryId) payload.id = editingEntryId; payload.updated_at = new Date().toISOString(); await saveScheduleEntry(payload); await loadTimeEntries(); setEditorOpen(false); } catch (error) { console.error('THICC.TIME save failed', error); setTimeError('Unable to save THICC.TIME entry.'); } }}>SAVE</button>{editingEntryId ? <button onClick={async () => { try { setTimeError(''); await deleteScheduleEntry(editingEntryId); await loadTimeEntries(); setEditorOpen(false); setEditingEntryId(''); } catch (error) { console.error('THICC.TIME delete failed', error); setTimeError('Unable to delete THICC.TIME entry.'); } }}>DELETE</button> : null}<button onClick={() => { setEditorOpen(false); setEditingEntryId(''); }}>CLOSE</button></div></div> : null}{timeLoadStatus === 'loading' ? <p>LOADING…</p> : null}{timeError ? <p className="time-error">{timeError}</p> : null}</> }] }];
   const nomoShelves = [{ id: 'nomo', columns: 1, panels: [{ id: 'n1', token: 'medium', content: <><h3>THICC.NOMO</h3><p>Deactivate/archive current client from active roster.</p><button onClick={() => { if (!window.confirm('THICC.NOMO this client?')) return; const nextClients = clients.map((c) => (c.id === active.id ? { ...c, active: false } : c)); persist(nextClients, 'client:nomo'); const nextActive = nextClients.find((c) => c.active !== false); setActiveId(nextActive?.id || ''); setActiveTab('THICC.INFO'); }}>THICC.NOMO</button></> }] }];
 
   const shelves = activeTab === 'THICC.INFO' ? infoShelves : activeTab === 'THICC.PEOPLE' ? peopleShelves : activeTab === 'THICC.FORMS' ? formsShelves : activeTab === 'THICC.TIME' ? timeShelves : nomoShelves;
