@@ -7,6 +7,7 @@ import ControlPanelOverlay from './ControlPanelOverlay';
 const ROUTE_BY_KEY = {
   home: '/home',
   'the-summation': '/the-summation',
+  'its-getting-thicc': '/its-getting-thicc',
   'thicc-fitt': '/thicc-fitt',
   'da-eater': '/da-eater',
   'remember-me': '/remember-me',
