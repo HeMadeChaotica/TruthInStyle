@@ -42,24 +42,61 @@ export const createClientTemplate = () => ({
   eventNotes: '', paymentDate: '', thoughts: '', myfitMeals: '', myfitVerified: false, celebration: createCelebration(), active: true,
 });
 
-const get = (k, fb) => { if (typeof window === 'undefined') return fb; try { return JSON.parse(localStorage.getItem(k) || 'null') ?? fb; } catch { return fb; } };
+const get = (k, fb) => {
+  if (typeof window === 'undefined') return fb;
+  try {
+    return JSON.parse(localStorage.getItem(k) || 'null') ?? fb;
+  } catch (error) {
+    console.warn(`ITS.GETTING.THICC localStorage parse failed for ${k}`, error);
+    return fb;
+  }
+};
 const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-export const resolveClientColor = (key) => CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0];
+export const resolveClientColor = (key) => CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0] || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
+
+const normalizeCelebration = (value) => {
+  const safeTiles = Array.from({ length: 10 }, (_, i) => ({
+    id: `tile-${i + 1}`,
+    text: '',
+    media: '',
+  }));
+  if (!Array.isArray(value)) return safeTiles;
+  return safeTiles.map((tile, index) => ({
+    ...tile,
+    ...(value[index] && typeof value[index] === 'object' ? value[index] : {}),
+  }));
+};
+
+const normalizeClient = (client = {}) => {
+  const base = createClientTemplate();
+  const safeClient = client && typeof client === 'object' ? client : {};
+  return {
+    ...base,
+    ...safeClient,
+    id: typeof safeClient.id === 'string' && safeClient.id ? safeClient.id : base.id,
+    name: typeof safeClient.name === 'string' && safeClient.name ? safeClient.name : base.name,
+    clientColorOptionKey: resolveClientColor(safeClient.clientColorOptionKey).key,
+    referrals: Array.isArray(safeClient.referrals) && safeClient.referrals.length
+      ? safeClient.referrals.map((row) => ({ name: row?.name || '', date: row?.date || '', status: row?.status || '', notes: row?.notes || '' }))
+      : [{ name: '', date: '', status: '', notes: '' }],
+    trainingRest: Array.from({ length: 7 }, (_, i) => safeClient.trainingRest?.[i] || 'TRAINING'),
+    programSplit: Array.from({ length: 7 }, (_, i) => safeClient.programSplit?.[i] || 'FULLBODY'),
+    celebration: normalizeCelebration(safeClient.celebration),
+    myfitVerified: Boolean(safeClient.myfitVerified),
+    active: safeClient.active !== false,
+  };
+};
 
 export function loadClients() {
-  const clients = get(CLIENTS_KEY, []);
+  const rawClients = get(CLIENTS_KEY, []);
+  const clients = Array.isArray(rawClients) ? rawClients : [];
   if (!clients.length) {
     const seeded = [createClientTemplate()];
     set(CLIENTS_KEY, seeded);
     return seeded;
   }
-  return clients
-  .filter(Boolean)
-  .map((c) => ({
-    ...c,
-    celebration: Array.isArray(c.celebration) ? c.celebration : createCelebration(),
-  }));
+  return clients.filter(Boolean).map(normalizeClient);
 }
 export const saveClients = (clients) => set(CLIENTS_KEY, clients);
 export const loadForms = () => get(FORMS_KEY, DEFAULT_FORMS);
@@ -183,7 +220,8 @@ export function normalizeScheduleEntry(row = {}) {
 }
 
 export function groupScheduleEntriesByDate(rows = []) {
-  return (rows || []).reduce((acc, row) => {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  return safeRows.reduce((acc, row) => {
     const normalized = normalizeScheduleEntry(row);
     if (!normalized.entry_date) return acc;
     acc[normalized.entry_date] = [...(acc[normalized.entry_date] || []), normalized];
