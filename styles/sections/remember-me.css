@@ -2,7 +2,7 @@
 .remember-scene-frame{position:absolute;left:50%;top:50%;width:min(100vw,calc(100dvh * 16 / 9));height:min(100dvh,calc(100vw * 9 / 16));transform:translate(-50%,-50%);overflow:hidden}
 .remember-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:var(--rm-bg-fit,cover);object-position:var(--rm-bg-position,center center);z-index:0}
 .remember-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.12) 40%,rgba(0,0,0,.36) 62%,rgba(0,0,0,.68) 100%),radial-gradient(120% 120% at 96% 45%,rgba(255,99,185,.2),rgba(0,0,0,0));}
-.remember-content{position:relative;z-index:2;min-height:100dvh;padding:1rem 1.4rem 1.6rem}
+.remember-content{position:relative;z-index:2;min-height:100%;padding:1rem 1.4rem 1.6rem}
 .remember-head,.remember-month-mini,.remember-calendar-title-visible{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-sr-only,.remember-floating-month-control{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-main{position:absolute;right:var(--rm-calendar-right,4.6%);bottom:var(--rm-calendar-bottom,7.4%);width:var(--rm-calendar-width,38.5%);max-width:var(--rm-calendar-max-width,635px);min-width:360px;transform:none;transform-origin:bottom right;margin:0;z-index:2;overflow:visible;display:flex;flex-direction:column;gap:12px;align-items:stretch}
