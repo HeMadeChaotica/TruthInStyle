@@ -24,6 +24,20 @@ export const formatDisplayDate = (value) => {
   return `${month}/${day}/${year}`;
 };
 
+
+const sanitizePhotoRef = (photoRef) => {
+  if (!photoRef) return '';
+  if (typeof photoRef === 'string') {
+    return photoRef.startsWith('blob:') ? '' : photoRef;
+  }
+  if (typeof photoRef !== 'object') return '';
+  const candidate = { ...photoRef };
+  if (typeof candidate.url === 'string' && candidate.url.startsWith('blob:')) delete candidate.url;
+  if (typeof candidate.previewUrl === 'string' && candidate.previewUrl.startsWith('blob:')) delete candidate.previewUrl;
+  if (typeof candidate.objectUrl === 'string' && candidate.objectUrl.startsWith('blob:')) delete candidate.objectUrl;
+  return candidate;
+};
+
 const emptyDay = (date) => ({
   source: 'da_eater_day',
   date,
@@ -59,7 +73,7 @@ export function getDaEaterDay(date) {
   const merged = { ...emptyDay(date), ...(days[date] || {}) };
   merged.photoLog = (merged.photoLog || emptyDay(date).photoLog).map((entry, index) => ({
     slot: entry.slot || index + 1,
-    photoRef: entry.photoRef || '',
+    photoRef: sanitizePhotoRef(entry.photoRef),
     description: entry.description || entry.mealTag || ''
   }));
   return merged;
