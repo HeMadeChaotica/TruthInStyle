@@ -33,7 +33,7 @@ const emptyDay = (date) => ({
   cravings: [],
   cheatFlexEntries: [],
   hyperFixationMeal: { mealName: '', currentFixation: '', weeklyCount: '', notes: '', macroEstimate: '' },
-  photoLog: [{ slot: 1, photoRef: '', mealTag: '' }, { slot: 2, photoRef: '', mealTag: '' }]
+  photoLog: [{ slot: 1, photoRef: '', description: '' }, { slot: 2, photoRef: '', description: '' }]
 });
 
 export function readDaEaterDays() {
@@ -56,7 +56,13 @@ export function saveDaEaterDays(days) {
 
 export function getDaEaterDay(date) {
   const days = readDaEaterDays();
-  return { ...emptyDay(date), ...(days[date] || {}) };
+  const merged = { ...emptyDay(date), ...(days[date] || {}) };
+  merged.photoLog = (merged.photoLog || emptyDay(date).photoLog).map((entry, index) => ({
+    slot: entry.slot || index + 1,
+    photoRef: entry.photoRef || '',
+    description: entry.description || entry.mealTag || ''
+  }));
+  return merged;
 }
 
 export function saveDaEaterDay(dayPayload) {

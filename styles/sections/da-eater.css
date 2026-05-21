@@ -25,5 +25,16 @@
 .da-eater-bar-waterOz>div{background:linear-gradient(90deg,#c5f5ff,#8ad5ff,#9be4ff);box-shadow:0 0 16px rgba(136,215,255,.75),0 0 30px rgba(130,243,255,.4)}
 .da-eater-list-row{display:flex;gap:6px;justify-content:space-between;align-items:center}
 .da-eater-photo-slot{min-height:80px;border:1px dashed rgba(255,226,175,.5);border-radius:12px;padding:10px;display:grid;place-items:center;background:rgba(255,186,228,.11)}
+.da-eater-fixation-log{gap:12px}
+.da-eater-subtle-note{margin:0;color:var(--da-eater-signature-pink);font-size:12px;letter-spacing:.04em}
+.da-eater-photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.da-eater-photo-slot{align-content:start;gap:8px;place-items:stretch}
+.da-eater-photo-head{display:flex;justify-content:space-between;align-items:center;color:#ffd8f2;font-size:12px}
+.da-eater-photo-body{display:grid;gap:8px}
+.da-eater-photo-ref,.da-eater-photo-empty{min-height:46px;border:1px solid rgba(255,183,229,.35);border-radius:9px;padding:8px;color:#ffeefb;background:rgba(74,21,62,.25)}
+.da-eater-photo-actions{display:flex;gap:6px}
+.da-eater-file-fallback{display:none}
+.da-eater-fixation-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.da-eater-fixation-fields textarea{grid-column:1/-1}
 .da-eater-craving{border-radius:24px}
 .da-eater-lined{background:repeating-linear-gradient(to bottom,rgba(255,226,242,.16) 0,rgba(255,226,242,.16) 24px,rgba(255,164,213,.3) 24px,rgba(255,164,213,.3) 25px),rgba(255,176,222,.14)!important;min-height:120px}
