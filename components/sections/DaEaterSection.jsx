@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import '../../styles/sections/universal-frame.css';
 import '../../styles/sections/da-eater.css';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
@@ -18,11 +18,51 @@ export default function DaEaterSection() {
   const [suppForm, setSuppForm] = useState({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' });
   const [cheatForm, setCheatForm] = useState({ id: '', type: 'CHEAT MEAL', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
   const [cravingNotes, setCravingNotes] = useState({ craving: '', trigger: '', intensity: '', response: '', notes: '' });
+  const fileInputRefs = useRef({});
 
   const saveDay = (next) => { const saved = saveDaEaterDay(next); setDay(saved); };
   const totals = useMemo(() => calculateDaEaterTotals(day), [day]);
   const assurerPayload = useMemo(() => buildDaEaterAssurerPayload(date, day), [date, day]);
   const dayName = useMemo(() => new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase(), [date]);
+  const photoLog = day.photoLog || [];
+  const mediaLibraryApi = typeof window !== 'undefined' ? (window.media_library || window.mediaLibrary || window.MediaLibrary || null) : null;
+  const hasNativePicker = typeof window !== 'undefined' && typeof window.showOpenFilePicker === 'function';
+  const mediaLibraryAvailable = Boolean(mediaLibraryApi || hasNativePicker);
+
+  const updatePhotoSlot = (slot, nextValues) => {
+    const nextPhotoLog = (day.photoLog || []).map((entry) => (entry.slot === slot ? { ...entry, ...nextValues } : entry));
+    saveDay({ ...day, photoLog: nextPhotoLog });
+  };
+
+  const pickLibraryPhoto = async (slot) => {
+    try {
+      if (mediaLibraryApi?.pick) {
+        const picked = await mediaLibraryApi.pick({ type: 'image' });
+        if (!picked) return;
+        updatePhotoSlot(slot, { photoRef: picked, description: day.photoLog?.find((x) => x.slot === slot)?.description || '' });
+        return;
+      }
+      if (hasNativePicker) {
+        const [handle] = await window.showOpenFilePicker({ multiple: false, types: [{ description: 'Images', accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] } }] });
+        if (!handle) return;
+        const safeRef = { source: 'native_library_picker', name: handle.name || `slot_${slot}_image`, kind: handle.kind || 'file', handleName: handle.name || '' };
+        updatePhotoSlot(slot, { photoRef: safeRef, description: day.photoLog?.find((x) => x.slot === slot)?.description || '' });
+        return;
+      }
+      fileInputRefs.current[slot]?.click();
+    } catch (error) {
+      console.warn('DA.EATER photo pick failed', error);
+    }
+  };
+
+  const handleFileFallback = (slot, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    updatePhotoSlot(slot, {
+      photoRef: { source: 'browser_file_input', name: file.name, type: file.type, size: file.size, lastModified: file.lastModified },
+      description: day.photoLog?.find((x) => x.slot === slot)?.description || ''
+    });
+  };
 
   const saveMeal = () => { const next = upsertMealEntry(date, mealForm); setDay(next); setMealForm({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '' }); };
   const saveSupplement = () => { const next = upsertSupplementEntry(date, suppForm); setDay(next); setSuppForm({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' }); };
