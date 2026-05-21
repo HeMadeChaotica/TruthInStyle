@@ -135,10 +135,11 @@ export function calculateDaEaterTotals(dayPayload) {
     protein: acc.protein + Number(meal.protein || 0),
     carbs: acc.carbs + Number(meal.carbs || 0),
     fats: acc.fats + Number(meal.fats || 0),
-    calories: acc.calories + Number(meal.calories || 0)
-  }), { protein: 0, carbs: 0, fats: 0, calories: 0 });
+    calories: acc.calories + Number(meal.calories || 0),
+    waterOz: acc.waterOz + Number(meal.type === 'WATER' ? (meal.waterOz || 0) : 0)
+  }), { protein: 0, carbs: 0, fats: 0, calories: 0, waterOz: 0 });
   totals.calories += cheatCals;
-  totals.waterOz = Number(dayPayload?.waterOz || 0);
+  totals.waterOz += Number(dayPayload?.waterOz || 0);
   const targets = getDaEaterMacroTargets();
   const progress = {
     protein: (totals.protein / targets.protein) * 100,
