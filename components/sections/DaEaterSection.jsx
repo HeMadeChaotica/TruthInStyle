@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import '../../styles/sections/universal-frame.css';
 import '../../styles/sections/da-eater.css';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
@@ -10,19 +10,38 @@ const today = () => new Date().toISOString().slice(0, 10);
 const MEAL_TYPES = ['BREAKFAST','LUNCH','DINNER','SNACK','PRE-WORKOUT','POST-WORKOUT','TREAT','DRINK','LATE NIGHT','OTHER'];
 const SUP_TYPES = ['VITAMIN','MINERAL','PROTEIN','CREATINE','ELECTROLYTE','DIGESTIVE','PRE-WORKOUT','POST-WORKOUT','OTHER'];
 const CHEAT_TYPES = ['CHEAT MEAL','FLEX MEAL','TREAT','REFEED','DATE NIGHT','SOCIAL MEAL','CELEBRATION','OTHER'];
+const THICC_DAYS = ['WEDNESDAY', 'SATURDAY'];
+const THICC_DAY_STORAGE_KEY = 'truthinstyle_da_eater_thicc_treat_day_v1';
 
 export default function DaEaterSection() {
   const [date, setDate] = useState(today());
   const [day, setDay] = useState(() => getDaEaterDay(today()));
   const [mealForm, setMealForm] = useState({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '' });
   const [suppForm, setSuppForm] = useState({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' });
-  const [cheatForm, setCheatForm] = useState({ id: '', type: 'CHEAT MEAL', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
+  const [cheatForm, setCheatForm] = useState({ id: '', type: 'CHEAT MEAL', day: '', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
   const [cravingNotes, setCravingNotes] = useState({ craving: '', trigger: '', intensity: '', response: '', notes: '' });
   const fileInputRefs = useRef({});
 
   const saveDay = (next) => { const saved = saveDaEaterDay(next); setDay(saved); };
   const totals = useMemo(() => calculateDaEaterTotals(day), [day]);
   const dayName = useMemo(() => new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase(), [date]);
+
+  const getInitialThiccDay = () => {
+    if (THICC_DAYS.includes(dayName)) return dayName;
+    if (typeof window !== 'undefined') {
+      const remembered = window.localStorage.getItem(THICC_DAY_STORAGE_KEY);
+      if (THICC_DAYS.includes(remembered)) return remembered;
+    }
+    return 'WEDNESDAY';
+  };
+  const [selectedThiccDay, setSelectedThiccDay] = useState(getInitialThiccDay);
+
+
+  useEffect(() => {
+    if (THICC_DAYS.includes(dayName)) {
+      selectThiccDay(dayName);
+    }
+  }, [dayName]);
   const photoLog = day.photoLog || [];
   const mediaLibraryApi = typeof window !== 'undefined' ? (window.media_library || window.mediaLibrary || window.MediaLibrary || null) : null;
   const hasNativePicker = typeof window !== 'undefined' && typeof window.showOpenFilePicker === 'function';
@@ -65,7 +84,16 @@ export default function DaEaterSection() {
 
   const saveMeal = () => { const next = upsertMealEntry(date, mealForm); setDay(next); setMealForm({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '' }); };
   const saveSupplement = () => { const next = upsertSupplementEntry(date, suppForm); setDay(next); setSuppForm({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' }); };
-  const saveCheat = () => { const next = upsertCheatFlexEntry(date, cheatForm); setDay(next); setCheatForm({ id: '', type: 'CHEAT MEAL', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' }); };
+  const selectThiccDay = (nextDay) => {
+    setSelectedThiccDay(nextDay);
+    if (typeof window !== 'undefined') window.localStorage.setItem(THICC_DAY_STORAGE_KEY, nextDay);
+  };
+
+  const saveCheat = () => {
+    const next = upsertCheatFlexEntry(date, { ...cheatForm, day: selectedThiccDay });
+    setDay(next);
+    setCheatForm({ id: '', type: 'CHEAT MEAL', day: '', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
+  };
 
   const shelves = [
     { id: 'A', columns: 1, panels: [{ id: 'macro', token: 'hero-strip', className: 'da-eater-panel da-eater-macro-hero', content: <>{[['PROTEIN','protein','g'],['CARBS','carbs','g'],['FATS','fats','g'],['CALORIES','calories','cal'],['WATER','waterOz','oz']].map(([label,key,unit]) => { const goal = totals.targets[key]; const current = totals.totals[key]; const p = totals.progress[key]; return <div className="da-eater-macro-row" key={key}><span>{label}</span><span>GOAL {goal}{unit.toUpperCase()}</span><div className={`da-eater-bar da-eater-bar-${key}`}><div style={{ width: `${Math.min(p,100)}%` }} /></div><span>{p.toFixed(0)}%</span><span>{Math.max(goal-current,0).toFixed(0)}{unit.toUpperCase()} LEFT</span></div>; })}</> }] },
