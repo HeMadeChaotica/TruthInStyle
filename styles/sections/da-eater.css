@@ -4,11 +4,20 @@
 .da-eater-content{padding:12px 8px 20px 0}
 .da-eater-panel{position:relative;border:1px solid rgba(255,216,143,.46);background:linear-gradient(145deg,rgba(31,24,12,.54),rgba(9,7,4,.38));backdrop-filter:blur(5px);box-shadow:0 0 0 1px rgba(255,235,190,.08) inset,0 18px 44px rgba(0,0,0,.22);border-radius:14px;padding:10px;display:grid;gap:8px}
 .da-eater-panel::before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(120deg,rgba(255,220,132,.85),rgba(255,93,190,.62),rgba(191,255,166,.45),rgba(255,244,214,.7));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.da-eater-macro-hero{border-radius:22px;padding:16px 14px;background:radial-gradient(circle at 20% 20%,rgba(255,248,226,.18),rgba(255,248,226,0) 38%),linear-gradient(145deg,rgba(56,38,18,.78),rgba(28,17,8,.84));box-shadow:0 0 0 2px rgba(255,215,150,.3) inset,0 0 48px rgba(255,146,200,.24),0 22px 52px rgba(0,0,0,.38)}
+.da-eater-macro-hero::before{inset:-2px;padding:2px;background:linear-gradient(125deg,#f4e2c1 0%,#c99746 14%,#fff0cb 24%,#f074be 40%,#fff6df 56%,#a66c2b 72%,#ffe7b4 100%)}
+.da-eater-macro-hero::after{content:'';position:absolute;inset:5px;border-radius:18px;border:1px solid rgba(255,238,205,.36);background:radial-gradient(circle at top right,rgba(255,190,118,.18),rgba(255,190,118,0) 42%);pointer-events:none}
 .da-eater-panel input,.da-eater-panel select,.da-eater-panel textarea,.da-eater-panel button{background:rgba(39,28,14,.62);border:1px solid rgba(255,218,156,.45);color:#fff3d7;padding:7px;border-radius:8px}
 .da-eater-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.da-eater-macro-row{display:grid;grid-template-columns:1fr 1fr 2fr auto auto;gap:8px;align-items:center;font-size:12px}
-.da-eater-bar{height:10px;background:rgba(0,0,0,.35);border-radius:99px;overflow:hidden}
-.da-eater-bar>div{height:100%;background:linear-gradient(90deg,#e9d18a,#ff72bc,#b2ff9c);box-shadow:0 0 12px rgba(255,181,92,.5)}
+.da-eater-macro-row{display:grid;grid-template-columns:minmax(82px,.95fr) minmax(112px,1.2fr) 2.3fr auto auto;gap:10px;align-items:center;font-size:12px;color:#ffd5f1;text-shadow:0 0 12px rgba(255,83,168,.34)}
+.da-eater-macro-row span:nth-child(2),.da-eater-macro-row span:nth-child(4),.da-eater-macro-row span:nth-child(5){color:#ffe9c8}
+.da-eater-bar{height:14px;background:linear-gradient(180deg,rgba(29,15,5,.85),rgba(14,8,2,.8));border-radius:99px;overflow:hidden;border:1px solid rgba(255,223,168,.3);box-shadow:0 0 0 1px rgba(255,177,100,.18) inset}
+.da-eater-bar>div{height:100%;background:linear-gradient(90deg,#ffd968,#ff7bc4,#c2ff87);box-shadow:0 0 18px rgba(255,190,114,.68),0 0 30px rgba(255,118,191,.4)}
+.da-eater-bar-protein>div{background:linear-gradient(90deg,#f9f49f,#7affcf,#8ff5ff);box-shadow:0 0 16px rgba(132,255,217,.7),0 0 30px rgba(144,255,252,.42)}
+.da-eater-bar-carbs>div{background:linear-gradient(90deg,#ff96cb,#ffc976,#ff7f9a);box-shadow:0 0 16px rgba(255,142,186,.72),0 0 30px rgba(255,211,119,.4)}
+.da-eater-bar-fats>div{background:linear-gradient(90deg,#ffe9a8,#f8b57a,#ff8f62);box-shadow:0 0 16px rgba(255,195,126,.78),0 0 30px rgba(255,146,97,.4)}
+.da-eater-bar-calories>div{background:linear-gradient(90deg,#ffd87c,#ff8ab9,#f6ff95);box-shadow:0 0 16px rgba(255,153,202,.72),0 0 30px rgba(251,255,148,.38)}
+.da-eater-bar-waterOz>div{background:linear-gradient(90deg,#c5f5ff,#8ad5ff,#9be4ff);box-shadow:0 0 16px rgba(136,215,255,.75),0 0 30px rgba(130,243,255,.4)}
 .da-eater-list-row{display:flex;gap:6px;justify-content:space-between;align-items:center}
 .da-eater-photo-slot{min-height:80px;border:1px dashed rgba(255,226,175,.5);border-radius:12px;padding:10px;display:grid;place-items:center;background:rgba(43,31,20,.45)}
 .da-eater-craving{border-radius:24px}
