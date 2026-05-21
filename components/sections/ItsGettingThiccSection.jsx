@@ -17,6 +17,18 @@ const movementPrompts = ['WALK ME THROUGH A TYPICAL DAY OF EATING', 'WALK ME THR
 const medicalPrompts = ['EMERGENCY CONTACT NAME / NUMBER', 'PAST / CURRENT INJURIES', 'PAST / UPCOMING SURGERIES', 'RECURRING SEASONAL ISSUES / ALLERGIES', 'MEDICATIONS THAT COULD CAUSE COMPLICATIONS, LIKE BLOOD PRESSURE MEDS', 'PHYSICAL LIMITATIONS', 'MOVEMENTS THAT CAUSE PAIN', 'LEVEL OF FLEXIBILITY, RANGE FROM RIGAMORTUS TO SIMONE BILES WISHES', 'HARD NO’S', 'TRAINING FEARS'];
 
 const createFallbackCelebration = () => Array.from({ length: 10 }, (_, i) => ({ id: `tile-${i + 1}`, text: '', media: '' }));
+
+const safeFallbackClient = {
+  id: 'local_safe_its',
+  name: 'THICC CLIENT',
+  clientColorOptionKey: 'cobalt',
+  referrals: [{ name: '', date: '', status: '', notes: '' }],
+  trainingRest: Array.from({ length: 7 }, () => 'TRAINING'),
+  programSplit: Array.from({ length: 7 }, () => 'FULLBODY'),
+  celebration: createFallbackCelebration(),
+  active: true,
+};
+
 const normalizeClientForView = (client) => {
   if (!client || typeof client !== 'object') return null;
   return {
@@ -61,7 +73,7 @@ export default function ItsGettingThiccSection() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [timeDraft, setTimeDraft] = useState({ entry_type: 'client', client_id: '', client_name: '', entry_date: '', start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: '', location: '', notes: '', color_option_key: 'cobalt' });
   const safeClients = useMemo(() => (Array.isArray(clients) ? clients.filter(Boolean).map((c) => normalizeClientForView(c)).filter(Boolean) : []), [clients]);
-  const active = useMemo(() => safeClients.find((c) => c.id === activeId) || safeClients[0] || null, [safeClients, activeId]);
+  const active = useMemo(() => safeClients.find((c) => c.id === activeId) || safeClients[0] || safeFallbackClient, [safeClients, activeId]);
   const activeClientDbId = useMemo(() => getClientDbId(active), [active]);
   const isSupabase = isSupabaseEnabled();
 
@@ -106,7 +118,8 @@ export default function ItsGettingThiccSection() {
   function Movement() { return <><h3>MOVEMENT: THE MEASURE AND THE PRESSURES</h3>{movementPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}{i === 1 && <small>THINK WORK, ERRANDS, SITTING, STANDING, STEPS, STRESS, AND HOW OFTEN YOUR BODY IS ACTUALLY IN MOTION, NOT JUST HOW OFTEN YOU MEANT TO WORK OUT.</small>}<textarea value={active[`move${i + 1}`] || ''} onChange={(e) => update(`move${i + 1}`, e.target.value)} /></label>)}<label>5. SELECT CURRENT OVERALL LEVEL OF ACTIVITY<select value={active.activity || 'SEDENTARY'} onChange={(e) => update('activity', e.target.value)}>{['SEDENTARY', 'LIGHTLY', 'MODERATELY', 'ACTIVE', 'I DO THIS S@$&!', 'I SWEAR I’M ACTIVE BUT MY APPLE WATCH SAYS OTHERWISE'].map((o) => <option key={o}>{o}</option>)}</select></label></>; }
   function Medical() { const keys=['emergencyContact','injuries','surgeries','allergies','medications','limits','painfulMovements','flexibility','hardNos','trainingFears']; return <><h3>MEDICAL ADVISORY</h3>{medicalPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={active[keys[i]] || ''} onChange={(e) => update(keys[i], e.target.value)} /></label>)}</>; }
 
-  const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'medium', content: <><h3>THICC.PEOPLE</h3><div className="people-list">{safeClients.map((c) => { const cc = resolveClientColor(c.clientColorOptionKey); return <button key={c.id} className="people-item" style={{ borderLeftColor: cc.value }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><div><strong>{c.name}</strong><span>{c.id}</span></div><div><em style={{ color: cc.value }}>{cc.label}</em><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></div></button>; })}</div></> }] }];
+  const hasRealClients = safeClients.length > 0;
+  const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'medium', content: <><h3>THICC.PEOPLE</h3>{!hasRealClients ? <p>NO CLIENTS YET. ADD A CLIENT IN THICC.PEOPLE TO ENABLE CLIENT SCHEDULING.</p> : null}<div className="people-list">{safeClients.map((c) => { const cc = resolveClientColor(c.clientColorOptionKey); return <button key={c.id} className="people-item" style={{ borderLeftColor: cc.value }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><div><strong>{c.name}</strong><span>{c.id}</span></div><div><em style={{ color: cc.value }}>{cc.label}</em><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></div></button>; })}</div></> }] }];
   const activeClientId = active?.id || '';
   const canAssignInSupabase = Boolean(active) && (!isSupabase || Boolean(activeClientDbId));
   const formsShelves = [{ id: 'forms', columns: 1, panels: [{ id: 'f1', token: 'medium', content: <><h3>THICC.FORMS</h3>{forms.map((f) => <div key={f.id} className="form-row"><strong>{f.formName}</strong><span>{f.formCategory}</span><button disabled={!canAssignInSupabase} title={!canAssignInSupabase ? 'ASSIGN disabled: active client is missing a database UUID.' : ''} onClick={async () => { try { setFormsError(''); const ensuredClient = isSupabase ? await ensureClientDbId(active) : active; if (isSupabase && ensuredClient.dbId && ensuredClient.dbId !== active.dbId) { const nextClients = clients.map((c) => (c.id === active.id ? ensuredClient : c)); setClients(nextClients); saveClients(nextClients); } const created = await upsertFormAssignment({ client: ensuredClient, client_id: ensuredClient.dbId || ensuredClient.id, formDbId: f.dbId || f.id, form_id: f.id, status: 'assigned', response_json: {}, notes: '', assigned_at: new Date().toISOString() }); setAssignments((prev) => [...prev, created]); } catch (error) { setFormsError(error?.message || 'Unable to assign form.'); } }}>ASSIGN</button></div>)}{formsError ? <p>{formsError}</p> : null}<p>ASSIGNMENTS {assignments.filter((a) => (isSupabase ? a.client_id === activeClientDbId : (a.client_id || a.clientId) === activeClientId)).length}</p></> }] }];
@@ -160,9 +173,6 @@ export default function ItsGettingThiccSection() {
 
   useEffect(() => { resetTimeDraft(); }, [activeId]);
 
-  if (!active) {
-    return <SectionShell className="igtv2-page"><ScenePlate className="igtv2-scene-plate"><div className="igtv2-bg" /></ScenePlate><SectionOverlay><ArtLane className="igtv2-left"><div className="igtv2-cabinet">{tabs.map((tab) => <button key={tab} className={`igtv2-cabinet-btn ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>{tab}</button>)}</div></ArtLane><ContentScroller><p>NO CLIENTS YET. ADD A CLIENT IN THICC.PEOPLE TO ENABLE CLIENT SCHEDULING.</p></ContentScroller></SectionOverlay></SectionShell>;
-  }
 
   const highlightPhoto = active?.livingThiccPhoto || (active ? readMedia(active.id, 'livingThiccPhoto') : '');
 
