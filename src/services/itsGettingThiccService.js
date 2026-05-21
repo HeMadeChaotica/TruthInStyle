@@ -111,6 +111,7 @@ const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const sbHeaders = { apikey: sbAnon || '', Authorization: `Bearer ${sbAnon || ''}`, 'Content-Type': 'application/json' };
 const hasSupabase = Boolean(sbUrl && sbAnon);
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 export const isUuid = (value) => typeof value === 'string' && UUID_REGEX.test(value.trim());
 
@@ -236,6 +237,13 @@ const formatDisplayDate = (isoDate) => {
   return `${month}/${day}/${year}`;
 };
 
+const toLocalIsoDate = (value) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new Date()) {
   const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
   const end = new Date(start);
@@ -245,27 +253,43 @@ export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new 
   Object.values(safeEntriesByDate).forEach((rows) => {
     (Array.isArray(rows) ? rows : []).forEach((entry) => {
       const normalized = normalizeScheduleEntry(entry);
+      const recurrenceDays = Array.isArray(normalized.recurrence_days) ? normalized.recurrence_days : [];
+      const pushEntry = (dateKey) => {
+        entries.push({
+          date: dateKey,
+          displayDate: formatDisplayDate(dateKey),
+          scheduleLayer: normalized.schedule_layer,
+          entryType: normalized.entry_type,
+          clientId: normalized.schedule_layer === 'the_thiccens' ? normalized.client_id : null,
+          clientName: normalized.client_name || '',
+          prospectName: normalized.prospect_name || '',
+          title: normalized.workout_label || '',
+          startTime: normalized.start_time || '',
+          endTime: normalized.end_time || '',
+          location: normalized.location || '',
+          description: normalized.notes || '',
+          recurrenceType: normalized.recurrence_type || 'none',
+          recurrenceDays: recurrenceDays,
+          recurrenceActive: Boolean(normalized.recurrence_active),
+          colorOptionKey: normalized.color_option_key || 'cobalt',
+        });
+      };
       const entryDay = new Date(`${normalized.entry_date}T12:00:00`);
       if (Number.isNaN(entryDay.getTime())) return;
+      if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && recurrenceDays.length) {
+        for (let i = 0; i < 7; i += 1) {
+          const candidate = new Date(start);
+          candidate.setDate(start.getDate() + i);
+          if (candidate < entryDay) continue;
+          const weekdayKey = WEEKDAY_KEYS[candidate.getDay()];
+          if (!recurrenceDays.includes(weekdayKey)) continue;
+          const dateKey = toLocalIsoDate(candidate);
+          pushEntry(dateKey);
+        }
+        return;
+      }
       if (entryDay < start || entryDay > end) return;
-      entries.push({
-        date: normalized.entry_date,
-        displayDate: formatDisplayDate(normalized.entry_date),
-        scheduleLayer: normalized.schedule_layer,
-        entryType: normalized.entry_type,
-        clientId: normalized.schedule_layer === 'the_thiccens' ? normalized.client_id : null,
-        clientName: normalized.client_name || '',
-        prospectName: normalized.prospect_name || '',
-        title: normalized.workout_label || '',
-        startTime: normalized.start_time || '',
-        endTime: normalized.end_time || '',
-        location: normalized.location || '',
-        description: normalized.notes || '',
-        recurrenceType: normalized.recurrence_type || 'none',
-        recurrenceDays: Array.isArray(normalized.recurrence_days) ? normalized.recurrence_days : [],
-        recurrenceActive: Boolean(normalized.recurrence_active),
-        colorOptionKey: normalized.color_option_key || 'cobalt',
-      });
+      pushEntry(normalized.entry_date);
     });
   });
   entries.sort((a, b) => (a.date === b.date ? String(a.startTime).localeCompare(String(b.startTime)) : String(a.date).localeCompare(String(b.date))));
