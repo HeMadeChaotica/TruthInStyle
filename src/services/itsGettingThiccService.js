@@ -250,11 +250,17 @@ export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new 
   end.setDate(start.getDate() + 6);
   const safeEntriesByDate = entriesByDate && typeof entriesByDate === 'object' ? entriesByDate : {};
   const entries = [];
+  const seenEntryKeys = new Set();
   Object.values(safeEntriesByDate).forEach((rows) => {
     (Array.isArray(rows) ? rows : []).forEach((entry) => {
       const normalized = normalizeScheduleEntry(entry);
-      const recurrenceDays = Array.isArray(normalized.recurrence_days) ? normalized.recurrence_days : [];
+      const recurrenceDays = Array.isArray(normalized.recurrence_days)
+        ? [...new Set(normalized.recurrence_days.map((value) => String(value || '').toLowerCase()).filter(Boolean))]
+        : [];
       const pushEntry = (dateKey) => {
+        const identity = `${normalized.id}__${dateKey}__${normalized.start_time || ''}__${normalized.end_time || ''}`;
+        if (seenEntryKeys.has(identity)) return;
+        seenEntryKeys.add(identity);
         entries.push({
           date: dateKey,
           displayDate: formatDisplayDate(dateKey),
