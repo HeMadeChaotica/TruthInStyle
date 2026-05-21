@@ -38,19 +38,11 @@ const REMEMBER_MONTH_VISUALS = {
   11: { key: 'december', bgFit: 'cover', bgPosition: 'center center' }
 };
 
-const REMEMBER_MONTH_CALENDAR_PINS = {
-  0: { key: 'january', calendarRight: '4.8%', calendarBottom: '7.2%', calendarWidth: '39.5%', calendarMaxWidth: '650px' },
-  1: { key: 'february', calendarRight: '4.6%', calendarBottom: '7.4%', calendarWidth: '37.5%', calendarMaxWidth: '620px' },
-  2: { key: 'march', calendarRight: '4.8%', calendarBottom: '7.2%', calendarWidth: '39%', calendarMaxWidth: '640px' },
-  3: { key: 'april', calendarRight: '4.6%', calendarBottom: '7.4%', calendarWidth: '37.5%', calendarMaxWidth: '620px' },
-  4: { key: 'may', calendarRight: '4.2%', calendarBottom: '7.8%', calendarWidth: '40%', calendarMaxWidth: '660px' },
-  5: { key: 'june', calendarRight: '4.4%', calendarBottom: '7.6%', calendarWidth: '40%', calendarMaxWidth: '660px' },
-  6: { key: 'july', calendarRight: '4.8%', calendarBottom: '7.4%', calendarWidth: '39%', calendarMaxWidth: '640px' },
-  7: { key: 'august', calendarRight: '4.8%', calendarBottom: '7.6%', calendarWidth: '38%', calendarMaxWidth: '625px' },
-  8: { key: 'september', calendarRight: '4.8%', calendarBottom: '7.6%', calendarWidth: '38%', calendarMaxWidth: '625px' },
-  9: { key: 'october', calendarRight: '4.6%', calendarBottom: '7.4%', calendarWidth: '38.5%', calendarMaxWidth: '635px' },
-  10: { key: 'november', calendarRight: '4.8%', calendarBottom: '7.4%', calendarWidth: '39.5%', calendarMaxWidth: '650px' },
-  11: { key: 'december', calendarRight: '4.8%', calendarBottom: '7.4%', calendarWidth: '39.5%', calendarMaxWidth: '650px' }
+const REMEMBER_CALENDAR_PIN = {
+  calendarRight: '4.8%',
+  calendarBottom: '7.6%',
+  calendarWidth: '38%',
+  calendarMaxWidth: '625px'
 };
 
 const readStoredMoments = () => {
@@ -105,7 +97,6 @@ export default function RememberMeSection() {
   const currentMoments = selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
   const monthIndex = viewDate.getMonth();
   const visual = REMEMBER_MONTH_VISUALS[monthIndex] || REMEMBER_MONTH_VISUALS[0];
-  const calendarPin = REMEMBER_MONTH_CALENDAR_PINS[monthIndex] || REMEMBER_MONTH_CALENDAR_PINS[9];
 
   useEffect(() => {
     (async () => {
@@ -242,10 +233,10 @@ export default function RememberMeSection() {
         style={{
           '--rm-bg-fit': visual.bgFit,
           '--rm-bg-position': visual.bgPosition,
-          '--rm-calendar-right': calendarPin.calendarRight,
-          '--rm-calendar-bottom': calendarPin.calendarBottom,
-          '--rm-calendar-width': calendarPin.calendarWidth,
-          '--rm-calendar-max-width': calendarPin.calendarMaxWidth
+          '--rm-calendar-right': REMEMBER_CALENDAR_PIN.calendarRight,
+          '--rm-calendar-bottom': REMEMBER_CALENDAR_PIN.calendarBottom,
+          '--rm-calendar-width': REMEMBER_CALENDAR_PIN.calendarWidth,
+          '--rm-calendar-max-width': REMEMBER_CALENDAR_PIN.calendarMaxWidth
         }}
       >
         <img
@@ -263,11 +254,12 @@ export default function RememberMeSection() {
             <div className="remember-weekdays">{['SUN','MON','TUE','WED','THU','FRI','SAT'].map((d) => <span key={d}>{d}</span>)}</div>
             <div className="remember-grid">{monthGrid.map((cell, idx) => <button key={`${idx}-${cell.day}`} type="button" className={`remember-day ${!cell.inMonth ? 'remember-outside' : ''}`} onClick={() => { if (cell.inMonth) { setSelectedDay(cell.day); setPostcardOpen(true); } }}><span className="remember-day-num">{cell.day}</span></button>)}</div>
           </section>
-
-          {postcardOpen ? <section className="remember-postcard-popout"><header><h3>{formatDisplayDate(selectedDateKey)}</h3><button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></header><div className="remember-type-switch"><button type="button" className={editorMode === 'EVENT' ? 'active' : ''} onClick={() => setEditorMode('EVENT')}>EVENT</button><button type="button" className={editorMode === 'STANDOUT' ? 'active' : ''} onClick={() => setEditorMode('STANDOUT')}>STANDOUT</button></div><div className="remember-form">{editorMode === 'EVENT' ? <><div className="remember-existing-items">{currentEntries.map((entry) => <button key={entry.id} type="button" className={entryDraft.id === entry.id ? 'active' : ''} onClick={() => setEntryDraft({ ...entry })}>{entry.type} {entry.time ? `• ${entry.time}` : ''}</button>)}</div><label>EVENT TYPE<select value={entryDraft.type} onChange={(e)=>setEntryDraft((d)=>({...d,type:e.target.value}))}>{EVENT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select></label><label>TIME<input type="time" value={entryDraft.time} onChange={(e)=>setEntryDraft((d)=>({...d,time:e.target.value}))} /></label><label>LOCATION<input type="text" value={entryDraft.detail} onChange={(e)=>setEntryDraft((d)=>({...d,detail:e.target.value}))} /></label><label>DESCRIPTION<textarea value={entryDraft.description} onChange={(e)=>setEntryDraft((d)=>({...d,description:e.target.value}))} /></label><div className="remember-actions"><button type="button" onClick={saveEntry}>SAVE</button>{entryDraft.id ? <button type="button" onClick={deleteEntry}>DELETE</button> : null}<button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></div></> : <><div className="remember-existing-items">{currentMoments.map((moment) => <button key={moment.id} type="button" className={momentDraft.id === moment.id ? 'active' : ''} onClick={() => setMomentDraft({ ...moment, mediaRef: moment.mediaRef || '', persistedMediaRef: moment.persistedMediaRef || moment.photoRef || '' })}>{moment.type || moment.standoutType} {moment.time ? `• ${moment.time}` : ''}</button>)}</div><label>WOW / WTF / PLOT TWIST<select value={momentDraft.type} onChange={(e)=>setMomentDraft((d)=>({...d,type:e.target.value}))}>{STANDOUT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select></label><label>TIME<input type="time" value={momentDraft.time} onChange={(e)=>setMomentDraft((d)=>({...d,time:e.target.value}))} /></label><label>LOCATION<input type="text" value={momentDraft.detail} onChange={(e)=>setMomentDraft((d)=>({...d,detail:e.target.value}))} /></label><label>DESCRIPTION<textarea value={momentDraft.description} onChange={(e)=>setMomentDraft((d)=>({...d,description:e.target.value}))} /></label><label>PHOTO / IMAGE<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const objectUrl = URL.createObjectURL(file); setMomentDraft((d) => ({ ...d, mediaRef: objectUrl, persistedMediaRef: '' })); setError('Image preview only. Durable upload unavailable.'); }} /></label>{momentDraft.mediaRef ? <div className="remember-moment-photo-preview"><img src={momentDraft.mediaRef} alt="preview" /></div> : null}<div className="remember-actions"><button type="button" onClick={stampMoment}>STAMP IT</button>{momentDraft.id ? <button type="button" onClick={deleteMoment}>DELETE</button> : null}<button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></div></>}{error ? <p className="time-error">{error}</p> : null}</div></section> : null}
         </main>
         </div>
       </div>
+
+      {postcardOpen ? <><div className="remember-popout-scrim" onClick={() => setPostcardOpen(false)} /><section className="remember-postcard-popout"><header><h3>{formatDisplayDate(selectedDateKey)}</h3><button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></header><div className="remember-type-switch"><button type="button" className={editorMode === 'EVENT' ? 'active' : ''} onClick={() => setEditorMode('EVENT')}>EVENT</button><button type="button" className={editorMode === 'STANDOUT' ? 'active' : ''} onClick={() => setEditorMode('STANDOUT')}>STANDOUT</button></div><div className="remember-form">{editorMode === 'EVENT' ? <><div className="remember-existing-items">{currentEntries.map((entry) => <button key={entry.id} type="button" className={entryDraft.id === entry.id ? 'active' : ''} onClick={() => setEntryDraft({ ...entry })}>{entry.type} {entry.time ? `• ${entry.time}` : ''}</button>)}</div><label>EVENT TYPE<select value={entryDraft.type} onChange={(e)=>setEntryDraft((d)=>({...d,type:e.target.value}))}>{EVENT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select></label><label>TIME<input type="time" value={entryDraft.time} onChange={(e)=>setEntryDraft((d)=>({...d,time:e.target.value}))} /></label><label>LOCATION<input type="text" value={entryDraft.detail} onChange={(e)=>setEntryDraft((d)=>({...d,detail:e.target.value}))} /></label><label>DESCRIPTION<textarea value={entryDraft.description} onChange={(e)=>setEntryDraft((d)=>({...d,description:e.target.value}))} /></label><div className="remember-actions"><button type="button" onClick={saveEntry}>SAVE</button>{entryDraft.id ? <button type="button" onClick={deleteEntry}>DELETE</button> : null}<button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></div></> : <><div className="remember-existing-items">{currentMoments.map((moment) => <button key={moment.id} type="button" className={momentDraft.id === moment.id ? 'active' : ''} onClick={() => setMomentDraft({ ...moment, mediaRef: moment.mediaRef || '', persistedMediaRef: moment.persistedMediaRef || moment.photoRef || '' })}>{moment.type || moment.standoutType} {moment.time ? `• ${moment.time}` : ''}</button>)}</div><label>WOW / WTF / PLOT TWIST<select value={momentDraft.type} onChange={(e)=>setMomentDraft((d)=>({...d,type:e.target.value}))}>{STANDOUT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select></label><label>TIME<input type="time" value={momentDraft.time} onChange={(e)=>setMomentDraft((d)=>({...d,time:e.target.value}))} /></label><label>LOCATION<input type="text" value={momentDraft.detail} onChange={(e)=>setMomentDraft((d)=>({...d,detail:e.target.value}))} /></label><label>DESCRIPTION<textarea value={momentDraft.description} onChange={(e)=>setMomentDraft((d)=>({...d,description:e.target.value}))} /></label><label>PHOTO / IMAGE<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const objectUrl = URL.createObjectURL(file); setMomentDraft((d) => ({ ...d, mediaRef: objectUrl, persistedMediaRef: '' })); setError('Image preview only. Durable upload unavailable.'); }} /></label>{momentDraft.mediaRef ? <div className="remember-moment-photo-preview"><img src={momentDraft.mediaRef} alt="preview" /></div> : null}<div className="remember-actions"><button type="button" onClick={stampMoment}>STAMP IT</button>{momentDraft.id ? <button type="button" onClick={deleteMoment}>DELETE</button> : null}<button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></div></>}{error ? <p className="time-error">{error}</p> : null}</div></section></> : null}
+
     </section>
   );
 }
