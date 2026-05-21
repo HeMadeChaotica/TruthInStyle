@@ -1,1 +1,5 @@
-// Temporary scaffold file for local implementation.
+import DaEaterSection from '../../components/sections/DaEaterSection';
+
+export default function DaEaterPage() {
+  return <DaEaterSection />;
+}
