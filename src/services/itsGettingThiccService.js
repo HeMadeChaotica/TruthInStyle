@@ -237,6 +237,13 @@ const formatDisplayDate = (isoDate) => {
   return `${month}/${day}/${year}`;
 };
 
+const toLocalIsoDate = (value) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new Date()) {
   const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
   const end = new Date(start);
@@ -276,7 +283,7 @@ export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new 
           if (candidate < entryDay) continue;
           const weekdayKey = WEEKDAY_KEYS[candidate.getDay()];
           if (!recurrenceDays.includes(weekdayKey)) continue;
-          const dateKey = candidate.toISOString().slice(0, 10);
+          const dateKey = toLocalIsoDate(candidate);
           pushEntry(dateKey);
         }
         return;
