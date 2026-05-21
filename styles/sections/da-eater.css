@@ -1,16 +1,16 @@
 .da-eater-shell{
   --da-eater-content-start:clamp(210px,21.5vw,380px);
-  --da-eater-content-rail-max:clamp(720px,65vw,980px);
-  --da-eater-right-gutter:clamp(40px,4.8vw,72px);
-  --da-eater-signature-pink:#ff83cf;
+  --da-eater-content-rail-max:clamp(680px,60vw,900px);
+  --da-eater-right-gutter:clamp(88px,10.5vw,170px);
+  --da-eater-signature-pink:#ff6fc6;
   --da-eater-warm-cream:#ffeecf;
-  --da-eater-text-pink:#ff9ddc;
+  --da-eater-text-pink:#ffc0e7;
   color:var(--da-eater-text-pink)
 }
 .da-eater-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(5,3,1,.12) 0%,rgba(5,3,1,.22) 34%,rgba(5,3,1,.48) 100%),url('/backgrounds/DA-EATER/da-eater-cheff-thicc-bg.png');background-size:cover;background-position:center center}
 .da-eater-left{pointer-events:none}
 .da-eater-content{padding:12px var(--da-eater-right-gutter) 20px var(--da-eater-content-start);max-width:min(var(--da-eater-content-rail-max),calc(100% - var(--da-eater-right-gutter)));margin-right:auto}
-.da-eater-panel{position:relative;border:1px solid rgba(255,168,222,.54);background:linear-gradient(145deg,rgba(255,182,229,.2),rgba(255,245,252,.11));backdrop-filter:blur(6px);box-shadow:0 0 0 1px rgba(255,210,238,.18) inset,0 14px 30px rgba(0,0,0,.18);border-radius:14px;padding:10px;display:grid;gap:8px}
+.da-eater-panel{position:relative;border:1px solid rgba(255,152,214,.62);background:linear-gradient(152deg,rgba(255,132,206,.24),rgba(255,96,186,.14));backdrop-filter:blur(5px);box-shadow:0 0 0 1px rgba(255,192,228,.22) inset,0 14px 30px rgba(0,0,0,.2);border-radius:14px;padding:10px;display:grid;gap:8px}
 .da-eater-panel::before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(120deg,rgba(255,220,132,.85),rgba(255,93,190,.62),rgba(191,255,166,.45),rgba(255,244,214,.7));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
 .da-eater-macro-hero{border-radius:22px;padding:16px 14px;background:radial-gradient(circle at 20% 20%,rgba(255,248,226,.18),rgba(255,248,226,0) 38%),linear-gradient(145deg,rgba(56,38,18,.78),rgba(28,17,8,.84));box-shadow:0 0 0 2px rgba(255,215,150,.3) inset,0 0 48px rgba(255,146,200,.24),0 22px 52px rgba(0,0,0,.38)}
 .da-eater-macro-hero::before{inset:-2px;padding:2px;background:linear-gradient(125deg,#f4e2c1 0%,#c99746 14%,#fff0cb 24%,#f074be 40%,#fff6df 56%,#a66c2b 72%,#ffe7b4 100%)}
@@ -60,7 +60,7 @@
   opacity:.35
 }
 .da-eater-panel h2{color:var(--da-eater-signature-pink);letter-spacing:.06em;text-shadow:0 0 14px rgba(255,115,198,.35)}
-.da-eater-panel input,.da-eater-panel select,.da-eater-panel textarea,.da-eater-panel button{background:rgba(255,246,254,.14);border:1px solid rgba(255,187,226,.5);color:#fff3f9;padding:7px;border-radius:8px;max-width:100%;box-sizing:border-box}
+.da-eater-panel input,.da-eater-panel select,.da-eater-panel textarea,.da-eater-panel button{background:rgba(255,155,217,.16);border:1px solid rgba(255,174,223,.58);color:#ffe9f6;padding:7px;border-radius:8px;max-width:100%;box-sizing:border-box}
 .da-eater-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .da-eater-macro-row{display:grid;grid-template-columns:minmax(82px,.95fr) minmax(112px,1.2fr) 2.3fr auto auto;gap:10px;align-items:center;font-size:12px;color:var(--da-eater-text-pink);text-shadow:0 0 14px rgba(255,83,168,.48)}
 .da-eater-macro-row span:nth-child(2),.da-eater-macro-row span:nth-child(4),.da-eater-macro-row span:nth-child(5){color:var(--da-eater-signature-pink)}
@@ -86,7 +86,7 @@
 .da-eater-fixation-fields textarea{grid-column:1/-1}
 .da-eater-craving{border-radius:24px}
 .da-eater-lined{background:repeating-linear-gradient(to bottom,rgba(255,226,242,.16) 0,rgba(255,226,242,.16) 24px,rgba(255,164,213,.3) 24px,rgba(255,164,213,.3) 25px),rgba(255,176,222,.14)!important;min-height:120px}
-.da-eater-meal-log-layout{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:12px;align-items:start}
+.da-eater-meal-head-row{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:12px;align-items:end}.da-eater-meal-head-row h2{margin:0}.da-eater-meal-log-layout{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:12px;align-items:start}
 .da-eater-meal-input-stack{display:grid;gap:8px}
 .da-eater-meal-input-stack label{display:grid;gap:6px;font-size:11px;letter-spacing:.08em}
 .da-eater-meal-input-stack button,.da-eater-meal-controls button{cursor:pointer;font-weight:700;letter-spacing:.05em}
