@@ -2,7 +2,7 @@
 .remember-scene-frame{position:absolute;left:50%;top:50%;width:min(100vw,calc(100dvh * 16 / 9));height:min(100dvh,calc(100vw * 9 / 16));transform:translate(-50%,-50%);overflow:hidden}
 .remember-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:var(--rm-bg-fit,cover);object-position:var(--rm-bg-position,center center);z-index:0}
 .remember-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.12) 40%,rgba(0,0,0,.36) 62%,rgba(0,0,0,.68) 100%),radial-gradient(120% 120% at 96% 45%,rgba(255,99,185,.2),rgba(0,0,0,0));}
-.remember-content{position:relative;z-index:2;min-height:100%;padding:1rem 1.4rem 1.6rem}
+.remember-content{position:relative;z-index:2;min-height:100dvh;padding:1rem 1.4rem 1.6rem}
 .remember-head,.remember-month-mini,.remember-calendar-title-visible{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-sr-only,.remember-floating-month-control{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-main{position:absolute;right:var(--rm-calendar-right,4.6%);bottom:var(--rm-calendar-bottom,7.4%);width:var(--rm-calendar-width,38.5%);max-width:var(--rm-calendar-max-width,635px);min-width:360px;transform:none;transform-origin:bottom right;margin:0;z-index:2;overflow:visible;display:flex;flex-direction:column;gap:12px;align-items:stretch}
@@ -21,7 +21,7 @@
 .remember-standout-postcards{position:relative;width:100%;min-height:0;max-height:18vh;overflow:hidden;padding:10px 12px;background:rgba(12,0,10,.44);border:1px solid rgba(255,94,190,.58);border-radius:12px}
 .remember-standout-postcards:empty{display:none}.remember-standout-postcards h3{margin:0 0 8px}
 .remember-postcard{border:1px dashed rgba(255,108,194,.85);border-radius:10px;padding:8px;background:linear-gradient(180deg,rgba(45,8,30,.9),rgba(22,4,16,.9));display:flex;flex-direction:column;gap:4px;margin-bottom:8px}.remember-postcard p{margin:0;text-transform:none;font:600 .72rem/1.3 'Arial Narrow',Arial,sans-serif}.remember-postcard em{font-style:normal;color:#ff86c9}
-.remember-postcard-popout{position:absolute;left:50%;top:10%;transform:translateX(-50%);width:min(90vw,760px);max-height:78vh;overflow-y:auto;z-index:8;padding:clamp(12px,1.4vw,18px);border-radius:18px;background:linear-gradient(145deg,rgba(22,0,18,.90),rgba(52,7,37,.76));border:1px solid rgba(255,102,202,.78);box-shadow:0 0 0 1px rgba(255,205,244,.08) inset,0 18px 60px rgba(0,0,0,.56),0 0 32px rgba(255,36,169,.18);backdrop-filter:blur(5px)}
+.remember-postcard-popout{position:absolute;right:0;top:-8px;transform:none;width:min(34vw,460px);max-height:76vh;overflow-y:auto;z-index:8;padding:12px 14px;border-radius:14px;background:linear-gradient(145deg,rgba(15,0,12,.88),rgba(34,4,24,.72));border:1px solid rgba(255,102,202,.78);box-shadow:0 14px 36px rgba(0,0,0,.46),0 0 24px rgba(255,36,169,.16);backdrop-filter:blur(4px)}
 .remember-postcard-popout header{display:flex;justify-content:space-between;align-items:center;gap:8px}.remember-postcard-popout h3{margin:0}
 .remember-type-switch{display:flex;align-items:center;gap:6px;margin-top:8px}.remember-type-switch button.active{box-shadow:0 0 0 2px rgba(255,128,201,.95)}
 .remember-observance-note{margin:8px 0 10px;padding:9px 11px;border-radius:12px;background:linear-gradient(135deg,rgba(255,57,174,.18),rgba(52,0,35,.68));border:1px solid rgba(255,125,214,.64);color:#ff9fda;box-shadow:0 0 18px rgba(255,43,160,.14)}
@@ -54,3 +54,6 @@
 .assurer-flip-card img{width:100%;height:100%;min-height:220px;object-fit:cover;display:block}
 .assurer-flip-back{padding:10px;display:grid;gap:6px;text-align:left;color:#ffd8ec}
 .assurer-flip-back p{margin:0;text-transform:none}
+
+.time-error{margin:0;color:#ff9cb6;font-size:.78rem;text-transform:none}
+.remember-postcard-popout select{appearance:none;background:rgba(11,0,9,.70)}
