@@ -8,14 +8,3 @@ body {
   margin: 0;
   overflow-y: auto;
 }
-
-.thicc-fitt-access-trigger {
-  display: none !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
-}
-
-.thicc-fitt-access-trigger img {
-  display: none !important;
-  pointer-events: none !important;
-}
