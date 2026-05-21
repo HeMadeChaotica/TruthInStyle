@@ -19,7 +19,6 @@ export default function DaEaterSection() {
   const [cheatForm, setCheatForm] = useState({ id: '', type: 'CHEAT MEAL', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
   const [cravingNotes, setCravingNotes] = useState({ craving: '', trigger: '', intensity: '', response: '', notes: '' });
 
-  const hydrateDate = (nextDate) => { setDate(nextDate); setDay(getDaEaterDay(nextDate)); setMealForm({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '' }); };
   const saveDay = (next) => { const saved = saveDaEaterDay(next); setDay(saved); };
   const totals = useMemo(() => calculateDaEaterTotals(day), [day]);
   const assurerPayload = useMemo(() => buildDaEaterAssurerPayload(date, day), [date, day]);
