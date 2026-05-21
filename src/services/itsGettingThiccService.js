@@ -229,6 +229,49 @@ export function groupScheduleEntriesByDate(rows = []) {
   }, {});
 }
 
+const formatDisplayDate = (isoDate) => {
+  if (!isoDate || typeof isoDate !== 'string') return '';
+  const [year, month, day] = isoDate.split('-');
+  if (!year || !month || !day) return '';
+  return `${month}/${day}/${year}`;
+};
+
+export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new Date()) {
+  const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const safeEntriesByDate = entriesByDate && typeof entriesByDate === 'object' ? entriesByDate : {};
+  const entries = [];
+  Object.values(safeEntriesByDate).forEach((rows) => {
+    (Array.isArray(rows) ? rows : []).forEach((entry) => {
+      const normalized = normalizeScheduleEntry(entry);
+      const entryDay = new Date(`${normalized.entry_date}T12:00:00`);
+      if (Number.isNaN(entryDay.getTime())) return;
+      if (entryDay < start || entryDay > end) return;
+      entries.push({
+        date: normalized.entry_date,
+        displayDate: formatDisplayDate(normalized.entry_date),
+        scheduleLayer: normalized.schedule_layer,
+        entryType: normalized.entry_type,
+        clientId: normalized.schedule_layer === 'the_thiccens' ? normalized.client_id : null,
+        clientName: normalized.client_name || '',
+        prospectName: normalized.prospect_name || '',
+        title: normalized.workout_label || '',
+        startTime: normalized.start_time || '',
+        endTime: normalized.end_time || '',
+        location: normalized.location || '',
+        description: normalized.notes || '',
+        recurrenceType: normalized.recurrence_type || 'none',
+        recurrenceDays: Array.isArray(normalized.recurrence_days) ? normalized.recurrence_days : [],
+        recurrenceActive: Boolean(normalized.recurrence_active),
+        colorOptionKey: normalized.color_option_key || 'cobalt',
+      });
+    });
+  });
+  entries.sort((a, b) => (a.date === b.date ? String(a.startTime).localeCompare(String(b.startTime)) : String(a.date).localeCompare(String(b.date))));
+  return { source: 'THICC.TIME', range: '7_DAY', entries };
+}
+
 export async function saveScheduleEntry(entry) {
   const allowedScheduleKeys = [
     'id',

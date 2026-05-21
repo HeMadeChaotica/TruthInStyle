@@ -61,3 +61,4 @@ small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
 .weekday-pill.active{background:rgba(255,120,203,.3);border-color:#ff78cb}
 .booking-more{font-size:.55rem;opacity:.9;color:#ffd3ec}
 .time-editor label{letter-spacing:.08em}
+.assurer-preview{margin-top:10px;font-size:.58rem;opacity:.9;letter-spacing:.1em}
