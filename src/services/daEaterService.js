@@ -150,7 +150,9 @@ export function calculateDaEaterTotals(dayPayload) {
   return { totals, targets, progress };
 }
 
-export function buildDaEaterAssurerPayload(date, dayPayload) {
+export function prepareDaEaterAssurerPayload(dayData) {
+  const date = dayData?.date || new Date().toISOString().slice(0, 10);
+  const dayPayload = dayData || {};
   const safeDay = { ...emptyDay(date), ...(dayPayload || {}) };
   const { totals, targets, progress } = calculateDaEaterTotals(safeDay);
   const dayName = new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
@@ -183,3 +185,6 @@ export function buildDaEaterAssurerPayload(date, dayPayload) {
     }
   };
 }
+
+
+export const buildDaEaterAssurerPayload = (date, dayPayload) => prepareDaEaterAssurerPayload({ date, ...(dayPayload || {}) });
