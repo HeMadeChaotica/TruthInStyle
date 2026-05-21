@@ -53,7 +53,7 @@
   position:absolute;
   inset:-2px -4px;
   border-radius:11px;
-  background:linear-gradient(108deg,rgba(255,255,255,0) 8%,rgba(255,255,255,.33) 42%,rgba(255,197,236,.22) 53%,rgba(255,255,255,0) 73%);
+  background:linear-gradient(108deg,rgba(255,255,255,0) 6%,rgba(255,214,162,.28) 28%,rgba(255,142,216,.34) 44%,rgba(255,241,218,.28) 56%,rgba(198,146,86,.2) 66%,rgba(255,255,255,0) 79%);
   transform:translateX(-142%);
   animation:daEaterMacroShimmer 3.8s ease-in-out infinite;
   pointer-events:none;
@@ -66,7 +66,7 @@
 .da-eater-macro-row span:nth-child(2),.da-eater-macro-row span:nth-child(4),.da-eater-macro-row span:nth-child(5){color:var(--da-eater-signature-pink)}
 .da-eater-bar{height:14px;background:linear-gradient(180deg,rgba(29,15,5,.85),rgba(14,8,2,.8));border-radius:99px;overflow:hidden;border:1px solid rgba(255,223,168,.3);box-shadow:0 0 0 1px rgba(255,177,100,.18) inset}
 .da-eater-bar>div{height:100%;background:linear-gradient(90deg,#ffd968,#ff7bc4,#c2ff87);box-shadow:0 0 22px rgba(255,190,114,.84),0 0 40px rgba(255,118,191,.58),0 0 58px rgba(255,220,122,.3);position:relative;overflow:hidden}
-.da-eater-bar>div::after{content:'';position:absolute;inset:0;background:linear-gradient(112deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.45) 36%,rgba(255,221,245,.12) 53%,rgba(255,255,255,0) 72%);transform:translateX(-140%);animation:daEaterMacroShimmer 2.9s ease-in-out infinite;opacity:.62}
+.da-eater-bar>div::after{content:'';position:absolute;inset:0;background:linear-gradient(112deg,rgba(255,255,255,0) 0%,rgba(255,225,178,.4) 24%,rgba(255,143,212,.42) 39%,rgba(255,241,218,.36) 53%,rgba(202,154,97,.22) 64%,rgba(255,255,255,0) 79%);transform:translateX(-140%);animation:daEaterMacroShimmer 2.9s ease-in-out infinite;opacity:.62}
 .da-eater-bar-protein>div{background:linear-gradient(90deg,#f9f49f,#7affcf,#8ff5ff);box-shadow:0 0 20px rgba(132,255,217,.84),0 0 40px rgba(144,255,252,.54),0 0 58px rgba(142,255,228,.34)}
 .da-eater-bar-carbs>div{background:linear-gradient(90deg,#ff96cb,#ffc976,#ff7f9a);box-shadow:0 0 20px rgba(255,142,186,.86),0 0 40px rgba(255,211,119,.52),0 0 58px rgba(255,124,178,.36)}
 .da-eater-bar-fats>div{background:linear-gradient(90deg,#ffe9a8,#f8b57a,#ff8f62);box-shadow:0 0 20px rgba(255,195,126,.9),0 0 40px rgba(255,146,97,.52),0 0 58px rgba(255,205,144,.32)}
@@ -101,8 +101,7 @@
 .da-eater-meal-controls{display:flex;gap:6px;flex-shrink:0}
 @media (max-width:980px){.da-eater-meal-log-layout{grid-template-columns:1fr}}
 .da-eater-thicc-treat{gap:6px;padding:8px 9px;background:linear-gradient(145deg,rgba(67,20,56,.2),rgba(23,10,20,.18));min-height:unset}
-.da-eater-thicc-treat h2{margin:0;font-size:15px;letter-spacing:.11em;color:#ff8ed6}
-.da-eater-thicc-subtitle{margin:0;color:var(--da-eater-signature-pink);font-size:11px;letter-spacing:.09em}
+.da-eater-thicc-treat h2{margin:0}
 .da-eater-thicc-days{display:flex;gap:6px}
 .da-eater-thicc-day-pill{cursor:pointer;background:rgba(58,17,47,.34)!important;border:1px solid rgba(255,160,220,.42)!important;color:var(--da-eater-signature-pink)!important;padding:5px 10px!important;font-size:11px;font-weight:700;letter-spacing:.08em;transition:all .2s ease}
 .da-eater-thicc-day-pill.is-active{border-color:rgba(255,166,232,.95)!important;background:rgba(255,114,205,.24)!important;color:var(--da-eater-signature-pink)!important;box-shadow:0 0 14px rgba(255,126,212,.8),0 0 28px rgba(255,149,221,.42),inset 0 0 10px rgba(255,226,244,.35)}
