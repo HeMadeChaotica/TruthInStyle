@@ -60,7 +60,7 @@
   opacity:.35
 }
 .da-eater-panel h2{color:var(--da-eater-signature-pink);letter-spacing:.06em;text-shadow:0 0 14px rgba(255,115,198,.35)}
-.da-eater-panel input,.da-eater-panel select,.da-eater-panel textarea,.da-eater-panel button{background:rgba(255,246,254,.14);border:1px solid rgba(255,187,226,.5);color:#fff3f9;padding:7px;border-radius:8px}
+.da-eater-panel input,.da-eater-panel select,.da-eater-panel textarea,.da-eater-panel button{background:rgba(255,246,254,.14);border:1px solid rgba(255,187,226,.5);color:#fff3f9;padding:7px;border-radius:8px;max-width:100%;box-sizing:border-box}
 .da-eater-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .da-eater-macro-row{display:grid;grid-template-columns:minmax(82px,.95fr) minmax(112px,1.2fr) 2.3fr auto auto;gap:10px;align-items:center;font-size:12px;color:var(--da-eater-text-pink);text-shadow:0 0 14px rgba(255,83,168,.48)}
 .da-eater-macro-row span:nth-child(2),.da-eater-macro-row span:nth-child(4),.da-eater-macro-row span:nth-child(5){color:var(--da-eater-signature-pink)}
@@ -78,7 +78,6 @@
 .da-eater-subtle-note{margin:0;color:var(--da-eater-signature-pink);font-size:12px;letter-spacing:.04em}
 .da-eater-photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .da-eater-photo-slot{align-content:start;gap:8px;place-items:stretch}
-.da-eater-photo-head{display:flex;justify-content:space-between;align-items:center;color:var(--da-eater-text-pink);font-size:12px}
 .da-eater-photo-body{display:grid;gap:8px}
 .da-eater-photo-ref,.da-eater-photo-empty{min-height:46px;border:1px solid rgba(255,183,229,.5);border-radius:9px;padding:8px;color:var(--da-eater-text-pink);background:rgba(74,21,62,.34)}
 .da-eater-photo-actions{display:flex;gap:6px}
@@ -87,12 +86,12 @@
 .da-eater-fixation-fields textarea{grid-column:1/-1}
 .da-eater-craving{border-radius:24px}
 .da-eater-lined{background:repeating-linear-gradient(to bottom,rgba(255,226,242,.16) 0,rgba(255,226,242,.16) 24px,rgba(255,164,213,.3) 24px,rgba(255,164,213,.3) 25px),rgba(255,176,222,.14)!important;min-height:120px}
-.da-eater-meal-log-layout{display:grid;grid-template-columns:minmax(250px,1fr) minmax(320px,1.2fr);gap:12px;align-items:start}
+.da-eater-meal-log-layout{display:grid;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:12px;align-items:start}
 .da-eater-meal-input-stack{display:grid;gap:8px}
 .da-eater-meal-input-stack label{display:grid;gap:6px;font-size:11px;letter-spacing:.08em}
 .da-eater-meal-input-stack button,.da-eater-meal-controls button{cursor:pointer;font-weight:700;letter-spacing:.05em}
 .da-eater-meal-saved-list{display:grid;gap:8px;align-content:start}
-.da-eater-meal-saved-list h3{margin:0;color:var(--da-eater-signature-pink);font-size:13px;letter-spacing:.08em}
+.da-eater-meal-saved-list h2{margin:0}
 .da-eater-empty{margin:0;padding:10px;border:1px dashed rgba(255,202,230,.42);border-radius:10px;background:rgba(255,176,222,.08);color:var(--da-eater-text-pink)}
 .da-eater-meal-card{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px;border-radius:10px;border:1px solid rgba(255,191,223,.38);background:linear-gradient(145deg,rgba(74,35,76,.2),rgba(35,19,33,.14));box-shadow:0 0 0 1px rgba(255,223,244,.08) inset}
 .da-eater-meal-card-main{display:grid;gap:4px}
