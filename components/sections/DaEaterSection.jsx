@@ -7,7 +7,7 @@ import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, S
 import { calculateDaEaterTotals, deleteCheatFlexEntry, deleteMealEntry, deleteSupplementEntry, formatDisplayDate, getDaEaterDay, saveDaEaterDay, upsertCheatFlexEntry, upsertMealEntry, upsertSupplementEntry } from '../../src/services/daEaterService';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const MEAL_TYPES = ['BREAKFAST','LUNCH','DINNER','SNACK','PRE-WORKOUT','POST-WORKOUT','TREAT','DRINK','LATE NIGHT','OTHER'];
+const MEAL_TYPES = ['BREAKFAST','LUNCH','DINNER','SNACK','PRE-WORKOUT','POST-WORKOUT','TREAT','DRINK','WATER','LATE NIGHT','OTHER'];
 const SUP_TYPES = ['VITAMIN','MINERAL','PROTEIN','CREATINE','ELECTROLYTE','DIGESTIVE','PRE-WORKOUT','POST-WORKOUT','OTHER'];
 const CHEAT_TYPES = ['CHEAT MEAL','FLEX MEAL','TREAT','REFEED','DATE NIGHT','SOCIAL MEAL','CELEBRATION','OTHER'];
 const THICC_DAYS = ['WEDNESDAY', 'SATURDAY'];
@@ -16,7 +16,7 @@ const THICC_DAY_STORAGE_KEY = 'truthinstyle_da_eater_thicc_treat_day_v1';
 export default function DaEaterSection() {
   const [date, setDate] = useState(today());
   const [day, setDay] = useState(() => getDaEaterDay(today()));
-  const [mealForm, setMealForm] = useState({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '' });
+  const [mealForm, setMealForm] = useState({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '', waterOz: '' });
   const [suppForm, setSuppForm] = useState({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' });
   const [cheatForm, setCheatForm] = useState({ id: '', type: 'CHEAT MEAL', day: '', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
   const [cravingNotes, setCravingNotes] = useState({ craving: '', trigger: '', intensity: '', response: '', notes: '' });
@@ -86,7 +86,14 @@ export default function DaEaterSection() {
     });
   };
 
-  const saveMeal = () => { const next = upsertMealEntry(date, mealForm); setDay(next); setMealForm({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '' }); };
+  const saveMeal = () => {
+    const normalizedMeal = mealForm.type === 'WATER'
+      ? { ...mealForm, protein: '', carbs: '', fats: '', calories: '', waterOz: mealForm.waterOz || '' }
+      : { ...mealForm, waterOz: '' };
+    const next = upsertMealEntry(date, normalizedMeal);
+    setDay(next);
+    setMealForm({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '', waterOz: '' });
+  };
   const saveSupplement = () => { const next = upsertSupplementEntry(date, suppForm); setDay(next); setSuppForm({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' }); };
   const selectThiccDay = (nextDay) => {
     setSelectedThiccDay(nextDay);
