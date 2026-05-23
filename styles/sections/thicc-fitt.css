@@ -88,3 +88,25 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
 @media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
+
+
+.tf30-shell .usf-panel{border-radius:22px 22px 12px 22px}
+.tf30-shell .usf-panel::before{border-radius:22px 22px 12px 22px}
+.tf30-shell .tf30-quote-panel{border-radius:22px 22px 12px 22px}
+.tf30-shell .tf30-quote-panel::before{inset:0;border-radius:22px 22px 12px 22px}
+.tf30-shell .tf30-table-row,
+.tf30-shell .tf30-featured-photo,
+.tf30-shell .tf30-art-wrap,
+.tf30-shell .tf30-history-btn,
+.tf30-shell input,
+.tf30-shell select,
+.tf30-shell textarea{border-radius:12px}
+
+.tf30-rhythm-compact{margin-bottom:4px}
+.tf30-rhythm-dominant{margin-bottom:10px}
+.tf30-rhythm-pair{margin-bottom:6px}
+.tf30-rhythm-breathing{margin-top:8px;margin-bottom:12px}
+.tf30-shelf-b .usf-panel{padding:8px 8px 10px}
+.tf30-rhythm-pair .usf-panel{min-height:100%}
+.tf30-shell .usf-shelf.tf30-rhythm-pair{align-items:stretch}
+.tf30-shelf-c{grid-template-columns:1fr 1fr!important}
