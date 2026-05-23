@@ -78,7 +78,7 @@
 .tf30-featured-photo img{width:100%;max-height:220px;object-fit:cover;border-radius:8px}
 .tf30-file-input{border:none;background:rgba(255,146,218,.22)!important;padding:6px}
 .tf30-footer{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;text-align:center}
-.tf30-shelf-b{grid-template-columns:1.85fr .95fr!important}
+.tf30-shelf-b{grid-template-columns:1fr!important}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
 @media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
