@@ -1,6 +1,6 @@
 .thicc-fitt-page,.thicc-fitt-page *,.thicc-fitt-page *::before,.thicc-fitt-page *::after{box-sizing:border-box}
 .tf30-shell{color:#ff8fd0;--thicc-fitt-content-peep-offset:clamp(78px,10vh,128px)}
-.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg-v3.png') center center/cover no-repeat}
+.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-arena-bg.png') center center/cover no-repeat}
 .tf30-overlay{position:absolute;inset:0;background:
 radial-gradient(circle at 18% 12%,rgba(255,168,94,.18),transparent 42%),
 radial-gradient(circle at 84% 74%,rgba(113,50,82,.24),transparent 44%),
