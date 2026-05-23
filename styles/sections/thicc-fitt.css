@@ -2,9 +2,9 @@
 .tf30-shell{color:#ff8fd0;--thicc-fitt-content-peep-offset:clamp(78px,10vh,128px)}
 .tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-arena-bg.png') center center/cover no-repeat}
 .tf30-overlay{position:absolute;inset:0;background:
-radial-gradient(circle at 18% 12%,rgba(255,168,94,.18),transparent 42%),
-radial-gradient(circle at 84% 74%,rgba(113,50,82,.24),transparent 44%),
-linear-gradient(135deg,rgba(24,10,14,.72),rgba(13,6,10,.36))}
+radial-gradient(circle at 18% 12%,rgba(255,166,110,.10),transparent 40%),
+radial-gradient(circle at 84% 74%,rgba(126,58,102,.14),transparent 42%),
+linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-left{position:relative}
 .tf30-content{padding-top:var(--thicc-fitt-content-peep-offset)}
 .thicc-fitt-access-trigger {
