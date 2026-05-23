@@ -91,3 +91,16 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tf30-stage-header{margin-top:6px}
 .tf30-stage-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center;margin-bottom:5px}
+
+
+.tf30-trophy-wall-panel{position:relative;overflow:hidden}
+.tf30-trophy-wall-panel::before{content:'';position:absolute;inset:4px;padding:1px;border-radius:14px;background:linear-gradient(112deg,rgba(255,90,187,.82),rgba(242,191,103,.74),rgba(156,214,228,.65),rgba(236,126,192,.82));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:1}
+.tf30-trophy-wall-grid{position:relative;z-index:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tf30-photo-spot{display:grid;gap:8px;border:1px dashed rgba(255,187,114,.5);border-radius:12px;padding:10px;background:rgba(34,12,18,.3);align-content:start}
+.tf30-photo-spot-title{font-size:.68rem;font-weight:700;letter-spacing:.1em;color:#ffc3e5;text-shadow:0 0 10px rgba(255,89,201,.4)}
+.tf30-photo-ref{font-size:.66rem;color:#ffd6ee;word-break:break-word}
+.tf30-photo-empty{font-size:.66rem;color:#ffb9df}
+.tf30-photo-actions{display:flex;gap:8px}
+.tf30-photo-actions button,.tf30-photo-spot > button{border:1px solid rgba(245,189,110,.52);background:rgba(98,22,53,.24);color:#ff9dd8;border-radius:8px;padding:6px 10px;font-size:.65rem}
+.tf30-file-input{display:none}
+@media (max-width:760px){.tf30-trophy-wall-grid{grid-template-columns:1fr}}
