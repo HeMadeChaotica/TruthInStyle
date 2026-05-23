@@ -1,6 +1,6 @@
 .thicc-fitt-page,.thicc-fitt-page *,.thicc-fitt-page *::before,.thicc-fitt-page *::after{box-sizing:border-box}
 .tf30-shell{color:#ff8fd0;--thicc-fitt-content-peep-offset:clamp(78px,10vh,128px)}
-.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-bg-v3.png') center center/cover no-repeat}
+.tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-arena-bg.png') center center/cover no-repeat}
 .tf30-overlay{position:absolute;inset:0;background:
 radial-gradient(circle at 18% 12%,rgba(255,168,94,.18),transparent 42%),
 radial-gradient(circle at 84% 74%,rgba(113,50,82,.24),transparent 44%),
@@ -65,6 +65,8 @@ linear-gradient(135deg,rgba(24,10,14,.72),rgba(13,6,10,.36))}
 .tf30-table-head{opacity:.96;margin-bottom:8px;font-weight:700;color:#ff9cd7}
 .tf30-fixed-minutes{margin-bottom:10px;color:#e1b575;font-weight:700}
 .tf30-core-grid,.tf30-cardio-grid,.tf30-inbody-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tf30-core-strip{margin-top:10px;padding-top:10px;border-top:1px solid rgba(246,198,116,.28)}
+.tf30-core-strip h3{margin-top:0}
 .tf30-span-2{grid-column:1/-1}
 .tf30-metric-header,.tf30-metric-row{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,minmax(0,.75fr));gap:6px;align-items:center;min-width:0}
 .tf30-metric-header{font-weight:700;color:#ff9cd7;margin-bottom:4px}
