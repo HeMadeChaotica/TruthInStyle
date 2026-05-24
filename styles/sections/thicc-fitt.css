@@ -153,3 +153,8 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-photo-actions button,.tf30-photo-spot > button{border:1px solid rgba(245,189,110,.52);background:rgba(98,22,53,.24);color:#ff9dd8;border-radius:8px;padding:6px 10px;font-size:.65rem}
 .tf30-file-input{display:none}
 @media (max-width:760px){.tf30-trophy-wall-grid{grid-template-columns:1fr}}
+
+.tf30-posing-rounds-panel{position:relative;overflow:hidden}
+.tf30-posing-rounds-panel::before,.tf30-posing-rounds-panel::after{content:'';position:absolute;width:18px;height:18px;border:1px solid rgba(255,199,120,.72);pointer-events:none}
+.tf30-posing-rounds-panel::before{top:6px;left:6px;border-right:none;border-bottom:none}
+.tf30-posing-rounds-panel::after{right:6px;bottom:6px;border-left:none;border-top:none}
