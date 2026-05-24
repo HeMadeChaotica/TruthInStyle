@@ -166,3 +166,6 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-posing-rounds-panel::before,.tf30-posing-rounds-panel::after{content:'';position:absolute;width:18px;height:18px;border:1px solid rgba(255,199,120,.72);pointer-events:none}
 .tf30-posing-rounds-panel::before{top:6px;left:6px;border-right:none;border-bottom:none}
 .tf30-posing-rounds-panel::after{right:6px;bottom:6px;border-left:none;border-top:none}
+.tf30-weekly-list{display:grid;gap:8px}
+.tf30-week-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;align-items:center;padding:6px;border:1px solid rgba(246,198,116,.28);border-radius:8px}
+.tf30-weekly-summary{margin-top:10px;display:grid;gap:4px;font-weight:700;color:#ffd0eb}
