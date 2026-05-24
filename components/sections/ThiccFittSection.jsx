@@ -177,6 +177,26 @@ export default function ThiccFittSection() {
     }
   };
 
+
+  const fallbackMomentDetails = {
+    trainingFor: 'MOMENT NOT SET',
+    targetDate: '',
+    location: '',
+    description: 'SET THIS LATER IN CLOCK.IT'
+  };
+  const rawMomentDetails = state?.momentDetails || fallbackMomentDetails;
+  const momentDetails = {
+    ...fallbackMomentDetails,
+    ...rawMomentDetails,
+    targetDate: rawMomentDetails?.targetDate
+      ? new Date(rawMomentDetails.targetDate).toLocaleDateString('en-US', {
+          month: '2-digit',
+          day: '2-digit',
+          year: 'numeric'
+        })
+      : ''
+  };
+
   const handleFileFallback = (slotKey, event) => {
     const file = event.target.files?.[0];
     if (!file) return;
