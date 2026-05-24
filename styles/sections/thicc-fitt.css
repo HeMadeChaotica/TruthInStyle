@@ -6,7 +6,7 @@ radial-gradient(circle at 18% 12%,rgba(255,166,110,.10),transparent 40%),
 radial-gradient(circle at 84% 74%,rgba(126,58,102,.14),transparent 42%),
 linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-left{position:relative}
-.tf30-content{padding-top:var(--thicc-fitt-content-peep-offset)}
+.tf30-content{padding-top:var(--thicc-fitt-content-peep-offset);padding-bottom:24px}
 .thicc-fitt-access-trigger {
   position: absolute;
   left: 10px;
@@ -106,14 +106,14 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-moment-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .tf30-moment-details-grid div{display:grid;gap:2px;padding:8px;border-radius:10px;background:rgba(21,8,15,.45);box-shadow:inset 0 0 0 1px rgba(245,192,111,.2)}
 .tf30-moment-details-grid span{font-size:.56rem;letter-spacing:.12em;color:#e1b575}
-.tf30-moment-details-grid strong{font-size:.73rem;color:#ffd1ed;letter-spacing:.05em;word-break:break-word}
+.tf30-moment-details-grid strong{font-size:.73rem;color:#ffd1ed;letter-spacing:.05em;word-break:break-word;line-height:1.3}
 .tf30-sohow-panel{min-height:clamp(500px,58vh,720px)!important;display:grid;grid-template-rows:auto auto 1fr;align-content:stretch}
 .tf30-sohow-panel label{display:grid;grid-template-rows:auto 1fr;min-height:100%}
 .tf30-sohow-panel .tf30-lined-notes{min-height:clamp(340px,42vh,560px);height:100%;resize:vertical}
 .tf30-art-wrap-unlabeled{margin-top:0}
-.tf30-shell .usf-stack{gap:8px}
-.tf30-shell .usf-shelf{align-items:start;gap:8px}
-.tf30-shell .usf-panel{align-content:start;border-radius:18px;overflow:hidden}
+.tf30-shell .usf-stack{gap:10px}
+.tf30-shell .usf-shelf{align-items:start;gap:10px}
+.tf30-shell .usf-panel{align-content:start;border-radius:18px;overflow:hidden;min-width:0}
 
 .tf30-shell .usf-panel::before{border-radius:18px;inset:0}
 .tf30-table-head,.tf30-table-row{display:grid;grid-template-columns:minmax(0,24px) minmax(0,2fr) repeat(4,minmax(0,.74fr)) minmax(0,.9fr);gap:6px;align-items:center;min-width:0}
@@ -222,14 +222,10 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-posing-rounds-panel::before{top:6px;left:6px;border-right:none;border-bottom:none}
 .tf30-posing-rounds-panel::after{right:6px;bottom:6px;border-left:none;border-top:none}
 .tf30-weekly-list{display:grid;gap:8px}
-.tf30-week-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;align-items:center;padding:6px;border:1px solid rgba(246,198,116,.28);border-radius:8px}
+.tf30-week-row{display:grid;grid-template-columns:minmax(42px,.7fr) minmax(56px,.8fr) repeat(3,minmax(0,1fr));gap:8px;align-items:center;padding:8px 9px;border:1px solid rgba(246,198,116,.28);border-radius:8px;background:linear-gradient(145deg,rgba(39,14,22,.34),rgba(28,11,19,.22))}
 .tf30-weekly-summary{margin-top:10px;display:grid;gap:4px;font-weight:700;color:#ffd0eb}
-.tf30-upup-rack{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.tf30-upup-vial{display:grid;gap:5px;padding:8px;border:1px solid rgba(245,192,108,.35);border-radius:12px;background:linear-gradient(170deg,rgba(44,14,24,.72),rgba(24,9,18,.62));box-shadow:inset 0 0 0 1px rgba(255,109,198,.18),0 8px 18px rgba(13,2,8,.35)}
-.tf30-upup-vial span{font-size:.6rem;letter-spacing:.14em;color:#ffdd9f}
-.tf30-upup-vial small{font-size:.55rem;letter-spacing:.16em;color:#f4bd72}
-.tf30-upup-vial input{text-align:center;font-weight:700;background:linear-gradient(180deg,rgba(20,8,13,.74),rgba(16,6,11,.6));border-color:rgba(255,194,114,.42)}
-.tf30-upup-summary{padding:10px;border-radius:12px;background:radial-gradient(circle at 12% 15%,rgba(255,101,188,.25),transparent 50%),linear-gradient(160deg,rgba(44,12,27,.7),rgba(20,8,14,.58));box-shadow:inset 0 0 0 1px rgba(255,183,109,.3)}
-.tf30-sleep-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.tf30-sleep-notes{display:grid;margin-top:8px}
-@media (max-width:760px){.tf30-upup-rack,.tf30-sleep-grid{grid-template-columns:1fr}}
+.tf30-weekly-list label{display:grid;grid-template-columns:minmax(70px,.9fr) minmax(0,1fr);gap:8px;align-items:center}
+.tf30-weekly-list label input{min-width:0}
+.tf30-shell .usf-panel h2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tf30-shell .usf-panel h2,.tf30-shell .usf-panel h3{line-height:1.25}
+@media (min-width:761px){.tf30-shell .usf-shelf.tf30-shelf-c{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)!important}}
