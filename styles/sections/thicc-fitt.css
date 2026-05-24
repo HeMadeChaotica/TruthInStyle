@@ -53,6 +53,52 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shelf-a{grid-template-columns:minmax(0,1fr) minmax(340px,440px)!important}
 
 .tf30-training-panel{grid-column:2;justify-self:end;width:min(100%,440px)}
+.tf30-moment-clock-panel{
+  grid-column:1;
+  align-self:stretch;
+  position:relative;
+  overflow:hidden;
+  border:none!important;
+  background:
+    radial-gradient(circle at 14% 12%,rgba(255,189,113,.22),transparent 35%),
+    radial-gradient(circle at 84% 82%,rgba(146,61,119,.26),transparent 45%),
+    linear-gradient(150deg,rgba(34,9,23,.82),rgba(24,8,18,.88));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,184,111,.2),
+    inset 0 0 26px rgba(255,126,202,.2),
+    0 16px 30px rgba(14,2,8,.5);
+}
+.tf30-moment-clock-panel::before{
+  content:'';
+  position:absolute;
+  inset:4px;
+  border-radius:12px;
+  border:1px solid rgba(255,197,128,.25);
+  pointer-events:none;
+}
+.tf30-moment-clock-digital{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.tf30-moment-clock-unit{
+  display:grid;
+  gap:4px;
+  padding:10px 6px;
+  border-radius:10px;
+  text-align:center;
+  background:linear-gradient(180deg,rgba(40,14,28,.9),rgba(22,8,18,.9));
+  box-shadow:inset 0 0 0 1px rgba(248,188,108,.25),inset 0 0 16px rgba(255,99,197,.2);
+}
+.tf30-moment-clock-value{
+  font-family:'Courier New',monospace;
+  font-size:clamp(1rem,1.8vw,1.45rem);
+  font-weight:800;
+  letter-spacing:.08em;
+  color:#ff78c8;
+  text-shadow:0 0 10px rgba(255,74,184,.8),0 0 24px rgba(255,74,184,.5);
+}
+.tf30-moment-clock-label{font-size:.57rem;letter-spacing:.16em;color:#f5c278}
+.tf30-moment-clock-event{margin-top:12px;padding-top:10px;border-top:1px solid rgba(239,186,108,.3);display:grid;gap:3px}
+.tf30-moment-clock-event-title{font-size:.55rem;letter-spacing:.18em;color:#d8ab6c}
+.tf30-moment-clock-event strong{color:#ffd1ed;font-size:.8rem;letter-spacing:.1em}
+.tf30-moment-clock-panther-hook{position:absolute;inset:auto 10px 8px auto;width:48px;height:48px;opacity:.3;pointer-events:none}
 .tf30-sohow-panel{min-height:clamp(500px,58vh,720px)!important;display:grid;grid-template-rows:auto auto 1fr;align-content:stretch}
 .tf30-sohow-panel label{display:grid;grid-template-rows:auto 1fr;min-height:100%}
 .tf30-sohow-panel .tf30-lined-notes{min-height:clamp(340px,42vh,560px);height:100%;resize:vertical}
@@ -87,7 +133,7 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shelf-b{grid-template-columns:1fr!important}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
-@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-grid-3{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
+@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-grid-3,.tf30-moment-clock-digital{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel,.tf30-moment-clock-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
 
 .tf30-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tf30-stage-header{margin-top:6px}
