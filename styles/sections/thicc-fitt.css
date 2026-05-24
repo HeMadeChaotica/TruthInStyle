@@ -53,13 +53,61 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shelf-a{grid-template-columns:minmax(0,1fr) minmax(340px,440px)!important}
 
 .tf30-training-panel{grid-column:2;justify-self:end;width:min(100%,440px)}
+.tf30-moment-clock-panel{
+  grid-column:1;
+  align-self:stretch;
+  position:relative;
+  overflow:hidden;
+  border:none!important;
+  background:
+    radial-gradient(circle at 14% 12%,rgba(255,189,113,.22),transparent 35%),
+    radial-gradient(circle at 84% 82%,rgba(146,61,119,.26),transparent 45%),
+    linear-gradient(150deg,rgba(34,9,23,.82),rgba(24,8,18,.88));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,184,111,.2),
+    inset 0 0 26px rgba(255,126,202,.2),
+    0 16px 30px rgba(14,2,8,.5);
+}
+.tf30-moment-clock-panel::before{
+  content:'';
+  position:absolute;
+  inset:4px;
+  border-radius:12px;
+  border:1px solid rgba(255,197,128,.25);
+  pointer-events:none;
+}
+.tf30-moment-clock-digital{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.tf30-moment-clock-unit{
+  display:grid;
+  gap:4px;
+  padding:10px 6px;
+  border-radius:10px;
+  text-align:center;
+  background:linear-gradient(180deg,rgba(40,14,28,.9),rgba(22,8,18,.9));
+  box-shadow:inset 0 0 0 1px rgba(248,188,108,.25),inset 0 0 16px rgba(255,99,197,.2);
+}
+.tf30-moment-clock-value{
+  font-family:'Courier New',monospace;
+  font-size:clamp(1rem,1.8vw,1.45rem);
+  font-weight:800;
+  letter-spacing:.08em;
+  color:#ff78c8;
+  text-shadow:0 0 10px rgba(255,74,184,.8),0 0 24px rgba(255,74,184,.5);
+}
+.tf30-moment-clock-label{font-size:.57rem;letter-spacing:.16em;color:#f5c278}
+.tf30-moment-clock-event{margin-top:12px;padding-top:10px;border-top:1px solid rgba(239,186,108,.3);display:grid;gap:3px}
+.tf30-moment-clock-event-title{font-size:.55rem;letter-spacing:.18em;color:#d8ab6c}
+.tf30-moment-clock-event strong{color:#ffd1ed;font-size:.8rem;letter-spacing:.1em}
+.tf30-moment-clock-panther-hook{position:absolute;inset:auto 10px 8px auto;width:48px;height:48px;opacity:.3;pointer-events:none}
 .tf30-sohow-panel{min-height:clamp(500px,58vh,720px)!important;display:grid;grid-template-rows:auto auto 1fr;align-content:stretch}
 .tf30-sohow-panel label{display:grid;grid-template-rows:auto 1fr;min-height:100%}
 .tf30-sohow-panel .tf30-lined-notes{min-height:clamp(340px,42vh,560px);height:100%;resize:vertical}
 .tf30-art-wrap-unlabeled{margin-top:0}
 .tf30-shell .usf-stack{gap:8px}
 .tf30-shell .usf-shelf{align-items:start;gap:8px}
-.tf30-shell .usf-panel{align-content:start}
+.tf30-shell .usf-panel{align-content:start;border-radius:18px;overflow:hidden}
+
+.tf30-shell .usf-panel::before{border-radius:18px;inset:0}
 .tf30-table-head,.tf30-table-row{display:grid;grid-template-columns:minmax(0,24px) minmax(0,2fr) repeat(4,minmax(0,.74fr)) minmax(0,.9fr);gap:6px;align-items:center;min-width:0}
 .tf30-table-row{padding:8px;border:1px solid rgba(246,198,116,.38);border-radius:10px;margin-bottom:8px;background:linear-gradient(145deg,rgba(40,17,20,.42),rgba(32,14,20,.22))}
 .tf30-table-head{opacity:.96;margin-bottom:8px;font-weight:700;color:#ff9cd7}
@@ -77,7 +125,7 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-quote-meta,.tf30-quote-tag{position:relative;z-index:3;display:block;margin-top:8px;color:#ff9ad6}
 .tf30-art-wrap{min-height:230px;height:auto;border:1px solid rgba(255,183,112,.34);border-radius:12px;overflow:hidden;background:rgba(23,11,15,.3);box-shadow:0 0 20px rgba(227,118,152,.2)}
 .tf30-art-wrap img{width:100%;height:100%;min-height:230px;object-fit:cover;display:block}
-.tf30-lined-notes{min-height:320px;line-height:28px;padding:10px 12px 12px;border:1px solid rgba(255,185,122,.48);border-radius:12px;color:#ff8fd0;text-transform:uppercase;background:linear-gradient(160deg,rgba(33,10,17,.52),rgba(24,8,14,.28));background-image:linear-gradient(160deg,rgba(33,10,17,.52),rgba(24,8,14,.28)),repeating-linear-gradient(to bottom,transparent 0,transparent 27px,rgba(255,181,126,.28) 28px,transparent 29px),radial-gradient(circle at 82% 14%,rgba(255,98,188,.12),transparent 45%);box-shadow:inset 0 0 0 1px rgba(255,105,196,.2),0 10px 24px rgba(10,0,6,.35)}
+.tf30-lined-notes{min-height:320px;line-height:28px;padding:10px 12px 12px;border:1px solid rgba(255,185,122,.48);border-radius:12px;color:#ff8fd0;text-transform:uppercase;background:linear-gradient(160deg,rgba(33,10,17,.52),rgba(24,8,14,.28));background-image:linear-gradient(160deg,rgba(33,10,17,.52),rgba(24,8,14,.28)),repeating-linear-gradient(to bottom,rgba(255,255,255,.01) 0,rgba(255,255,255,.01) 26px,rgba(255,192,137,.46) 27px,rgba(255,192,137,.46) 28px,rgba(255,255,255,.01) 29px),radial-gradient(circle at 82% 14%,rgba(255,98,188,.12),transparent 45%);box-shadow:inset 0 0 0 1px rgba(255,105,196,.26),0 10px 24px rgba(10,0,6,.35)}
 .tf30-lined-notes::placeholder{color:rgba(255,169,222,.65);text-transform:uppercase}
 .tf30-history-btn{margin-top:6px;justify-self:start;padding:8px 12px;background:rgba(98,22,53,.24);border:1px solid rgba(245,189,110,.52);color:#ff9dd8;border-radius:8px}
 .tf30-featured-photo{display:grid;gap:8px;border:1px dashed rgba(255,187,114,.5);border-radius:12px;padding:10px;min-height:180px;align-content:center;text-align:center;overflow:hidden;background:rgba(34,12,18,.3)}
@@ -87,7 +135,7 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shelf-b{grid-template-columns:1fr!important}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
-@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-grid-3{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
+@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-grid-3,.tf30-moment-clock-digital{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel,.tf30-moment-clock-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
 
 .tf30-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tf30-stage-header{margin-top:6px}
