@@ -208,7 +208,7 @@ export default function ThiccFittSection() {
     trainingFor: 'MOMENT NOT SET',
     targetDate: '',
     location: '',
-    description: 'SET THIS LATER IN CLOCK.IT'
+    description: 'SET THIS LATER'
   };
   const rawMomentDetails = state?.momentDetails || fallbackMomentDetails;
   const momentDetails = {
