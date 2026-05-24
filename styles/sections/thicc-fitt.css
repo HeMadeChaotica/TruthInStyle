@@ -50,9 +50,9 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shell input,.tf30-shell select,.tf30-shell textarea{width:100%;background:linear-gradient(130deg,rgba(26,13,18,.62),rgba(38,17,22,.34));border:1px solid rgba(255,192,122,.38);color:#ffcae7;border-radius:9px;padding:8px;box-shadow:inset 0 0 0 1px rgba(255,124,202,.12)}
 .tf30-shell textarea{min-height:68px;resize:vertical}
 .tf30-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tf30-shelf-a{grid-template-columns:minmax(0,1fr) minmax(340px,440px)!important}
-
-.tf30-training-panel{grid-column:2;justify-self:end;width:min(100%,440px)}
+.tf30-shelf-a{grid-template-columns:1fr!important}
+.tf30-shelf-a2{grid-template-columns:1fr!important}
+.tf30-training-panel{grid-column:1;justify-self:stretch;width:100%}
 .tf30-moment-clock-panel{
   grid-column:1;
   align-self:stretch;
@@ -76,6 +76,13 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
   border:1px solid rgba(255,197,128,.25);
   pointer-events:none;
 }
+.tf30-moment-clock-frame{
+  position:relative;
+  width:100%;
+  min-height:190px;
+  padding:18px 16px 16px;
+  background:url('/ornaments/THICC-FITT/moment-clock-frame.png') center center/cover no-repeat;
+}
 .tf30-moment-clock-digital{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
 .tf30-moment-clock-unit{
   display:grid;
@@ -95,10 +102,11 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
   text-shadow:0 0 10px rgba(255,74,184,.8),0 0 24px rgba(255,74,184,.5);
 }
 .tf30-moment-clock-label{font-size:.57rem;letter-spacing:.16em;color:#f5c278}
-.tf30-moment-clock-event{margin-top:12px;padding-top:10px;border-top:1px solid rgba(239,186,108,.3);display:grid;gap:3px}
-.tf30-moment-clock-event-title{font-size:.55rem;letter-spacing:.18em;color:#d8ab6c}
-.tf30-moment-clock-event strong{color:#ffd1ed;font-size:.8rem;letter-spacing:.1em}
-.tf30-moment-clock-panther-hook{position:absolute;inset:auto 10px 8px auto;width:48px;height:48px;opacity:.3;pointer-events:none}
+.tf30-moment-details{margin-top:10px;padding-top:10px;border-top:1px solid rgba(239,186,108,.3)}
+.tf30-moment-details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tf30-moment-details-grid div{display:grid;gap:2px;padding:8px;border-radius:10px;background:rgba(21,8,15,.45);box-shadow:inset 0 0 0 1px rgba(245,192,111,.2)}
+.tf30-moment-details-grid span{font-size:.56rem;letter-spacing:.12em;color:#e1b575}
+.tf30-moment-details-grid strong{font-size:.73rem;color:#ffd1ed;letter-spacing:.05em;word-break:break-word}
 .tf30-sohow-panel{min-height:clamp(500px,58vh,720px)!important;display:grid;grid-template-rows:auto auto 1fr;align-content:stretch}
 .tf30-sohow-panel label{display:grid;grid-template-rows:auto 1fr;min-height:100%}
 .tf30-sohow-panel .tf30-lined-notes{min-height:clamp(340px,42vh,560px);height:100%;resize:vertical}
@@ -135,7 +143,7 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 .tf30-shelf-b{grid-template-columns:1fr!important}
 .tf30-shelf-c{grid-template-columns:1.1fr 1fr!important}
 .tf30-shelf-f{grid-template-columns:1fr!important}
-@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-grid-3,.tf30-moment-clock-digital{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel,.tf30-moment-clock-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
+@media (max-width:760px){.tf30-grid-2,.tf30-core-grid,.tf30-cardio-grid,.tf30-grid-3,.tf30-moment-clock-digital,.tf30-moment-details-grid{grid-template-columns:1fr}.tf30-shelf-a,.tf30-shelf-a2,.tf30-shelf-b,.tf30-shelf-c{grid-template-columns:1fr!important}.tf30-training-panel,.tf30-moment-clock-panel{grid-column:1;justify-self:stretch;width:100%}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(0,1.5fr) repeat(5,minmax(0,.8fr))}}
 
 .tf30-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .tf30-stage-header{margin-top:6px}
