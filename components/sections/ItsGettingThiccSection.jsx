@@ -9,6 +9,7 @@ import {
   saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload,
 } from '../../src/services/itsGettingThiccService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
+import { normalizeObjectStrings, normalizeUserText } from '../../lib/utils/textCasing';
 
 const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const tabs = ['THICC.INFO', 'THICC.PEOPLE', 'THICC.FORMS', 'THICC.TIME', 'THICC.NOMO'];
@@ -112,7 +113,7 @@ export default function ItsGettingThiccSection() {
     });
   }, []);
   const persist = (next, event = 'autosave') => { setClients(next); saveClients(next); appendLog(event, { activeId }); };
-  const update = (key, value) => { if (!active) return; persist((Array.isArray(clients) ? clients : []).map((c) => (c.id === active.id ? { ...c, [key]: value } : c)), `field:${key}`); };
+  const update = (key, value) => { if (!active) return; persist((Array.isArray(clients) ? clients : []).map((c) => (c.id === active.id ? { ...c, [key]: normalizeObjectStrings(value) } : c)), `field:${key}`); };
   const updateArray = (key, i, value) => update(key, (active[key] || []).map((v, idx) => (idx === i ? value : v)));
   const onUpload = (slot) => (e) => { const f = e.target.files?.[0]; if (!f || !active) return; const fr = new FileReader(); fr.onload = () => { const d = upsertMedia(active.id, slot, fr.result); if (slot === 'photo') update('photo', d); else update('celebration', (active.celebration || []).map((t, i) => (i === Number(slot) ? { ...t, media: d } : t))); }; fr.readAsDataURL(f); };
   function Food() { return <><h3>FOOD: THE GOOD, THE BAD & THE “I DESERVE THIS”</h3>{foodPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={active[`food${i + 1}`] || ''} onChange={(e) => update(`food${i + 1}`, e.target.value)} /></label>)}</>; }
@@ -167,8 +168,8 @@ export default function ItsGettingThiccSection() {
       end_time: currentEntryForm.end_time || '10:00',
       workout_label: currentEntryForm.workout_label || fallbackLabel,
       source_split_day: safeDay,
-      location: currentEntryForm.location || '',
-      notes: currentEntryForm.notes || '',
+      location: normalizeUserText(currentEntryForm.location || ''),
+      notes: normalizeUserText(currentEntryForm.notes || ''),
     };
   };
 

@@ -8,3 +8,5 @@ body {
   margin: 0;
   overflow-y: auto;
 }
+
+body, button, label, input, textarea, select, option, ::placeholder { text-transform: uppercase; }
