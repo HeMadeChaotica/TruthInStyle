@@ -1,4 +1,4 @@
-import '@/styles/sections/the-assurer.css';
+import '../../styles/sections/the-assurer.css';
 
 export default function TheAssurerSection() {
   return (
