@@ -1,8 +1,6 @@
 .assurer-shell {
   --assurer-pink-soft: #f4b2bd;
   --assurer-pink-main: #ef8fa3;
-  --assurer-panel-bg: rgba(28, 8, 18, 0.54);
-  --assurer-panel-border: rgba(244, 178, 189, 0.42);
 
   width: 100vw;
   height: 100dvh;
@@ -17,13 +15,14 @@
   width: min(100vw, calc(100dvh * 16 / 9));
   height: min(100dvh, calc(100vw * 9 / 16));
   overflow: hidden;
+  background: #000;
 }
 
 .assurer-scene-plate {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: url('/backgrounds/THE-ASSURER/the-assurer-bg-v2.PNG');
+  background-image: url('/background/THE-ASSURER/the-assurer-bg-v2.png');
   background-size: contain;
   background-position: center center;
   background-repeat: no-repeat;
@@ -34,63 +33,117 @@
   position: relative;
   z-index: 2;
   height: 100%;
-  padding: clamp(0.8rem, 2vh, 1.2rem) clamp(1rem, 2.4vw, 2rem) clamp(14rem, 34vh, 18rem);
+  padding: clamp(0.9rem, 2vh, 1.2rem) clamp(0.9rem, 2.2vw, 2rem) clamp(11rem, 30vh, 15rem);
   display: grid;
   grid-template-rows: auto 1fr;
   gap: clamp(0.6rem, 1.8vh, 1rem);
-  color: var(--assurer-pink-soft);
 }
 
-.assurer-title-input {
-  width: min(100%, 720px);
-  border: 1px solid rgba(239, 143, 163, 0.66);
-  background: rgba(22, 5, 14, 0.42);
+.assurer-top {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+}
+
+.assurer-title {
+  margin: 0;
   color: var(--assurer-pink-main);
-  font-size: clamp(1.35rem, 3vw, 2.2rem);
-  font-weight: 700;
-  padding: 0.5rem 0.75rem;
-}
-.assurer-title-input::placeholder { color: var(--assurer-pink-soft); }
-
-.assurer-bars { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 0.5rem; }
-.assurer-bar-meta { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--assurer-pink-soft); }
-.assurer-bar-track { height: 7px; border: 1px solid rgba(244, 178, 189, 0.45); background: rgba(18, 4, 11, 0.6); }
-.assurer-bar-fill { display: block; height: 100%; background: var(--assurer-pink-main); }
-
-.assurer-chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.5rem; }
-.assurer-chip {
-  border: 1px solid rgba(244, 178, 189, 0.55);
-  background: rgba(16, 3, 9, 0.55);
-  color: var(--assurer-pink-soft);
-  font-size: 0.74rem;
-  padding: 0.3rem 0.55rem;
+  font-size: clamp(1.35rem, 2.8vw, 2.4rem);
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
-.assurer-content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; align-content: start; }
-.assurer-col { display: grid; gap: 0.65rem; }
-.assurer-panel {
-  border: 1px solid var(--assurer-panel-border);
-  background: var(--assurer-panel-bg);
-  color: var(--assurer-pink-soft);
-  padding: 0.55rem 0.65rem;
-  backdrop-filter: blur(2px);
+.assurer-bars {
+  width: min(100%, 820px);
+  display: grid;
+  gap: 0.4rem;
 }
-.assurer-panel h3 { margin: 0 0 0.4rem; color: var(--assurer-pink-main); font-size: 0.88rem; }
-.assurer-panel p { margin: 0.2rem 0; font-size: 0.73rem; }
 
-.assurer-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
-.metric { border: 1px solid rgba(239, 143, 163, 0.48); padding: 0.35rem 0.45rem; font-size: 0.72rem; color: var(--assurer-pink-soft); }
-.assurer-memory-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.4rem; }
-.memory-tile { border: 1px solid rgba(244, 178, 189, 0.48); min-height: 64px; display: grid; place-items: center; font-size: 0.72rem; color: var(--assurer-pink-soft); }
-
-.assurer-thoughts textarea {
-  width: 100%;
-  min-height: 92px;
-  border: 1px solid rgba(239, 143, 163, 0.5);
-  background: rgba(13, 3, 9, 0.62);
-  color: var(--assurer-pink-soft);
+.assurer-bar-meta {
   font-size: 0.72rem;
-  padding: 0.45rem;
+  color: var(--assurer-pink-soft);
+  letter-spacing: 0.05em;
+}
+
+.assurer-bar-track {
+  height: 8px;
+  border: 1px solid rgba(244, 178, 189, 0.5);
+  background: rgba(244, 178, 189, 0.15);
+}
+
+.assurer-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--assurer-pink-main);
+}
+
+.assurer-chip-row {
+  width: min(100%, 860px);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.assurer-chip {
+  border: 1px solid rgba(244, 178, 189, 0.58);
+  background: rgba(239, 143, 163, 0.16);
+  color: var(--assurer-pink-soft);
+  font-size: 0.68rem;
+  padding: 0.28rem 0.46rem;
+  letter-spacing: 0.05em;
+}
+
+.assurer-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    'left thoughts'
+    'left right'
+    'rhythm right'
+    'memory memory';
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.assurer-panel {
+  border: 1px solid rgba(244, 178, 189, 0.45);
+  background: rgba(25, 8, 16, 0.42);
+  min-height: 80px;
+}
+
+.assurer-cluster {
+  position: relative;
+}
+
+.assurer-cluster::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px dashed rgba(239, 143, 163, 0.45);
+}
+
+.assurer-cluster-left { grid-area: left; min-height: 180px; }
+.assurer-cluster-right { grid-area: right; min-height: 180px; }
+.assurer-cluster-rhythm { grid-area: rhythm; min-height: 95px; }
+.assurer-cluster-memory { grid-area: memory; min-height: 76px; }
+
+.assurer-thoughts {
+  grid-area: thoughts;
+  padding: 0.6rem;
+}
+
+.assurer-thoughts h2 {
+  margin: 0 0 0.45rem;
+  color: var(--assurer-pink-main);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}
+
+.assurer-thoughts-body {
+  min-height: 90px;
+  border: 1px solid rgba(244, 178, 189, 0.5);
+  background: rgba(244, 178, 189, 0.08);
 }
 
 .assurer-clear-zone {
@@ -98,15 +151,25 @@
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
-  width: min(35vw, 420px);
-  height: clamp(150px, 32%, 240px);
-  z-index: 3;
+  width: min(36vw, 430px);
+  height: clamp(150px, 30%, 230px);
   pointer-events: none;
   background: transparent;
+  z-index: 3;
 }
 
-@media (max-width: 980px) {
-  .assurer-bars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .assurer-content-grid { grid-template-columns: 1fr; }
-  .assurer-overlay { padding-bottom: clamp(12rem, 30vh, 16rem); }
+@media (max-width: 900px) {
+  .assurer-overlay {
+    padding-bottom: clamp(10.5rem, 28vh, 13.5rem);
+  }
+
+  .assurer-content-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'thoughts'
+      'left'
+      'right'
+      'rhythm'
+      'memory';
+  }
 }
