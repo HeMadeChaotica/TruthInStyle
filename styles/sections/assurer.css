@@ -1,1 +1,74 @@
-/* Temporary scaffold file for local implementation. */
+.assurer-section {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 48px;
+  color: #f4b2bd;
+}
+
+.assurer-card {
+  width: min(900px, 100%);
+  border: 2px solid #ef8fa3;
+  border-radius: 16px;
+  padding: 20px;
+  background: rgba(23, 2, 14, 0.72);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+}
+
+.assurer-card h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #f4b2bd;
+  letter-spacing: 0.06em;
+}
+
+.assurer-date {
+  margin: 8px 0 18px;
+  color: #ef8fa3;
+  font-size: 1rem;
+}
+
+.assurer-card label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f4b2bd;
+}
+
+.assurer-card input,
+.assurer-card select,
+.assurer-card textarea {
+  width: 100%;
+  border: 1px solid #ef8fa3;
+  border-radius: 10px;
+  background: rgba(244, 178, 189, 0.08);
+  color: #f4b2bd;
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 10px 12px;
+  text-transform: uppercase;
+}
+
+.assurer-card input::placeholder,
+.assurer-card textarea::placeholder {
+  color: rgba(244, 178, 189, 0.72);
+}
+
+.assurer-card textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.assurer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.assurer-card input:focus,
+.assurer-card select:focus,
+.assurer-card textarea:focus {
+  outline: 2px solid #f4b2bd;
+  outline-offset: 1px;
+}
