@@ -1,1 +1,27 @@
-/* Temporary scaffold file for local implementation. */
+.assurer-section{min-height:100vh;background:radial-gradient(circle at 20% 20%,#3f0a29,#170213 50%,#09010a 100%);color:#ffeaf5;padding:18px}
+.assurer-overlay-shell{max-width:1280px;margin:0 auto;display:grid;gap:14px;grid-template-rows:auto auto auto auto auto;position:relative;padding-bottom:90px}
+.assurer-daily-header{background:linear-gradient(145deg,rgba(255,122,196,.22),rgba(56,6,48,.56));border:1px solid rgba(255,173,223,.34);padding:16px;border-radius:16px;backdrop-filter:blur(4px)}
+.assurer-kicker{margin:0 0 4px;letter-spacing:.15em;font-size:.72rem;color:#ffb4de}
+.assurer-daily-header h1{margin:0 0 10px;font-size:1.45rem}
+.assurer-progress-cluster{display:grid;gap:8px}
+.assurer-progress-row{display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:8px;font-size:.8rem}
+.assurer-progress-track{height:9px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.assurer-progress-track i{display:block;height:100%;background:linear-gradient(90deg,#9fffe5,#ff86c9,#ffd680)}
+.assurer-chip-ribbon{display:flex;flex-wrap:wrap;gap:8px}
+.assurer-chip-ribbon span{padding:6px 10px;border-radius:999px;background:rgba(255,178,227,.14);border:1px solid rgba(255,193,232,.33);font-size:.76rem}
+.assurer-main-islands{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.9fr) minmax(0,1fr);gap:12px;max-height:46vh;overflow:auto;padding-right:4px}
+.assurer-flow-column{display:grid;gap:10px;align-content:start}
+.assurer-signal-card{background:rgba(44,5,34,.72);border:1px solid rgba(255,173,223,.24);padding:10px;border-radius:14px}
+.assurer-signal-card h3{margin:0 0 6px;font-size:.92rem}.assurer-signal-card p{margin:0 0 8px;font-size:.8rem;line-height:1.3}.assurer-signal-card time{font-size:.72rem;color:#ffc2e4}
+.assurer-thoughts-card{align-self:start;background:linear-gradient(160deg,rgba(255,156,216,.26),rgba(52,7,47,.75));border:1px solid rgba(255,172,221,.34);padding:14px;border-radius:16px}
+.assurer-thoughts-card h2{margin:0 0 8px;font-size:1rem}.assurer-thoughts-card p{margin:0;line-height:1.45}
+.assurer-memory-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.assurer-mini-flip{min-height:126px;border-radius:12px;border:1px solid rgba(255,178,227,.35);background:rgba(30,2,20,.76);color:#ffe9f4;padding:8px;display:grid;gap:6px;text-align:left;cursor:pointer}
+.assurer-mini-flip img{width:100%;height:80px;object-fit:cover;border-radius:8px}.assurer-mini-flip span{font-size:.74rem}.assurer-mini-flip p{margin:0;font-size:.78rem}
+.assurer-mini-fallback{display:grid;place-items:center;height:80px;background:#421035;border-radius:8px}
+.assurer-rhythm-cluster{background:rgba(42,6,35,.76);border:1px solid rgba(255,166,219,.25);border-radius:14px;padding:12px}
+.assurer-rhythm-cluster h3{margin:0 0 8px}.assurer-rhythm-cluster ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.assurer-rhythm-cluster li{display:grid;grid-template-columns:62px 1fr;gap:8px;font-size:.84rem}
+.assurer-rhythm-cluster li span{color:#ffbde1}
+.assurer-mista-anchor{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:linear-gradient(90deg,#ff4db8,#ff8ecf);color:#190011;font-weight:800;letter-spacing:.08em;z-index:3;box-shadow:0 0 28px rgba(255,83,183,.54)}
+@media (max-width:1000px){.assurer-main-islands{grid-template-columns:1fr}.assurer-memory-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
