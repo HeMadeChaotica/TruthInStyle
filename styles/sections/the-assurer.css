@@ -2,190 +2,83 @@
   --assurer-pink-soft: #F4B2BD;
   --assurer-pink-main: #EF8FA3;
 
+  position: relative;
   width: 100vw;
   height: 100dvh;
   overflow: hidden;
   background: #000;
-  display: grid;
-  place-items: center;
 }
 
-.assurer-stage {
-  position: relative;
-  width: min(100vw, calc(100dvh * 16 / 9));
-  height: min(100dvh, calc(100vw * 9 / 16));
-  margin: auto;
-  overflow: hidden;
-}
-
-.assurer-scene-plate {
+.assurer-scene {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: url('/background/THE-ASSURER/the-assurer-bg-v2.png');
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-color: #000;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  pointer-events: none;
+  user-select: none;
 }
 
-.assurer-overlay {
+.assurer-live-layer {
   position: absolute;
   inset: 0;
   z-index: 2;
-  pointer-events: auto;
-  padding: clamp(0.8rem, 1.8vh, 1.2rem) clamp(0.8rem, 1.8vw, 1.6rem) clamp(10.5rem, 26vh, 14rem);
-}
-
-.assurer-title-cluster {
-  width: min(50%, 680px);
-  margin: 0 auto;
   display: grid;
-  gap: 0.4rem;
-}
-
-.assurer-title {
-  margin: 0;
-  color: var(--assurer-pink-main);
-  text-align: center;
-  font-size: clamp(1.2rem, 2.2vw, 2rem);
-  letter-spacing: 0.04em;
-}
-
-.assurer-progress-stack {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.assurer-progress-row {
-  display: grid;
-  grid-template-columns: 78px 1fr;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.assurer-progress-label {
-  color: var(--assurer-pink-soft);
-  font-size: 0.64rem;
-  letter-spacing: 0.05em;
-}
-
-.assurer-progress-track {
-  height: 7px;
-  border: 1px solid rgba(244, 178, 189, 0.55);
-  background: rgba(244, 178, 189, 0.2);
-}
-
-.assurer-progress-fill {
-  display: block;
-  height: 100%;
-  background: var(--assurer-pink-main);
-}
-
-.assurer-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.3rem;
-  margin-top: 0.1rem;
-}
-
-.assurer-chip {
-  color: var(--assurer-pink-soft);
-  border: 1px solid rgba(239, 143, 163, 0.65);
-  background: rgba(239, 143, 163, 0.16);
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
-  padding: 0.18rem 0.42rem;
-}
-
-.assurer-flow-layer {
-  position: absolute;
-  inset: clamp(11rem, 27vh, 15rem) 4.5% clamp(4.5rem, 9vh, 6rem);
-}
-
-.assurer-module {
-  position: absolute;
-  color: var(--assurer-pink-soft);
-  border: 1px solid rgba(244, 178, 189, 0.45);
-  background: rgba(239, 143, 163, 0.1);
-  backdrop-filter: blur(2px);
-  padding: 0.55rem;
-}
-
-.assurer-module p {
-  margin: 0 0 0.34rem;
-  font-size: 0.67rem;
-  letter-spacing: 0.03em;
-}
-
-.assurer-module-left {
-  left: 0;
-  top: 0;
-  width: 31%;
-  min-height: 24%;
-}
-
-.assurer-thought-card {
-  left: 31%;
-  top: 10%;
-  width: 26%;
-  min-height: 22%;
-}
-
-.assurer-thought-card h2 {
-  margin: 0 0 0.42rem;
-  color: var(--assurer-pink-main);
-  font-size: 0.82rem;
-  letter-spacing: 0.05em;
-}
-
-.assurer-thought-card p {
-  margin: 0;
-}
-
-.assurer-module-right {
-  right: 0;
-  top: 2%;
-  width: 30%;
-  min-height: 26%;
-}
-
-.assurer-module-bottom {
-  left: 15%;
-  right: 15%;
-  bottom: 1%;
-  min-height: 13%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-}
-
-.assurer-module-bottom span {
-  color: var(--assurer-pink-soft);
-  border: 1px solid rgba(239, 143, 163, 0.55);
-  background: rgba(244, 178, 189, 0.13);
-  padding: 0.26rem 0.42rem;
-  font-size: 0.62rem;
-}
-
-.assurer-mista-clear-zone {
-  position: absolute;
-  left: 38%;
-  right: 38%;
-  bottom: 0;
-  height: 48%;
+  grid-template-columns: 30% minmax(0, 70%);
   pointer-events: none;
-  z-index: 3;
 }
 
-@media (max-width: 1000px) {
-  .assurer-title-cluster {
-    width: min(52%, 680px);
-  }
+.assurer-content {
+  grid-column: 2;
+  pointer-events: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(0.8rem, 2vh, 1.4rem);
+}
 
-  .assurer-flow-layer {
-    inset: clamp(10rem, 24vh, 14rem) 3.5% clamp(4rem, 10vh, 5.5rem);
-  }
+.assurer-card { display: grid; gap: 0.7rem; max-width: 900px; margin-left: auto; }
+.assurer-title-input { font-size: clamp(1.1rem,2.4vw,2rem); letter-spacing: .06em; }
+
+.assurer-card input,
+.assurer-card select,
+.assurer-card textarea {
+  width: 100%;
+  border: 1px solid rgba(239, 143, 163, 0.7);
+  background: rgba(15, 7, 11, 0.5);
+  color: var(--assurer-pink-soft);
+  padding: 0.55rem;
+  text-transform: uppercase;
+}
+
+.assurer-card label { color: var(--assurer-pink-main); display: grid; gap: .3rem; letter-spacing: .04em; font-size: .78rem; }
+.assurer-grid-3 { display: grid; gap: .55rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.assurer-grid-2 { display: grid; gap: .55rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.assurer-progress-stack { display: grid; gap: .32rem; }
+.assurer-progress-row { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: .5rem; }
+.assurer-progress-label { color: var(--assurer-pink-soft); font-size: .67rem; }
+.assurer-progress-track { height: 8px; border: 1px solid rgba(244,178,189,.6); background: rgba(244,178,189,.2); }
+.assurer-progress-fill { display:block; height:100%; background: var(--assurer-pink-main); }
+
+.assurer-thoughts-wrap { margin-top: .3rem; }
+.assurer-thoughts {
+  min-height: 36dvh;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,.46), rgba(0,0,0,.46)),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(244, 178, 189, 0.08) 0,
+      rgba(244, 178, 189, 0.08) 30px,
+      rgba(239, 143, 163, 0.36) 30px,
+      rgba(239, 143, 163, 0.36) 31px
+    );
+}
+
+@media (max-width: 960px) {
+  .assurer-live-layer { grid-template-columns: 10% minmax(0, 90%); }
+  .assurer-grid-3,
+  .assurer-grid-2 { grid-template-columns: 1fr; }
+  .assurer-thoughts { min-height: 42dvh; }
 }
