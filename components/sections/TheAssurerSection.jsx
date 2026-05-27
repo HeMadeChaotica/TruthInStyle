@@ -3,29 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import '../../styles/sections/the-assurer.css';
 import '../../styles/sections/thicc-fitt.css';
-import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
+import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getDailyAssurerWord, getAssurerWeather, searchHeadHummer, selectHeadHummer } from '../../src/services/assurerService';
 
 const toCaps = (v) => String(v || '').toUpperCase();
 const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-
-const DROPDOWN_KEYS = {
-  assessmentMood: 'assessmentMood',
-  assessmentEra: 'assessmentEra',
-  assessmentSingleness: 'assessmentSingleness',
-  lobitoCheckIn: 'lobitoCheckIn'
-};
-
-const dropdownMap = {
-  [DROPDOWN_KEYS.assessmentMood]: () => optionRegistry.assessment?.mood || [],
-  [DROPDOWN_KEYS.assessmentEra]: () => optionRegistry.assessment?.era || [],
-  [DROPDOWN_KEYS.assessmentSingleness]: () => optionRegistry.assessment?.singlenessLevel || [],
-  [DROPDOWN_KEYS.lobitoCheckIn]: () => optionRegistry.assessment?.libidoCheckIn || []
-};
-
-function useDropdownOptions(key) {
-  return useMemo(() => dropdownMap[key]?.() || [], [key]);
-}
 
 function buildAssurerWandPayload(data) {
   return {
