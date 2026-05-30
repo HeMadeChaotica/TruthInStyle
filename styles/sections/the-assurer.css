@@ -1,30 +1,182 @@
-.assurer-shell {
-  --assurer-pink-soft: #F4B2BD;
-  --assurer-pink-main: #EF8FA3;
-  --assurer-panel-khaki: rgba(175, 142, 104, 0.18);
-  --assurer-panel-smoke: rgba(20, 10, 8, 0.46);
-  --assurer-panel-deep: rgba(6, 3, 4, 0.56);
-  position: relative;
+.assurer-oracle-shell {
   width: 100vw;
   height: 100dvh;
   overflow: hidden;
+  display: grid;
+  place-items: center;
   background: #000;
 }
-.assurer-scene { position:absolute; inset:0; z-index:0; width:100%; height:100%; object-fit:cover; object-position:center center; pointer-events:none; user-select:none; }
-.assurer-live-layer { position:absolute; inset:0; z-index:2; display:grid; grid-template-columns:30% minmax(0,70%); background:transparent; }
-.assurer-art-protect { grid-column:1; pointer-events:none; background:transparent; }
-.assurer-content { grid-column:2; min-width:0; height:100%; overflow-y:auto; overflow-x:hidden; background:transparent; padding:20px; display:grid; gap:14px; align-content:start; }
-.assurer-panel { position:relative; padding:14px; border:1px solid transparent; background:linear-gradient(135deg, rgba(175, 142, 104, 0.18), rgba(20, 10, 8, 0.46)); color:var(--assurer-pink-soft); text-transform:uppercase; font-family:'Same Same But Different', sans-serif; font-size:16px; line-height:1.6; letter-spacing:.04em; }
-.truth-shimmer-border::before { content:''; position:absolute; inset:0; padding:1px; border-radius:inherit; background:linear-gradient(120deg,var(--assurer-pink-soft),var(--assurer-pink-main),rgba(210,170,110,.65),var(--assurer-pink-main)); background-size:220% 220%; animation:assurerShimmer 8s linear infinite; -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none; }
-@keyframes assurerShimmer { to { background-position:200% 0; } }
-.assurer-title-input { width:100%; background:var(--assurer-panel-deep); color:var(--assurer-pink-soft); border:1px solid rgba(244,178,189,.5); font-size:clamp(34px,3vw,44px); line-height:1.25; padding:10px; }
-.assurer-date { color:var(--assurer-pink-main); font-size:14px; margin-top:8px; }
-label, h3, p, small, span, b, strong { color:var(--assurer-pink-soft); }
-h3 { color:var(--assurer-pink-main); font-size:22px; margin:0 0 8px; line-height:1.35; }
-.assurer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-input, select, textarea { width:100%; background:var(--assurer-panel-deep); color:var(--assurer-pink-soft); border:1px solid rgba(244,178,189,.45); padding:10px; font-size:16px; line-height:1.5; text-transform:uppercase; }
-label { display:grid; gap:6px; font-size:16px; color:var(--assurer-pink-main); }
-small { font-size:12px; line-height:1.4; }
-.assurer-thoughts { min-height:360px; background:linear-gradient(to bottom, rgba(6,3,4,.52), rgba(6,3,4,.52)), repeating-linear-gradient(to bottom, rgba(244,178,189,.06) 0, rgba(244,178,189,.06) 34px, rgba(239,143,163,.45) 34px, rgba(239,143,163,.45) 35px); }
-.assurer-thoughts-panel { order: 999; }
-@media (max-width: 960px){ .assurer-live-layer{grid-template-columns:8% 92%;} .assurer-grid{grid-template-columns:1fr;} }
+
+.assurer-oracle-stage {
+  position: relative;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: #000;
+}
+
+.assurer-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.assurer-widget-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.assurer-widget {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(2px, 0.45vw, 8px);
+  padding: clamp(6px, 0.85vw, 14px);
+  overflow: hidden;
+  background: rgba(20, 10, 8, 0.34);
+  border: 1px solid rgba(244, 178, 189, 0.72);
+  border-radius: 18px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #F4B2BD;
+  font-family: 'Same Same But Different', sans-serif;
+  font-size: clamp(10px, 0.95vw, 17px);
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 10px rgba(20, 10, 8, 0.82);
+}
+
+.assurer-widget-number {
+  align-self: flex-start;
+  min-width: clamp(18px, 1.8vw, 30px);
+  min-height: clamp(18px, 1.8vw, 30px);
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(244, 178, 189, 0.72);
+  border-radius: 999px;
+  color: #EF8FA3;
+  font-size: clamp(8px, 0.7vw, 12px);
+  line-height: 1;
+}
+
+.assurer-widget strong {
+  color: #F4B2BD;
+  font-size: clamp(10px, 1vw, 18px);
+  line-height: 1.05;
+}
+
+.assurer-widget small {
+  color: #EF8FA3;
+  font-size: clamp(8px, 0.7vw, 12px);
+  line-height: 1.15;
+}
+
+.assurer-title-cluster {
+  left: 35.4818%;
+  top: 3.0093%;
+  width: 29.2969%;
+  height: 13.3102%;
+}
+
+.assurer-macro-bars {
+  left: 32.8776%;
+  top: 16.7824%;
+  width: 33.8542%;
+  height: 21.412%;
+}
+
+.assurer-battle-cry-tile {
+  left: 2.9297%;
+  top: 6.3657%;
+  width: 10.0911%;
+  height: 17.9398%;
+}
+
+.assurer-weather-tile {
+  left: 13.9974%;
+  top: 6.3657%;
+  width: 10.0911%;
+  height: 17.9398%;
+}
+
+.assurer-meal-log {
+  left: 2.9297%;
+  top: 27.7778%;
+  width: 21.4844%;
+  height: 34.7222%;
+}
+
+.assurer-body-sleep-water {
+  left: 2.9297%;
+  top: 65.9722%;
+  width: 14.974%;
+  height: 29.5139%;
+}
+
+.assurer-word-panel {
+  left: 25.0651%;
+  top: 45.7176%;
+  width: 13.3464%;
+  height: 23.1481%;
+}
+
+.assurer-daily-orbit {
+  left: 38.737%;
+  top: 39.9306%;
+  width: 22.4609%;
+  height: 10.4167%;
+}
+
+.assurer-media-strip {
+  left: 73.8932%;
+  top: 4.0509%;
+  width: 22.7865%;
+  height: 15.0463%;
+}
+
+.assurer-week-strip {
+  left: 72.2656%;
+  top: 21.412%;
+  width: 24.4141%;
+  height: 11.5741%;
+}
+
+.assurer-metric-strip {
+  left: 72.2656%;
+  top: 35.3009%;
+  width: 24.4141%;
+  height: 11.5741%;
+}
+
+.assurer-day-timeline {
+  left: 72.2656%;
+  top: 49.7685%;
+  width: 24.4141%;
+  height: 28.3565%;
+}
+
+.assurer-moment-flip-cards {
+  left: 72.2656%;
+  top: 80.4398%;
+  width: 24.4141%;
+  height: 16.7824%;
+}
+
+.assurer-assured-thoughts {
+  left: 55.9896%;
+  top: 75.2315%;
+  width: 14.974%;
+  height: 20.2546%;
+}
