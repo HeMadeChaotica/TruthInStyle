@@ -44,18 +44,23 @@
   gap: clamp(2px, 0.45vw, 8px);
   padding: clamp(6px, 0.85vw, 14px);
   overflow: hidden;
-  background: rgba(20, 10, 8, 0.34);
-  border: 1px solid rgba(244, 178, 189, 0.72);
+  background: linear-gradient(
+    135deg,
+    rgba(20, 10, 8, 0.24),
+    rgba(20, 10, 8, 0.10)
+  );
+  border: 1px solid rgba(244, 178, 189, 0.58);
   border-radius: 18px;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(2px) saturate(112%);
+  -webkit-backdrop-filter: blur(2px) saturate(112%);
+  box-shadow: 0 10px 24px rgba(20, 10, 8, 0.18);
   color: #F4B2BD;
   font-family: 'Same Same But Different', sans-serif;
-  font-size: clamp(10px, 0.95vw, 17px);
+  font-size: clamp(11px, 1vw, 18px);
   line-height: 1.1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  text-shadow: 0 1px 10px rgba(20, 10, 8, 0.82);
+  text-shadow: 0 1px 7px rgba(20, 10, 8, 0.62);
 }
 
 .assurer-widget-number {
@@ -64,22 +69,23 @@
   min-height: clamp(18px, 1.8vw, 30px);
   display: grid;
   place-items: center;
-  border: 1px solid rgba(244, 178, 189, 0.72);
+  border: 1px solid rgba(244, 178, 189, 0.46);
   border-radius: 999px;
   color: #EF8FA3;
-  font-size: clamp(8px, 0.7vw, 12px);
+  opacity: 0.72;
+  font-size: clamp(8px, 0.74vw, 13px);
   line-height: 1;
 }
 
 .assurer-widget strong {
   color: #F4B2BD;
-  font-size: clamp(10px, 1vw, 18px);
+  font-size: clamp(11px, 1.08vw, 19px);
   line-height: 1.05;
 }
 
 .assurer-widget small {
   color: #EF8FA3;
-  font-size: clamp(8px, 0.7vw, 12px);
+  font-size: clamp(8px, 0.74vw, 13px);
   line-height: 1.15;
 }
 
@@ -94,7 +100,7 @@
   left: 32.8776%;
   top: 16.7824%;
   width: 33.8542%;
-  height: 21.412%;
+  height: 19.8%;
 }
 
 .assurer-battle-cry-tile {
@@ -115,14 +121,14 @@
   left: 2.9297%;
   top: 27.7778%;
   width: 21.4844%;
-  height: 34.7222%;
+  height: 31.5%;
 }
 
 .assurer-body-sleep-water {
   left: 2.9297%;
-  top: 65.9722%;
+  top: 64.6%;
   width: 14.974%;
-  height: 29.5139%;
+  height: 27.8%;
 }
 
 .assurer-word-panel {
@@ -133,50 +139,50 @@
 }
 
 .assurer-daily-orbit {
-  left: 38.737%;
-  top: 39.9306%;
-  width: 22.4609%;
-  height: 10.4167%;
+  left: 39%;
+  top: 36.8%;
+  width: 22%;
+  height: 8.8%;
 }
 
 .assurer-media-strip {
   left: 73.8932%;
-  top: 4.0509%;
+  top: 4.2%;
   width: 22.7865%;
-  height: 15.0463%;
+  height: 13.5%;
 }
 
 .assurer-week-strip {
   left: 72.2656%;
-  top: 21.412%;
+  top: 20.2%;
   width: 24.4141%;
-  height: 11.5741%;
+  height: 9.8%;
 }
 
 .assurer-metric-strip {
   left: 72.2656%;
-  top: 35.3009%;
+  top: 32%;
   width: 24.4141%;
-  height: 11.5741%;
+  height: 9.8%;
 }
 
 .assurer-day-timeline {
   left: 72.2656%;
-  top: 49.7685%;
+  top: 44.4%;
   width: 24.4141%;
-  height: 28.3565%;
+  height: 27.5%;
 }
 
 .assurer-moment-flip-cards {
   left: 72.2656%;
-  top: 80.4398%;
+  top: 76.7%;
   width: 24.4141%;
-  height: 16.7824%;
+  height: 18.3%;
 }
 
 .assurer-assured-thoughts {
-  left: 55.9896%;
-  top: 75.2315%;
-  width: 14.974%;
-  height: 20.2546%;
+  left: 57.8%;
+  top: 76.8%;
+  width: 14.2%;
+  height: 18.2%;
 }
