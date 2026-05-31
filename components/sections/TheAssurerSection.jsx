@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
+import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
+import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
 import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
   DEFAULT_WEATHER_CITY,
@@ -182,6 +184,7 @@ export default function TheAssurerSection() {
   const today = useMemo(() => new Date(), []);
   const date = useMemo(() => formatAssurerDate(today), [today]);
   const storageDate = useMemo(() => formatAssurerStorageDate(today), [today]);
+  const daEaterStorageDate = useMemo(() => getDaEaterStorageDate(today), [today]);
   const defaultDailyWord = useMemo(() => getDailyWordDefault(storageDate), [storageDate]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
@@ -200,6 +203,7 @@ export default function TheAssurerSection() {
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
   const [assuredThoughts, setAssuredThoughts] = useState('');
   const [storageLoaded, setStorageLoaded] = useState(false);
+  const [macroMirror, setMacroMirror] = useState(ASSURER_MACRO_FALLBACK_MIRROR);
   const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
 
   useEffect(() => {
@@ -239,8 +243,9 @@ export default function TheAssurerSection() {
   }, [storageDate, storageLoaded, titleOfDay]);
 
   useEffect(() => {
-    setDaEaterMeals(readDaEaterMealLogForDate(storageDate));
-  }, [storageDate]);
+    setMacroMirror(readDaEaterMacroMirror(daEaterStorageDate));
+    setDaEaterMeals(readDaEaterMealLogForDate(daEaterStorageDate));
+  }, [daEaterStorageDate]);
 
   useEffect(() => {
     if (!storageLoaded) {
