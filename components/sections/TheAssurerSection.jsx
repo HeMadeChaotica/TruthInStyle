@@ -2,17 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
-import {
-  DEFAULT_WEATHER_CITY,
-  WEATHER_CITY_COORDINATES,
-  WEATHER_CITY_OPTIONS,
-  fetchAssurerWeather,
-} from '../../lib/theAssurer/weatherOptions';
+import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
 import '../../styles/sections/the-assurer.css';
 
 const STATIC_REVIEW_WIDGETS = [
   { number: '02', className: 'assurer-macro-bars', label: 'MACRO BARS' },
-  { number: '03', className: 'assurer-battle-cry-tile', label: 'BATTLE CRY' },
   { number: '05', className: 'assurer-meal-log', label: 'MEAL LOG' },
   { number: '06', className: 'assurer-body-sleep-water', label: 'BODY / SLEEP / WATER' },
   { number: '09', className: 'assurer-media-strip', label: 'MEDIA STRIP' },
@@ -127,6 +121,7 @@ export default function TheAssurerSection() {
   const date = useMemo(() => formatAssurerDate(today), [today]);
   const storageDate = useMemo(() => formatAssurerStorageDate(today), [today]);
   const defaultDailyWord = useMemo(() => getDailyWordDefault(storageDate), [storageDate]);
+  const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
   const [titleOfDay, setTitleOfDay] = useState('');
   const [mood, setMood] = useState('');
@@ -322,6 +317,14 @@ export default function TheAssurerSection() {
               </div>
             </article>
           ))}
+
+          <article className="assurer-widget assurer-battle-cry-tile" data-slot="03">
+            <div className="assurer-widget-content assurer-battle-cry-content">
+              <strong>BATTLE CRY</strong>
+              <p className="assurer-battle-cry-quote">{dailyBattleCry.text}</p>
+              <small className="assurer-battle-cry-attribution">{dailyBattleCry.attribution}</small>
+            </div>
+          </article>
 
           <article className="assurer-widget assurer-weather-tile" data-slot="04">
             <div className="assurer-widget-content assurer-weather-content">
