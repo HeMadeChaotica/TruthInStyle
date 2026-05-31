@@ -448,3 +448,38 @@
   overflow-y: auto;
   resize: none;
 }
+
+.assurer-battle-cry-content {
+  justify-content: flex-start;
+  gap: clamp(3px, 0.34vw, 6px);
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(0.36rem, 0.58vw, 0.66rem);
+}
+
+.assurer-battle-cry-content strong {
+  flex: 0 0 auto;
+  font-size: clamp(9px, 0.62vw, 13px);
+}
+
+.assurer-battle-cry-quote {
+  min-width: 0;
+  margin: 0;
+  color: #F4B2BD;
+  font-size: clamp(7px, 0.46vw, 10px);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: 0.045em;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.assurer-battle-cry-attribution {
+  display: block;
+  color: rgba(255, 236, 206, 0.88);
+  font-size: clamp(6px, 0.36vw, 8px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+}
