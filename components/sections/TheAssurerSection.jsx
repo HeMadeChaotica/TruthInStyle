@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
+import {
+  DEFAULT_WEATHER_CITY,
+  WEATHER_CITY_COORDINATES,
+  WEATHER_CITY_OPTIONS,
+  fetchAssurerWeather,
+} from '../../lib/theAssurer/weatherOptions';
 import '../../styles/sections/the-assurer.css';
 
 const STATIC_REVIEW_WIDGETS = [
@@ -14,19 +20,6 @@ const STATIC_REVIEW_WIDGETS = [
   { number: '11', className: 'assurer-metric-strip', label: 'METRICS' },
   { number: '12', className: 'assurer-day-timeline', label: 'DAY TIMELINE' },
   { number: '13', className: 'assurer-moment-flip-cards', label: 'MOMENT FLIP CARDS' },
-];
-
-const WEATHER_CITY_OPTIONS = [
-  'HOUSTON, TX',
-  'LOS ANGELES, CA',
-  'DALLAS, TX',
-  'AUSTIN, TX',
-  'SAN ANTONIO, TX',
-  'NEW ORLEANS, LA',
-  'ATLANTA, GA',
-  'MIAMI, FL',
-  'NEW YORK, NY',
-  'CHICAGO, IL',
 ];
 
 const DAILY_WORD_BANK = [
@@ -142,9 +135,11 @@ export default function TheAssurerSection() {
   const [lobitoCheckIn, setLobitoCheckIn] = useState('');
   const [location, setLocation] = useState('');
   const [headHummer, setHeadHummer] = useState('');
-  const [weatherCity, setWeatherCity] = useState(WEATHER_CITY_OPTIONS[0]);
+  const [weatherCity, setWeatherCity] = useState(DEFAULT_WEATHER_CITY);
+  const [weatherDisplayLabel, setWeatherDisplayLabel] = useState(DEFAULT_WEATHER_CITY);
+  const [weatherStatus, setWeatherStatus] = useState('');
+  const [weatherResult, setWeatherResult] = useState(null);
   const [gpsSupported, setGpsSupported] = useState(false);
-  const [gpsStatus, setGpsStatus] = useState('');
   const [wordOfDay, setWordOfDay] = useState(defaultDailyWord.word);
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
   const [assuredThoughts, setAssuredThoughts] = useState('');
@@ -205,25 +200,63 @@ export default function TheAssurerSection() {
     setGpsSupported(typeof window !== 'undefined' && 'geolocation' in window.navigator);
   }, []);
 
+  const loadWeather = async ({ displayLabel, coordinates, status = '' }) => {
+    setWeatherDisplayLabel(displayLabel);
+    setWeatherStatus(status);
+    setWeatherResult(null);
+
+    try {
+      const nextWeatherResult = await fetchAssurerWeather(coordinates);
+      setWeatherResult(nextWeatherResult);
+    } catch {
+      setWeatherResult(null);
+    }
+  };
+
+  useEffect(() => {
+    void loadWeather({
+      displayLabel: DEFAULT_WEATHER_CITY,
+      coordinates: WEATHER_CITY_COORDINATES[DEFAULT_WEATHER_CITY],
+    });
+  }, []);
+
   const useGpsWeatherLocation = () => {
+    const fallbackToHouston = () => {
+      setWeatherCity(DEFAULT_WEATHER_CITY);
+      void loadWeather({
+        displayLabel: DEFAULT_WEATHER_CITY,
+        coordinates: WEATHER_CITY_COORDINATES[DEFAULT_WEATHER_CITY],
+        status: `USING ${DEFAULT_WEATHER_CITY}`,
+      });
+    };
+
     if (!gpsSupported) {
+      fallbackToHouston();
       return;
     }
 
-    setGpsStatus('GPS REQUESTING');
+    setWeatherDisplayLabel('GPS LOCATION');
+    setWeatherStatus('');
+    setWeatherResult(null);
     window.navigator.geolocation.getCurrentPosition(
-      () => {
-        setGpsStatus('GPS LOCKED — WEATHER PENDING');
+      (position) => {
+        void loadWeather({
+          displayLabel: 'GPS LOCATION',
+          coordinates: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          },
+        });
       },
-      () => {
-        setGpsStatus('GPS DENIED — WEATHER PENDING');
-      },
+      fallbackToHouston,
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
     );
   };
 
   // TODO: Persist assurer_assessment and assured_thoughts through the project storage layer when the Assurer daily store is finalized.
-  const weatherSummary = `${weatherCity} WEATHER PENDING`;
+  const weatherSummary = weatherResult
+    ? `${weatherDisplayLabel} ${weatherResult.condition}`
+    : `${weatherDisplayLabel} WEATHER PENDING`;
   const assurerNativePayload = useMemo(() => ({
     titleOfDay,
     date,
@@ -234,7 +267,7 @@ export default function TheAssurerSection() {
     location,
     weatherCity,
     weatherSummary,
-    gpsStatus,
+    weatherStatus,
     headHummer,
     wordOfDay,
     wordDefinition,
@@ -249,7 +282,7 @@ export default function TheAssurerSection() {
     location,
     weatherCity,
     weatherSummary,
-    gpsStatus,
+    weatherStatus,
     headHummer,
     wordOfDay,
     wordDefinition,
@@ -298,8 +331,12 @@ export default function TheAssurerSection() {
                 className="assurer-control assurer-select assurer-weather-select"
                 value={weatherCity}
                 onChange={(event) => {
-                  setWeatherCity(event.target.value);
-                  setGpsStatus('');
+                  const nextCity = event.target.value;
+                  setWeatherCity(nextCity);
+                  void loadWeather({
+                    displayLabel: nextCity,
+                    coordinates: WEATHER_CITY_COORDINATES[nextCity],
+                  });
                 }}
                 aria-label="WEATHER CITY"
               >
@@ -307,14 +344,23 @@ export default function TheAssurerSection() {
                   <option key={city} value={city}>{city}</option>
                 ))}
               </select>
-              {gpsSupported ? (
-                <button className="assurer-gps-button" type="button" onClick={useGpsWeatherLocation}>
-                  USE GPS
-                </button>
-              ) : null}
+              <button className="assurer-gps-button" type="button" onClick={useGpsWeatherLocation}>
+                USE GPS
+              </button>
               <div className="assurer-weather-display" aria-live="polite">
-                <small>{weatherSummary}</small>
-                <small>{gpsStatus || 'WEATHER PENDING'}</small>
+                <small>{weatherDisplayLabel}</small>
+                {weatherStatus ? <small>{weatherStatus}</small> : null}
+                {weatherResult ? (
+                  <>
+                    <small>TEMP: {weatherResult.temperature}°</small>
+                    <small>FEELS: {weatherResult.feelsLike}°</small>
+                    <small>HUMIDITY: {weatherResult.humidity}%</small>
+                    <small>WIND: {weatherResult.wind} MPH</small>
+                    <small>CONDITION: {weatherResult.condition}</small>
+                  </>
+                ) : (
+                  <small>WEATHER PENDING</small>
+                )}
               </div>
             </div>
           </article>
