@@ -120,8 +120,8 @@
   place-items: center;
   border: 1px solid rgba(239, 143, 163, 0.62);
   border-radius: 999px;
-  background: #EF8FA3;
-  color: #120406;
+  background: rgba(239, 143, 163, 0.18);
+  color: #F4B2BD;
   font-size: 16px;
   font-weight: 700;
   line-height: 1;
@@ -237,4 +237,176 @@
   top: 73.8%;
   width: 24.0%;
   height: 20.4%;
+}
+
+.assurer-title-content,
+.assurer-daily-content,
+.assurer-weather-content,
+.assurer-word-content,
+.assurer-thoughts-content {
+  justify-content: flex-start;
+}
+
+.assurer-title-content {
+  flex-direction: row;
+  align-items: center;
+  gap: clamp(6px, 0.7vw, 12px);
+}
+
+.assurer-title-fields {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.28vw, 5px);
+}
+
+.assurer-title-fields time {
+  color: #EF8FA3;
+  font-size: clamp(9px, 0.72vw, 14px);
+  letter-spacing: 0.08em;
+}
+
+.assurer-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1px, 0.18vw, 3px);
+  color: #F4B2BD;
+  font-size: clamp(8px, 0.48vw, 11px);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.assurer-field span {
+  color: #EF8FA3;
+}
+
+.assurer-control {
+  width: 100%;
+  min-width: 0;
+  min-height: clamp(17px, 1.25vw, 24px);
+  border: 1px solid rgba(244, 178, 189, 0.54);
+  border-radius: 9px;
+  background: rgba(12, 4, 5, 0.44);
+  color: #F4B2BD;
+  box-shadow: inset 0 0 10px rgba(239, 143, 163, 0.08);
+  caret-color: #EF8FA3;
+  font: inherit;
+  font-size: clamp(9px, 0.56vw, 12px);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  padding: clamp(2px, 0.28vw, 5px) clamp(5px, 0.45vw, 8px);
+  text-transform: uppercase;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-text-fill-color: #F4B2BD;
+}
+
+.assurer-control::placeholder {
+  color: #EF8FA3;
+  opacity: 0.78;
+  -webkit-text-fill-color: #EF8FA3;
+}
+
+.assurer-control:focus {
+  border-color: #EF8FA3;
+  box-shadow:
+    0 0 0 1px rgba(239, 143, 163, 0.28),
+    0 0 12px rgba(239, 143, 163, 0.22),
+    inset 0 0 10px rgba(239, 143, 163, 0.10);
+}
+
+.assurer-control:disabled {
+  opacity: 0.58;
+}
+
+.assurer-select {
+  padding-right: clamp(12px, 1.1vw, 18px);
+  background-image: linear-gradient(45deg, transparent 50%, #EF8FA3 50%), linear-gradient(135deg, #EF8FA3 50%, transparent 50%);
+  background-position: calc(100% - 10px) 50%, calc(100% - 6px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.assurer-select option {
+  background: #120406;
+  color: #F4B2BD;
+  text-transform: uppercase;
+}
+
+.assurer-title-input {
+  min-height: clamp(21px, 1.55vw, 30px);
+  font-size: clamp(11px, 0.82vw, 16px);
+  font-weight: 700;
+}
+
+.assurer-daily-content {
+  gap: clamp(2px, 0.22vw, 4px);
+  padding: clamp(0.34rem, 0.62vw, 0.64rem);
+}
+
+.assurer-daily-content .assurer-widget-number {
+  min-width: clamp(15px, 1.15vw, 22px);
+  min-height: clamp(15px, 1.15vw, 22px);
+  font-size: clamp(8px, 0.58vw, 11px);
+}
+
+.assurer-daily-content .assurer-field {
+  font-size: clamp(7px, 0.42vw, 9px);
+}
+
+.assurer-daily-content .assurer-control {
+  min-height: clamp(15px, 1.03vw, 20px);
+  border-radius: 7px;
+  font-size: clamp(7px, 0.45vw, 10px);
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.assurer-weather-content {
+  align-items: flex-start;
+  gap: clamp(3px, 0.38vw, 7px);
+}
+
+.assurer-weather-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(24px, 2.3vw, 42px);
+  height: clamp(24px, 2.3vw, 42px);
+  border: 1px solid rgba(239, 143, 163, 0.52);
+  border-radius: 999px;
+  color: #F4B2BD;
+  background: rgba(12, 4, 5, 0.28);
+  font-size: clamp(14px, 1.35vw, 24px);
+}
+
+.assurer-word-content {
+  gap: clamp(4px, 0.45vw, 8px);
+}
+
+.assurer-definition-input {
+  min-height: clamp(48px, 7vw, 102px);
+  resize: none;
+}
+
+.assurer-thoughts-content {
+  gap: clamp(4px, 0.42vw, 8px);
+}
+
+.assurer-lined-writing {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+  border-radius: 12px;
+  line-height: 1.6;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(12, 4, 5, 0.40) 0,
+      rgba(12, 4, 5, 0.40) 21px,
+      rgba(239, 143, 163, 0.32) 22px
+    );
 }
