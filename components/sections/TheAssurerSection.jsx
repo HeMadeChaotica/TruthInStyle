@@ -126,6 +126,32 @@ function AssurerField({ id, label, children }) {
   );
 }
 
+
+function AssurerMacroBars({ rows, expanded = false, isFallback = false }) {
+  return (
+    <div className={`assurer-macro-list ${expanded ? 'assurer-macro-list-expanded' : ''}`} aria-label="READ-ONLY DA.EATER MACRO BARS">
+      {expanded ? <small className="assurer-macro-source">READ-ONLY FROM {isFallback ? 'DA.EATER FALLBACK' : 'DA.EATER'}</small> : null}
+      {rows.map((row) => {
+        const fillWidth = `${Math.min(Math.max(row.percent, 0), 100)}%`;
+        const label = expanded ? row.label : row.compactLabel;
+
+        return (
+          <div className={`assurer-macro-row assurer-macro-row-${row.key}`} key={row.key}>
+            <span className="assurer-macro-icon" aria-hidden="true">{row.glyph}</span>
+            <span className="assurer-macro-label">{label}</span>
+            <span className="assurer-macro-target">{row.targetDisplay}</span>
+            <span className="assurer-macro-track" aria-hidden="true">
+              <span className="assurer-macro-fill" style={{ width: fillWidth }} />
+            </span>
+            <span className="assurer-macro-percent">{row.percent.toFixed(0)}%</span>
+            <span className="assurer-macro-left">{row.leftDisplay}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function AssurerSelect({ id, value, onChange, options }) {
   const safeOptions = Array.isArray(options) ? options : [];
 
@@ -308,6 +334,10 @@ export default function TheAssurerSection() {
 
   const renderExpandedBody = () => {
     switch (expandedWidget) {
+      case 'macroBars':
+        return (
+          <AssurerMacroBars rows={macroMirror.rows} expanded isFallback={macroMirror.isFallback} />
+        );
       case 'battleCry':
         return (
           <div className="assurer-expanded-battle-cry">
@@ -470,6 +500,21 @@ export default function TheAssurerSection() {
                   aria-label="TITLE OF THE DAY"
                 />
               </div>
+            </div>
+          </article>
+
+          <article className="assurer-widget assurer-macro-bars" data-slot="02">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('macroBars')}
+              aria-label="EXPAND MACRO BARS"
+            >
+              ⤢
+            </button>
+            <div className="assurer-widget-content assurer-macro-content">
+              <strong>MACRO BARS</strong>
+              <AssurerMacroBars rows={macroMirror.rows} isFallback={macroMirror.isFallback} />
             </div>
           </article>
 
