@@ -135,9 +135,9 @@ function macroFillWidth(percent) {
 
 function renderMacroBarsCompact(rows) {
   return (
-    <div className="assurer-macro-list assurer-macro-list-compact" aria-label="READ-ONLY DA.EATER MACRO BARS">
+    <div className="assurer-macro-compact-list" aria-label="READ-ONLY DA.EATER MACRO BARS COMPACT">
       {rows.map((row) => (
-        <div className={`assurer-macro-row assurer-macro-row-${row.key}`} key={row.key}>
+        <div className={`assurer-macro-compact-row assurer-macro-row-${row.key}`} key={row.key}>
           <span className="assurer-macro-label">{row.compactLabel}</span>
           <span className="assurer-macro-track" aria-hidden="true">
             <span className="assurer-macro-fill" style={{ width: macroFillWidth(row.percent) }} />
@@ -151,18 +151,23 @@ function renderMacroBarsCompact(rows) {
 
 function renderMacroBarsExpanded(rows, isFallback) {
   return (
-    <div className="assurer-macro-list assurer-macro-list-expanded" aria-label="READ-ONLY DA.EATER MACRO BARS">
+    <div className="assurer-macro-expanded-list" aria-label="READ-ONLY DA.EATER MACRO BARS EXPANDED">
       <small className="assurer-macro-source">READ-ONLY FROM {isFallback ? 'DA.EATER FALLBACK' : 'DA.EATER'}</small>
       {rows.map((row) => (
-        <div className={`assurer-macro-row assurer-macro-row-${row.key}`} key={row.key}>
-          <span className="assurer-macro-icon" aria-hidden="true">{row.glyph}</span>
-          <span className="assurer-macro-label">{row.label}</span>
-          <span className="assurer-macro-target">TARGET {row.targetDisplay}</span>
+        <div className={`assurer-macro-expanded-row assurer-macro-row-${row.key}`} key={row.key}>
+          <div className="assurer-macro-expanded-head">
+            <span className="assurer-macro-icon" aria-hidden="true">{row.glyph}</span>
+            <span className="assurer-macro-label">{row.label}</span>
+            <span className="assurer-macro-percent">{row.percent.toFixed(0)}%</span>
+          </div>
+          <div className="assurer-macro-expanded-stats">
+            <span className="assurer-macro-value assurer-macro-target">TARGET {row.targetDisplay}</span>
+            <span className="assurer-macro-value assurer-macro-current">CURRENT {row.currentDisplay}</span>
+            <span className="assurer-macro-value assurer-macro-left">LEFT {row.leftDisplay.replace(' LEFT', '')}</span>
+          </div>
           <span className="assurer-macro-track" aria-hidden="true">
             <span className="assurer-macro-fill" style={{ width: macroFillWidth(row.percent) }} />
           </span>
-          <span className="assurer-macro-percent">{row.percent.toFixed(0)}%</span>
-          <span className="assurer-macro-left">{row.currentDisplay} NOW / {row.leftDisplay}</span>
         </div>
       ))}
     </div>
