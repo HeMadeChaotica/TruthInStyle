@@ -75,6 +75,12 @@ const DAILY_WORD_BANK = [
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
 
+const MOMENT_BACKS = {
+  WOW: '/art/REMEMBER-ME/moment-backs/wow-moment-back.png',
+  WTF: '/art/REMEMBER-ME/moment-backs/wtf-moment-back.png',
+  'PLOT TWIST': '/art/REMEMBER-ME/moment-backs/plot-twist-moment-back.png',
+};
+
 function formatAssurerDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -215,7 +221,11 @@ function AssurerMomentCards({ cards, expanded = false }) {
         const previewText = hasMoment && card.moment.text ? card.moment.text : 'NO MOMENT RECORDED YET';
 
         return (
-          <article key={card.type} className={`assurer-moment-card ${expanded ? 'assurer-moment-card-expanded' : ''}`.trim()}>
+          <article
+            key={card.type}
+            className={`assurer-moment-card ${expanded ? 'assurer-moment-card-expanded' : ''}`.trim()}
+            style={{ '--assurer-moment-back': `url(${card.backAsset})` }}
+          >
             <AssurerMomentMedia moment={card.moment} expanded={expanded} />
             <strong className="assurer-moment-type">{card.type}</strong>
             {hasMoment ? <small className="assurer-moment-time">{card.displayDateTime}</small> : null}
@@ -385,6 +395,7 @@ export default function TheAssurerSection() {
       type: momentType.label,
       moment,
       displayDateTime: formatMomentDateTime(moment, date),
+      backAsset: MOMENT_BACKS[momentType.label],
     };
   });
 
