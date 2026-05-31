@@ -798,212 +798,155 @@
   }
 }
 
-.assurer-macro-content {
+.assurer-meal-content {
   justify-content: flex-start;
-  gap: clamp(3px, 0.34vw, 6px);
-  padding: clamp(0.38rem, 0.66vw, 0.72rem);
+  gap: clamp(4px, 0.44vw, 8px);
   min-height: 0;
-}
-
-.assurer-macro-content > strong {
-  flex: 0 0 auto;
-  color: #F4B2BD;
-  font-size: clamp(9px, 0.62vw, 13px);
-}
-
-.assurer-macro-list {
-  width: 100%;
-  min-height: 0;
-  display: grid;
-  gap: clamp(2px, 0.23vw, 4px);
-}
-
-.assurer-macro-source {
-  color: #EF8FA3;
-  font-size: clamp(9px, 0.6vw, 12px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.assurer-macro-row {
-  position: relative;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: clamp(14px, 1.08vw, 20px) minmax(42px, 0.72fr) minmax(42px, 0.62fr) minmax(74px, 1.7fr) minmax(30px, 0.42fr) minmax(58px, 0.78fr);
-  align-items: center;
-  gap: clamp(3px, 0.36vw, 8px);
-  padding: clamp(2px, 0.2vw, 4px) clamp(3px, 0.34vw, 7px);
-  border: 1px solid rgba(244, 178, 189, 0.22);
-  border-radius: 11px;
-  background:
-    radial-gradient(90% 140% at 12% 0%, rgba(246, 198, 116, 0.16), rgba(246, 198, 116, 0) 48%),
-    linear-gradient(135deg, rgba(12, 4, 5, 0.48), rgba(20, 10, 8, 0.24));
-  box-shadow:
-    0 0 0 1px rgba(239, 143, 163, 0.08) inset,
-    0 0 14px rgba(239, 143, 163, 0.08);
-  color: #F4B2BD;
   overflow: hidden;
+  padding: clamp(0.42rem, 0.62vw, 0.72rem);
 }
 
-.assurer-macro-row::after {
-  content: '';
-  position: absolute;
-  inset: -2px -6px;
-  border-radius: inherit;
-  background: linear-gradient(
-    106deg,
-    rgba(244, 178, 189, 0) 4%,
-    rgba(246, 198, 116, 0.24) 18%,
-    rgba(239, 143, 163, 0.30) 31%,
-    rgba(244, 178, 189, 0.28) 48%,
-    rgba(246, 198, 116, 0.22) 66%,
-    rgba(244, 178, 189, 0) 82%
-  );
-  background-size: 180% 100%;
-  transform: translateX(-142%);
-  animation: assurerMacroShimmer 3.6s cubic-bezier(.34, .08, .23, .99) infinite;
-  pointer-events: none;
-  opacity: 0.52;
+.assurer-meal-content > strong {
+  flex: 0 0 auto;
+  padding-right: clamp(18px, 1.6vw, 30px);
+  font-size: clamp(10px, 0.68vw, 14px);
 }
 
-.assurer-macro-icon,
-.assurer-macro-label,
-.assurer-macro-target,
-.assurer-macro-percent,
-.assurer-macro-left {
-  position: relative;
-  z-index: 1;
+.assurer-meal-list {
+  min-height: 0;
+  display: grid;
+  gap: clamp(4px, 0.42vw, 8px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.assurer-meal-row {
   min-width: 0;
-  color: #F4B2BD;
-  font-size: clamp(6px, 0.48vw, 10px);
+  display: grid;
+  grid-template-columns: minmax(35px, 0.52fr) clamp(20px, 1.9vw, 34px) minmax(0, 1fr) auto;
+  gap: clamp(4px, 0.46vw, 8px);
+  align-items: center;
+  border: 1px solid rgba(239, 143, 163, 0.38);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(239, 143, 163, 0.20), rgba(239, 143, 163, 0) 48%),
+    linear-gradient(145deg, rgba(20, 8, 9, 0.58), rgba(12, 4, 5, 0.30));
+  box-shadow:
+    0 0 0 1px rgba(244, 178, 189, 0.08) inset,
+    0 0 12px rgba(239, 143, 163, 0.12);
+  padding: clamp(4px, 0.45vw, 8px);
+}
+
+.assurer-meal-time {
+  color: #EF8FA3;
+  font-size: clamp(6px, 0.43vw, 9px);
   font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.05em;
-  text-shadow: 0 0 12px rgba(239, 143, 163, 0.48);
+  line-height: 1.05;
+}
+
+.assurer-meal-thumb {
+  width: clamp(20px, 1.9vw, 34px);
+  height: clamp(20px, 1.9vw, 34px);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(244, 178, 189, 0.52);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(239, 143, 163, 0.26), rgba(12, 4, 5, 0.44));
+  color: #F4B2BD;
+  font-size: clamp(9px, 0.7vw, 13px);
+  font-weight: 900;
+  box-shadow: 0 0 12px rgba(239, 143, 163, 0.20);
+}
+
+.assurer-meal-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.assurer-meal-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.assurer-meal-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #F4B2BD;
+  font-size: clamp(7px, 0.5vw, 10px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.assurer-macro-icon {
+.assurer-meal-macros {
+  overflow: hidden;
+  color: #EF8FA3;
+  font-size: clamp(6px, 0.42vw, 9px);
+  font-weight: 800;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assurer-meal-status {
+  color: #F4B2BD;
+  font-size: clamp(9px, 0.74vw, 14px);
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(239, 143, 163, 0.58);
+}
+
+.assurer-meal-empty {
+  margin: 0;
+  border: 1px dashed rgba(239, 143, 163, 0.46);
+  border-radius: 12px;
+  background: rgba(12, 4, 5, 0.30);
+  color: #EF8FA3;
+  font-size: clamp(8px, 0.52vw, 11px);
+  font-weight: 900;
+  line-height: 1.2;
+  padding: clamp(8px, 0.72vw, 13px);
+  text-align: center;
+}
+
+.assurer-expanded-meal-log {
+  min-height: 0;
   display: grid;
-  place-items: center;
-  width: clamp(13px, 1.0vw, 19px);
-  height: clamp(13px, 1.0vw, 19px);
-  border: 1px solid rgba(246, 198, 116, 0.42);
-  border-radius: 999px;
-  background: rgba(12, 4, 5, 0.54);
+  gap: clamp(0.75rem, 1vw, 1.2rem);
+}
+
+.assurer-meal-readonly {
+  margin: 0;
   color: #EF8FA3;
-  box-shadow: 0 0 12px rgba(246, 198, 116, 0.16), inset 0 0 8px rgba(239, 143, 163, 0.14);
+  font-size: clamp(12px, 0.9vw, 18px);
+  font-weight: 900;
 }
 
-.assurer-macro-target,
-.assurer-macro-percent,
-.assurer-macro-left {
-  color: #EF8FA3;
+.assurer-meal-list-expanded {
+  max-height: clamp(320px, 46vw, 620px);
+  gap: clamp(0.6rem, 0.85vw, 1rem);
 }
 
-.assurer-macro-track {
-  position: relative;
-  z-index: 1;
-  height: clamp(8px, 0.74vw, 14px);
-  overflow: hidden;
-  border: 1px solid rgba(246, 198, 116, 0.30);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(20, 10, 8, 0.88), rgba(12, 4, 5, 0.82));
-  box-shadow: 0 0 0 1px rgba(239, 143, 163, 0.14) inset;
-}
-
-.assurer-macro-fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #F6C674, #EF8FA3, #F4B2BD, #F6C674);
-  box-shadow:
-    0 0 18px rgba(246, 198, 116, 0.78),
-    0 0 32px rgba(239, 143, 163, 0.58),
-    0 0 48px rgba(244, 178, 189, 0.34);
-  position: relative;
-  overflow: hidden;
-}
-
-.assurer-macro-fill::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    110deg,
-    rgba(244, 178, 189, 0) 0%,
-    rgba(246, 198, 116, 0.46) 20%,
-    rgba(239, 143, 163, 0.46) 38%,
-    rgba(244, 178, 189, 0.42) 58%,
-    rgba(246, 198, 116, 0.40) 74%,
-    rgba(244, 178, 189, 0) 88%
-  );
-  transform: translateX(-140%);
-  animation: assurerMacroShimmer 2.75s ease-in-out infinite;
-  opacity: 0.78;
-}
-
-.assurer-macro-row-protein .assurer-macro-fill {
-  background: linear-gradient(90deg, #F6C674, #F4B2BD, #EF8FA3);
-}
-
-.assurer-macro-row-carbs .assurer-macro-fill {
-  background: linear-gradient(90deg, #EF8FA3, #F6C674, #F4B2BD);
-}
-
-.assurer-macro-row-fats .assurer-macro-fill {
-  background: linear-gradient(90deg, #F6C674, #EF8FA3, #F6C674);
-}
-
-.assurer-macro-row-calories .assurer-macro-fill {
-  background: linear-gradient(90deg, #F6C674, #F4B2BD, #EF8FA3, #F6C674);
-}
-
-.assurer-macro-row-waterOz .assurer-macro-fill {
-  background: linear-gradient(90deg, #F4B2BD, #EF8FA3, #F6C674);
-}
-
-.assurer-macro-list-expanded {
-  gap: clamp(8px, 0.82vw, 14px);
-  padding-top: clamp(4px, 0.6vw, 10px);
-}
-
-.assurer-macro-list-expanded .assurer-macro-row {
-  grid-template-columns: clamp(26px, 2.0vw, 38px) minmax(110px, 0.7fr) minmax(90px, 0.52fr) minmax(220px, 1.55fr) minmax(54px, 0.32fr) minmax(120px, 0.58fr);
-  min-height: clamp(44px, 4.4vw, 70px);
-  padding: clamp(8px, 0.78vw, 14px) clamp(10px, 1.05vw, 18px);
+.assurer-meal-list-expanded .assurer-meal-row {
+  grid-template-columns: minmax(72px, 0.28fr) clamp(44px, 4.5vw, 72px) minmax(0, 1fr) auto;
   border-radius: 18px;
+  padding: clamp(0.75rem, 1vw, 1.15rem);
 }
 
-.assurer-macro-list-expanded .assurer-macro-icon {
-  width: clamp(24px, 1.9vw, 36px);
-  height: clamp(24px, 1.9vw, 36px);
-  font-size: clamp(11px, 0.9vw, 16px);
+.assurer-meal-list-expanded .assurer-meal-time,
+.assurer-meal-list-expanded .assurer-meal-name,
+.assurer-meal-list-expanded .assurer-meal-macros,
+.assurer-meal-list-expanded .assurer-meal-status {
+  font-size: clamp(14px, 1.05vw, 20px);
 }
 
-.assurer-macro-list-expanded .assurer-macro-label,
-.assurer-macro-list-expanded .assurer-macro-target,
-.assurer-macro-list-expanded .assurer-macro-percent,
-.assurer-macro-list-expanded .assurer-macro-left {
-  font-size: clamp(13px, 1.15vw, 22px);
-}
-
-.assurer-macro-list-expanded .assurer-macro-track {
-  height: clamp(16px, 1.28vw, 24px);
-}
-
-@keyframes assurerMacroShimmer {
-  0%, 14% {
-    transform: translateX(-145%);
-    opacity: 0;
-  }
-
-  34%, 58% {
-    opacity: 0.75;
-  }
-
-  100% {
-    transform: translateX(165%);
-    opacity: 0;
-  }
+.assurer-meal-list-expanded .assurer-meal-thumb {
+  width: clamp(44px, 4.5vw, 72px);
+  height: clamp(44px, 4.5vw, 72px);
+  border-radius: 16px;
+  font-size: clamp(18px, 1.4vw, 28px);
 }
