@@ -19,7 +19,6 @@ const STATIC_REVIEW_WIDGETS = [
   { number: '10', className: 'assurer-week-strip', label: 'WEEK STRIP' },
   { number: '11', className: 'assurer-metric-strip', label: 'METRICS' },
   { number: '12', className: 'assurer-day-timeline', label: 'DAY TIMELINE' },
-  { number: '13', className: 'assurer-moment-flip-cards', label: 'MOMENT FLIP CARDS' },
 ];
 
 const DAILY_WORD_BANK = [
@@ -138,9 +137,8 @@ export default function TheAssurerSection() {
   const [headHummer, setHeadHummer] = useState('');
   const [weatherCity, setWeatherCity] = useState(DEFAULT_WEATHER_CITY);
   const [weatherDisplayLabel, setWeatherDisplayLabel] = useState(DEFAULT_WEATHER_CITY);
-  const [weatherStatus, setWeatherStatus] = useState('');
   const [weatherResult, setWeatherResult] = useState(null);
-  const [gpsSupported, setGpsSupported] = useState(false);
+  const [expandedWidget, setExpandedWidget] = useState(null);
   const [wordOfDay, setWordOfDay] = useState(defaultDailyWord.word);
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
   const [assuredThoughts, setAssuredThoughts] = useState('');
@@ -197,13 +195,8 @@ export default function TheAssurerSection() {
     }
   }, [storageDate, storageLoaded, wordDefinition, wordOfDay]);
 
-  useEffect(() => {
-    setGpsSupported(typeof window !== 'undefined' && 'geolocation' in window.navigator);
-  }, []);
-
-  const loadWeather = async ({ displayLabel, coordinates, status = '' }) => {
+  const loadWeather = async ({ displayLabel, coordinates }) => {
     setWeatherDisplayLabel(displayLabel);
-    setWeatherStatus(status);
     setWeatherResult(null);
 
     try {
@@ -221,37 +214,159 @@ export default function TheAssurerSection() {
     });
   }, []);
 
-  const useGpsWeatherLocation = () => {
-    const fallbackToHouston = () => {
-      setWeatherCity(DEFAULT_WEATHER_CITY);
-      void loadWeather({
-        displayLabel: DEFAULT_WEATHER_CITY,
-        coordinates: WEATHER_CITY_COORDINATES[DEFAULT_WEATHER_CITY],
-        status: `USING ${DEFAULT_WEATHER_CITY}`,
-      });
-    };
 
-    if (!gpsSupported) {
-      fallbackToHouston();
-      return;
+  useEffect(() => {
+    if (!expandedWidget) {
+      return undefined;
     }
 
-    setWeatherDisplayLabel('GPS LOCATION');
-    setWeatherStatus('');
-    setWeatherResult(null);
-    window.navigator.geolocation.getCurrentPosition(
-      (position) => {
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setExpandedWidget(null);
+      }
+    };
+
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [expandedWidget]);
+
+  const momentCards = [
+    { type: 'WOW', date: 'DATE TBD', text: 'NO MOMENT RECORDED YET' },
+    { type: 'WTF', date: 'DATE TBD', text: 'NO MOMENT RECORDED YET' },
+    { type: 'PLOT TWIST', date: 'DATE TBD', text: 'NO MOMENT RECORDED YET' },
+  ];
+
+  const openExpandedWidget = (widgetName) => setExpandedWidget(widgetName);
+  const closeExpandedWidget = () => setExpandedWidget(null);
+
+  const weatherCitySelect = (id, className = '') => (
+    <select
+      id={id}
+      className={`assurer-control assurer-select assurer-weather-select ${className}`.trim()}
+      value={weatherCity}
+      onChange={(event) => {
+        const nextCity = event.target.value;
+        setWeatherCity(nextCity);
         void loadWeather({
-          displayLabel: 'GPS LOCATION',
-          coordinates: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
+          displayLabel: nextCity,
+          coordinates: WEATHER_CITY_COORDINATES[nextCity],
         });
-      },
-      fallbackToHouston,
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
-    );
+      }}
+      aria-label="WEATHER CITY"
+    >
+      {WEATHER_CITY_OPTIONS.map((city) => (
+        <option key={city} value={city}>{city}</option>
+      ))}
+    </select>
+  );
+
+  const expandedTitles = {
+    battleCry: 'BATTLE CRY',
+    weather: 'WEATHER',
+    word: 'WORD OF THE DAY',
+    thoughts: 'ASSURED THOUGHTS',
+    dailyOrbit: 'DAILY ORBIT',
+    moments: 'MOMENT FLIP CARDS',
+  };
+
+  const renderExpandedBody = () => {
+    switch (expandedWidget) {
+      case 'battleCry':
+        return (
+          <div className="assurer-expanded-battle-cry">
+            <p className="assurer-expanded-quote">{dailyBattleCry.text}</p>
+            <p className="assurer-expanded-attribution">{dailyBattleCry.attribution}</p>
+            {dailyBattleCry.category ? <p className="assurer-expanded-meta">CATEGORY: {dailyBattleCry.category}</p> : null}
+          </div>
+        );
+      case 'weather':
+        return (
+          <div className="assurer-expanded-weather">
+            <AssurerField id="assurer-weather-city-expanded" label="CITY">
+              {weatherCitySelect('assurer-weather-city-expanded', 'assurer-weather-select-expanded')}
+            </AssurerField>
+            <div className="assurer-expanded-weather-grid" aria-live="polite">
+              <span>CITY</span><strong>{weatherDisplayLabel}</strong>
+              {weatherResult ? (
+                <>
+                  <span>TEMP</span><strong>{weatherResult.temperature}°</strong>
+                  <span>FEELS LIKE</span><strong>{weatherResult.feelsLike}°</strong>
+                  <span>HUMIDITY</span><strong>{weatherResult.humidity}%</strong>
+                  <span>WIND</span><strong>{weatherResult.wind} MPH</strong>
+                  <span>CONDITION</span><strong>{weatherResult.condition}</strong>
+                </>
+              ) : (
+                <><span>STATUS</span><strong>WEATHER PENDING</strong></>
+              )}
+            </div>
+          </div>
+        );
+      case 'word':
+        return (
+          <div className="assurer-expanded-word">
+            <input
+              className="assurer-control assurer-expanded-word-input"
+              value={wordOfDay}
+              onChange={(event) => setWordOfDay(event.target.value)}
+              aria-label="WORD OF THE DAY"
+            />
+            <textarea
+              className="assurer-control assurer-expanded-definition-input"
+              value={wordDefinition}
+              onChange={(event) => setWordDefinition(event.target.value)}
+              aria-label="WORD OF THE DAY DEFINITION"
+            />
+          </div>
+        );
+      case 'thoughts':
+        return (
+          <textarea
+            className="assurer-control assurer-lined-writing assurer-expanded-thoughts-textarea"
+            value={assuredThoughts}
+            onChange={(event) => setAssuredThoughts(event.target.value)}
+            aria-label="ASSURED THOUGHTS EXPANDED"
+          />
+        );
+      case 'dailyOrbit':
+        return (
+          <div className="assurer-expanded-daily-grid">
+            <AssurerField id="assurer-mood-expanded" label="MOOD">
+              <AssurerSelect id="assurer-mood-expanded" value={mood} onChange={setMood} options={moodOptions} />
+            </AssurerField>
+            <AssurerField id="assurer-era-expanded" label="ERA">
+              <AssurerSelect id="assurer-era-expanded" value={era} onChange={setEra} options={eraOptions} />
+            </AssurerField>
+            <AssurerField id="assurer-singleness-expanded" label="SINGLENESS LEVEL">
+              <AssurerSelect id="assurer-singleness-expanded" value={singlenessLevel} onChange={setSinglenessLevel} options={singlenessOptions} />
+            </AssurerField>
+            <AssurerField id="assurer-lobito-expanded" label="LOBITO CHECK-IN">
+              <AssurerSelect id="assurer-lobito-expanded" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
+            </AssurerField>
+            <AssurerField id="assurer-head-hummer-expanded" label="HEAD HUMMER">
+              <input id="assurer-head-hummer-expanded" className="assurer-control" value={headHummer} onChange={(event) => setHeadHummer(event.target.value)} placeholder="SONG / LOOP" />
+            </AssurerField>
+            <AssurerField id="assurer-location-expanded" label="LOCATION">
+              <input id="assurer-location-expanded" className="assurer-control" value={location} onChange={(event) => setLocation(event.target.value)} placeholder="LOCATION" />
+            </AssurerField>
+          </div>
+        );
+      case 'moments':
+        return (
+          <div className="assurer-expanded-moment-grid">
+            {momentCards.map((card) => (
+              <article key={card.type} className="assurer-moment-card">
+                <div className="assurer-moment-media">READY FOR REMEMBER.ME</div>
+                <strong>{card.type}</strong>
+                <small>{card.date}</small>
+                <p>{card.text}</p>
+                <span>READY FOR REMEMBER.ME</span>
+              </article>
+            ))}
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   // TODO: Persist assurer_assessment and assured_thoughts through the project storage layer when the Assurer daily store is finalized.
@@ -268,7 +383,6 @@ export default function TheAssurerSection() {
     location,
     weatherCity,
     weatherSummary,
-    weatherStatus,
     headHummer,
     wordOfDay,
     wordDefinition,
@@ -283,7 +397,6 @@ export default function TheAssurerSection() {
     location,
     weatherCity,
     weatherSummary,
-    weatherStatus,
     headHummer,
     wordOfDay,
     wordDefinition,
@@ -325,6 +438,14 @@ export default function TheAssurerSection() {
           ))}
 
           <article className="assurer-widget assurer-battle-cry-tile" data-slot="03">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('battleCry')}
+              aria-label="EXPAND BATTLE CRY"
+            >
+              ⤢
+            </button>
             <div className="assurer-widget-content assurer-battle-cry-content">
               <strong>BATTLE CRY</strong>
               <p className="assurer-battle-cry-quote">{dailyBattleCry.text}</p>
@@ -333,38 +454,23 @@ export default function TheAssurerSection() {
           </article>
 
           <article className="assurer-widget assurer-weather-tile" data-slot="04">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('weather')}
+              aria-label="EXPAND WEATHER"
+            >
+              ⤢
+            </button>
             <div className="assurer-widget-content assurer-weather-content">
               <strong>WEATHER</strong>
-              <select
-                id="assurer-weather-city"
-                className="assurer-control assurer-select assurer-weather-select"
-                value={weatherCity}
-                onChange={(event) => {
-                  const nextCity = event.target.value;
-                  setWeatherCity(nextCity);
-                  void loadWeather({
-                    displayLabel: nextCity,
-                    coordinates: WEATHER_CITY_COORDINATES[nextCity],
-                  });
-                }}
-                aria-label="WEATHER CITY"
-              >
-                {WEATHER_CITY_OPTIONS.map((city) => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-              <button className="assurer-gps-button" type="button" onClick={useGpsWeatherLocation}>
-                USE GPS
-              </button>
+              {weatherCitySelect('assurer-weather-city')}
               <div className="assurer-weather-display" aria-live="polite">
                 <small>{weatherDisplayLabel}</small>
-                {weatherStatus ? <small>{weatherStatus}</small> : null}
                 {weatherResult ? (
                   <>
                     <small>TEMP: {weatherResult.temperature}°</small>
                     <small>FEELS: {weatherResult.feelsLike}°</small>
-                    <small>HUMIDITY: {weatherResult.humidity}%</small>
-                    <small>WIND: {weatherResult.wind} MPH</small>
                     <small>CONDITION: {weatherResult.condition}</small>
                   </>
                 ) : (
@@ -375,6 +481,14 @@ export default function TheAssurerSection() {
           </article>
 
           <article className="assurer-widget assurer-word-panel" data-slot="07">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('word')}
+              aria-label="EXPAND WORD OF THE DAY"
+            >
+              ⤢
+            </button>
             <div className="assurer-widget-content assurer-word-content">
               <strong>WORD OF THE DAY</strong>
               <AssurerField id="assurer-word-of-day" label="WORD:">
@@ -397,6 +511,14 @@ export default function TheAssurerSection() {
           </article>
 
           <article className="assurer-widget assurer-daily-orbit" data-slot="08">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('dailyOrbit')}
+              aria-label="EXPAND DAILY ORBIT"
+            >
+              ⤢
+            </button>
             <div className="assurer-widget-content assurer-daily-content">
               <AssurerField id="assurer-mood" label="MOOD">
                 <AssurerSelect id="assurer-mood" value={mood} onChange={setMood} options={moodOptions} />
@@ -431,7 +553,37 @@ export default function TheAssurerSection() {
             </div>
           </article>
 
+          <article className="assurer-widget assurer-moment-flip-cards" data-slot="13">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('moments')}
+              aria-label="EXPAND MOMENT FLIP CARDS"
+            >
+              ⤢
+            </button>
+            <div className="assurer-widget-content assurer-moment-content">
+              <strong>MOMENT FLIP CARDS</strong>
+              <div className="assurer-moment-preview-grid">
+                {momentCards.map((card) => (
+                  <div key={card.type} className="assurer-moment-preview-slot">
+                    <span>{card.type}</span>
+                    <small>NO MOMENT RECORDED YET</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </article>
+
           <article className="assurer-widget assurer-assured-thoughts" data-slot="14">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('thoughts')}
+              aria-label="EXPAND ASSURED THOUGHTS"
+            >
+              ⤢
+            </button>
             <div className="assurer-widget-content assurer-thoughts-content">
               <strong>ASSURED THOUGHTS</strong>
               <textarea
@@ -443,6 +595,27 @@ export default function TheAssurerSection() {
             </div>
           </article>
         </div>
+        {expandedWidget ? (
+          <div className="assurer-expanded-backdrop" role="presentation" onClick={closeExpandedWidget}>
+            <section
+              className="assurer-expanded-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="assurer-expanded-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <header className="assurer-expanded-header">
+                <h2 id="assurer-expanded-title" className="assurer-expanded-title">
+                  {expandedTitles[expandedWidget]}
+                </h2>
+                <button className="assurer-expanded-close" type="button" onClick={closeExpandedWidget}>
+                  CLOSE
+                </button>
+              </header>
+              <div className="assurer-expanded-body">{renderExpandedBody()}</div>
+            </section>
+          </div>
+        ) : null}
       </div>
     </section>
   );

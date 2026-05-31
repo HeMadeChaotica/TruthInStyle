@@ -376,30 +376,6 @@
   font-size: clamp(8px, 0.48vw, 10px);
 }
 
-.assurer-gps-button {
-  width: fit-content;
-  border: 1px solid rgba(244, 178, 189, 0.58);
-  border-radius: 999px;
-  background: rgba(239, 143, 163, 0.12);
-  color: #F4B2BD;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -webkit-text-fill-color: #F4B2BD;
-  font: inherit;
-  font-size: clamp(8px, 0.48vw, 10px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  padding: clamp(3px, 0.32vw, 6px) clamp(7px, 0.62vw, 11px);
-  text-transform: uppercase;
-}
-
-.assurer-gps-button:focus-visible {
-  outline: 1px solid #EF8FA3;
-  outline-offset: 2px;
-}
-
 .assurer-weather-display {
   min-height: 0;
   display: flex;
@@ -485,4 +461,339 @@
   line-height: 1.16;
   letter-spacing: 0.05em;
   overflow-wrap: anywhere;
+}
+
+.assurer-expand-button {
+  position: absolute;
+  top: clamp(4px, 0.5vw, 8px);
+  right: clamp(4px, 0.5vw, 8px);
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: clamp(18px, 1.45vw, 28px);
+  height: clamp(18px, 1.45vw, 28px);
+  border: 1px solid rgba(244, 178, 189, 0.68);
+  border-radius: 999px;
+  background: rgba(12, 4, 5, 0.56);
+  color: #F4B2BD;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(10px, 0.72vw, 14px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(239, 143, 163, 0.55);
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-text-fill-color: #F4B2BD;
+}
+
+.assurer-expand-button:hover,
+.assurer-expand-button:focus-visible,
+.assurer-expanded-close:hover,
+.assurer-expanded-close:focus-visible {
+  border-color: #EF8FA3;
+  box-shadow: 0 0 14px rgba(239, 143, 163, 0.38);
+  outline: none;
+}
+
+.assurer-expanded-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: block;
+  background: rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+
+.assurer-expanded-panel {
+  position: absolute;
+  left: 12%;
+  top: 10%;
+  width: 76%;
+  height: 76%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(12, 4, 5, 0.92), rgba(24, 8, 10, 0.78));
+  color: #F4B2BD;
+  font-family: 'Same Same But Different', sans-serif;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 10px rgba(20, 10, 8, 0.72);
+  box-shadow:
+    0 24px 72px rgba(0, 0, 0, 0.62),
+    0 0 34px rgba(239, 143, 163, 0.22),
+    inset 0 0 24px rgba(244, 178, 189, 0.08);
+}
+
+.assurer-expanded-panel::before,
+.assurer-moment-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    rgba(244, 178, 189, 0.92),
+    rgba(239, 143, 163, 0.72),
+    rgba(244, 178, 189, 0.88),
+    rgba(239, 143, 163, 0.9),
+    rgba(244, 178, 189, 0.92)
+  ) border-box;
+  background-size: 220% 100%;
+  animation: assurerTrueThiccShimmer 4.5s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.assurer-expanded-header,
+.assurer-expanded-body {
+  position: relative;
+  z-index: 2;
+}
+
+.assurer-expanded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.9rem, 1.35vw, 1.45rem) clamp(1rem, 1.7vw, 1.8rem) clamp(0.5rem, 0.8vw, 0.8rem);
+}
+
+.assurer-expanded-title {
+  margin: 0;
+  color: #F4B2BD;
+  font-size: clamp(24px, 2.2vw, 42px);
+  line-height: 1;
+}
+
+.assurer-expanded-close {
+  border: 1px solid rgba(244, 178, 189, 0.68);
+  border-radius: 999px;
+  background: rgba(12, 4, 5, 0.48);
+  color: #F4B2BD;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(10px, 0.75vw, 14px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: clamp(0.35rem, 0.55vw, 0.6rem) clamp(0.75rem, 1vw, 1.1rem);
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-text-fill-color: #F4B2BD;
+}
+
+.assurer-expanded-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 clamp(1rem, 1.7vw, 1.8rem) clamp(1rem, 1.6vw, 1.8rem);
+}
+
+.assurer-battle-cry-quote {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.assurer-expanded-quote {
+  margin: 0 0 1rem;
+  color: #F4B2BD;
+  font-size: clamp(22px, 2.25vw, 44px);
+  font-weight: 900;
+  line-height: 1.22;
+  letter-spacing: 0.055em;
+}
+
+.assurer-expanded-attribution,
+.assurer-expanded-meta {
+  margin: 0.5rem 0 0;
+  color: #EF8FA3;
+  font-size: clamp(14px, 1.1vw, 22px);
+  font-weight: 800;
+}
+
+.assurer-expanded-weather,
+.assurer-expanded-word,
+.assurer-expanded-daily-grid {
+  display: grid;
+  gap: clamp(0.8rem, 1.2vw, 1.3rem);
+}
+
+.assurer-expanded-weather-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.42fr) 1fr;
+  gap: clamp(0.55rem, 0.9vw, 1rem);
+  align-items: center;
+  font-size: clamp(16px, 1.5vw, 28px);
+}
+
+.assurer-expanded-weather-grid span {
+  color: #EF8FA3;
+  font-weight: 800;
+}
+
+.assurer-expanded-weather-grid strong {
+  color: #F4B2BD;
+  font-size: clamp(18px, 1.7vw, 32px);
+}
+
+.assurer-expanded-word-input {
+  min-height: clamp(54px, 5vw, 90px);
+  font-size: clamp(26px, 3vw, 54px);
+  font-weight: 900;
+}
+
+.assurer-expanded-definition-input {
+  min-height: clamp(220px, 28vw, 420px);
+  overflow-y: auto;
+  resize: none;
+  font-size: clamp(18px, 1.5vw, 28px);
+  line-height: 1.35;
+}
+
+.assurer-expanded-thoughts-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: clamp(320px, 40vw, 560px);
+  overflow-y: auto;
+  font-size: clamp(17px, 1.3vw, 25px);
+}
+
+.assurer-expanded-daily-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.assurer-expanded-daily-grid .assurer-field {
+  font-size: clamp(13px, 0.95vw, 18px);
+  gap: 0.35rem;
+}
+
+.assurer-expanded-daily-grid .assurer-control,
+.assurer-weather-select-expanded {
+  min-height: clamp(42px, 3.4vw, 64px);
+  font-size: clamp(15px, 1.1vw, 22px);
+}
+
+.assurer-moment-content {
+  justify-content: flex-start;
+  gap: clamp(4px, 0.45vw, 8px);
+}
+
+.assurer-moment-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(3px, 0.45vw, 8px);
+  min-height: 0;
+}
+
+.assurer-moment-preview-slot {
+  min-width: 0;
+  min-height: clamp(42px, 5vw, 82px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid rgba(244, 178, 189, 0.36);
+  border-radius: 12px;
+  background: rgba(12, 4, 5, 0.34);
+  padding: clamp(4px, 0.45vw, 8px);
+}
+
+.assurer-moment-preview-slot span,
+.assurer-moment-card span {
+  color: #EF8FA3;
+  font-weight: 900;
+  font-size: clamp(7px, 0.5vw, 10px);
+}
+
+.assurer-moment-preview-slot small {
+  font-size: clamp(6px, 0.38vw, 8px);
+  line-height: 1.1;
+}
+
+.assurer-expanded-moment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.75rem, 1.4vw, 1.6rem);
+}
+
+.assurer-moment-card {
+  position: relative;
+  min-height: clamp(260px, 31vw, 460px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.45rem, 0.75vw, 0.9rem);
+  border: 1px solid transparent;
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(20, 8, 9, 0.74), rgba(58, 20, 26, 0.28));
+  padding: clamp(0.8rem, 1.15vw, 1.25rem);
+  box-shadow: inset 0 0 20px rgba(244, 178, 189, 0.07);
+}
+
+.assurer-moment-media {
+  position: relative;
+  z-index: 2;
+  min-height: clamp(92px, 10vw, 160px);
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(244, 178, 189, 0.4);
+  border-radius: 16px;
+  background: rgba(12, 4, 5, 0.34);
+  color: #EF8FA3;
+  font-size: clamp(11px, 0.9vw, 17px);
+  font-weight: 900;
+  text-align: center;
+}
+
+.assurer-moment-card strong,
+.assurer-moment-card small,
+.assurer-moment-card p,
+.assurer-moment-card span {
+  position: relative;
+  z-index: 2;
+}
+
+.assurer-moment-card strong {
+  font-size: clamp(24px, 2.2vw, 40px);
+}
+
+.assurer-moment-card small {
+  color: #EF8FA3;
+  font-size: clamp(11px, 0.85vw, 16px);
+  font-weight: 800;
+}
+
+.assurer-moment-card p {
+  margin: 0;
+  color: #F4B2BD;
+  font-size: clamp(17px, 1.35vw, 26px);
+  font-weight: 900;
+  line-height: 1.22;
+}
+
+@media (max-width: 700px) {
+  .assurer-expanded-panel {
+    left: 50%;
+    top: 50%;
+    width: 88%;
+    height: 82%;
+    transform: translate(-50%, -50%);
+  }
+
+  .assurer-expanded-daily-grid,
+  .assurer-expanded-moment-grid {
+    grid-template-columns: 1fr;
+  }
 }
