@@ -797,3 +797,213 @@
     grid-template-columns: 1fr;
   }
 }
+
+.assurer-macro-content {
+  justify-content: flex-start;
+  gap: clamp(3px, 0.34vw, 6px);
+  padding: clamp(0.38rem, 0.66vw, 0.72rem);
+  min-height: 0;
+}
+
+.assurer-macro-content > strong {
+  flex: 0 0 auto;
+  color: #F4B2BD;
+  font-size: clamp(9px, 0.62vw, 13px);
+}
+
+.assurer-macro-list {
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  gap: clamp(2px, 0.23vw, 4px);
+}
+
+.assurer-macro-source {
+  color: #EF8FA3;
+  font-size: clamp(9px, 0.6vw, 12px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.assurer-macro-row {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: clamp(14px, 1.08vw, 20px) minmax(42px, 0.72fr) minmax(42px, 0.62fr) minmax(74px, 1.7fr) minmax(30px, 0.42fr) minmax(58px, 0.78fr);
+  align-items: center;
+  gap: clamp(3px, 0.36vw, 8px);
+  padding: clamp(2px, 0.2vw, 4px) clamp(3px, 0.34vw, 7px);
+  border: 1px solid rgba(244, 178, 189, 0.22);
+  border-radius: 11px;
+  background:
+    radial-gradient(90% 140% at 12% 0%, rgba(246, 198, 116, 0.16), rgba(246, 198, 116, 0) 48%),
+    linear-gradient(135deg, rgba(12, 4, 5, 0.48), rgba(20, 10, 8, 0.24));
+  box-shadow:
+    0 0 0 1px rgba(239, 143, 163, 0.08) inset,
+    0 0 14px rgba(239, 143, 163, 0.08);
+  color: #F4B2BD;
+  overflow: hidden;
+}
+
+.assurer-macro-row::after {
+  content: '';
+  position: absolute;
+  inset: -2px -6px;
+  border-radius: inherit;
+  background: linear-gradient(
+    106deg,
+    rgba(244, 178, 189, 0) 4%,
+    rgba(246, 198, 116, 0.24) 18%,
+    rgba(239, 143, 163, 0.30) 31%,
+    rgba(244, 178, 189, 0.28) 48%,
+    rgba(246, 198, 116, 0.22) 66%,
+    rgba(244, 178, 189, 0) 82%
+  );
+  background-size: 180% 100%;
+  transform: translateX(-142%);
+  animation: assurerMacroShimmer 3.6s cubic-bezier(.34, .08, .23, .99) infinite;
+  pointer-events: none;
+  opacity: 0.52;
+}
+
+.assurer-macro-icon,
+.assurer-macro-label,
+.assurer-macro-target,
+.assurer-macro-percent,
+.assurer-macro-left {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  color: #F4B2BD;
+  font-size: clamp(6px, 0.48vw, 10px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba(239, 143, 163, 0.48);
+  white-space: nowrap;
+}
+
+.assurer-macro-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(13px, 1.0vw, 19px);
+  height: clamp(13px, 1.0vw, 19px);
+  border: 1px solid rgba(246, 198, 116, 0.42);
+  border-radius: 999px;
+  background: rgba(12, 4, 5, 0.54);
+  color: #EF8FA3;
+  box-shadow: 0 0 12px rgba(246, 198, 116, 0.16), inset 0 0 8px rgba(239, 143, 163, 0.14);
+}
+
+.assurer-macro-target,
+.assurer-macro-percent,
+.assurer-macro-left {
+  color: #EF8FA3;
+}
+
+.assurer-macro-track {
+  position: relative;
+  z-index: 1;
+  height: clamp(8px, 0.74vw, 14px);
+  overflow: hidden;
+  border: 1px solid rgba(246, 198, 116, 0.30);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(20, 10, 8, 0.88), rgba(12, 4, 5, 0.82));
+  box-shadow: 0 0 0 1px rgba(239, 143, 163, 0.14) inset;
+}
+
+.assurer-macro-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #F6C674, #EF8FA3, #F4B2BD, #F6C674);
+  box-shadow:
+    0 0 18px rgba(246, 198, 116, 0.78),
+    0 0 32px rgba(239, 143, 163, 0.58),
+    0 0 48px rgba(244, 178, 189, 0.34);
+  position: relative;
+  overflow: hidden;
+}
+
+.assurer-macro-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    rgba(244, 178, 189, 0) 0%,
+    rgba(246, 198, 116, 0.46) 20%,
+    rgba(239, 143, 163, 0.46) 38%,
+    rgba(244, 178, 189, 0.42) 58%,
+    rgba(246, 198, 116, 0.40) 74%,
+    rgba(244, 178, 189, 0) 88%
+  );
+  transform: translateX(-140%);
+  animation: assurerMacroShimmer 2.75s ease-in-out infinite;
+  opacity: 0.78;
+}
+
+.assurer-macro-row-protein .assurer-macro-fill {
+  background: linear-gradient(90deg, #F6C674, #F4B2BD, #EF8FA3);
+}
+
+.assurer-macro-row-carbs .assurer-macro-fill {
+  background: linear-gradient(90deg, #EF8FA3, #F6C674, #F4B2BD);
+}
+
+.assurer-macro-row-fats .assurer-macro-fill {
+  background: linear-gradient(90deg, #F6C674, #EF8FA3, #F6C674);
+}
+
+.assurer-macro-row-calories .assurer-macro-fill {
+  background: linear-gradient(90deg, #F6C674, #F4B2BD, #EF8FA3, #F6C674);
+}
+
+.assurer-macro-row-waterOz .assurer-macro-fill {
+  background: linear-gradient(90deg, #F4B2BD, #EF8FA3, #F6C674);
+}
+
+.assurer-macro-list-expanded {
+  gap: clamp(8px, 0.82vw, 14px);
+  padding-top: clamp(4px, 0.6vw, 10px);
+}
+
+.assurer-macro-list-expanded .assurer-macro-row {
+  grid-template-columns: clamp(26px, 2.0vw, 38px) minmax(110px, 0.7fr) minmax(90px, 0.52fr) minmax(220px, 1.55fr) minmax(54px, 0.32fr) minmax(120px, 0.58fr);
+  min-height: clamp(44px, 4.4vw, 70px);
+  padding: clamp(8px, 0.78vw, 14px) clamp(10px, 1.05vw, 18px);
+  border-radius: 18px;
+}
+
+.assurer-macro-list-expanded .assurer-macro-icon {
+  width: clamp(24px, 1.9vw, 36px);
+  height: clamp(24px, 1.9vw, 36px);
+  font-size: clamp(11px, 0.9vw, 16px);
+}
+
+.assurer-macro-list-expanded .assurer-macro-label,
+.assurer-macro-list-expanded .assurer-macro-target,
+.assurer-macro-list-expanded .assurer-macro-percent,
+.assurer-macro-list-expanded .assurer-macro-left {
+  font-size: clamp(13px, 1.15vw, 22px);
+}
+
+.assurer-macro-list-expanded .assurer-macro-track {
+  height: clamp(16px, 1.28vw, 24px);
+}
+
+@keyframes assurerMacroShimmer {
+  0%, 14% {
+    transform: translateX(-145%);
+    opacity: 0;
+  }
+
+  34%, 58% {
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translateX(165%);
+    opacity: 0;
+  }
+}
