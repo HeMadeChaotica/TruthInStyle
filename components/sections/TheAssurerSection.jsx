@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
+import {
+  DEFAULT_WEATHER_CITY,
+  WEATHER_CITY_COORDINATES,
+  WEATHER_CITY_OPTIONS,
+  fetchAssurerWeather,
+} from '../../lib/theAssurer/weatherOptions';
 import '../../styles/sections/the-assurer.css';
 
 const STATIC_REVIEW_WIDGETS = [
