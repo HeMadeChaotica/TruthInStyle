@@ -155,6 +155,138 @@
   height: 21.6%;
 }
 
+.assurer-macro-content {
+  justify-content: flex-start;
+  gap: clamp(3px, 0.38vw, 7px);
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(0.42rem, 0.64vw, 0.76rem);
+}
+
+.assurer-macro-content > strong {
+  flex: 0 0 auto;
+  padding-right: clamp(18px, 1.6vw, 30px);
+  font-size: clamp(10px, 0.68vw, 14px);
+  line-height: 1;
+  text-shadow: 0 0 5px rgba(239, 143, 163, 0.34);
+}
+
+.assurer-macro-list {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: clamp(0.18rem, 0.35vw, 0.35rem);
+  overflow: hidden;
+}
+
+.assurer-macro-list-compact {
+  flex: 1 1 auto;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  height: 100%;
+}
+
+.assurer-macro-row {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  align-items: center;
+  gap: clamp(0.22rem, 0.45vw, 0.5rem);
+  overflow: hidden;
+}
+
+.assurer-macro-list-compact .assurer-macro-row {
+  grid-template-columns: minmax(2.8rem, 4.2rem) minmax(0, 1fr) auto;
+}
+
+.assurer-macro-label,
+.assurer-macro-percent,
+.assurer-macro-target,
+.assurer-macro-left {
+  min-width: 0;
+  overflow: hidden;
+  color: #F4B2BD;
+  font-size: clamp(7px, 0.52vw, 11px);
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 4px rgba(239, 143, 163, 0.26);
+  white-space: nowrap;
+}
+
+.assurer-macro-label {
+  color: #EF8FA3;
+}
+
+.assurer-macro-percent {
+  justify-self: end;
+  color: #F4B2BD;
+  font-variant-numeric: tabular-nums;
+}
+
+.assurer-macro-track {
+  position: relative;
+  min-width: 0;
+  height: clamp(4px, 0.44vw, 8px);
+  overflow: hidden;
+  border: 1px solid rgba(244, 178, 189, 0.40);
+  border-radius: 999px;
+  background: rgba(12, 4, 5, 0.52);
+  box-shadow:
+    inset 0 0 8px rgba(20, 10, 8, 0.72),
+    0 0 9px rgba(239, 143, 163, 0.12);
+}
+
+.assurer-macro-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(239, 143, 163, 0.72), rgba(244, 178, 189, 0.96));
+  box-shadow: 0 0 10px rgba(239, 143, 163, 0.42);
+}
+
+.assurer-macro-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(24px, 2vw, 38px);
+  height: clamp(24px, 2vw, 38px);
+  border: 1px solid rgba(239, 143, 163, 0.42);
+  border-radius: 999px;
+  color: #EF8FA3;
+  font-size: clamp(10px, 0.8vw, 15px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.assurer-macro-list-expanded {
+  gap: clamp(0.55rem, 0.85vw, 1rem);
+}
+
+.assurer-macro-source {
+  color: #EF8FA3;
+  font-size: clamp(11px, 0.8vw, 15px);
+  font-weight: 900;
+}
+
+.assurer-macro-list-expanded .assurer-macro-row {
+  grid-template-columns: auto minmax(6rem, 0.72fr) minmax(7rem, 0.8fr) minmax(8rem, 1.2fr) auto minmax(9rem, 1fr);
+  min-height: clamp(46px, 4.8vw, 74px);
+  border: 1px solid rgba(239, 143, 163, 0.34);
+  border-radius: 16px;
+  background: rgba(12, 4, 5, 0.34);
+  padding: clamp(0.45rem, 0.75vw, 0.9rem);
+}
+
+.assurer-macro-list-expanded .assurer-macro-label,
+.assurer-macro-list-expanded .assurer-macro-percent,
+.assurer-macro-list-expanded .assurer-macro-target,
+.assurer-macro-list-expanded .assurer-macro-left {
+  font-size: clamp(12px, 0.95vw, 18px);
+}
+
+.assurer-macro-list-expanded .assurer-macro-track {
+  height: clamp(8px, 0.72vw, 13px);
+}
+
 .assurer-battle-cry-tile {
   left: 2.6%;
   top: 6.0%;
