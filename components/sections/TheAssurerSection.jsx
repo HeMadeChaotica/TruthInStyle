@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
+import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
   DEFAULT_WEATHER_CITY,
   WEATHER_CITY_COORDINATES,
@@ -13,7 +14,6 @@ import '../../styles/sections/the-assurer.css';
 
 const STATIC_REVIEW_WIDGETS = [
   { number: '02', className: 'assurer-macro-bars', label: 'MACRO BARS' },
-  { number: '05', className: 'assurer-meal-log', label: 'MEAL LOG' },
   { number: '06', className: 'assurer-body-sleep-water', label: 'BODY / SLEEP / WATER' },
   { number: '09', className: 'assurer-media-strip', label: 'MEDIA STRIP' },
   { number: '10', className: 'assurer-week-strip', label: 'WEEK STRIP' },
@@ -86,6 +86,37 @@ function getDailyWordDefault(storageDate) {
   return DAILY_WORD_BANK[seed % DAILY_WORD_BANK.length];
 }
 
+
+function AssurerMealRows({ meals, limit, expanded = false }) {
+  const visibleMeals = typeof limit === 'number' ? meals.slice(0, limit) : meals;
+
+  if (!visibleMeals.length) {
+    return <p className="assurer-meal-empty">NO MEALS LOGGED YET</p>;
+  }
+
+  return (
+    <div className={`assurer-meal-list ${expanded ? 'assurer-meal-list-expanded' : ''}`.trim()}>
+      {visibleMeals.map((meal) => (
+        <article className="assurer-meal-row" key={meal.id}>
+          <span className="assurer-meal-time">{meal.time}</span>
+          <span className="assurer-meal-thumb" aria-hidden="true">
+            {meal.thumbnail ? <img src={meal.thumbnail} alt="" /> : <span>{meal.type.slice(0, 1)}</span>}
+          </span>
+          <span className="assurer-meal-main">
+            <strong className="assurer-meal-name">{meal.type}{meal.name ? ` • ${meal.name}` : ''}</strong>
+            <small className="assurer-meal-macros">{meal.macroText}</small>
+          </span>
+          {meal.status || meal.completed ? (
+            <span className="assurer-meal-status" aria-label={meal.status || 'COMPLETED'}>
+              {meal.status || '✓'}
+            </span>
+          ) : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
 function AssurerField({ id, label, children }) {
   return (
     <label className="assurer-field" htmlFor={id}>
@@ -143,6 +174,7 @@ export default function TheAssurerSection() {
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
   const [assuredThoughts, setAssuredThoughts] = useState('');
   const [storageLoaded, setStorageLoaded] = useState(false);
+  const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
 
   useEffect(() => {
     try {
@@ -179,6 +211,10 @@ export default function TheAssurerSection() {
       // Local storage is optional for this native panel.
     }
   }, [storageDate, storageLoaded, titleOfDay]);
+
+  useEffect(() => {
+    setDaEaterMeals(readDaEaterMealLogForDate(storageDate));
+  }, [storageDate]);
 
   useEffect(() => {
     if (!storageLoaded) {
@@ -267,6 +303,7 @@ export default function TheAssurerSection() {
     thoughts: 'ASSURED THOUGHTS',
     dailyOrbit: 'DAILY ORBIT',
     moments: 'MOMENT FLIP CARDS',
+    mealLog: 'MEAL LOG',
   };
 
   const renderExpandedBody = () => {
@@ -299,6 +336,13 @@ export default function TheAssurerSection() {
                 <><span>STATUS</span><strong>WEATHER PENDING</strong></>
               )}
             </div>
+          </div>
+        );
+      case 'mealLog':
+        return (
+          <div className="assurer-expanded-meal-log">
+            <p className="assurer-meal-readonly">READ-ONLY FROM DA.EATER</p>
+            <AssurerMealRows meals={daEaterMeals} expanded />
           </div>
         );
       case 'word':
@@ -436,6 +480,21 @@ export default function TheAssurerSection() {
               </div>
             </article>
           ))}
+
+          <article className="assurer-widget assurer-meal-log" data-slot="05">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('mealLog')}
+              aria-label="EXPAND MEAL LOG"
+            >
+              ⤢
+            </button>
+            <div className="assurer-widget-content assurer-meal-content">
+              <strong>MEAL LOG</strong>
+              <AssurerMealRows meals={daEaterMeals} limit={4} />
+            </div>
+          </article>
 
           <article className="assurer-widget assurer-battle-cry-tile" data-slot="03">
             <button
