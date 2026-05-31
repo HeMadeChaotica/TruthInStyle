@@ -191,10 +191,10 @@
 }
 
 .assurer-daily-orbit {
-  left: 58.6%;
-  top: 42.6%;
-  width: 13.0%;
-  height: 30.0%;
+  left: 56.8%;
+  top: 40.8%;
+  width: 15.2%;
+  height: 32.0%;
 }
 
 .assurer-media-strip {
@@ -248,9 +248,8 @@
 }
 
 .assurer-title-content {
-  flex-direction: row;
-  align-items: center;
-  gap: clamp(6px, 0.7vw, 12px);
+  align-items: stretch;
+  gap: clamp(4px, 0.45vw, 8px);
 }
 
 .assurer-title-fields {
@@ -258,7 +257,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: clamp(2px, 0.28vw, 5px);
+  gap: clamp(3px, 0.38vw, 7px);
 }
 
 .assurer-title-fields time {
@@ -338,28 +337,29 @@
 }
 
 .assurer-title-input {
-  min-height: clamp(21px, 1.55vw, 30px);
-  font-size: clamp(11px, 0.82vw, 16px);
-  font-weight: 700;
+  flex: 1;
+  min-height: clamp(30px, 3.2vw, 56px);
+  font-size: clamp(18px, 2.0vw, 38px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.assurer-placeholder-content {
+  justify-content: center;
 }
 
 .assurer-daily-content {
-  gap: clamp(2px, 0.22vw, 4px);
-  padding: clamp(0.34rem, 0.62vw, 0.64rem);
-}
-
-.assurer-daily-content .assurer-widget-number {
-  min-width: clamp(15px, 1.15vw, 22px);
-  min-height: clamp(15px, 1.15vw, 22px);
-  font-size: clamp(8px, 0.58vw, 11px);
+  gap: clamp(3px, 0.32vw, 6px);
+  padding: clamp(0.32rem, 0.52vw, 0.58rem);
 }
 
 .assurer-daily-content .assurer-field {
   font-size: clamp(7px, 0.42vw, 9px);
+  gap: 1px;
 }
 
 .assurer-daily-content .assurer-control {
-  min-height: clamp(15px, 1.03vw, 20px);
+  min-height: clamp(16px, 1.0vw, 20px);
   border-radius: 7px;
   font-size: clamp(7px, 0.45vw, 10px);
   padding-top: 1px;
@@ -367,33 +367,64 @@
 }
 
 .assurer-weather-content {
-  align-items: flex-start;
-  gap: clamp(3px, 0.38vw, 7px);
+  align-items: stretch;
+  gap: clamp(3px, 0.35vw, 6px);
 }
 
-.assurer-weather-icon {
-  display: grid;
-  place-items: center;
-  width: clamp(24px, 2.3vw, 42px);
-  height: clamp(24px, 2.3vw, 42px);
-  border: 1px solid rgba(239, 143, 163, 0.52);
+.assurer-weather-select {
+  min-height: clamp(18px, 1.18vw, 23px);
+  font-size: clamp(8px, 0.48vw, 10px);
+}
+
+.assurer-gps-button {
+  width: fit-content;
+  border: 1px solid rgba(244, 178, 189, 0.58);
   border-radius: 999px;
+  background: rgba(239, 143, 163, 0.12);
   color: #F4B2BD;
-  background: rgba(12, 4, 5, 0.28);
-  font-size: clamp(14px, 1.35vw, 24px);
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(8px, 0.48vw, 10px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: clamp(3px, 0.32vw, 6px) clamp(7px, 0.62vw, 11px);
+  text-transform: uppercase;
+}
+
+.assurer-gps-button:focus-visible {
+  outline: 1px solid #EF8FA3;
+  outline-offset: 2px;
+}
+
+.assurer-weather-display {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .assurer-word-content {
-  gap: clamp(4px, 0.45vw, 8px);
+  gap: clamp(3px, 0.36vw, 6px);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.assurer-word-content .assurer-field:last-child {
+  flex: 1;
+  min-height: 0;
 }
 
 .assurer-definition-input {
-  min-height: clamp(48px, 7vw, 102px);
+  flex: 1;
+  min-height: clamp(52px, 8vw, 116px);
+  overflow-y: auto;
   resize: none;
 }
 
 .assurer-thoughts-content {
   gap: clamp(4px, 0.42vw, 8px);
+  min-height: 0;
 }
 
 .assurer-lined-writing {
@@ -409,4 +440,11 @@
       rgba(12, 4, 5, 0.40) 21px,
       rgba(239, 143, 163, 0.32) 22px
     );
+}
+
+.assurer-thoughts-textarea {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  resize: none;
 }
