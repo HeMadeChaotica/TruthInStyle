@@ -30,9 +30,11 @@ export default function TheAssurerSection() {
         <div className="assurer-widget-layer">
           {ASSURER_WIDGETS.map((widget) => (
             <article key={widget.number} className={`assurer-widget ${widget.className}`}>
-              <span className="assurer-widget-number">{widget.number}</span>
-              <strong>{widget.label}</strong>
-              <small>{widget.sample}</small>
+              <div className="assurer-widget-content">
+                <span className="assurer-widget-number">{widget.number}</span>
+                <strong>{widget.label}</strong>
+                <small>{widget.sample}</small>
+              </div>
             </article>
           ))}
         </div>

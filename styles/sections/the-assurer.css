@@ -7,6 +7,13 @@
   background: #000;
 }
 
+.assurer-oracle-stage,
+.assurer-oracle-stage *,
+.assurer-oracle-stage *::before,
+.assurer-oracle-stage *::after {
+  box-sizing: border-box;
+}
+
 .assurer-oracle-stage {
   position: relative;
   width: min(100vw, calc(100dvh * 16 / 9));
@@ -38,11 +45,7 @@
 
 .assurer-widget {
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: clamp(2px, 0.45vw, 8px);
-  padding: clamp(6px, 0.85vw, 14px);
+  padding: 0;
   overflow: hidden;
   background: linear-gradient(
     135deg,
@@ -65,6 +68,18 @@
   text-shadow: 0 1px 7px rgba(20, 10, 8, 0.62);
 }
 
+.assurer-widget-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(2px, 0.45vw, 8px);
+  padding: clamp(0.45rem, 0.9vw, 0.9rem);
+}
+
 .assurer-widget::before {
   content: '';
   position: absolute;
@@ -83,6 +98,7 @@
   background-size: 220% 100%;
   animation: assurerTrueThiccShimmer 4.5s linear infinite;
   pointer-events: none;
+  z-index: 1;
   -webkit-mask:
     linear-gradient(#000 0 0) padding-box,
     linear-gradient(#000 0 0);
