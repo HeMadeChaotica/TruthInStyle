@@ -129,29 +129,48 @@ function AssurerField({ id, label, children }) {
 }
 
 
-function AssurerMacroBars({ rows, expanded = false, isFallback = false }) {
-  return (
-    <div className={`assurer-macro-list ${expanded ? 'assurer-macro-list-expanded' : ''}`} aria-label="READ-ONLY DA.EATER MACRO BARS">
-      {expanded ? <small className="assurer-macro-source">READ-ONLY FROM {isFallback ? 'DA.EATER FALLBACK' : 'DA.EATER'}</small> : null}
-      {rows.map((row) => {
-        const fillWidth = `${Math.min(Math.max(row.percent, 0), 100)}%`;
-        const label = expanded ? row.label : row.compactLabel;
+function macroFillWidth(percent) {
+  return `${Math.min(Math.max(Number(percent) || 0, 0), 100)}%`;
+}
 
-        return (
-          <div className={`assurer-macro-row assurer-macro-row-${row.key}`} key={row.key}>
-            <span className="assurer-macro-icon" aria-hidden="true">{row.glyph}</span>
-            <span className="assurer-macro-label">{label}</span>
-            <span className="assurer-macro-target">{row.targetDisplay}</span>
-            <span className="assurer-macro-track" aria-hidden="true">
-              <span className="assurer-macro-fill" style={{ width: fillWidth }} />
-            </span>
-            <span className="assurer-macro-percent">{row.percent.toFixed(0)}%</span>
-            <span className="assurer-macro-left">{row.leftDisplay}</span>
-          </div>
-        );
-      })}
+function renderMacroBarsCompact(rows) {
+  return (
+    <div className="assurer-macro-list assurer-macro-list-compact" aria-label="READ-ONLY DA.EATER MACRO BARS">
+      {rows.map((row) => (
+        <div className={`assurer-macro-row assurer-macro-row-${row.key}`} key={row.key}>
+          <span className="assurer-macro-label">{row.compactLabel}</span>
+          <span className="assurer-macro-track" aria-hidden="true">
+            <span className="assurer-macro-fill" style={{ width: macroFillWidth(row.percent) }} />
+          </span>
+          <span className="assurer-macro-percent">{row.percent.toFixed(0)}%</span>
+        </div>
+      ))}
     </div>
   );
+}
+
+function renderMacroBarsExpanded(rows, isFallback) {
+  return (
+    <div className="assurer-macro-list assurer-macro-list-expanded" aria-label="READ-ONLY DA.EATER MACRO BARS">
+      <small className="assurer-macro-source">READ-ONLY FROM {isFallback ? 'DA.EATER FALLBACK' : 'DA.EATER'}</small>
+      {rows.map((row) => (
+        <div className={`assurer-macro-row assurer-macro-row-${row.key}`} key={row.key}>
+          <span className="assurer-macro-icon" aria-hidden="true">{row.glyph}</span>
+          <span className="assurer-macro-label">{row.label}</span>
+          <span className="assurer-macro-target">TARGET {row.targetDisplay}</span>
+          <span className="assurer-macro-track" aria-hidden="true">
+            <span className="assurer-macro-fill" style={{ width: macroFillWidth(row.percent) }} />
+          </span>
+          <span className="assurer-macro-percent">{row.percent.toFixed(0)}%</span>
+          <span className="assurer-macro-left">{row.currentDisplay} NOW / {row.leftDisplay}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AssurerMacroBars({ rows, expanded = false, isFallback = false }) {
+  return expanded ? renderMacroBarsExpanded(rows, isFallback) : renderMacroBarsCompact(rows);
 }
 
 function AssurerSelect({ id, value, onChange, options }) {
@@ -328,6 +347,7 @@ export default function TheAssurerSection() {
   );
 
   const expandedTitles = {
+    macroBars: 'MACRO BARS',
     battleCry: 'BATTLE CRY',
     weather: 'WEATHER',
     word: 'WORD OF THE DAY',
