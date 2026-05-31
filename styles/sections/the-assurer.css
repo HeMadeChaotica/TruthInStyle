@@ -383,6 +383,9 @@
   background: rgba(239, 143, 163, 0.12);
   color: #F4B2BD;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-text-fill-color: #F4B2BD;
   font: inherit;
   font-size: clamp(8px, 0.48vw, 10px);
   font-weight: 800;
