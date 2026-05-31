@@ -7,6 +7,12 @@ import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
 import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
+  EMPTY_REMEMBER_ME_MOMENT_MIRROR,
+  REMEMBER_ME_MOMENT_TYPES,
+  getRememberMeMomentDateKey,
+  readRememberMeMomentMirror,
+} from '../../lib/theAssurer/rememberMeMomentMirror';
+import {
   DEFAULT_WEATHER_CITY,
   WEATHER_CITY_COORDINATES,
   WEATHER_CITY_OPTIONS,
@@ -178,6 +184,50 @@ function AssurerMacroBars({ rows, expanded = false, isFallback = false }) {
   return expanded ? renderMacroBarsExpanded(rows, isFallback) : renderMacroBarsCompact(rows);
 }
 
+
+function formatMomentDateTime(moment, fallbackDate) {
+  if (!moment) {
+    return '';
+  }
+
+  const displayDate = moment.dateKey && moment.dateKey.includes('-')
+    ? moment.dateKey.split('-').slice(1).concat(moment.dateKey.split('-').slice(0, 1)).join('/')
+    : fallbackDate;
+
+  return [displayDate, moment.time].filter(Boolean).join(' • ');
+}
+
+function AssurerMomentMedia({ moment, expanded = false }) {
+  const mediaRef = moment?.mediaRef || '';
+
+  return (
+    <div className={`assurer-moment-media ${expanded ? 'assurer-moment-media-expanded' : ''}`.trim()}>
+      {mediaRef ? <img src={mediaRef} alt={`${moment.type} REMEMBER.ME MOMENT`} /> : <span>READY FOR REMEMBER.ME</span>}
+    </div>
+  );
+}
+
+function AssurerMomentCards({ cards, expanded = false }) {
+  return (
+    <div className={expanded ? 'assurer-moment-expanded-grid' : 'assurer-moment-card-list'}>
+      {cards.map((card) => {
+        const hasMoment = Boolean(card.moment);
+        const previewText = hasMoment && card.moment.text ? card.moment.text : 'NO MOMENT RECORDED YET';
+
+        return (
+          <article key={card.type} className={`assurer-moment-card ${expanded ? 'assurer-moment-card-expanded' : ''}`.trim()}>
+            <AssurerMomentMedia moment={card.moment} expanded={expanded} />
+            <strong className="assurer-moment-type">{card.type}</strong>
+            {hasMoment ? <small className="assurer-moment-time">{card.displayDateTime}</small> : null}
+            <p className={`assurer-moment-preview ${hasMoment ? '' : 'assurer-moment-empty'}`.trim()}>{previewText}</p>
+            {!hasMoment && expanded ? <span className="assurer-moment-empty">READY FOR REMEMBER.ME</span> : null}
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
 function AssurerSelect({ id, value, onChange, options }) {
   const safeOptions = Array.isArray(options) ? options : [];
 
@@ -209,6 +259,7 @@ export default function TheAssurerSection() {
   const date = useMemo(() => formatAssurerDate(today), [today]);
   const storageDate = useMemo(() => formatAssurerStorageDate(today), [today]);
   const daEaterStorageDate = useMemo(() => getDaEaterStorageDate(today), [today]);
+  const rememberMeMomentDateKey = useMemo(() => getRememberMeMomentDateKey(today), [today]);
   const defaultDailyWord = useMemo(() => getDailyWordDefault(storageDate), [storageDate]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
@@ -229,6 +280,7 @@ export default function TheAssurerSection() {
   const [storageLoaded, setStorageLoaded] = useState(false);
   const [macroMirror, setMacroMirror] = useState(ASSURER_MACRO_FALLBACK_MIRROR);
   const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
+  const [rememberMeMomentMirror, setRememberMeMomentMirror] = useState(EMPTY_REMEMBER_ME_MOMENT_MIRROR);
 
   useEffect(() => {
     try {
@@ -270,6 +322,10 @@ export default function TheAssurerSection() {
     setMacroMirror(readDaEaterMacroMirror(daEaterStorageDate));
     setDaEaterMeals(readDaEaterMealLogForDate(daEaterStorageDate));
   }, [daEaterStorageDate]);
+
+  useEffect(() => {
+    setRememberMeMomentMirror(readRememberMeMomentMirror(rememberMeMomentDateKey));
+  }, [rememberMeMomentDateKey]);
 
   useEffect(() => {
     if (!storageLoaded) {
@@ -321,11 +377,16 @@ export default function TheAssurerSection() {
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [expandedWidget]);
 
-  const momentCards = [
-    { type: 'WOW', date: 'DATE TBD', text: 'NO MOMENT RECORDED YET' },
-    { type: 'WTF', date: 'DATE TBD', text: 'NO MOMENT RECORDED YET' },
-    { type: 'PLOT TWIST', date: 'DATE TBD', text: 'NO MOMENT RECORDED YET' },
-  ];
+  const momentCards = REMEMBER_ME_MOMENT_TYPES.map((momentType) => {
+    const moment = rememberMeMomentMirror[momentType.key];
+
+    return {
+      ...momentType,
+      type: momentType.label,
+      moment,
+      displayDateTime: formatMomentDateTime(moment, date),
+    };
+  });
 
   const openExpandedWidget = (widgetName) => setExpandedWidget(widgetName);
   const closeExpandedWidget = () => setExpandedWidget(null);
@@ -456,17 +517,7 @@ export default function TheAssurerSection() {
         );
       case 'moments':
         return (
-          <div className="assurer-expanded-moment-grid">
-            {momentCards.map((card) => (
-              <article key={card.type} className="assurer-moment-card">
-                <div className="assurer-moment-media">READY FOR REMEMBER.ME</div>
-                <strong>{card.type}</strong>
-                <small>{card.date}</small>
-                <p>{card.text}</p>
-                <span>READY FOR REMEMBER.ME</span>
-              </article>
-            ))}
-          </div>
+          <AssurerMomentCards cards={momentCards} expanded />
         );
       default:
         return null;
@@ -698,14 +749,7 @@ export default function TheAssurerSection() {
             </button>
             <div className="assurer-widget-content assurer-moment-content">
               <strong>MOMENT FLIP CARDS</strong>
-              <div className="assurer-moment-preview-grid">
-                {momentCards.map((card) => (
-                  <div key={card.type} className="assurer-moment-preview-slot">
-                    <span>{card.type}</span>
-                    <small>NO MOMENT RECORDED YET</small>
-                  </div>
-                ))}
-              </div>
+              <AssurerMomentCards cards={momentCards} />
             </div>
           </article>
 
