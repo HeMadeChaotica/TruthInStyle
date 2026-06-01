@@ -401,7 +401,7 @@
   height: 13.4%;
 }
 
-.assurer-week-strip {
+.assurer-week-strip-widget {
   left: 73.2%;
   top: 20.0%;
   width: 23.4%;
@@ -539,6 +539,221 @@
   font-size: clamp(18px, 2.0vw, 38px);
   font-weight: 800;
   letter-spacing: 0.06em;
+}
+
+
+.assurer-timeline-content,
+.assurer-week-content {
+  justify-content: flex-start;
+  gap: clamp(3px, 0.34vw, 6px);
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(0.38rem, 0.58vw, 0.68rem);
+}
+
+.assurer-timeline-content > strong,
+.assurer-week-content > strong {
+  flex: 0 0 auto;
+  padding-right: clamp(18px, 1.6vw, 30px);
+  font-size: clamp(9px, 0.62vw, 13px);
+}
+
+.assurer-timeline-list {
+  min-height: 0;
+  display: grid;
+  gap: clamp(3px, 0.32vw, 6px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.assurer-timeline-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(38px, 0.42fr) minmax(62px, 0.66fr) minmax(0, 1fr);
+  gap: clamp(4px, 0.38vw, 7px);
+  align-items: center;
+  border: 1px solid rgba(239, 143, 163, 0.34);
+  border-radius: 10px;
+  background: rgba(12, 4, 5, 0.28);
+  padding: clamp(3px, 0.34vw, 6px);
+}
+
+.assurer-timeline-time,
+.assurer-timeline-type,
+.assurer-timeline-text,
+.assurer-timeline-media {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 900;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assurer-timeline-time,
+.assurer-timeline-type,
+.assurer-timeline-media {
+  color: #EF8FA3;
+  font-size: clamp(6px, 0.42vw, 9px);
+}
+
+.assurer-timeline-text {
+  color: #F4B2BD;
+  font-size: clamp(7px, 0.48vw, 10px);
+}
+
+.assurer-timeline-empty,
+.assurer-week-empty,
+.assurer-week-day-empty {
+  margin: 0;
+  border: 1px dashed rgba(239, 143, 163, 0.46);
+  border-radius: 10px;
+  background: rgba(12, 4, 5, 0.30);
+  color: #EF8FA3;
+  font-size: clamp(7px, 0.48vw, 10px);
+  font-weight: 900;
+  line-height: 1.18;
+  padding: clamp(6px, 0.6vw, 10px);
+  text-align: center;
+}
+
+.assurer-week-strip {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(2px, 0.28vw, 5px);
+}
+
+.assurer-week-day {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  border: 1px solid rgba(239, 143, 163, 0.34);
+  border-radius: 8px;
+  background: rgba(12, 4, 5, 0.28);
+  padding: clamp(2px, 0.28vw, 5px);
+}
+
+.assurer-week-day-label,
+.assurer-week-day-count {
+  color: #F4B2BD;
+  font-size: clamp(5px, 0.36vw, 8px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.assurer-week-day-count {
+  color: #EF8FA3;
+}
+
+.assurer-week-dot-row {
+  display: flex;
+  max-width: 100%;
+  gap: 2px;
+  min-height: clamp(4px, 0.32vw, 7px);
+}
+
+.assurer-week-dot {
+  width: clamp(4px, 0.32vw, 7px);
+  height: clamp(4px, 0.32vw, 7px);
+  flex: 0 0 auto;
+  border: 1px solid rgba(244, 178, 189, 0.58);
+  border-radius: 999px;
+  box-shadow: 0 0 6px rgba(239, 143, 163, 0.28);
+}
+
+.assurer-expanded-timeline,
+.assurer-week-expanded {
+  min-height: 0;
+  display: grid;
+  gap: clamp(0.75rem, 1vw, 1.2rem);
+}
+
+.assurer-source-note {
+  margin: 0;
+  color: #EF8FA3;
+  font-size: clamp(12px, 0.9vw, 18px);
+  font-weight: 900;
+}
+
+.assurer-timeline-list-expanded {
+  max-height: clamp(320px, 46vw, 620px);
+  gap: clamp(0.55rem, 0.82vw, 0.95rem);
+}
+
+.assurer-timeline-list-expanded .assurer-timeline-row {
+  grid-template-columns: minmax(82px, 0.25fr) minmax(150px, 0.4fr) minmax(0, 1fr) auto;
+  border-radius: 16px;
+  padding: clamp(0.7rem, 0.95vw, 1.1rem);
+}
+
+.assurer-timeline-list-expanded .assurer-timeline-time,
+.assurer-timeline-list-expanded .assurer-timeline-type,
+.assurer-timeline-list-expanded .assurer-timeline-text,
+.assurer-timeline-list-expanded .assurer-timeline-media {
+  font-size: clamp(13px, 1vw, 19px);
+  white-space: normal;
+}
+
+.assurer-week-expanded-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(0.45rem, 0.75vw, 0.9rem);
+  overflow-y: auto;
+}
+
+.assurer-week-expanded-day {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.35rem, 0.6vw, 0.75rem);
+  border: 1px solid rgba(239, 143, 163, 0.36);
+  border-radius: 16px;
+  background: rgba(12, 4, 5, 0.30);
+  padding: clamp(0.5rem, 0.8vw, 0.95rem);
+}
+
+.assurer-week-expanded-day h3 {
+  margin: 0;
+  color: #F4B2BD;
+  font-size: clamp(14px, 1.1vw, 21px);
+  line-height: 1;
+}
+
+.assurer-week-expanded-day h3 span {
+  color: #EF8FA3;
+}
+
+.assurer-week-entry {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  border-left: 4px solid #EF8FA3;
+  border-radius: 10px;
+  background: rgba(12, 4, 5, 0.34);
+  padding: clamp(0.36rem, 0.56vw, 0.68rem);
+}
+
+.assurer-week-entry-time,
+.assurer-week-entry strong,
+.assurer-week-entry small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.assurer-week-entry-time,
+.assurer-week-entry small {
+  color: #EF8FA3;
+  font-size: clamp(9px, 0.72vw, 13px);
+}
+
+.assurer-week-entry strong {
+  color: #F4B2BD;
+  font-size: clamp(11px, 0.85vw, 16px);
 }
 
 .assurer-placeholder-content {
@@ -1088,7 +1303,8 @@
   }
 
   .assurer-expanded-daily-grid,
-  .assurer-moment-expanded-grid {
+  .assurer-moment-expanded-grid,
+  .assurer-week-expanded-grid {
     grid-template-columns: 1fr;
   }
 
