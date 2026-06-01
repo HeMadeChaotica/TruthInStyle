@@ -149,10 +149,10 @@
 }
 
 .assurer-macro-bars {
-  left: 30.5%;
-  top: 15.6%;
-  width: 37.5%;
-  height: 23.6%;
+  left: 27.8%;
+  top: 14.8%;
+  width: 43.8%;
+  height: 29.2%;
 }
 
 .assurer-macro-widget {
@@ -162,9 +162,17 @@
   background: transparent;
   border: 0;
   box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
   text-shadow: none;
+}
+
+.assurer-macro-widget,
+.assurer-macro-widget * {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .assurer-macro-widget::before,
@@ -177,9 +185,13 @@
   inset: 0;
   z-index: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(20, 10, 8, 0.34), rgba(20, 10, 8, 0.14));
-  backdrop-filter: blur(1.5px) saturate(108%);
-  -webkit-backdrop-filter: blur(1.5px) saturate(108%);
+  background: linear-gradient(
+    135deg,
+    rgba(8, 2, 5, 0.82),
+    rgba(18, 5, 10, 0.72)
+  );
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   pointer-events: none;
 }
 
@@ -287,9 +299,9 @@
 
 .assurer-macro-compact-row {
   display: grid;
-  grid-template-columns: minmax(3.2rem, 4.8rem) minmax(0, 1fr) minmax(2.2rem, auto);
+  grid-template-columns: minmax(4.2rem, 5.8rem) minmax(0, 1fr) minmax(2.4rem, auto);
   align-items: center;
-  gap: clamp(0.25rem, 0.48vw, 0.55rem);
+  gap: clamp(0.35rem, 0.65vw, 0.75rem);
   min-width: 0;
   min-height: 0;
 }
@@ -298,9 +310,18 @@
 .assurer-macro-compact-row .assurer-macro-percent {
   min-width: 0;
   overflow: hidden;
-  font-size: clamp(8px, 0.56vw, 12px);
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.assurer-macro-compact-row .assurer-macro-label {
+  font-size: clamp(12px, 0.9vw, 16px);
+}
+
+.assurer-macro-compact-row .assurer-macro-percent {
+  font-size: clamp(12px, 0.85vw, 15px);
 }
 
 .assurer-macro-label {
@@ -316,18 +337,24 @@
 .assurer-macro-track {
   position: relative;
   min-width: 0;
-  height: clamp(0.34rem, 0.55vw, 0.52rem);
+  height: clamp(0.45rem, 0.75vw, 0.68rem);
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(10, 4, 6, 0.66);
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(244, 178, 189, 0.28);
 }
 
 .assurer-macro-fill {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, rgba(244, 178, 189, 0.95), rgba(255, 214, 170, 0.82), rgba(239, 143, 163, 0.95));
-  box-shadow: 0 0 8px rgba(239, 143, 163, 0.38);
+  background: linear-gradient(
+    90deg,
+    #F4B2BD,
+    rgba(255, 214, 170, 0.92),
+    #EF8FA3
+  );
+  box-shadow: 0 0 10px rgba(239, 143, 163, 0.42);
 }
 
 .assurer-macro-icon {
@@ -437,10 +464,10 @@
 }
 
 .assurer-daily-orbit {
-  left: 57.2%;
-  top: 43.5%;
+  left: 57.0%;
+  top: 45.8%;
   width: 14.8%;
-  height: 29.0%;
+  height: 27.2%;
 }
 
 .assurer-media-strip {
