@@ -170,38 +170,62 @@ function AssurerWeekExpanded({ weekMirror }) {
 }
 
 
+function SignalTile({ label, value, className = '' }) {
+  return (
+    <span className={`assurer-signal-tile ${className}`.trim()}>
+      <strong>{label}</strong>
+      {value || 'NOT LOGGED'}
+    </span>
+  );
+}
+
 function AssurerWorkoutMirror({ mirror, expanded = false }) {
-  const exerciseRows = Array.isArray(mirror.exerciseRows) ? mirror.exerciseRows : [];
-  const summary = mirror.weeklySummary || EMPTY_THICC_FITT_WORKOUT_MIRROR.weeklySummary;
-  const control = mirror.control || {};
-  const cardio = mirror.cardio || {};
-  const core = mirror.core || {};
+  const safeMirror = mirror || EMPTY_THICC_FITT_WORKOUT_MIRROR;
+  const exerciseRows = Array.isArray(safeMirror.exerciseRows) ? safeMirror.exerciseRows : [];
+  const summary = safeMirror.weeklySummary || EMPTY_THICC_FITT_WORKOUT_MIRROR.weeklySummary;
+  const workout = safeMirror.workout || {};
+  const cardio = safeMirror.cardio || {};
+  const recovery = safeMirror.recovery || {};
+  const vault = safeMirror.vault || {};
+  const dailySignals = safeMirror.dailySignals || {};
+  const media = safeMirror.media || {};
   const visibleRows = expanded ? exerciseRows : exerciseRows.slice(0, 4);
+
+  if (!safeMirror.hasData) {
+    return (
+      <div className={`assurer-workout-mirror ${expanded ? 'assurer-workout-mirror-expanded' : ''}`.trim()}>
+        <p className="assurer-workout-empty">NO THICC.FITT DAILY SIGNALS FOUND YET.</p>
+        <p className="assurer-workout-empty-detail">LOG TODAY INSIDE THICC.FITT TO LIGHT UP THIS READ-ONLY FEED.</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`assurer-workout-mirror ${expanded ? 'assurer-workout-mirror-expanded' : ''}`.trim()}>
       <div className="assurer-workout-summary" aria-label="THICC.FITT TRAINING SUMMARY">
-        <span><strong>GYM</strong>{control.gymLocation || 'NOT SET'}</span>
-        <span><strong>LENGTH</strong>{control.workoutLength || '—'}</span>
-        <span><strong>WEEK</strong>{summary.daysTrained} DAYS / {summary.totalMinutes} MIN</span>
+        <SignalTile label="COMPLETED" value={workout.completed} />
+        <SignalTile label="DURATION" value={workout.duration} />
+        <SignalTile label="SEASON / PHASE" value={workout.seasonPhase} />
       </div>
-      {visibleRows.length ? (
-        <div className="assurer-workout-list">
-          {visibleRows.map((row) => (
-            <article className="assurer-workout-row" key={row.id}>
-              <strong>{row.exercise}</strong>
-              <small>{[row.sets && `${row.sets} SETS`, row.reps && `${row.reps} REPS`, row.weight && `${row.weight} LB`, row.failure && `FAIL ${row.failure}`].filter(Boolean).join(' • ') || 'DETAILS PENDING'}</small>
-              {expanded && row.rest ? <small>REST: {row.rest}</small> : null}
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="assurer-workout-empty">NO THICC.FITT WORKOUT LOGGED YET</p>
-      )}
-      <div className="assurer-workout-footer">
-        <span>CARDIO: {cardio.type || '—'} {cardio.duration ? `• ${cardio.duration}` : ''}</span>
-        <span>CORE: {core.focus || '—'} {core.completed ? `• ${core.completed}` : ''}</span>
-        {expanded && mirror.notes ? <p>{mirror.notes}</p> : null}
+
+      <div className="assurer-workout-list" aria-label="THICC.FITT EXERCISE FEED">
+        {visibleRows.length ? visibleRows.map((row) => (
+          <article className="assurer-workout-row" key={row.id}>
+            <strong>{row.exercise}</strong>
+            <small>{[row.sets && `${row.sets} SETS`, row.reps && `${row.reps} REPS`, row.weight && `${row.weight} LB`].filter(Boolean).join(' • ') || 'DETAILS PENDING'}</small>
+            {expanded && row.rest ? <small>REST: {row.rest}</small> : null}
+          </article>
+        )) : <p className="assurer-workout-empty">NO EXERCISES LOGGED YET.</p>}
+      </div>
+
+      <div className="assurer-workout-footer" aria-label="THICC.FITT DAILY SIGNALS">
+        <SignalTile label="CARDIO" value={[cardio.type, cardio.duration].filter(Boolean).join(' • ')} />
+        <SignalTile label="RECOVERY" value={[recovery.soreness, recovery.status].filter(Boolean).join(' • ')} />
+        <SignalTile label="VAULT" value={[vault.compoundSummary, vault.cycleWeek && `WEEK ${vault.cycleWeek}`, vault.shotTrackingSummary && `SHOT ${vault.shotTrackingSummary}`].filter(Boolean).join(' • ')} />
+        <SignalTile label="SO HOW YOU DOIN 🫪⁉️" value={dailySignals.soHowYouDoin} />
+        {expanded ? <SignalTile label="NOTES / TAKE" value={dailySignals.notes} className="assurer-signal-wide" /> : null}
+        {expanded ? <SignalTile label="TROPHY WALL" value={media.latestTrophyWallImageRef} className="assurer-signal-wide" /> : null}
+        {expanded ? <SignalTile label="WEEKLY TOTAL" value={`${summary.daysTrained} DAYS • ${summary.totalMinutes} MIN`} className="assurer-signal-wide" /> : null}
       </div>
     </div>
   );
