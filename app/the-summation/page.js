@@ -1,1 +1,5 @@
-// Temporary scaffold file for local implementation.
+import SummationSection from '../../components/sections/SummationSection';
+
+export default function TheSummationPage() {
+  return <SummationSection />;
+}

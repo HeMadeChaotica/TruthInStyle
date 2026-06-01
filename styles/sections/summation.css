@@ -1,1 +1,25 @@
-/* Temporary scaffold file for local implementation. */
+.summation-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #24150f;
+}
+
+.summation-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.summation-overlay {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  pointer-events: none;
+}
