@@ -10,6 +10,11 @@ const SCHEDULE_KEY = 'thicc_client_schedule_entries';
 const uid = () => Math.random().toString(36).slice(2, 10);
 const createLocalScheduleId = () => `local_schedule_${Date.now()}_${uid()}`;
 
+export const THICC_TIME_SPECIAL_COLORS = [
+  { key: 'mista-thicc-pink', label: 'MISTA.THICC PINK', value: '#ff4db8' },
+  { key: 'new-client-white', label: 'NEW CLIENT WHITE', value: '#f8f8f8' },
+];
+
 export const CONTROLLED_CLIENT_COLORS = [
   ['cobalt', 'COBALT', '#3b82f6'], ['emerald', 'EMERALD', '#10b981'], ['amber', 'AMBER', '#f59e0b'], ['violet', 'VIOLET', '#8b5cf6'],
   ['teal', 'TEAL', '#14b8a6'], ['indigo', 'INDIGO', '#6366f1'], ['slate', 'SLATE', '#64748b'], ['orange', 'ORANGE', '#f97316'],
@@ -53,7 +58,7 @@ const get = (k, fb) => {
 };
 const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-export const resolveClientColor = (key) => CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0] || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
+export const resolveClientColor = (key) => THICC_TIME_SPECIAL_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0] || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
 
 const normalizeCelebration = (value) => {
   const safeTiles = Array.from({ length: 10 }, (_, i) => ({
