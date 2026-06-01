@@ -284,7 +284,153 @@
   white-space: nowrap;
 }
 
-.assurer-macro-content .assurer-expand-button {
+.assurer-macro-content .assurer-workout-content {
+  justify-content: flex-start;
+  gap: clamp(5px, 0.48vw, 9px);
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(0.5rem, 0.72vw, 0.84rem);
+}
+
+.assurer-workout-content > strong {
+  flex: 0 0 auto;
+  padding-right: clamp(20px, 1.8vw, 34px);
+  font-size: clamp(9px, 0.62vw, 13px);
+  line-height: 1.1;
+}
+
+.assurer-workout-mirror,
+.assurer-expanded-workout {
+  min-height: 0;
+  display: grid;
+  gap: clamp(6px, 0.58vw, 11px);
+}
+
+.assurer-workout-mirror {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.assurer-workout-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(3px, 0.34vw, 6px);
+}
+
+.assurer-workout-summary span,
+.assurer-workout-footer span,
+.assurer-workout-footer p {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(239, 143, 163, 0.34);
+  border-radius: 10px;
+  background: rgba(12, 4, 5, 0.28);
+  color: #F4B2BD;
+  font-size: clamp(6px, 0.43vw, 9px);
+  font-weight: 900;
+  line-height: 1.1;
+  padding: clamp(4px, 0.38vw, 7px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assurer-workout-summary strong {
+  display: block;
+  color: #EF8FA3;
+  font-size: clamp(5px, 0.36vw, 8px);
+  line-height: 1;
+}
+
+.assurer-workout-list {
+  min-height: 0;
+  display: grid;
+  gap: clamp(4px, 0.42vw, 8px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.assurer-workout-row {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(239, 143, 163, 0.38);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(239, 143, 163, 0.20), rgba(239, 143, 163, 0) 48%),
+    linear-gradient(145deg, rgba(20, 8, 9, 0.58), rgba(12, 4, 5, 0.30));
+  padding: clamp(5px, 0.5vw, 9px);
+}
+
+.assurer-workout-row strong,
+.assurer-workout-row small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.assurer-workout-row strong {
+  color: #F4B2BD;
+  font-size: clamp(8px, 0.56vw, 11px);
+}
+
+.assurer-workout-row small,
+.assurer-workout-footer span,
+.assurer-workout-footer p {
+  color: #EF8FA3;
+  font-size: clamp(6px, 0.43vw, 9px);
+}
+
+.assurer-workout-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(3px, 0.34vw, 6px);
+}
+
+.assurer-workout-empty {
+  margin: 0;
+  border: 1px dashed rgba(239, 143, 163, 0.46);
+  border-radius: 12px;
+  background: rgba(12, 4, 5, 0.30);
+  color: #EF8FA3;
+  font-size: clamp(8px, 0.52vw, 11px);
+  font-weight: 900;
+  line-height: 1.2;
+  padding: clamp(8px, 0.72vw, 13px);
+  text-align: center;
+}
+
+.assurer-workout-mirror-expanded {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: clamp(440px, 56vw, 760px);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-summary span,
+.assurer-workout-mirror-expanded .assurer-workout-footer span,
+.assurer-workout-mirror-expanded .assurer-workout-footer p {
+  border-radius: 16px;
+  font-size: clamp(13px, 0.95vw, 18px);
+  padding: clamp(0.68rem, 0.95vw, 1rem);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-summary strong {
+  font-size: clamp(11px, 0.78vw, 15px);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-row {
+  border-radius: 18px;
+  padding: clamp(0.75rem, 1vw, 1.15rem);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-row strong,
+.assurer-workout-mirror-expanded .assurer-workout-row small {
+  font-size: clamp(14px, 1.05vw, 20px);
+  white-space: normal;
+}
+
+.assurer-expand-button {
   text-shadow: none !important;
 }
 
@@ -428,36 +574,29 @@
   height: clamp(8px, 0.72vw, 13px);
 }
 
-.assurer-battle-cry-tile {
+.assurer-meal-log {
   left: 2.6%;
   top: 6.0%;
-  width: 10.8%;
-  height: 17.6%;
+  width: 23.6%;
+  height: 20.6%;
 }
 
 .assurer-weather-tile {
-  left: 15.0%;
-  top: 6.0%;
-  width: 11.2%;
-  height: 17.6%;
-}
-
-.assurer-meal-log {
   left: 2.6%;
-  top: 26.2%;
+  top: 29.2%;
   width: 23.6%;
-  height: 30.8%;
+  height: 16.2%;
 }
 
-.assurer-body-sleep-water {
+.assurer-thicc-fitt-workout {
   left: 2.6%;
-  top: 62.4%;
-  width: 15.4%;
-  height: 27.2%;
+  top: 48.0%;
+  width: 23.6%;
+  height: 42.0%;
 }
 
 .assurer-word-panel {
-  left: 19.2%;
+  left: 28.2%;
   top: 62.4%;
   width: 15.6%;
   height: 27.2%;
@@ -470,32 +609,25 @@
   height: 27.2%;
 }
 
-.assurer-media-strip {
+.assurer-battle-cry-tile {
   left: 73.2%;
   top: 4.0%;
   width: 23.4%;
-  height: 13.4%;
+  height: 16.8%;
 }
 
 .assurer-week-strip-widget {
   left: 73.2%;
-  top: 20.0%;
+  top: 22.4%;
   width: 23.4%;
-  height: 9.8%;
-}
-
-.assurer-metric-strip {
-  left: 73.2%;
-  top: 32.4%;
-  width: 23.4%;
-  height: 10.2%;
+  height: 19.2%;
 }
 
 .assurer-day-timeline {
   left: 73.2%;
   top: 45.6%;
   width: 23.4%;
-  height: 24.2%;
+  height: 15.8%;
 }
 
 .assurer-moment-flip-cards {
@@ -714,7 +846,7 @@
 .assurer-week-day-label,
 .assurer-week-day-count {
   color: #F4B2BD;
-  font-size: clamp(5px, 0.36vw, 8px);
+  font-size: clamp(8px, 0.58vw, 12px);
   font-weight: 900;
   line-height: 1;
 }
@@ -918,24 +1050,24 @@
 
 .assurer-battle-cry-content {
   justify-content: flex-start;
-  gap: clamp(3px, 0.34vw, 6px);
+  gap: clamp(5px, 0.52vw, 10px);
   min-height: 0;
   overflow-y: auto;
-  padding: clamp(0.36rem, 0.58vw, 0.66rem);
+  padding: clamp(0.58rem, 0.82vw, 0.95rem);
 }
 
 .assurer-battle-cry-content strong {
   flex: 0 0 auto;
-  font-size: clamp(9px, 0.62vw, 13px);
+  font-size: clamp(12px, 0.82vw, 17px);
 }
 
 .assurer-battle-cry-quote {
   min-width: 0;
   margin: 0;
   color: #F4B2BD;
-  font-size: clamp(7px, 0.46vw, 10px);
+  font-size: clamp(10px, 0.68vw, 14px);
   font-weight: 800;
-  line-height: 1.18;
+  line-height: 1.24;
   letter-spacing: 0.045em;
   overflow-wrap: anywhere;
   word-break: normal;
@@ -944,11 +1076,157 @@
 .assurer-battle-cry-attribution {
   display: block;
   color: rgba(255, 236, 206, 0.88);
-  font-size: clamp(6px, 0.36vw, 8px);
+  font-size: clamp(8px, 0.48vw, 11px);
   font-weight: 700;
   line-height: 1.16;
   letter-spacing: 0.05em;
   overflow-wrap: anywhere;
+}
+
+.assurer-workout-content {
+  justify-content: flex-start;
+  gap: clamp(5px, 0.48vw, 9px);
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(0.5rem, 0.72vw, 0.84rem);
+}
+
+.assurer-workout-content > strong {
+  flex: 0 0 auto;
+  padding-right: clamp(20px, 1.8vw, 34px);
+  font-size: clamp(9px, 0.62vw, 13px);
+  line-height: 1.1;
+}
+
+.assurer-workout-mirror,
+.assurer-expanded-workout {
+  min-height: 0;
+  display: grid;
+  gap: clamp(6px, 0.58vw, 11px);
+}
+
+.assurer-workout-mirror {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.assurer-workout-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(3px, 0.34vw, 6px);
+}
+
+.assurer-workout-summary span,
+.assurer-workout-footer span,
+.assurer-workout-footer p {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(239, 143, 163, 0.34);
+  border-radius: 10px;
+  background: rgba(12, 4, 5, 0.28);
+  color: #F4B2BD;
+  font-size: clamp(6px, 0.43vw, 9px);
+  font-weight: 900;
+  line-height: 1.1;
+  padding: clamp(4px, 0.38vw, 7px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assurer-workout-summary strong {
+  display: block;
+  color: #EF8FA3;
+  font-size: clamp(5px, 0.36vw, 8px);
+  line-height: 1;
+}
+
+.assurer-workout-list {
+  min-height: 0;
+  display: grid;
+  gap: clamp(4px, 0.42vw, 8px);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.assurer-workout-row {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(239, 143, 163, 0.38);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(239, 143, 163, 0.20), rgba(239, 143, 163, 0) 48%),
+    linear-gradient(145deg, rgba(20, 8, 9, 0.58), rgba(12, 4, 5, 0.30));
+  padding: clamp(5px, 0.5vw, 9px);
+}
+
+.assurer-workout-row strong,
+.assurer-workout-row small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.assurer-workout-row strong {
+  color: #F4B2BD;
+  font-size: clamp(8px, 0.56vw, 11px);
+}
+
+.assurer-workout-row small,
+.assurer-workout-footer span,
+.assurer-workout-footer p {
+  color: #EF8FA3;
+  font-size: clamp(6px, 0.43vw, 9px);
+}
+
+.assurer-workout-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(3px, 0.34vw, 6px);
+}
+
+.assurer-workout-empty {
+  margin: 0;
+  border: 1px dashed rgba(239, 143, 163, 0.46);
+  border-radius: 12px;
+  background: rgba(12, 4, 5, 0.30);
+  color: #EF8FA3;
+  font-size: clamp(8px, 0.52vw, 11px);
+  font-weight: 900;
+  line-height: 1.2;
+  padding: clamp(8px, 0.72vw, 13px);
+  text-align: center;
+}
+
+.assurer-workout-mirror-expanded {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: clamp(440px, 56vw, 760px);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-summary span,
+.assurer-workout-mirror-expanded .assurer-workout-footer span,
+.assurer-workout-mirror-expanded .assurer-workout-footer p {
+  border-radius: 16px;
+  font-size: clamp(13px, 0.95vw, 18px);
+  padding: clamp(0.68rem, 0.95vw, 1rem);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-summary strong {
+  font-size: clamp(11px, 0.78vw, 15px);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-row {
+  border-radius: 18px;
+  padding: clamp(0.75rem, 1vw, 1.15rem);
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-row strong,
+.assurer-workout-mirror-expanded .assurer-workout-row small {
+  font-size: clamp(14px, 1.05vw, 20px);
+  white-space: normal;
 }
 
 .assurer-expand-button {

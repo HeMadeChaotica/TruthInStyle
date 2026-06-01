@@ -18,6 +18,7 @@ import {
   readRememberMeMomentMirror,
 } from '../../lib/theAssurer/rememberMeMomentMirror';
 import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMirror } from '../../lib/theAssurer/thiccTimeWeekMirror';
+import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import {
   DEFAULT_WEATHER_CITY,
   WEATHER_CITY_COORDINATES,
@@ -25,13 +26,6 @@ import {
   fetchAssurerWeather,
 } from '../../lib/theAssurer/weatherOptions';
 import '../../styles/sections/the-assurer.css';
-
-const STATIC_REVIEW_WIDGETS = [
-  { number: '02', className: 'assurer-macro-bars', label: 'MACRO BARS' },
-  { number: '06', className: 'assurer-body-sleep-water', label: 'BODY / SLEEP / WATER' },
-  { number: '09', className: 'assurer-media-strip', label: 'MEDIA STRIP' },
-  { number: '11', className: 'assurer-metric-strip', label: 'METRICS' },
-];
 
 const DAILY_WORD_BANK = [
   {
@@ -170,6 +164,44 @@ function AssurerWeekExpanded({ weekMirror }) {
             )) : <p className="assurer-week-day-empty">NO ENTRIES</p>}
           </article>
         ))}
+      </div>
+    </div>
+  );
+}
+
+
+function AssurerWorkoutMirror({ mirror, expanded = false }) {
+  const exerciseRows = Array.isArray(mirror.exerciseRows) ? mirror.exerciseRows : [];
+  const summary = mirror.weeklySummary || EMPTY_THICC_FITT_WORKOUT_MIRROR.weeklySummary;
+  const control = mirror.control || {};
+  const cardio = mirror.cardio || {};
+  const core = mirror.core || {};
+  const visibleRows = expanded ? exerciseRows : exerciseRows.slice(0, 4);
+
+  return (
+    <div className={`assurer-workout-mirror ${expanded ? 'assurer-workout-mirror-expanded' : ''}`.trim()}>
+      <div className="assurer-workout-summary" aria-label="THICC.FITT TRAINING SUMMARY">
+        <span><strong>GYM</strong>{control.gymLocation || 'NOT SET'}</span>
+        <span><strong>LENGTH</strong>{control.workoutLength || '—'}</span>
+        <span><strong>WEEK</strong>{summary.daysTrained} DAYS / {summary.totalMinutes} MIN</span>
+      </div>
+      {visibleRows.length ? (
+        <div className="assurer-workout-list">
+          {visibleRows.map((row) => (
+            <article className="assurer-workout-row" key={row.id}>
+              <strong>{row.exercise}</strong>
+              <small>{[row.sets && `${row.sets} SETS`, row.reps && `${row.reps} REPS`, row.weight && `${row.weight} LB`, row.failure && `FAIL ${row.failure}`].filter(Boolean).join(' • ') || 'DETAILS PENDING'}</small>
+              {expanded && row.rest ? <small>REST: {row.rest}</small> : null}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="assurer-workout-empty">NO THICC.FITT WORKOUT LOGGED YET</p>
+      )}
+      <div className="assurer-workout-footer">
+        <span>CARDIO: {cardio.type || '—'} {cardio.duration ? `• ${cardio.duration}` : ''}</span>
+        <span>CORE: {core.focus || '—'} {core.completed ? `• ${core.completed}` : ''}</span>
+        {expanded && mirror.notes ? <p>{mirror.notes}</p> : null}
       </div>
     </div>
   );
@@ -368,6 +400,7 @@ export default function TheAssurerSection() {
   const [rememberMeMomentMirror, setRememberMeMomentMirror] = useState(EMPTY_REMEMBER_ME_MOMENT_MIRROR);
   const [rememberMeDayTimeline, setRememberMeDayTimeline] = useState({ ...EMPTY_REMEMBER_ME_DAY_TIMELINE, dateKey: rememberMeTimelineDateKey });
   const [thiccTimeWeekMirror, setThiccTimeWeekMirror] = useState({ ...EMPTY_THICC_TIME_WEEK_MIRROR, weekDays: getThiccTimeWeekDays(today) });
+  const [thiccFittWorkoutMirror, setThiccFittWorkoutMirror] = useState(EMPTY_THICC_FITT_WORKOUT_MIRROR);
 
   useEffect(() => {
     try {
@@ -441,6 +474,10 @@ export default function TheAssurerSection() {
       isActive = false;
     };
   }, [today]);
+
+  useEffect(() => {
+    setThiccFittWorkoutMirror(readThiccFittWorkoutMirror(storageDate));
+  }, [storageDate]);
 
   useEffect(() => {
     if (!storageLoaded) {
@@ -539,6 +576,7 @@ export default function TheAssurerSection() {
     dailyOrbit: 'DAILY ORBIT',
     moments: 'MOMENT FLIP CARDS',
     mealLog: 'MEAL LOG',
+    thiccFitt: 'THICC.FITT WORKOUT LOG + TRACKING',
   };
 
   const renderExpandedBody = () => {
@@ -591,6 +629,13 @@ export default function TheAssurerSection() {
           <div className="assurer-expanded-meal-log">
             <p className="assurer-meal-readonly">READ-ONLY FROM DA.EATER</p>
             <AssurerMealRows meals={daEaterMeals} expanded />
+          </div>
+        );
+      case 'thiccFitt':
+        return (
+          <div className="assurer-expanded-workout">
+            <p className="assurer-source-note">READ-ONLY FROM THICC.FITT</p>
+            <AssurerWorkoutMirror mirror={thiccFittWorkoutMirror} expanded />
           </div>
         );
       case 'word':
@@ -728,13 +773,20 @@ export default function TheAssurerSection() {
             </div>
           </article>
 
-          {STATIC_REVIEW_WIDGETS.map((widget) => (
-            <article key={widget.number} className={`assurer-widget ${widget.className}`} data-slot={widget.number}>
-              <div className="assurer-widget-content assurer-placeholder-content">
-                <strong>{widget.label}</strong>
-              </div>
-            </article>
-          ))}
+          <article className="assurer-widget assurer-thicc-fitt-workout" data-slot="06">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('thiccFitt')}
+              aria-label="EXPAND THICC.FITT WORKOUT LOG + TRACKING"
+            >
+              ⤢
+            </button>
+            <div className="assurer-widget-content assurer-workout-content">
+              <strong>THICC.FITT WORKOUT LOG + TRACKING</strong>
+              <AssurerWorkoutMirror mirror={thiccFittWorkoutMirror} />
+            </div>
+          </article>
 
           <article className="assurer-widget assurer-week-strip-widget" data-slot="10">
             <button
