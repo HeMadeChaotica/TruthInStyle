@@ -239,168 +239,340 @@ function weatherFromStorage(isoDate) {
   return cleanText(summary) ? { summary: cleanUpper(summary) } : null;
 }
 
-function phraseParts(dayPayload) {
+function firstPresent(...values) {
+  return values.map(cleanText).find(Boolean) || '';
+}
+
+function truncateText(value, maxLength = 96) {
+  const text = cleanText(value);
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1).trim()}…`;
+}
+
+function mergeWrapAnswers(storedAnswers = [], liveAnswers = {}) {
+  const live = Object.entries(liveAnswers || {})
+    .map(([question, answer]) => ({ id: question, question: cleanUpper(question), answer: cleanText(answer) }))
+    .filter((answer) => answer.answer);
+  return [...live, ...(Array.isArray(storedAnswers) ? storedAnswers : [])]
+    .filter((answer, index, all) => answer.answer && all.findIndex((candidate) => candidate.id === answer.id && candidate.answer === answer.answer) === index);
+}
+
+function wrapAnswerById(wrapAnswers, ids) {
+  const wanted = Array.isArray(ids) ? ids : [ids];
+  return firstPresent(...wanted.map((id) => wrapAnswers.find((answer) => answer.id === id || answer.question.toLowerCase().includes(id))?.answer));
+}
+
+function momentByType(dayPayload, label) {
+  return (dayPayload.moments || []).find((moment) => cleanText(moment.type).toLowerCase().includes(label.toLowerCase()))?.text || '';
+}
+
+function momentText(dayPayload, index = 0) {
+  return cleanText((dayPayload.moments || [])[index]?.text);
+}
+
+function mealText(dayPayload, index = 0) {
+  const meal = (dayPayload.mealHighlights || [])[index];
+  return meal ? [meal.time, meal.label, meal.macroText].filter(Boolean).join(' · ') : '';
+}
+
+function macroText(dayPayload, index = 0) {
+  const macro = (dayPayload.macroHighlights || [])[index];
+  return macro ? [macro.label, macro.current, macro.left && `${macro.left} LEFT`, macro.percent !== null ? `${macro.percent}%` : ''].filter(Boolean).join(' · ') : '';
+}
+
+function timelineText(dayPayload, index = 0) {
+  const entry = (dayPayload.timelineHighlights || [])[index];
+  return entry ? [entry.time, entry.text || entry.type].filter(Boolean).join(' · ') : '';
+}
+
+function makeTextItem(source, value, options = {}) {
+  const text = truncateText(value, options.maxLength || 112);
+  return text ? { source, text, role: options.role || 'line' } : null;
+}
+
+function makeVisualItem(source, value, form) {
+  const text = truncateText(value, 92);
+  return text ? { source, text, form } : null;
+}
+
+function compactItems(items, limit = 6) {
+  return items.filter(Boolean).slice(0, limit);
+}
+
+function sourceAvailabilityCount(dayPayload) {
+  return Object.values(dayPayload.sourceAvailability || {}).filter(Boolean).length;
+}
+
+function identityLine(dayPayload) {
   return [
-    dayPayload.titleOfDay,
-    dayPayload.wordOfDay?.word,
-    dayPayload.mood,
-    dayPayload.era,
-    dayPayload.battleCry?.text,
-    dayPayload.moments?.[0]?.text,
-    dayPayload.assuredThoughts,
-  ].map(cleanText).filter(Boolean);
+    cleanText(dayPayload.titleOfDay),
+    dayPayload.displayDate,
+    dayPayload.dayOfWeek,
+    `Chaotica Day # ${dayPayload.chaoticaDayNumber || getChaoticaDayNumber(dayPayload.sourceDate)}`,
+  ].filter(Boolean).join(' · ');
 }
 
-function choose(parts, index, fallback) {
-  return cleanUpper(parts[index % Math.max(parts.length, 1)] || fallback);
+export const SUMMATION_REMIX_PRESETS = [
+  {
+    id: 'variation-1',
+    selectorLabel: 'Variation 1',
+    name: 'THE MASQUERADE MAP',
+    visualFocus: 'The day becomes a ballroom map of emotional motion.',
+    textSources: ['Title of the Day', 'Date', 'Day of Week', 'Chaotica Day #', 'Word of the Day', 'Assured Thoughts excerpt'],
+    drawingSources: ['Mood mask illustration', 'Era costume/posture cue', 'Singleness heart-orbit', 'WOW/WTF/PLOT TWIST masquerade scene doodles'],
+    animatedSources: ['Battle Cry moving ribbon', 'Head Hummer pulsing music-note glyphs'],
+    smallIconSources: ['Singleness Level', 'Word of the Day', 'Moment cards'],
+    backgroundTextureSources: ['Weather atmospheric marks', 'Location atmospheric marks'],
+    emotionalArc: 'arrival → masked feeling → small scenes → ribboned resolve',
+    layoutBehavior: 'Ballroom-map orbit with mood and moment doodles arranged around the sourced title.',
+  },
+  {
+    id: 'variation-2',
+    selectorLabel: 'Variation 2',
+    name: 'THE BODY PULSE FLOOR',
+    visualFocus: 'The day is told through body, effort, appetite, and energy.',
+    textSources: ['Title of the Day', 'Word of the Day', 'Battle Cry excerpt', 'Assured Thoughts excerpt'],
+    drawingSources: ['THICC.FITT movement doodles', 'Macro plate/fuel symbols', 'Meal Log food glyphs', 'Sleep/recovery body marks'],
+    animatedSources: ['Workout energy line', 'Macro/fuel pulse line', 'Cardio or movement orbit'],
+    smallIconSources: ['Meal Log highlights', 'Macro snapshot', 'Recovery signal'],
+    backgroundTextureSources: ['Remember.Me timestamp flecks'],
+    emotionalArc: 'body signal → appetite evidence → effort pulse → grounded truth',
+    layoutBehavior: 'Floor-plan pulse path with body/fuel drawings carrying the story across one board.',
+  },
+  {
+    id: 'variation-3',
+    selectorLabel: 'Variation 3',
+    name: 'THE THREE-ACT DRAMA',
+    visualFocus: 'The day becomes a stage story with beginning, turn, and closing truth.',
+    textSources: ['Title of the Day', 'Date / Day / Chaotica Day #', 'What defined today?', 'What truth are you sealing?'],
+    drawingSources: ['WOW Act I sketch', 'WTF Act II sketch', 'PLOT TWIST Act III sketch', 'Mood theater mask pair'],
+    animatedSources: ['Act-divider line', 'Final truth reveal shimmer'],
+    smallIconSources: ['Meal symbol', 'Workout symbol', 'Weather symbol'],
+    backgroundTextureSources: ['Meal, workout, and weather supporting symbols'],
+    emotionalArc: 'opening mask → turn of the room → sealed closing truth',
+    layoutBehavior: 'Three theatrical act zones share one stage without becoming separate boards.',
+  },
+  {
+    id: 'variation-4',
+    selectorLabel: 'Variation 4',
+    name: 'THE WORD FLOOD',
+    visualFocus: 'The wording of the day becomes the dominant art.',
+    textSources: ['Title of the Day', 'Word of the Day', 'Assured Thoughts', 'wrap-question answers'],
+    drawingSources: ['Source-signal orbit doodles', 'Event calendar sparks', 'THICC.FITT motion marks', 'DA.EATER fuel marks'],
+    animatedSources: ['Flowing underline strokes', 'Slow orbit lines around the strongest phrase'],
+    smallIconSources: ['Events', 'Workout', 'Food', 'Weather'],
+    backgroundTextureSources: ['Battle Cry faint supporting script'],
+    emotionalArc: 'named word → thought flood → answer current → quiet underline',
+    layoutBehavior: 'Large language field with small doodles orbiting the strongest sourced phrase.',
+  },
+  {
+    id: 'variation-5',
+    selectorLabel: 'Variation 5',
+    name: 'THE ORACLE COLLAGE',
+    visualFocus: 'The day becomes a symbolic oracle board.',
+    textSources: ['Title of the Day', 'Date / Day / Chaotica Day #', 'final sealed truth', 'future-me reminder'],
+    drawingSources: ['Mood oracle symbol', 'Era emblem', 'Singleness relational icon', 'Word central sigil', 'WOW/WTF/PLOT TWIST omen cards'],
+    animatedSources: ['Opal glints on central sigil', 'Slow line movement between symbols'],
+    smallIconSources: ['Mood', 'Era', 'Singleness', 'Word of the Day'],
+    backgroundTextureSources: ['Workout fragments', 'Food fragments', 'Event fragments', 'Weather fragments'],
+    emotionalArc: 'symbols gather → sigil names it → future reminder seals it',
+    layoutBehavior: 'Oracle collage with one central sigil and connected omen fragments.',
+  },
+];
+
+export function getSummationRemixPresets() {
+  return SUMMATION_REMIX_PRESETS;
 }
 
-function makeSymbolSet(dayPayload) {
-  const symbols = [];
-  if (dayPayload.workoutHighlights.length) symbols.push('dumbbell comet', 'sweat lightning');
-  if (dayPayload.mealHighlights.length) symbols.push('fork orbit', 'macro moon');
-  if (dayPayload.moments.length) symbols.push('memory polaroids', 'plot spark');
-  if (dayPayload.weather) symbols.push('weather cloud');
-  if (dayPayload.weekSignal) symbols.push('week ladder');
-  if (dayPayload.wordOfDay?.word) symbols.push('word ribbon');
-  return symbols.length ? symbols : ['blank-page sigil', 'question curl'];
-}
+function buildPresetRemix(dayPayload, preset, wrapAnswers) {
+  const title = cleanText(dayPayload.titleOfDay);
+  const titleItem = title
+    ? makeTextItem('Title of the Day', title, { role: 'title', maxLength: 88 })
+    : { source: 'Title of the Day', text: 'Title of the Day is empty in THE.ASSURER.', role: 'empty-title' };
+  const wordItem = makeTextItem('Word of the Day', dayPayload.wordOfDay?.word, { role: 'word', maxLength: 48 });
+  const assuredExcerpt = makeTextItem('Assured Thoughts', dayPayload.assuredThoughts, { role: 'thought', maxLength: 120 });
+  const battleExcerpt = makeTextItem('Battle Cry', dayPayload.battleCry?.text, { role: 'cry', maxLength: 94 });
+  const dateItem = makeTextItem('Date / Day / Chaotica', identityLine(dayPayload), { role: 'identity', maxLength: 120 });
+  const definedAnswer = makeTextItem('What defined today?', wrapAnswerById(wrapAnswers, 'defined'), { role: 'wrap', maxLength: 100 });
+  const truthAnswer = makeTextItem('What truth are you sealing?', wrapAnswerById(wrapAnswers, ['truth', 'sealing']), { role: 'truth', maxLength: 100 });
+  const futureAnswer = makeTextItem('Future-me reminder', wrapAnswerById(wrapAnswers, ['remember', 'future']), { role: 'future', maxLength: 100 });
+  const wrapTextItems = wrapAnswers.map((answer) => makeTextItem(answer.question || 'Wrap answer', answer.answer, { role: 'wrap', maxLength: 100 }));
 
-function buildFragments(dayPayload) {
-  return [
-    dayPayload.mood && `MOOD: ${dayPayload.mood}`,
-    dayPayload.era && `ERA: ${dayPayload.era}`,
-    dayPayload.singlenessLevel && `SINGLENESS: ${dayPayload.singlenessLevel}`,
-    dayPayload.location && `LOCATION: ${dayPayload.location}`,
-    dayPayload.headHummer && `HEAD HUMMER: ${dayPayload.headHummer}`,
-    dayPayload.assuredThoughts && `ASSURED THOUGHTS: ${dayPayload.assuredThoughts}`,
-    dayPayload.wordOfDay?.word && `WORD: ${dayPayload.wordOfDay.word}`,
-    dayPayload.battleCry?.text && `BATTLE CRY: ${dayPayload.battleCry.text}`,
-    ...dayPayload.workoutHighlights.slice(0, 4),
-    ...dayPayload.mealHighlights.slice(0, 4).map((meal) => [meal.time, meal.label, meal.macroText].filter(Boolean).join(' — ')),
-    ...dayPayload.macroHighlights.slice(0, 5).map((macro) => `${macro.label}: ${macro.current}${macro.percent !== null ? ` / ${macro.percent}%` : ''}`),
-    dayPayload.weather?.summary,
-    dayPayload.weekSignal,
-    ...dayPayload.timelineHighlights.slice(0, 3).map((entry) => `${entry.time} ${entry.type}: ${entry.text}`),
-    ...dayPayload.moments.map((moment) => `${moment.type}: ${moment.text}`),
-    ...dayPayload.wrapAnswers.slice(0, 3).map((wrap) => `${wrap.question}: ${wrap.answer}`),
-  ].map(cleanText).filter(Boolean);
-}
+  const wow = momentByType(dayPayload, 'wow') || momentText(dayPayload, 0);
+  const wtf = momentByType(dayPayload, 'wtf') || momentText(dayPayload, 1);
+  const plotTwist = momentByType(dayPayload, 'plot') || momentText(dayPayload, 2);
+  const workout = firstPresent(...(dayPayload.workoutHighlights || []));
+  const cardio = (dayPayload.workoutHighlights || []).find((item) => item.includes('CARDIO')) || workout;
+  const recovery = (dayPayload.workoutHighlights || []).find((item) => item.includes('RECOVERY')) || '';
+  const food = mealText(dayPayload, 0);
+  const macro = macroText(dayPayload, 0);
+  const weather = dayPayload.weather?.summary;
+  const location = dayPayload.location;
+  const timeline = timelineText(dayPayload, 0);
+  const finalTruth = truthAnswer || makeTextItem('Final sealed truth', firstPresent(wrapAnswerById(dayPayload.wrapAnswers || [], ['truth', 'sealing']), dayPayload.assuredThoughts), { role: 'truth' });
 
-function createVariation(dayPayload, index, config) {
-  const parts = phraseParts(dayPayload);
-  const fragments = buildFragments(dayPayload);
-  const symbols = makeSymbolSet(dayPayload);
-
-  return {
-    id: `summation-variation-${index + 1}`,
-    name: config.name,
-    focalPhrase: choose(parts, index, config.fallbackPhrase),
-    storyArc: config.storyArc,
-    arrangement: config.arrangement,
-    flowDirection: config.flowDirection,
-    emotionalArc: config.emotionalArc,
-    doodleHierarchy: [config.heroDoodle, ...symbols].slice(0, 6),
-    wordRibbons: fragments.slice(index, index + 5).concat(fragments.slice(0, Math.max(0, 5 - fragments.slice(index, index + 5).length))),
-    clusters: config.clusters.map((cluster, clusterIndex) => ({
-      ...cluster,
-      fragments: fragments.filter((_, fragmentIndex) => fragmentIndex % config.clusters.length === clusterIndex).slice(0, 4),
-    })).filter((cluster) => cluster.fragments.length),
-    sketchInstructions: [
-      'stretch doodle lettering',
-      'sketchnote arrows between every cluster',
-      'looping connector lines',
-      'tiny hand-drawn icons beside true source fragments only',
-      config.instruction,
-    ],
-    sourceTruth: {
-      sourceDate: dayPayload.sourceDate,
-      chaoticaDayNumber: dayPayload.chaoticaDayNumber,
-      fragmentCount: fragments.length,
+  const byPreset = {
+    'variation-1': {
+      text: compactItems([titleItem, dateItem, wordItem, assuredExcerpt], 4),
+      drawings: compactItems([
+        makeVisualItem('Mood', dayPayload.mood, 'mask illustration'),
+        makeVisualItem('Era', dayPayload.era, 'costume posture cue'),
+        makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart-orbit symbol'),
+        makeVisualItem('WOW moment', wow, 'tiny masquerade scene'),
+        makeVisualItem('WTF moment', wtf, 'tiny masquerade scene'),
+        makeVisualItem('PLOT TWIST moment', plotTwist, 'tiny masquerade scene'),
+      ], 6),
+      animated: compactItems([
+        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'subtle moving ribbon'),
+        makeVisualItem('Head Hummer', dayPayload.headHummer, 'pulsing music-note glyphs'),
+      ], 3),
+      icons: compactItems([
+        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'word pin'),
+        makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart orbit'),
+        makeVisualItem('Chaotica Day #', dayPayload.chaoticaDayNumber, 'number charm'),
+      ], 4),
+      texture: compactItems([
+        makeVisualItem('Weather', weather, 'atmospheric marks'),
+        makeVisualItem('Location', location, 'room haze'),
+      ], 4),
+      focal: firstPresent(title, dayPayload.wordOfDay?.word),
+    },
+    'variation-2': {
+      text: compactItems([titleItem, wordItem, battleExcerpt, assuredExcerpt], 4),
+      drawings: compactItems([
+        makeVisualItem('THICC.FITT', workout, 'movement doodles'),
+        makeVisualItem('Macro snapshot', macro, 'abstract plate / fuel symbols'),
+        makeVisualItem('Meal Log', food, 'tiny food glyphs'),
+        makeVisualItem('Recovery signal', recovery, 'body-energy marks'),
+      ], 5),
+      animated: compactItems([
+        makeVisualItem('Workout energy', workout, 'energy line'),
+        makeVisualItem('Macro fuel', macro, 'fuel pulse line'),
+        makeVisualItem('Cardio movement', cardio, 'movement orbit'),
+      ], 3),
+      icons: compactItems([
+        makeVisualItem('Meal Log', mealText(dayPayload, 1) || food, 'food glyph'),
+        makeVisualItem('Macro snapshot', macroText(dayPayload, 1) || macro, 'fuel dot'),
+        makeVisualItem('Recovery signal', recovery, 'rest crescent'),
+      ], 4),
+      texture: compactItems((dayPayload.timelineHighlights || []).slice(0, 5).map((entry) => makeVisualItem('Remember.Me event', [entry.time, entry.text || entry.type].filter(Boolean).join(' · '), 'timestamp fleck')), 5),
+      focal: firstPresent(dayPayload.wordOfDay?.word, title, workout),
+    },
+    'variation-3': {
+      text: compactItems([titleItem, dateItem, definedAnswer, finalTruth], 4),
+      drawings: compactItems([
+        makeVisualItem('WOW', wow, 'Act I sketch'),
+        makeVisualItem('WTF', wtf, 'Act II sketch'),
+        makeVisualItem('PLOT TWIST', plotTwist, 'Act III sketch'),
+        makeVisualItem('Mood', dayPayload.mood, 'theater mask pair'),
+      ], 4),
+      animated: compactItems([
+        makeVisualItem('Act divider', firstPresent(wow, wtf, plotTwist), 'slow act-divider line'),
+        finalTruth && makeVisualItem('Final truth', finalTruth.text, 'reveal shimmer'),
+      ], 3),
+      icons: compactItems([
+        makeVisualItem('Meal', food, 'supporting plate'),
+        makeVisualItem('Workout', workout, 'supporting motion mark'),
+        makeVisualItem('Weather', weather, 'supporting cloud'),
+      ], 4),
+      texture: compactItems([
+        makeVisualItem('Meal', food, 'stage prop fleck'),
+        makeVisualItem('Workout', workout, 'stage prop fleck'),
+        makeVisualItem('Weather', weather, 'stage atmosphere'),
+      ], 4),
+      focal: firstPresent(finalTruth?.text, title, definedAnswer?.text),
+    },
+    'variation-4': {
+      text: compactItems([titleItem, wordItem, assuredExcerpt, ...wrapTextItems], 7),
+      drawings: compactItems([
+        makeVisualItem('Source signals', firstPresent(dayPayload.mood, dayPayload.era, weather), 'orbit doodles'),
+        makeVisualItem('Events', timeline, 'calendar sparks'),
+        makeVisualItem('THICC.FITT', workout, 'motion marks'),
+        makeVisualItem('DA.EATER', food || macro, 'fuel marks'),
+      ], 5),
+      animated: compactItems([
+        makeVisualItem('Strong phrase', firstPresent(dayPayload.wordOfDay?.word, dayPayload.assuredThoughts, title), 'flowing underline strokes'),
+        makeVisualItem('Strong phrase orbit', firstPresent(dayPayload.assuredThoughts, dayPayload.wordOfDay?.word, title), 'slow orbit lines'),
+      ], 3),
+      icons: compactItems([
+        makeVisualItem('Events', timeline, 'calendar spark'),
+        makeVisualItem('Workout', workout, 'motion mark'),
+        makeVisualItem('Food', food, 'fuel mark'),
+        makeVisualItem('Weather', weather, 'tiny cloud'),
+      ], 5),
+      texture: compactItems([
+        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'faint supporting script'),
+      ], 2),
+      focal: firstPresent(dayPayload.wordOfDay?.word, title, dayPayload.assuredThoughts),
+    },
+    'variation-5': {
+      text: compactItems([titleItem, dateItem, finalTruth, futureAnswer], 4),
+      drawings: compactItems([
+        makeVisualItem('Mood', dayPayload.mood, 'oracle symbol'),
+        makeVisualItem('Era', dayPayload.era, 'symbolic emblem'),
+        makeVisualItem('Singleness', dayPayload.singlenessLevel, 'relational icon'),
+        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'central sigil'),
+        makeVisualItem('WOW', wow, 'omen card'),
+        makeVisualItem('WTF', wtf, 'omen card'),
+        makeVisualItem('PLOT TWIST', plotTwist, 'omen card'),
+      ], 7),
+      animated: compactItems([
+        makeVisualItem('Word sigil', dayPayload.wordOfDay?.word, 'opal glints'),
+        makeVisualItem('Symbol relationships', firstPresent(dayPayload.mood, dayPayload.era, dayPayload.singlenessLevel), 'slow line movement'),
+      ], 3),
+      icons: compactItems([
+        makeVisualItem('Mood', dayPayload.mood, 'oracle mark'),
+        makeVisualItem('Era', dayPayload.era, 'emblem mark'),
+        makeVisualItem('Singleness', dayPayload.singlenessLevel, 'relation mark'),
+        makeVisualItem('Word', dayPayload.wordOfDay?.word, 'sigil mark'),
+      ], 5),
+      texture: compactItems([
+        makeVisualItem('Workout', workout, 'collage fragment'),
+        makeVisualItem('Food', food, 'collage fragment'),
+        makeVisualItem('Events', timeline, 'collage fragment'),
+        makeVisualItem('Weather', weather, 'collage fragment'),
+      ], 5),
+      focal: firstPresent(dayPayload.wordOfDay?.word, finalTruth?.text, title),
     },
   };
-}
 
-export function generateSummationVariations(dayPayload) {
-  const configs = [
-    {
-      name: 'RIBBON STORM MAP',
-      fallbackPhrase: 'THE DAY MADE A LITTLE WEATHER',
-      storyArc: 'center phrase blooms outward into weather, meals, movement, and memory sparks',
-      arrangement: 'radial phrase sun with messy orbit ribbons',
-      flowDirection: 'middle outward clockwise',
-      emotionalArc: 'arrival → static → proof → exhale',
-      heroDoodle: 'big stretched title ribbon',
-      instruction: 'make the title wobble like it got caught in glamorous wind',
-      clusters: [
-        { label: 'THE ROOM', icon: 'pin + cloud' },
-        { label: 'THE BODY', icon: 'dumbbell + fork' },
-        { label: 'THE PLOT', icon: 'spark card' },
-      ],
-    },
-    {
-      name: 'LEFT-TO-RIGHT CHAOS PARADE',
-      fallbackPhrase: 'ONE DAY, FIVE LITTLE DRAMAS',
-      storyArc: 'morning-to-night sketchnote march with tiny flags for each signal',
-      arrangement: 'horizontal parade lane with banner captions',
-      flowDirection: 'left to right',
-      emotionalArc: 'setup → appetite → effort → memory → closing question',
-      heroDoodle: 'parade flag with Chaotica number',
-      instruction: 'draw arrows like impatient marching bands',
-      clusters: [
-        { label: 'OPENING SCENE', icon: 'sun curl' },
-        { label: 'SIGNALS', icon: 'signal sparks' },
-        { label: 'END CAPTION', icon: 'moon note' },
-      ],
-    },
-    {
-      name: 'MOOD CONSTELLATION PAGE',
-      fallbackPhrase: 'A CONSTELLATION OF SMALL PROOFS',
-      storyArc: 'emotional star field where strongest source signals become doodle planets',
-      arrangement: 'constellation web with dotted connectors',
-      flowDirection: 'diagonal drift',
-      emotionalArc: 'signal → shimmer → meaning',
-      heroDoodle: 'mood moon with ribbon tail',
-      instruction: 'use dotted loops and starbursts, never boxy cards',
-      clusters: [
-        { label: 'HEART WEATHER', icon: 'moon face' },
-        { label: 'BODY ORBIT', icon: 'macro planets' },
-        { label: 'MEMORY COMETS', icon: 'polaroid stars' },
-      ],
-    },
-    {
-      name: 'BATTLE CRY COMIC STRIP',
-      fallbackPhrase: 'THE DAY FOUGHT BACK IN PANELS',
-      storyArc: 'battle cry becomes a comic action line that every source fragment reacts to',
-      arrangement: 'loose comic panels broken by scribble arrows',
-      flowDirection: 'zig-zag down the page',
-      emotionalArc: 'tension → punchline → rally',
-      heroDoodle: 'speech bubble thunderbolt',
-      instruction: 'make the battle cry a loud hand-lettered sound effect',
-      clusters: [
-        { label: 'CRY', icon: 'speech bolt' },
-        { label: 'CLASH', icon: 'impact star' },
-        { label: 'AFTERMATH', icon: 'soft landing cloud' },
-      ],
-    },
-    {
-      name: 'ARCHIVE ALTAR SKETCH',
-      fallbackPhrase: 'THIS IS WHAT THE DAY LEFT BEHIND',
-      storyArc: 'a final altar of truthful fragments, ready for Hopewood chronology',
-      arrangement: 'stacked shrine shelves with ribbons and tiny relic icons',
-      flowDirection: 'top to bottom',
-      emotionalArc: 'gather → name → seal',
-      heroDoodle: 'wax seal with tiny crown',
-      instruction: 'draw the final seal as a doodled stamp, not a corporate badge',
-      clusters: [
-        { label: 'NAMED', icon: 'label ribbon' },
-        { label: 'WITNESSED', icon: 'eye sparkle' },
-        { label: 'SEALED', icon: 'wax stamp' },
-      ],
-    },
-  ];
+  const remix = byPreset[preset.id] || byPreset['variation-1'];
+  const storyFragments = [
+    ...remix.text.map((item) => item.text),
+    ...remix.drawings.map((item) => `${item.text} as ${item.form}`),
+    ...remix.animated.map((item) => `${item.text} in motion`),
+    ...remix.texture.map((item) => item.text),
+  ].filter(Boolean);
 
-  return configs.map((config, index) => createVariation(dayPayload, index, config));
+  return {
+    ...preset,
+    title,
+    hasAssurerTitle: Boolean(title),
+    emptyTitleText: 'Title of the Day is empty in THE.ASSURER.',
+    displayDate: dayPayload.displayDate || formatDisplayDate(new Date()),
+    dayOfWeek: dayPayload.dayOfWeek || dayOfWeek(new Date()),
+    chaoticaDayNumber: dayPayload.chaoticaDayNumber || getChaoticaDayNumber(dayPayload.sourceDate),
+    focalPhrase: cleanUpper(remix.focal || title || ''),
+    textItems: remix.text,
+    drawingItems: remix.drawings,
+    animatedItems: remix.animated,
+    iconItems: remix.icons,
+    textureItems: remix.texture,
+    storyFragments: storyFragments.slice(0, 9),
+    sourceMap: {
+      text: preset.textSources,
+      drawing: preset.drawingSources,
+      animated: preset.animatedSources,
+      smallIcon: preset.smallIconSources,
+      backgroundTexture: preset.backgroundTextureSources,
+      emotionalFocalPoint: remix.focal || title || '',
+    },
+    sourceTruth: {
+      source: dayPayload.source || 'THE.ASSURER',
+      sourceDate: dayPayload.sourceDate,
+      availableSignals: sourceAvailabilityCount(dayPayload),
+    },
+  };
 }
 
 export async function readAssurerDayForSummation(date = new Date()) {
@@ -474,7 +646,6 @@ export async function readAssurerDayForSummation(date = new Date()) {
   };
 }
 
-
 function readSealedRecords() {
   if (!hasStorage()) return [];
   const parsed = safeJsonParse(window.localStorage.getItem(SUMMATION_SEALED_STORAGE_KEY), []);
@@ -489,64 +660,16 @@ export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
   return records.length + 1;
 }
 
-function variationProfile(variationName) {
-  const variationNumber = Number(cleanText(variationName).match(/\d+/)?.[0] || 1);
-  const profiles = [
-    { arc: 'arrival → appetite → evidence → exhale', cue: 'gold mask opens, velvet truth steps out' },
-    { arc: 'morning static → body thunder → moon receipt', cue: 'opera cape drags the day left to right' },
-    { arc: 'soft signal → orbiting proof → remembered glow', cue: 'opal constellation pins the mood in place' },
-    { arc: 'pressure → performance → release', cue: 'sweet potato spotlight catches the honest line' },
-    { arc: 'mess → meaning → sealed glamour', cue: 'camel shadow, cream ribbon, final bow' },
-  ];
-  return profiles[(variationNumber - 1) % profiles.length];
-}
-
-function storyPhraseCandidates(dayPayload = {}) {
-  const phrases = [
-    dayPayload.mood && `${dayPayload.mood} walked in wearing the first mask`,
-    dayPayload.era && `${dayPayload.era} set the velvet weather`,
-    dayPayload.singlenessLevel && `${dayPayload.singlenessLevel} moved through the room like a spotlight`,
-    dayPayload.location && `${dayPayload.location} held the scene`,
-    dayPayload.headHummer && `${dayPayload.headHummer} kept humming under the chandelier`,
-    dayPayload.assuredThoughts && `${dayPayload.assuredThoughts} became the note future-you can find`,
-    dayPayload.battleCry?.text && `${dayPayload.battleCry.text} cut a gold arrow through the noise`,
-    ...(dayPayload.workoutHighlights || []).slice(0, 2).map((item) => `${item} sparked body thunder`),
-    ...(dayPayload.mealHighlights || []).slice(0, 2).map((meal) => [meal.time, meal.label || meal.macroText].filter(Boolean).join(' fed the plot at ')),
-    dayPayload.weather?.summary && `${dayPayload.weather.summary} colored the backdrop`,
-    dayPayload.weekSignal && `${dayPayload.weekSignal} shimmered behind today`,
-    ...(dayPayload.timelineHighlights || []).slice(0, 2).map((entry) => `${entry.time} ${entry.text || entry.type} left a little comet trail`),
-    ...(dayPayload.moments || []).slice(0, 2).map((moment) => `${moment.text} stayed glowing in the balcony`),
-  ].map(cleanText).filter(Boolean);
-
-  return phrases.length ? phrases : [
-    'the day gathered itself in cream and gold',
-    'one small truth circled back with opera hands',
-    'future-you gets the clean ribbon version',
-  ];
+export function generateSummationVariations(dayPayload = null, wrapAnswers = {}) {
+  const payload = dayPayload || {};
+  const mergedWrapAnswers = mergeWrapAnswers(payload.wrapAnswers, wrapAnswers);
+  return SUMMATION_REMIX_PRESETS.map((preset) => buildPresetRemix(payload, preset, mergedWrapAnswers));
 }
 
 export function generateSummationSketchStory(dayPayload = null, selectedVariation = 'Variation 1', wrapAnswers = {}) {
-  const payload = dayPayload || {};
-  const profile = variationProfile(selectedVariation);
-  const phrasePool = storyPhraseCandidates(payload);
-  const offset = Math.max(0, Number(cleanText(selectedVariation).match(/\d+/)?.[0] || 1) - 1);
-  const storyPhrases = phrasePool.slice(offset, offset + 6).concat(phrasePool.slice(0, Math.max(0, 6 - phrasePool.slice(offset, offset + 6).length)));
-  const answerRibbons = Object.values(wrapAnswers || {}).map(cleanText).filter(Boolean).slice(0, 5);
-  const focalPhrase = cleanUpper(payload.wordOfDay?.word || payload.titleOfDay || choose(phrasePool, offset, 'THE DAY FOUND ITS MASK'));
-
-  return {
-    title: cleanText(payload.titleOfDay),
-    displayDate: payload.displayDate || formatDisplayDate(new Date()),
-    dayOfWeek: payload.dayOfWeek || dayOfWeek(new Date()),
-    selectedVariation,
-    focalPhrase,
-    wordDefinition: cleanUpper(payload.wordOfDay?.definition || profile.cue),
-    emotionalArc: profile.arc,
-    theatreCue: profile.cue,
-    storyPhrases: storyPhrases.slice(0, 6),
-    answerRibbons,
-    symbols: ['✦', '☾', '◐', '♡', '↝', '✧'],
-  };
+  const variations = generateSummationVariations(dayPayload, wrapAnswers);
+  const selectedNumber = Number(cleanText(selectedVariation).match(/\d+/)?.[0] || 1);
+  return variations[selectedNumber - 1] || variations[0];
 }
 
 export function sealSummationVariation(dayPayload, selectedVariation) {
