@@ -1,5 +1,6 @@
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
 import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
+import { getDailyDateKeyCandidates, getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
 import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
@@ -19,6 +20,7 @@ import { receiveSealedSummation } from './hopewoodService';
 
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
+const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
 const ASSURER_DAILY_FIELD_KEYS = {
   mood: ['the_assurer_mood', 'assurer:mood'],
@@ -57,11 +59,6 @@ function isPresent(value) {
   return cleanText(value).length > 0;
 }
 
-function formatIsoDate(date) {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
 
 function formatDisplayDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -79,26 +76,44 @@ function dayOfYear(date) {
   return Math.floor(difference / 86400000);
 }
 
-function readStoredValue(baseKeys, isoDate) {
+function normalizeDateKeys(dateKeys) {
+  return Array.isArray(dateKeys) ? dateKeys.filter(Boolean) : [dateKeys].filter(Boolean);
+}
+
+function readStoredValue(baseKeys, dateKeys) {
   if (!hasStorage()) return '';
   const keys = Array.isArray(baseKeys) ? baseKeys : [baseKeys];
+  const dates = normalizeDateKeys(dateKeys);
   for (const key of keys) {
-    const dated = window.localStorage.getItem(`${key}:${isoDate}`);
-    if (dated !== null && cleanText(dated)) return dated;
+    for (const dateKey of dates) {
+      const dated = window.localStorage.getItem(`${key}:${dateKey}`);
+      if (dated !== null && cleanText(dated)) return dated;
+    }
     const undated = window.localStorage.getItem(key);
     if (undated !== null && cleanText(undated)) return undated;
   }
   return '';
 }
 
-function readStoredJson(baseKeys, isoDate, fallback) {
-  const raw = readStoredValue(baseKeys, isoDate);
+function readStoredJson(baseKeys, dateKeys, fallback) {
+  const raw = readStoredValue(baseKeys, dateKeys);
   return safeJsonParse(raw, fallback);
 }
 
-function readAssurerWord(isoDate) {
+function readAssurerDayPayload(dateKeys) {
+  return readStoredJson(ASSURER_DAY_STORAGE_KEY, dateKeys, null);
+}
+
+function readAssurerWord(dateKeys, assurerDayPayload = null) {
   const fallback = { word: '', definition: '' };
-  const parsed = readStoredJson(`${ASSURER_WORD_STORAGE_KEY}:${isoDate}`, isoDate, fallback);
+  const nativeWord = assurerDayPayload?.wordOfDay;
+  if (nativeWord?.word || nativeWord?.definition) {
+    return {
+      word: cleanUpper(nativeWord.word),
+      definition: cleanUpper(nativeWord.definition),
+    };
+  }
+  const parsed = readStoredJson(ASSURER_WORD_STORAGE_KEY, dateKeys, fallback);
   if (parsed?.word || parsed?.definition) {
     return {
       word: cleanUpper(parsed.word),
@@ -106,6 +121,12 @@ function readAssurerWord(isoDate) {
     };
   }
   return fallback;
+}
+
+function readAssurerNativeField(assurerDayPayload, fieldName, fallbackKeys, dateKeys, transform = cleanText) {
+  const nativeValue = assurerDayPayload?.[fieldName];
+  if (cleanText(nativeValue)) return transform(nativeValue);
+  return transform(readStoredValue(fallbackKeys, dateKeys));
 }
 
 function normalizeWrapAnswers(value) {
@@ -241,6 +262,7 @@ function buildFragments(dayPayload) {
     dayPayload.singlenessLevel && `SINGLENESS: ${dayPayload.singlenessLevel}`,
     dayPayload.location && `LOCATION: ${dayPayload.location}`,
     dayPayload.headHummer && `HEAD HUMMER: ${dayPayload.headHummer}`,
+    dayPayload.assuredThoughts && `ASSURED THOUGHTS: ${dayPayload.assuredThoughts}`,
     dayPayload.wordOfDay?.word && `WORD: ${dayPayload.wordOfDay.word}`,
     dayPayload.battleCry?.text && `BATTLE CRY: ${dayPayload.battleCry.text}`,
     ...dayPayload.workoutHighlights.slice(0, 4),
@@ -371,13 +393,15 @@ export function generateSummationVariations(dayPayload) {
 }
 
 export async function readAssurerDayForSummation(date = new Date()) {
-  const sourceDate = formatIsoDate(date);
+  const sourceDate = getLocalDateKey(date);
+  const sourceDateCandidates = getDailyDateKeyCandidates(date);
   const displayDate = formatDisplayDate(date);
   const daEaterDate = getDaEaterStorageDate(date);
   const rememberMeMomentDate = getRememberMeMomentDateKey(date);
   const rememberMeTimelineDate = getRememberMeDayTimelineDateKey(date);
-  const titleOfDay = cleanText(readStoredValue(ASSURER_TITLE_STORAGE_KEY, sourceDate));
-  const wordOfDay = readAssurerWord(sourceDate);
+  const assurerDayPayload = readAssurerDayPayload(sourceDateCandidates);
+  const titleOfDay = readAssurerNativeField(assurerDayPayload, 'titleOfDay', ASSURER_TITLE_STORAGE_KEY, sourceDateCandidates);
+  const wordOfDay = readAssurerWord(sourceDateCandidates, assurerDayPayload);
   const dailyBattleCry = getBattleCryForDate(date);
 
   const [rememberMeDayTimeline, thiccTimeWeekMirror] = await Promise.all([
@@ -388,8 +412,8 @@ export async function readAssurerDayForSummation(date = new Date()) {
   const macroMirror = readDaEaterMacroMirror(daEaterDate) || ASSURER_MACRO_FALLBACK_MIRROR;
   const daEaterMeals = readDaEaterMealLogForDate(daEaterDate) || EMPTY_DA_EATER_MEAL_LOG;
   const rememberMeMomentMirror = readRememberMeMomentMirror(rememberMeMomentDate) || EMPTY_REMEMBER_ME_MOMENT_MIRROR;
-  const thiccFittWorkoutMirror = readThiccFittWorkoutMirror(sourceDate) || EMPTY_THICC_FITT_WORKOUT_MIRROR;
-  const wrapAnswers = normalizeWrapAnswers(readStoredValue(ASSURER_DAILY_FIELD_KEYS.wrapAnswers, sourceDate));
+  const thiccFittWorkoutMirror = readThiccFittWorkoutMirror(sourceDateCandidates) || EMPTY_THICC_FITT_WORKOUT_MIRROR;
+  const wrapAnswers = normalizeWrapAnswers(readStoredValue(ASSURER_DAILY_FIELD_KEYS.wrapAnswers, sourceDateCandidates));
 
   return {
     source: 'THE.ASSURER',
@@ -398,13 +422,13 @@ export async function readAssurerDayForSummation(date = new Date()) {
     dayOfWeek: dayOfWeek(date),
     chaoticaDayNumber: dayOfYear(date),
     titleOfDay,
-    mood: cleanUpper(readStoredValue(ASSURER_DAILY_FIELD_KEYS.mood, sourceDate)),
-    era: cleanUpper(readStoredValue(ASSURER_DAILY_FIELD_KEYS.era, sourceDate)),
-    singlenessLevel: cleanUpper(readStoredValue(ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDate)),
-    location: cleanUpper(readStoredValue(ASSURER_DAILY_FIELD_KEYS.location, sourceDate)),
-    headHummer: cleanUpper(readStoredValue(ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDate)),
+    mood: readAssurerNativeField(assurerDayPayload, 'mood', ASSURER_DAILY_FIELD_KEYS.mood, sourceDateCandidates, cleanUpper),
+    era: readAssurerNativeField(assurerDayPayload, 'era', ASSURER_DAILY_FIELD_KEYS.era, sourceDateCandidates, cleanUpper),
+    singlenessLevel: readAssurerNativeField(assurerDayPayload, 'singlenessLevel', ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDateCandidates, cleanUpper),
+    location: readAssurerNativeField(assurerDayPayload, 'location', ASSURER_DAILY_FIELD_KEYS.location, sourceDateCandidates, cleanUpper),
+    headHummer: readAssurerNativeField(assurerDayPayload, 'headHummer', ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper),
     wordOfDay,
-    assuredThoughts: cleanText(readStoredValue(ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDate)),
+    assuredThoughts: readAssurerNativeField(assurerDayPayload, 'assuredThoughts', ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates),
     battleCry: {
       text: cleanText(dailyBattleCry?.text),
       attribution: cleanText(dailyBattleCry?.attribution),
@@ -413,7 +437,7 @@ export async function readAssurerDayForSummation(date = new Date()) {
     macroHighlights: macroHighlights(macroMirror),
     mealHighlights: mealHighlights(daEaterMeals),
     workoutHighlights: workoutHighlights(thiccFittWorkoutMirror),
-    weather: weatherFromStorage(sourceDate),
+    weather: weatherFromStorage(sourceDateCandidates),
     weekSignal: weekSignal(thiccTimeWeekMirror),
     timelineHighlights: timelineHighlights(rememberMeDayTimeline),
     moments: momentHighlights(rememberMeMomentMirror),
@@ -421,6 +445,12 @@ export async function readAssurerDayForSummation(date = new Date()) {
     sourceAvailability: {
       title: Boolean(titleOfDay),
       word: Boolean(wordOfDay.word),
+      mood: Boolean(readAssurerNativeField(assurerDayPayload, 'mood', ASSURER_DAILY_FIELD_KEYS.mood, sourceDateCandidates, cleanUpper)),
+      era: Boolean(readAssurerNativeField(assurerDayPayload, 'era', ASSURER_DAILY_FIELD_KEYS.era, sourceDateCandidates, cleanUpper)),
+      singlenessLevel: Boolean(readAssurerNativeField(assurerDayPayload, 'singlenessLevel', ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDateCandidates, cleanUpper)),
+      location: Boolean(readAssurerNativeField(assurerDayPayload, 'location', ASSURER_DAILY_FIELD_KEYS.location, sourceDateCandidates, cleanUpper)),
+      headHummer: Boolean(readAssurerNativeField(assurerDayPayload, 'headHummer', ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper)),
+      assuredThoughts: Boolean(readAssurerNativeField(assurerDayPayload, 'assuredThoughts', ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates)),
       macroSnapshot: Boolean(macroHighlights(macroMirror).length),
       mealLog: Boolean(mealHighlights(daEaterMeals).length),
       thiccFitt: Boolean(workoutHighlights(thiccFittWorkoutMirror).length),

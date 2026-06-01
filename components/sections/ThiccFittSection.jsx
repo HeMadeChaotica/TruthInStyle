@@ -4,6 +4,7 @@ import '../../styles/sections/thicc-fitt.css';
 import '../../styles/sections/universal-frame.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import { publishThiccFittSessionProof } from '../../src/services/assurerService';
+import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 
 const STORAGE_KEY = 'thicc_fitt_day';
@@ -25,9 +26,9 @@ const normalizeExerciseRows = (rows) => {
   });
 };
 const bodyRows = [['weight', 'WEIGHT'], ['bodyFat', 'BODY FAT'], ['chest', 'CHEST'], ['waist', 'WAIST'], ['arms', 'ARMS L / R'], ['thighs', 'THIGHS L / R'], ['glutes', 'GLUTES']];
-const todayKey = () => new Date().toISOString().slice(0, 10);
+const todayKey = () => getLocalDateKey();
 const WEEK_DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-const getWeekStartKey = (date = new Date()) => { const d = new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return d.toISOString().slice(0,10); };
+const getWeekStartKey = (date = new Date()) => { const d = new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()); return getLocalDateKey(d); };
 const parseDurationMinutes = (value) => { if (!value) return 0; const text = String(value).trim().toLowerCase(); const hhmm = text.match(/^(\d{1,2}):(\d{2})$/); if (hhmm) return Number(hhmm[1]) * 60 + Number(hhmm[2]); const h=text.match(/(\d+(?:\.\d+)?)\s*h/); const m=text.match(/(\d+)\s*m/); if (h||m) return Math.round((Number(h?.[1]||0)*60)+Number(m?.[1]||0)); const n=Number(text.replace(/[^0-9.]/g,'')); return Number.isFinite(n) ? Math.round(n) : 0; };
 
 const initialState = { control: { gymLocation: 'CHAOTICA', arrivalTime: '', workoutLength: '', seasonPhase: '', sorenessRecovery: '', prepStatus: '' }, exerciseRows: Array.from({ length: EXERCISE_COUNT }, createExerciseRow), core: { focus: '', circuit: '', rounds: '', repScheme: '', format: 'BODYWEIGHT', completed: '' }, cardio: { type: '', duration: '', intensity: '', location: '', notes: '', weeklyGoal: '3 SESSIONS / 60 MIN', weeklyDone: '' }, vault: { compound: '', ester: '', amount: '', shotCurrent: '', shotTotal: '', sensitivity: '', cycleWeekCurrent: '', cycleWeekTotal: '' }, body: Object.fromEntries(bodyRows.map(([k]) => [k, { today: '', lastWeek: '', change: '' }])), bodyNotes: '', stageCall: { months: '', days: '', hours: '', minutes: '', seconds: '', stageDescription: '', posingMinutes: '', mandatoryRoundPracticed: '', strongestPose: '', weakestPose: '', transitions: '', posingFatigue: '', coachSelfNotes: '' }, soHowYouDoin: optionRegistry.thiccFitt.soHowYouDoin[0], soHowYouDoinNotes: '', photo: { progressPhotoRef: '', gymPhotoRef: '' }, weeklyTrackers: { weekStart: getWeekStartKey(), byDay: Object.fromEntries(WEEK_DAYS.map((d) => [d, { training: { gymMinutes: 0, cardioMinutes: 0 }, caffeineMg: '', sleep: { bedtime: '', wakeTime: '', hoursSlept: '', quality: '', recoveryNotes: '' } }])) }, sessionCompleted: '' };
@@ -72,7 +73,7 @@ export default function ThiccFittSection() {
       // keep default state
     }
   }, []);
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }, [state]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, date: todayKey() })); }, [state]);
 
   useEffect(() => {
     const currentWeek = getWeekStartKey();

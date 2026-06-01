@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
 import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
+import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
 import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
@@ -72,6 +73,7 @@ const DAILY_WORD_BANK = [
 
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
+const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 
 const MOMENT_BACKS = {
   WOW: '/art/REMEMBER-ME/moment-backs/wow-moment-back.png',
@@ -86,11 +88,55 @@ function formatAssurerDate(date) {
   return `${month}/${day}/${year}`;
 }
 
-function formatAssurerStorageDate(date) {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${year}-${month}-${day}`;
+function formatAssurerDayOfWeek(date) {
+  return date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+}
+
+function safeJsonParse(raw, fallback) {
+  try {
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function buildAssurerDayPayload({
+  dateKey,
+  displayDate,
+  dayOfWeek,
+  titleOfDay,
+  mood,
+  era,
+  singlenessLevel,
+  lobitoCheckIn,
+  location,
+  weatherCity,
+  weatherSummary,
+  headHummer,
+  wordOfDay,
+  wordDefinition,
+  assuredThoughts,
+}) {
+  return {
+    source: 'THE.ASSURER',
+    dateKey,
+    displayDate,
+    dayOfWeek,
+    titleOfDay,
+    mood,
+    era,
+    singlenessLevel,
+    lobitoCheckIn,
+    location,
+    weatherCity,
+    weatherSummary,
+    headHummer,
+    wordOfDay: {
+      word: wordOfDay,
+      definition: wordDefinition,
+    },
+    assuredThoughts,
+  };
 }
 
 function getDailyWordDefault(storageDate) {
@@ -397,11 +443,12 @@ export default function TheAssurerSection() {
 
   const today = useMemo(() => new Date(), []);
   const date = useMemo(() => formatAssurerDate(today), [today]);
-  const storageDate = useMemo(() => formatAssurerStorageDate(today), [today]);
+  const storageDate = useMemo(() => getLocalDateKey(today), [today]);
   const daEaterStorageDate = useMemo(() => getDaEaterStorageDate(today), [today]);
   const rememberMeMomentDateKey = useMemo(() => getRememberMeMomentDateKey(today), [today]);
   const rememberMeTimelineDateKey = useMemo(() => getRememberMeDayTimelineDateKey(today), [today]);
   const defaultDailyWord = useMemo(() => getDailyWordDefault(storageDate), [storageDate]);
+  const storageDayOfWeek = useMemo(() => formatAssurerDayOfWeek(today), [today]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
   const [titleOfDay, setTitleOfDay] = useState('');
@@ -428,20 +475,34 @@ export default function TheAssurerSection() {
 
   useEffect(() => {
     try {
+      const savedDay = safeJsonParse(window.localStorage.getItem(`${ASSURER_DAY_STORAGE_KEY}:${storageDate}`), null);
       const savedTitle = window.localStorage.getItem(`${ASSURER_TITLE_STORAGE_KEY}:${storageDate}`);
-      if (savedTitle !== null) {
+      const savedWord = safeJsonParse(window.localStorage.getItem(`${ASSURER_WORD_STORAGE_KEY}:${storageDate}`), null);
+
+      if (typeof savedDay?.titleOfDay === 'string') {
+        setTitleOfDay(savedDay.titleOfDay);
+      } else if (savedTitle !== null) {
         setTitleOfDay(savedTitle);
       }
 
-      const savedWord = window.localStorage.getItem(`${ASSURER_WORD_STORAGE_KEY}:${storageDate}`);
-      if (savedWord) {
-        const parsedWord = JSON.parse(savedWord);
-        if (typeof parsedWord?.word === 'string') {
-          setWordOfDay(parsedWord.word);
-        }
-        if (typeof parsedWord?.definition === 'string') {
-          setWordDefinition(parsedWord.definition);
-        }
+      if (typeof savedDay?.mood === 'string') setMood(savedDay.mood);
+      if (typeof savedDay?.era === 'string') setEra(savedDay.era);
+      if (typeof savedDay?.singlenessLevel === 'string') setSinglenessLevel(savedDay.singlenessLevel);
+      if (typeof savedDay?.lobitoCheckIn === 'string') setLobitoCheckIn(savedDay.lobitoCheckIn);
+      if (typeof savedDay?.location === 'string') setLocation(savedDay.location);
+      if (typeof savedDay?.headHummer === 'string') setHeadHummer(savedDay.headHummer);
+      if (typeof savedDay?.assuredThoughts === 'string') setAssuredThoughts(savedDay.assuredThoughts);
+
+      const dayWord = savedDay?.wordOfDay && typeof savedDay.wordOfDay === 'object' ? savedDay.wordOfDay : null;
+      if (typeof dayWord?.word === 'string') {
+        setWordOfDay(dayWord.word);
+      } else if (typeof savedWord?.word === 'string') {
+        setWordOfDay(savedWord.word);
+      }
+      if (typeof dayWord?.definition === 'string') {
+        setWordDefinition(dayWord.definition);
+      } else if (typeof savedWord?.definition === 'string') {
+        setWordDefinition(savedWord.definition);
       }
     } catch {
       // Keep the blank title and deterministic daily word when local storage is unavailable.
@@ -720,13 +781,14 @@ export default function TheAssurerSection() {
     }
   };
 
-  // TODO: Persist assurer_assessment and assured_thoughts through the project storage layer when the Assurer daily store is finalized.
   const weatherSummary = weatherResult
     ? `${weatherDisplayLabel} ${weatherResult.condition}`
     : `${weatherDisplayLabel} WEATHER PENDING`;
-  const assurerNativePayload = useMemo(() => ({
+  const assurerNativePayload = useMemo(() => buildAssurerDayPayload({
+    dateKey: storageDate,
+    displayDate: date,
+    dayOfWeek: storageDayOfWeek,
     titleOfDay,
-    date,
     mood,
     era,
     singlenessLevel,
@@ -739,8 +801,10 @@ export default function TheAssurerSection() {
     wordDefinition,
     assuredThoughts,
   }), [
-    titleOfDay,
+    storageDate,
     date,
+    storageDayOfWeek,
+    titleOfDay,
     mood,
     era,
     singlenessLevel,
@@ -753,7 +817,18 @@ export default function TheAssurerSection() {
     wordDefinition,
     assuredThoughts,
   ]);
-  void assurerNativePayload;
+
+  useEffect(() => {
+    if (!storageLoaded) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(`${ASSURER_DAY_STORAGE_KEY}:${storageDate}`, JSON.stringify(assurerNativePayload));
+    } catch {
+      // Local storage is optional for this native panel.
+    }
+  }, [assurerNativePayload, storageDate, storageLoaded]);
 
   return (
     <section className="assurer-oracle-shell" aria-label="THE.ASSURER oracle board">
