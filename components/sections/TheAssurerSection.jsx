@@ -711,17 +711,19 @@ export default function TheAssurerSection() {
             </div>
           </article>
 
-          <article className="assurer-widget assurer-macro-bars" data-slot="02">
-            <button
-              className="assurer-expand-button"
-              type="button"
-              onClick={() => openExpandedWidget('macroBars')}
-              aria-label="EXPAND MACRO BARS"
-            >
-              ⤢
-            </button>
-            <div className="assurer-widget-content assurer-macro-content">
-              <strong>MACRO BARS</strong>
+          <article className="assurer-widget assurer-macro-bars assurer-macro-widget" data-slot="02">
+            <div className="assurer-macro-glass" aria-hidden="true" />
+            <div className="assurer-macro-border" aria-hidden="true" />
+            <div className="assurer-macro-content">
+              <button
+                className="assurer-expand-button"
+                type="button"
+                onClick={() => openExpandedWidget('macroBars')}
+                aria-label="EXPAND MACRO BARS"
+              >
+                ⤢
+              </button>
+              <strong className="assurer-macro-title">MACRO BARS</strong>
               <AssurerMacroBars rows={macroMirror.rows} isFallback={macroMirror.isFallback} />
             </div>
           </article>
