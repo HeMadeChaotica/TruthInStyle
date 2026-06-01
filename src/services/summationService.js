@@ -18,8 +18,8 @@ import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMi
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import { receiveSealedSummation } from './hopewoodService';
 
-const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
-const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
+const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfDay', 'assurer:title'];
+const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
 const ASSURER_DAILY_FIELD_KEYS = {
@@ -30,6 +30,8 @@ const ASSURER_DAILY_FIELD_KEYS = {
   headHummer: ['the_assurer_head_hummer', 'assurer:headHummer'],
   assuredThoughts: ['the_assurer_assured_thoughts', 'assurer:assuredThoughts'],
   wrapAnswers: ['the_assurer_end_of_day_wrap', 'assurer:endOfDayWrap'],
+  dateKey: ['the_assurer_date_key', 'assurer:dateKey'],
+  dayOfWeek: ['the_assurer_day_of_week', 'assurer:dayOfWeek'],
 };
 
 function hasStorage() {
@@ -106,7 +108,7 @@ function readAssurerDayPayload(dateKeys) {
 
 function readAssurerWord(dateKeys, assurerDayPayload = null) {
   const fallback = { word: '', definition: '' };
-  const nativeWord = assurerDayPayload?.wordOfDay;
+  const nativeWord = assurerDayPayload?.wordOfDay || assurerDayPayload?.dailyWord;
   if (nativeWord?.word || nativeWord?.definition) {
     return {
       word: cleanUpper(nativeWord.word),
@@ -123,8 +125,17 @@ function readAssurerWord(dateKeys, assurerDayPayload = null) {
   return fallback;
 }
 
+function readPayloadField(assurerDayPayload, fieldNames) {
+  const names = Array.isArray(fieldNames) ? fieldNames : [fieldNames];
+  for (const fieldName of names) {
+    const nativeValue = assurerDayPayload?.[fieldName];
+    if (cleanText(nativeValue)) return nativeValue;
+  }
+  return '';
+}
+
 function readAssurerNativeField(assurerDayPayload, fieldName, fallbackKeys, dateKeys, transform = cleanText) {
-  const nativeValue = assurerDayPayload?.[fieldName];
+  const nativeValue = readPayloadField(assurerDayPayload, fieldName);
   if (cleanText(nativeValue)) return transform(nativeValue);
   return transform(readStoredValue(fallbackKeys, dateKeys));
 }
@@ -400,7 +411,7 @@ export async function readAssurerDayForSummation(date = new Date()) {
   const rememberMeMomentDate = getRememberMeMomentDateKey(date);
   const rememberMeTimelineDate = getRememberMeDayTimelineDateKey(date);
   const assurerDayPayload = readAssurerDayPayload(sourceDateCandidates);
-  const titleOfDay = readAssurerNativeField(assurerDayPayload, 'titleOfDay', ASSURER_TITLE_STORAGE_KEY, sourceDateCandidates);
+  const titleOfDay = readAssurerNativeField(assurerDayPayload, ['titleOfDay', 'title', 'dailyTitle'], ASSURER_TITLE_STORAGE_KEY, sourceDateCandidates);
   const wordOfDay = readAssurerWord(sourceDateCandidates, assurerDayPayload);
   const dailyBattleCry = getBattleCryForDate(date);
 
@@ -419,16 +430,17 @@ export async function readAssurerDayForSummation(date = new Date()) {
     source: 'THE.ASSURER',
     sourceDate,
     displayDate,
-    dayOfWeek: dayOfWeek(date),
-    chaoticaDayNumber: dayOfYear(date),
+    dateKey: readAssurerNativeField(assurerDayPayload, 'dateKey', ASSURER_DAILY_FIELD_KEYS.dateKey, sourceDateCandidates) || sourceDate,
+    dayOfWeek: readAssurerNativeField(assurerDayPayload, 'dayOfWeek', ASSURER_DAILY_FIELD_KEYS.dayOfWeek, sourceDateCandidates, cleanUpper) || dayOfWeek(date),
+    chaoticaDayNumber: getChaoticaDayNumber(sourceDate),
     titleOfDay,
     mood: readAssurerNativeField(assurerDayPayload, 'mood', ASSURER_DAILY_FIELD_KEYS.mood, sourceDateCandidates, cleanUpper),
     era: readAssurerNativeField(assurerDayPayload, 'era', ASSURER_DAILY_FIELD_KEYS.era, sourceDateCandidates, cleanUpper),
-    singlenessLevel: readAssurerNativeField(assurerDayPayload, 'singlenessLevel', ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDateCandidates, cleanUpper),
+    singlenessLevel: readAssurerNativeField(assurerDayPayload, ['singlenessLevel', 'singleness', 'singleLevel'], ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDateCandidates, cleanUpper),
     location: readAssurerNativeField(assurerDayPayload, 'location', ASSURER_DAILY_FIELD_KEYS.location, sourceDateCandidates, cleanUpper),
-    headHummer: readAssurerNativeField(assurerDayPayload, 'headHummer', ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper),
+    headHummer: readAssurerNativeField(assurerDayPayload, ['headHummer', 'headHum', 'songLoop'], ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper),
     wordOfDay,
-    assuredThoughts: readAssurerNativeField(assurerDayPayload, 'assuredThoughts', ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates),
+    assuredThoughts: readAssurerNativeField(assurerDayPayload, ['assuredThoughts', 'thoughts', 'assurerThoughts'], ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates),
     battleCry: {
       text: cleanText(dailyBattleCry?.text),
       attribution: cleanText(dailyBattleCry?.attribution),
@@ -447,10 +459,10 @@ export async function readAssurerDayForSummation(date = new Date()) {
       word: Boolean(wordOfDay.word),
       mood: Boolean(readAssurerNativeField(assurerDayPayload, 'mood', ASSURER_DAILY_FIELD_KEYS.mood, sourceDateCandidates, cleanUpper)),
       era: Boolean(readAssurerNativeField(assurerDayPayload, 'era', ASSURER_DAILY_FIELD_KEYS.era, sourceDateCandidates, cleanUpper)),
-      singlenessLevel: Boolean(readAssurerNativeField(assurerDayPayload, 'singlenessLevel', ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDateCandidates, cleanUpper)),
+      singlenessLevel: Boolean(readAssurerNativeField(assurerDayPayload, ['singlenessLevel', 'singleness', 'singleLevel'], ASSURER_DAILY_FIELD_KEYS.singlenessLevel, sourceDateCandidates, cleanUpper)),
       location: Boolean(readAssurerNativeField(assurerDayPayload, 'location', ASSURER_DAILY_FIELD_KEYS.location, sourceDateCandidates, cleanUpper)),
-      headHummer: Boolean(readAssurerNativeField(assurerDayPayload, 'headHummer', ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper)),
-      assuredThoughts: Boolean(readAssurerNativeField(assurerDayPayload, 'assuredThoughts', ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates)),
+      headHummer: Boolean(readAssurerNativeField(assurerDayPayload, ['headHummer', 'headHum', 'songLoop'], ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper)),
+      assuredThoughts: Boolean(readAssurerNativeField(assurerDayPayload, ['assuredThoughts', 'thoughts', 'assurerThoughts'], ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates)),
       macroSnapshot: Boolean(macroHighlights(macroMirror).length),
       mealLog: Boolean(mealHighlights(daEaterMeals).length),
       thiccFitt: Boolean(workoutHighlights(thiccFittWorkoutMirror).length),
@@ -462,22 +474,92 @@ export async function readAssurerDayForSummation(date = new Date()) {
   };
 }
 
+
 function readSealedRecords() {
   if (!hasStorage()) return [];
   const parsed = safeJsonParse(window.localStorage.getItem(SUMMATION_SEALED_STORAGE_KEY), []);
   return Array.isArray(parsed) ? parsed : [];
 }
 
+export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
+  const requestedDateKey = cleanText(dateKey);
+  const records = readSealedRecords();
+  const existing = records.find((record) => cleanText(record?.sourceDate) === requestedDateKey || cleanText(record?.dateKey) === requestedDateKey);
+  if (existing?.chaoticaDayNumber) return Number(existing.chaoticaDayNumber);
+  return records.length + 1;
+}
+
+function variationProfile(variationName) {
+  const variationNumber = Number(cleanText(variationName).match(/\d+/)?.[0] || 1);
+  const profiles = [
+    { arc: 'arrival → appetite → evidence → exhale', cue: 'gold mask opens, velvet truth steps out' },
+    { arc: 'morning static → body thunder → moon receipt', cue: 'opera cape drags the day left to right' },
+    { arc: 'soft signal → orbiting proof → remembered glow', cue: 'opal constellation pins the mood in place' },
+    { arc: 'pressure → performance → release', cue: 'sweet potato spotlight catches the honest line' },
+    { arc: 'mess → meaning → sealed glamour', cue: 'camel shadow, cream ribbon, final bow' },
+  ];
+  return profiles[(variationNumber - 1) % profiles.length];
+}
+
+function storyPhraseCandidates(dayPayload = {}) {
+  const phrases = [
+    dayPayload.mood && `${dayPayload.mood} walked in wearing the first mask`,
+    dayPayload.era && `${dayPayload.era} set the velvet weather`,
+    dayPayload.singlenessLevel && `${dayPayload.singlenessLevel} moved through the room like a spotlight`,
+    dayPayload.location && `${dayPayload.location} held the scene`,
+    dayPayload.headHummer && `${dayPayload.headHummer} kept humming under the chandelier`,
+    dayPayload.assuredThoughts && `${dayPayload.assuredThoughts} became the note future-you can find`,
+    dayPayload.battleCry?.text && `${dayPayload.battleCry.text} cut a gold arrow through the noise`,
+    ...(dayPayload.workoutHighlights || []).slice(0, 2).map((item) => `${item} sparked body thunder`),
+    ...(dayPayload.mealHighlights || []).slice(0, 2).map((meal) => [meal.time, meal.label || meal.macroText].filter(Boolean).join(' fed the plot at ')),
+    dayPayload.weather?.summary && `${dayPayload.weather.summary} colored the backdrop`,
+    dayPayload.weekSignal && `${dayPayload.weekSignal} shimmered behind today`,
+    ...(dayPayload.timelineHighlights || []).slice(0, 2).map((entry) => `${entry.time} ${entry.text || entry.type} left a little comet trail`),
+    ...(dayPayload.moments || []).slice(0, 2).map((moment) => `${moment.text} stayed glowing in the balcony`),
+  ].map(cleanText).filter(Boolean);
+
+  return phrases.length ? phrases : [
+    'the day gathered itself in cream and gold',
+    'one small truth circled back with opera hands',
+    'future-you gets the clean ribbon version',
+  ];
+}
+
+export function generateSummationSketchStory(dayPayload = null, selectedVariation = 'Variation 1', wrapAnswers = {}) {
+  const payload = dayPayload || {};
+  const profile = variationProfile(selectedVariation);
+  const phrasePool = storyPhraseCandidates(payload);
+  const offset = Math.max(0, Number(cleanText(selectedVariation).match(/\d+/)?.[0] || 1) - 1);
+  const storyPhrases = phrasePool.slice(offset, offset + 6).concat(phrasePool.slice(0, Math.max(0, 6 - phrasePool.slice(offset, offset + 6).length)));
+  const answerRibbons = Object.values(wrapAnswers || {}).map(cleanText).filter(Boolean).slice(0, 5);
+  const focalPhrase = cleanUpper(payload.wordOfDay?.word || payload.titleOfDay || choose(phrasePool, offset, 'THE DAY FOUND ITS MASK'));
+
+  return {
+    title: cleanText(payload.titleOfDay),
+    displayDate: payload.displayDate || formatDisplayDate(new Date()),
+    dayOfWeek: payload.dayOfWeek || dayOfWeek(new Date()),
+    selectedVariation,
+    focalPhrase,
+    wordDefinition: cleanUpper(payload.wordOfDay?.definition || profile.cue),
+    emotionalArc: profile.arc,
+    theatreCue: profile.cue,
+    storyPhrases: storyPhrases.slice(0, 6),
+    answerRibbons,
+    symbols: ['✦', '☾', '◐', '♡', '↝', '✧'],
+  };
+}
+
 export function sealSummationVariation(dayPayload, selectedVariation) {
   if (!hasStorage() || !dayPayload?.sourceDate || !selectedVariation?.id) return null;
 
+  const existingRecord = readSealedRecords().find((record) => String(record?.sourceDate || '') === String(dayPayload.sourceDate));
   const sealedRecord = {
     id: `summation-${dayPayload.sourceDate}`,
     source: 'THE.SUMMATION',
     sourceDate: dayPayload.sourceDate,
     displayDate: dayPayload.displayDate,
     dayOfWeek: dayPayload.dayOfWeek,
-    chaoticaDayNumber: dayPayload.chaoticaDayNumber,
+    chaoticaDayNumber: existingRecord?.chaoticaDayNumber || getChaoticaDayNumber(dayPayload.sourceDate),
     selectedVariationId: selectedVariation.id,
     selectedVariationName: selectedVariation.name,
     renderedStoryPayload: selectedVariation,
