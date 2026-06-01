@@ -1820,3 +1820,69 @@
   border-radius: 16px;
   font-size: clamp(18px, 1.4vw, 28px);
 }
+
+.assurer-workout-mirror .assurer-workout-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.assurer-signal-tile {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid rgba(239, 143, 163, 0.34);
+  border-radius: 10px;
+  background: rgba(12, 4, 5, 0.28);
+  color: #F4B2BD;
+  font-size: clamp(6px, 0.43vw, 9px);
+  font-weight: 900;
+  line-height: 1.1;
+  padding: clamp(4px, 0.38vw, 7px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assurer-signal-tile strong {
+  display: block;
+  color: #EF8FA3;
+  font-size: clamp(5px, 0.36vw, 8px);
+  line-height: 1;
+}
+
+.assurer-workout-footer {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.assurer-signal-wide {
+  grid-column: 1 / -1;
+}
+
+.assurer-workout-empty-detail {
+  margin: 0;
+  border: 1px solid rgba(239, 143, 163, 0.28);
+  border-radius: 12px;
+  background: rgba(12, 4, 5, 0.22);
+  color: rgba(244, 178, 189, 0.76);
+  font-size: clamp(7px, 0.48vw, 10px);
+  font-weight: 900;
+  line-height: 1.2;
+  padding: clamp(7px, 0.62vw, 11px);
+  text-align: center;
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.assurer-workout-mirror-expanded .assurer-workout-footer {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.assurer-workout-mirror-expanded .assurer-signal-tile {
+  border-radius: 16px;
+  font-size: clamp(13px, 0.95vw, 18px);
+  padding: clamp(0.68rem, 0.95vw, 1rem);
+  white-space: normal;
+}
+
+.assurer-workout-mirror-expanded .assurer-signal-tile strong {
+  font-size: clamp(11px, 0.78vw, 15px);
+}
