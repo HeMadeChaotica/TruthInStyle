@@ -1,5 +1,5 @@
-import SummationSection from '../../components/sections/SummationSection';
+import TheSummationSection from '../../components/sections/TheSummationSection';
 
 export default function TheSummationPage() {
-  return <SummationSection />;
+  return <TheSummationSection />;
 }
