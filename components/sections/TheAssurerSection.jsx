@@ -7,11 +7,17 @@ import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
 import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
+  EMPTY_REMEMBER_ME_DAY_TIMELINE,
+  getRememberMeDayTimelineDateKey,
+  readRememberMeDayTimelineMirror,
+} from '../../lib/theAssurer/rememberMeDayTimelineMirror';
+import {
   EMPTY_REMEMBER_ME_MOMENT_MIRROR,
   REMEMBER_ME_MOMENT_TYPES,
   getRememberMeMomentDateKey,
   readRememberMeMomentMirror,
 } from '../../lib/theAssurer/rememberMeMomentMirror';
+import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMirror } from '../../lib/theAssurer/thiccTimeWeekMirror';
 import {
   DEFAULT_WEATHER_CITY,
   WEATHER_CITY_COORDINATES,
@@ -24,9 +30,7 @@ const STATIC_REVIEW_WIDGETS = [
   { number: '02', className: 'assurer-macro-bars', label: 'MACRO BARS' },
   { number: '06', className: 'assurer-body-sleep-water', label: 'BODY / SLEEP / WATER' },
   { number: '09', className: 'assurer-media-strip', label: 'MEDIA STRIP' },
-  { number: '10', className: 'assurer-week-strip', label: 'WEEK STRIP' },
   { number: '11', className: 'assurer-metric-strip', label: 'METRICS' },
-  { number: '12', className: 'assurer-day-timeline', label: 'DAY TIMELINE' },
 ];
 
 const DAILY_WORD_BANK = [
@@ -100,6 +104,76 @@ function getDailyWordDefault(storageDate) {
   return DAILY_WORD_BANK[seed % DAILY_WORD_BANK.length];
 }
 
+
+function AssurerTimelineRows({ entries, limit, expanded = false }) {
+  const visibleEntries = typeof limit === 'number' ? entries.slice(0, limit) : entries;
+
+  if (!visibleEntries.length) {
+    return <p className="assurer-timeline-empty">NO REMEMBER.ME EVENTS TODAY</p>;
+  }
+
+  return (
+    <div className={`assurer-timeline-list ${expanded ? 'assurer-timeline-list-expanded' : ''}`.trim()}>
+      {visibleEntries.map((entry) => (
+        <article className="assurer-timeline-row" key={entry.id}>
+          <span className="assurer-timeline-time">{entry.time || 'ALL DAY'}</span>
+          <span className="assurer-timeline-type">{entry.type}</span>
+          <span className="assurer-timeline-text">{entry.text}</span>
+          {expanded && entry.mediaRef ? <span className="assurer-timeline-media">MEDIA</span> : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function AssurerWeekStrip({ weekMirror }) {
+  const weekDays = Array.isArray(weekMirror.weekDays) ? weekMirror.weekDays : [];
+  const hasEntries = weekDays.some((day) => day.entries?.length);
+
+  if (!hasEntries) {
+    return <p className="assurer-week-empty">NO THICC.TIME ENTRIES THIS WEEK</p>;
+  }
+
+  return (
+    <div className="assurer-week-strip" aria-label="READ-ONLY THICC.TIME WEEK STRIP">
+      {weekDays.map((day) => (
+        <div className="assurer-week-day" key={day.dateKey}>
+          <span className="assurer-week-day-label">{day.label}</span>
+          <span className="assurer-week-day-count">{day.entries.length}</span>
+          <span className="assurer-week-dot-row" aria-hidden="true">
+            {day.entries.slice(0, 3).map((entry) => (
+              <span className="assurer-week-dot" style={{ backgroundColor: entry.color }} key={entry.id} />
+            ))}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AssurerWeekExpanded({ weekMirror }) {
+  const weekDays = Array.isArray(weekMirror.weekDays) ? weekMirror.weekDays : [];
+
+  return (
+    <div className="assurer-week-expanded">
+      <p className="assurer-source-note">READ-ONLY FROM THICC.TIME</p>
+      <div className="assurer-week-expanded-grid">
+        {weekDays.map((day) => (
+          <article className="assurer-week-expanded-day" key={day.dateKey}>
+            <h3>{day.label} <span>{day.dayNumber}</span></h3>
+            {day.entries.length ? day.entries.map((entry) => (
+              <div className="assurer-week-entry" key={entry.id} style={{ borderLeftColor: entry.color }}>
+                <span className="assurer-week-entry-time">{entry.startTime || 'TIME TBD'}{entry.endTime ? `-${entry.endTime}` : ''}</span>
+                <strong>{entry.person}</strong>
+                <small>{entry.label}</small>
+              </div>
+            )) : <p className="assurer-week-day-empty">NO ENTRIES</p>}
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function AssurerMealRows({ meals, limit, expanded = false }) {
   const visibleMeals = typeof limit === 'number' ? meals.slice(0, limit) : meals;
@@ -270,6 +344,7 @@ export default function TheAssurerSection() {
   const storageDate = useMemo(() => formatAssurerStorageDate(today), [today]);
   const daEaterStorageDate = useMemo(() => getDaEaterStorageDate(today), [today]);
   const rememberMeMomentDateKey = useMemo(() => getRememberMeMomentDateKey(today), [today]);
+  const rememberMeTimelineDateKey = useMemo(() => getRememberMeDayTimelineDateKey(today), [today]);
   const defaultDailyWord = useMemo(() => getDailyWordDefault(storageDate), [storageDate]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
@@ -291,6 +366,8 @@ export default function TheAssurerSection() {
   const [macroMirror, setMacroMirror] = useState(ASSURER_MACRO_FALLBACK_MIRROR);
   const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
   const [rememberMeMomentMirror, setRememberMeMomentMirror] = useState(EMPTY_REMEMBER_ME_MOMENT_MIRROR);
+  const [rememberMeDayTimeline, setRememberMeDayTimeline] = useState({ ...EMPTY_REMEMBER_ME_DAY_TIMELINE, dateKey: rememberMeTimelineDateKey });
+  const [thiccTimeWeekMirror, setThiccTimeWeekMirror] = useState({ ...EMPTY_THICC_TIME_WEEK_MIRROR, weekDays: getThiccTimeWeekDays(today) });
 
   useEffect(() => {
     try {
@@ -336,6 +413,34 @@ export default function TheAssurerSection() {
   useEffect(() => {
     setRememberMeMomentMirror(readRememberMeMomentMirror(rememberMeMomentDateKey));
   }, [rememberMeMomentDateKey]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    readRememberMeDayTimelineMirror(rememberMeTimelineDateKey).then((mirror) => {
+      if (isActive) {
+        setRememberMeDayTimeline(mirror);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [rememberMeTimelineDateKey]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    readThiccTimeWeekMirror(today).then((mirror) => {
+      if (isActive) {
+        setThiccTimeWeekMirror(mirror);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [today]);
 
   useEffect(() => {
     if (!storageLoaded) {
@@ -427,6 +532,8 @@ export default function TheAssurerSection() {
     macroBars: 'MACRO BARS',
     battleCry: 'BATTLE CRY',
     weather: 'WEATHER',
+    dayTimeline: 'DAY TIMELINE',
+    weekStrip: 'THICC.TIME WEEK',
     word: 'WORD OF THE DAY',
     thoughts: 'ASSURED THOUGHTS',
     dailyOrbit: 'DAILY ORBIT',
@@ -470,6 +577,15 @@ export default function TheAssurerSection() {
             </div>
           </div>
         );
+      case 'dayTimeline':
+        return (
+          <div className="assurer-expanded-timeline">
+            <p className="assurer-source-note">READ-ONLY FROM REMEMBER.ME EVENTS</p>
+            <AssurerTimelineRows entries={rememberMeDayTimeline.entries} expanded />
+          </div>
+        );
+      case 'weekStrip':
+        return <AssurerWeekExpanded weekMirror={thiccTimeWeekMirror} />;
       case 'mealLog':
         return (
           <div className="assurer-expanded-meal-log">
@@ -617,6 +733,37 @@ export default function TheAssurerSection() {
               </div>
             </article>
           ))}
+
+          <article className="assurer-widget assurer-week-strip-widget" data-slot="10">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('weekStrip')}
+              aria-label="EXPAND WEEK STRIP"
+            >
+              ⤢
+            </button>
+            <div className="assurer-widget-content assurer-week-content">
+              <strong>WEEK STRIP</strong>
+              <AssurerWeekStrip weekMirror={thiccTimeWeekMirror} />
+            </div>
+          </article>
+
+          <article className="assurer-widget assurer-day-timeline" data-slot="12">
+            <button
+              className="assurer-expand-button"
+              type="button"
+              onClick={() => openExpandedWidget('dayTimeline')}
+              aria-label="EXPAND DAY TIMELINE"
+            >
+              ⤢
+            </button>
+            <div className="assurer-widget-content assurer-timeline-content">
+              <strong>DAY TIMELINE</strong>
+              <small>{date}</small>
+              <AssurerTimelineRows entries={rememberMeDayTimeline.entries} limit={4} />
+            </div>
+          </article>
 
           <article className="assurer-widget assurer-meal-log" data-slot="05">
             <button
