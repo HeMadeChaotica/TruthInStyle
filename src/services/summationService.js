@@ -287,12 +287,22 @@ function timelineText(dayPayload, index = 0) {
 
 function makeTextItem(source, value, options = {}) {
   const text = truncateText(value, options.maxLength || 112);
-  return text ? { source, text, role: options.role || 'line' } : null;
+  const sourceKey = cleanText(options.sourceKey);
+  return text && sourceKey ? { source, sourceKey, text, role: options.role || 'line' } : null;
 }
 
-function makeVisualItem(source, value, form) {
+function makeVisualItem(source, value, form, sourceKey = 'otherAssurerSource') {
   const text = truncateText(value, 92);
-  return text ? { source, text, form } : null;
+  return text ? { source, sourceKey, text, form } : null;
+}
+
+function makeFocalItem(source, value, sourceKey) {
+  const text = truncateText(value, 88);
+  return text && sourceKey ? { source, sourceKey, text } : null;
+}
+
+function firstFocalItem(...items) {
+  return items.find((item) => item?.text) || null;
 }
 
 function compactItems(items, limit = 6) {
@@ -386,17 +396,15 @@ export function getSummationRemixPresets() {
 
 function buildPresetRemix(dayPayload, preset, wrapAnswers) {
   const title = cleanText(dayPayload.titleOfDay);
-  const titleItem = title
-    ? makeTextItem('Title of the Day', title, { role: 'title', maxLength: 88 })
-    : { source: 'Title of the Day', text: 'Title of the Day is empty in THE.ASSURER.', role: 'empty-title' };
-  const wordItem = makeTextItem('Word of the Day', dayPayload.wordOfDay?.word, { role: 'word', maxLength: 48 });
-  const assuredExcerpt = makeTextItem('Assured Thoughts', dayPayload.assuredThoughts, { role: 'thought', maxLength: 120 });
-  const battleExcerpt = makeTextItem('Battle Cry', dayPayload.battleCry?.text, { role: 'cry', maxLength: 94 });
-  const dateItem = makeTextItem('Date / Day / Chaotica', identityLine(dayPayload), { role: 'identity', maxLength: 120 });
-  const definedAnswer = makeTextItem('What defined today?', wrapAnswerById(wrapAnswers, 'defined'), { role: 'wrap', maxLength: 100 });
-  const truthAnswer = makeTextItem('What truth are you sealing?', wrapAnswerById(wrapAnswers, ['truth', 'sealing']), { role: 'truth', maxLength: 100 });
-  const futureAnswer = makeTextItem('Future-me reminder', wrapAnswerById(wrapAnswers, ['remember', 'future']), { role: 'future', maxLength: 100 });
-  const wrapTextItems = wrapAnswers.map((answer) => makeTextItem(answer.question || 'Wrap answer', answer.answer, { role: 'wrap', maxLength: 100 }));
+  const titleItem = makeTextItem('Title of the Day', title, { sourceKey: 'titleOfDay', role: 'title', maxLength: 88 });
+  const wordItem = makeTextItem('Word of the Day', dayPayload.wordOfDay?.word, { sourceKey: 'wordOfDay', role: 'word', maxLength: 48 });
+  const assuredExcerpt = makeTextItem('Assured Thoughts', dayPayload.assuredThoughts, { sourceKey: 'assuredThoughts', role: 'thought', maxLength: 120 });
+  const battleExcerpt = makeTextItem('Battle Cry', dayPayload.battleCry?.text, { sourceKey: 'battleCry', role: 'cry', maxLength: 94 });
+  const dateItem = makeTextItem('Date / Day / Chaotica', identityLine(dayPayload), { sourceKey: 'otherAssurerSource', role: 'identity', maxLength: 120 });
+  const definedAnswer = makeTextItem('What defined today?', wrapAnswerById(wrapAnswers, 'defined'), { sourceKey: 'wrapAnswers', role: 'wrap', maxLength: 100 });
+  const truthAnswer = makeTextItem('What truth are you sealing?', wrapAnswerById(wrapAnswers, ['truth', 'sealing']), { sourceKey: 'wrapAnswers', role: 'truth', maxLength: 100 });
+  const futureAnswer = makeTextItem('Future-me reminder', wrapAnswerById(wrapAnswers, ['remember', 'future']), { sourceKey: 'wrapAnswers', role: 'future', maxLength: 100 });
+  const wrapTextItems = wrapAnswers.map((answer) => makeTextItem(answer.question || 'Wrap answer', answer.answer, { sourceKey: 'wrapAnswers', role: 'wrap', maxLength: 100 }));
 
   const wow = momentByType(dayPayload, 'wow') || momentText(dayPayload, 0);
   const wtf = momentByType(dayPayload, 'wtf') || momentText(dayPayload, 1);
@@ -409,7 +417,9 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
   const weather = dayPayload.weather?.summary;
   const location = dayPayload.location;
   const timeline = timelineText(dayPayload, 0);
-  const finalTruth = truthAnswer || makeTextItem('Final sealed truth', firstPresent(wrapAnswerById(dayPayload.wrapAnswers || [], ['truth', 'sealing']), dayPayload.assuredThoughts), { role: 'truth' });
+  const storedTruthAnswer = makeTextItem('Final sealed truth', wrapAnswerById(dayPayload.wrapAnswers || [], ['truth', 'sealing']), { sourceKey: 'wrapAnswers', role: 'truth' });
+  const assuredTruth = makeTextItem('Final sealed truth', dayPayload.assuredThoughts, { sourceKey: 'assuredThoughts', role: 'truth' });
+  const finalTruth = truthAnswer || storedTruthAnswer || assuredTruth;
 
   const byPreset = {
     'variation-1': {
@@ -418,16 +428,16 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Mood', dayPayload.mood, 'mask illustration'),
         makeVisualItem('Era', dayPayload.era, 'costume posture cue'),
         makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart-orbit symbol'),
-        makeVisualItem('WOW moment', wow, 'tiny masquerade scene'),
-        makeVisualItem('WTF moment', wtf, 'tiny masquerade scene'),
-        makeVisualItem('PLOT TWIST moment', plotTwist, 'tiny masquerade scene'),
+        makeVisualItem('WOW moment', wow, 'tiny masquerade scene', 'moments'),
+        makeVisualItem('WTF moment', wtf, 'tiny masquerade scene', 'moments'),
+        makeVisualItem('PLOT TWIST moment', plotTwist, 'tiny masquerade scene', 'moments'),
       ], 6),
       animated: compactItems([
-        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'subtle moving ribbon'),
+        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'subtle moving ribbon', 'battleCry'),
         makeVisualItem('Head Hummer', dayPayload.headHummer, 'pulsing music-note glyphs'),
       ], 3),
       icons: compactItems([
-        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'word pin'),
+        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'word pin', 'wordOfDay'),
         makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart orbit'),
         makeVisualItem('Chaotica Day #', dayPayload.chaoticaDayNumber, 'number charm'),
       ], 4),
@@ -435,7 +445,10 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Weather', weather, 'atmospheric marks'),
         makeVisualItem('Location', location, 'room haze'),
       ], 4),
-      focal: firstPresent(title, dayPayload.wordOfDay?.word),
+      focal: firstFocalItem(
+        makeFocalItem('Title of the Day', title, 'titleOfDay'),
+        makeFocalItem('Word of the Day', dayPayload.wordOfDay?.word, 'wordOfDay'),
+      ),
     },
     'variation-2': {
       text: compactItems([titleItem, wordItem, battleExcerpt, assuredExcerpt], 4),
@@ -455,20 +468,25 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Macro snapshot', macroText(dayPayload, 1) || macro, 'fuel dot'),
         makeVisualItem('Recovery signal', recovery, 'rest crescent'),
       ], 4),
-      texture: compactItems((dayPayload.timelineHighlights || []).slice(0, 5).map((entry) => makeVisualItem('Remember.Me event', [entry.time, entry.text || entry.type].filter(Boolean).join(' · '), 'timestamp fleck')), 5),
-      focal: firstPresent(dayPayload.wordOfDay?.word, title, workout),
+      texture: compactItems((dayPayload.timelineHighlights || []).slice(0, 5).map((entry) => makeVisualItem('Remember.Me event', [entry.time, entry.text || entry.type].filter(Boolean).join(' · '), 'timestamp fleck', 'moments')), 5),
+      focal: firstFocalItem(
+        makeFocalItem('Word of the Day', dayPayload.wordOfDay?.word, 'wordOfDay'),
+        makeFocalItem('Title of the Day', title, 'titleOfDay'),
+        makeFocalItem('Battle Cry', dayPayload.battleCry?.text, 'battleCry'),
+        makeFocalItem('Assured Thoughts', dayPayload.assuredThoughts, 'assuredThoughts'),
+      ),
     },
     'variation-3': {
       text: compactItems([titleItem, dateItem, definedAnswer, finalTruth], 4),
       drawings: compactItems([
-        makeVisualItem('WOW', wow, 'Act I sketch'),
-        makeVisualItem('WTF', wtf, 'Act II sketch'),
-        makeVisualItem('PLOT TWIST', plotTwist, 'Act III sketch'),
+        makeVisualItem('WOW', wow, 'Act I sketch', 'moments'),
+        makeVisualItem('WTF', wtf, 'Act II sketch', 'moments'),
+        makeVisualItem('PLOT TWIST', plotTwist, 'Act III sketch', 'moments'),
         makeVisualItem('Mood', dayPayload.mood, 'theater mask pair'),
       ], 4),
       animated: compactItems([
         makeVisualItem('Act divider', firstPresent(wow, wtf, plotTwist), 'slow act-divider line'),
-        finalTruth && makeVisualItem('Final truth', finalTruth.text, 'reveal shimmer'),
+        finalTruth && makeVisualItem('Final truth', finalTruth.text, 'reveal shimmer', finalTruth.sourceKey),
       ], 3),
       icons: compactItems([
         makeVisualItem('Meal', food, 'supporting plate'),
@@ -480,7 +498,11 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Workout', workout, 'stage prop fleck'),
         makeVisualItem('Weather', weather, 'stage atmosphere'),
       ], 4),
-      focal: firstPresent(finalTruth?.text, title, definedAnswer?.text),
+      focal: firstFocalItem(
+        finalTruth && makeFocalItem(finalTruth.source, finalTruth.text, finalTruth.sourceKey),
+        makeFocalItem('Title of the Day', title, 'titleOfDay'),
+        definedAnswer && makeFocalItem(definedAnswer.source, definedAnswer.text, definedAnswer.sourceKey),
+      ),
     },
     'variation-4': {
       text: compactItems([titleItem, wordItem, assuredExcerpt, ...wrapTextItems], 7),
@@ -491,8 +513,8 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('DA.EATER', food || macro, 'fuel marks'),
       ], 5),
       animated: compactItems([
-        makeVisualItem('Strong phrase', firstPresent(dayPayload.wordOfDay?.word, dayPayload.assuredThoughts, title), 'flowing underline strokes'),
-        makeVisualItem('Strong phrase orbit', firstPresent(dayPayload.assuredThoughts, dayPayload.wordOfDay?.word, title), 'slow orbit lines'),
+        makeVisualItem('Strong phrase', firstPresent(dayPayload.wordOfDay?.word, dayPayload.assuredThoughts, title), 'flowing underline strokes', firstPresent(dayPayload.wordOfDay?.word) ? 'wordOfDay' : firstPresent(dayPayload.assuredThoughts) ? 'assuredThoughts' : 'titleOfDay'),
+        makeVisualItem('Strong phrase orbit', firstPresent(dayPayload.assuredThoughts, dayPayload.wordOfDay?.word, title), 'slow orbit lines', firstPresent(dayPayload.assuredThoughts) ? 'assuredThoughts' : firstPresent(dayPayload.wordOfDay?.word) ? 'wordOfDay' : 'titleOfDay'),
       ], 3),
       icons: compactItems([
         makeVisualItem('Events', timeline, 'calendar spark'),
@@ -501,9 +523,13 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Weather', weather, 'tiny cloud'),
       ], 5),
       texture: compactItems([
-        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'faint supporting script'),
+        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'faint supporting script', 'battleCry'),
       ], 2),
-      focal: firstPresent(dayPayload.wordOfDay?.word, title, dayPayload.assuredThoughts),
+      focal: firstFocalItem(
+        makeFocalItem('Word of the Day', dayPayload.wordOfDay?.word, 'wordOfDay'),
+        makeFocalItem('Title of the Day', title, 'titleOfDay'),
+        makeFocalItem('Assured Thoughts', dayPayload.assuredThoughts, 'assuredThoughts'),
+      ),
     },
     'variation-5': {
       text: compactItems([titleItem, dateItem, finalTruth, futureAnswer], 4),
@@ -511,20 +537,20 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Mood', dayPayload.mood, 'oracle symbol'),
         makeVisualItem('Era', dayPayload.era, 'symbolic emblem'),
         makeVisualItem('Singleness', dayPayload.singlenessLevel, 'relational icon'),
-        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'central sigil'),
+        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'central sigil', 'wordOfDay'),
         makeVisualItem('WOW', wow, 'omen card'),
         makeVisualItem('WTF', wtf, 'omen card'),
         makeVisualItem('PLOT TWIST', plotTwist, 'omen card'),
       ], 7),
       animated: compactItems([
-        makeVisualItem('Word sigil', dayPayload.wordOfDay?.word, 'opal glints'),
+        makeVisualItem('Word sigil', dayPayload.wordOfDay?.word, 'opal glints', 'wordOfDay'),
         makeVisualItem('Symbol relationships', firstPresent(dayPayload.mood, dayPayload.era, dayPayload.singlenessLevel), 'slow line movement'),
       ], 3),
       icons: compactItems([
         makeVisualItem('Mood', dayPayload.mood, 'oracle mark'),
         makeVisualItem('Era', dayPayload.era, 'emblem mark'),
         makeVisualItem('Singleness', dayPayload.singlenessLevel, 'relation mark'),
-        makeVisualItem('Word', dayPayload.wordOfDay?.word, 'sigil mark'),
+        makeVisualItem('Word', dayPayload.wordOfDay?.word, 'sigil mark', 'wordOfDay'),
       ], 5),
       texture: compactItems([
         makeVisualItem('Workout', workout, 'collage fragment'),
@@ -532,7 +558,11 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
         makeVisualItem('Events', timeline, 'collage fragment'),
         makeVisualItem('Weather', weather, 'collage fragment'),
       ], 5),
-      focal: firstPresent(dayPayload.wordOfDay?.word, finalTruth?.text, title),
+      focal: firstFocalItem(
+        makeFocalItem('Word of the Day', dayPayload.wordOfDay?.word, 'wordOfDay'),
+        finalTruth && makeFocalItem(finalTruth.source, finalTruth.text, finalTruth.sourceKey),
+        makeFocalItem('Title of the Day', title, 'titleOfDay'),
+      ),
     },
   };
 
@@ -552,8 +582,9 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
     displayDate: dayPayload.displayDate || formatDisplayDate(new Date()),
     dayOfWeek: dayPayload.dayOfWeek || dayOfWeek(new Date()),
     chaoticaDayNumber: dayPayload.chaoticaDayNumber || getChaoticaDayNumber(dayPayload.sourceDate),
-    focalPhrase: cleanUpper(remix.focal || title || ''),
-    textItems: remix.text,
+    focalPhrase: cleanUpper(remix.focal?.text || ''),
+    focalSource: remix.focal ? { source: remix.focal.source, sourceKey: remix.focal.sourceKey } : null,
+    textItems: remix.text.filter((item) => item?.sourceKey),
     drawingItems: remix.drawings,
     animatedItems: remix.animated,
     iconItems: remix.icons,
@@ -565,7 +596,8 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
       animated: preset.animatedSources,
       smallIcon: preset.smallIconSources,
       backgroundTexture: preset.backgroundTextureSources,
-      emotionalFocalPoint: remix.focal || title || '',
+      title: titleItem ? { source: titleItem.source, sourceKey: titleItem.sourceKey, text: titleItem.text } : null,
+      emotionalFocalPoint: remix.focal ? { source: remix.focal.source, sourceKey: remix.focal.sourceKey, text: remix.focal.text } : null,
     },
     sourceTruth: {
       source: dayPayload.source || 'THE.ASSURER',
