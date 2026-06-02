@@ -132,7 +132,7 @@ export default function TheSummationSection() {
 
             <section className="summation-focal-phrase" aria-label="Sourced emotional focal point">
               <span className="summation-story-glyph">✦</span>
-              {activeStory.focalPhrase ? <strong>{activeStory.focalPhrase}</strong> : <strong className="is-empty">Awaiting THE.ASSURER source text</strong>}
+              {activeStory.focalPhrase ? <strong>{activeStory.focalPhrase}</strong> : <strong className="is-empty" aria-label="No sourced focal phrase" />}
               <small>{activeStory.emotionalArc}</small>
             </section>
 
