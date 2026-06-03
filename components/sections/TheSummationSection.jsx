@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  PENNY_FOR_YOUR_THOUGHTS_QUESTIONS,
   buildSummationSealPayload,
   generateSummationSketchStory,
   getChaoticaDayNumber,
@@ -13,16 +14,9 @@ import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-masquerade-official.png';
 
-const WRAP_QUESTIONS = [
-  { key: 'defined', label: 'What defined today?' },
-  { key: 'taught', label: 'What did today teach you?' },
-  { key: 'remember', label: 'What do you want future you to remember?' },
-  { key: 'truth', label: 'What truth are you sealing?' },
-  { key: 'release', label: 'What needs to be released before tomorrow?' },
-];
+const PENNY_LIMIT = 2;
 
 const VARIATIONS = getSummationRemixPresets();
-const EMPTY_ANSWERS = Object.fromEntries(WRAP_QUESTIONS.map((question) => [question.key, '']));
 
 
 export default function TheSummationSection() {
@@ -54,16 +48,33 @@ export default function TheSummationSection() {
     };
   }, [today]);
 
+  const pennyForYourThoughts = useMemo(() => {
+    const selectedQuestionIds = PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
+      .filter((question) => selectedPennyQuestionIds.includes(question.id))
+      .map((question) => question.id);
+
+    return {
+      selectedQuestionIds,
+      answers: PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
+        .filter((question) => selectedQuestionIds.includes(question.id))
+        .map((question) => ({
+          questionId: question.id,
+          questionText: question.text,
+          answerText: pennyAnswerTextById[question.id] || '',
+        })),
+    };
+  }, [pennyAnswerTextById, selectedPennyQuestionIds]);
+
   const activeStory = useMemo(() => (
-    generateSummationSketchStory(assurerDay, selectedVariation, answers)
-  ), [answers, assurerDay, selectedVariation]);
+    generateSummationSketchStory(assurerDay, selectedVariation, pennyForYourThoughts)
+  ), [assurerDay, pennyForYourThoughts, selectedVariation]);
 
   const titleOfDay = activeStory.hasAssurerTitle ? activeStory.title : activeStory.emptyTitleText;
   const activeNumber = '1';
 
   const sealableStoryPayload = useMemo(
-    () => buildSummationSealPayload(activeStory, answers),
-    [activeStory, answers],
+    () => buildSummationSealPayload(activeStory, pennyForYourThoughts),
+    [activeStory, pennyForYourThoughts],
   );
 
   useEffect(() => {
