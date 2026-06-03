@@ -356,14 +356,34 @@ function pennySourceMetadata(sourceAnswer, usedAs) {
 function makeTextItem(source, value, options = {}) {
   const text = truncateText(value, options.maxLength || 112);
   const sourceKey = cleanText(options.sourceKey);
-  const sourceMap = pennySourceMetadata(options.sourceAnswer, options.usedAs || 'text');
-  return text && sourceKey ? { source, sourceKey, text, role: options.role || 'line', ...(sourceMap ? { sourceMap } : {}) } : null;
+  return text && sourceKey ? {
+    source,
+    sourceKey,
+    sourceSection: options.sourceSection || 'THE.ASSURER',
+    sourceField: options.sourceField || sourceKey,
+    sourceValue: cleanText(value),
+    usedAs: options.usedAs || 'text',
+    text,
+    role: options.role || 'line',
+  } : null;
 }
 
 function makeVisualItem(source, value, form, sourceKey = 'otherAssurerSource', options = {}) {
-  const text = truncateText(value, 92);
-  const sourceMap = pennySourceMetadata(options.sourceAnswer, options.usedAs || 'drawing');
-  return text ? { source, sourceKey, text, form, ...(sourceMap ? { sourceMap } : {}) } : null;
+  const text = truncateText(value, options.maxLength || 92);
+  return text ? {
+    source,
+    sourceKey,
+    sourceSection: options.sourceSection || 'THE.ASSURER',
+    sourceField: options.sourceField || sourceKey,
+    sourceValue: cleanText(value),
+    usedAs: options.usedAs || 'drawing',
+    kind: options.kind || '',
+    glyph: options.glyph || '✧',
+    label: options.label || source,
+    id: options.id || cleanText(source).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    text,
+    form,
+  } : null;
 }
 
 function makeFocalItem(source, value, sourceKey, options = {}) {
@@ -407,10 +427,56 @@ function identityLine(dayPayload) {
   ].filter(Boolean).join(' · ');
 }
 
+
+function pennyThoughtItems(wrapAnswers) {
+  return (Array.isArray(wrapAnswers) ? wrapAnswers : [])
+    .filter((answer) => cleanText(answer.answer))
+    .slice(0, 2)
+    .map((answer, index) => ({
+      sourceSection: 'THE.SUMMATION',
+      sourceArea: 'PENNY FOR YOUR THOUGHTS',
+      sourceQuestionId: cleanText(answer.id || `penny-${index + 1}`),
+      sourceQuestionText: cleanText(answer.question),
+      sourceValue: cleanText(answer.answer),
+      usedAs: index === 0 ? 'text / final truth pin' : 'text / closing note',
+      text: truncateText(answer.answer, 120),
+    }));
+}
+
+function proofRowsForMasquerade(dayPayload, masque) {
+  return [
+    ...masque.text,
+    ...masque.maskCluster,
+    ...masque.momentPins,
+    ...masque.animated,
+    ...masque.icons,
+    ...masque.pennyAnswers.map((item) => ({
+      sourceSection: item.sourceSection,
+      sourceField: item.sourceQuestionText || item.sourceQuestionId,
+      sourceValue: item.sourceValue,
+      usedAs: item.usedAs,
+    })),
+    makeVisualItem('Full Assured Thoughts', dayPayload.assuredThoughts, 'proof drawer exact text', 'assuredThoughts', { usedAs: 'raw proof', sourceField: 'assuredThoughts', maxLength: 240 }),
+    ...(dayPayload.mealHighlights || []).map((meal) => makeVisualItem('Meal detail', [meal.time, meal.label, meal.macroText, meal.status].filter(Boolean).join(' · '), 'proof drawer exact meal', 'mealLogHighlights', { sourceSection: 'DA.EATER via THE.ASSURER', usedAs: 'raw proof', sourceField: 'mealLogHighlights', maxLength: 180 })),
+    ...(dayPayload.workoutHighlights || []).map((workoutValue) => makeVisualItem('Workout detail', workoutValue, 'proof drawer exact workout', 'workoutHighlights', { sourceSection: 'THICC.FITT via THE.ASSURER', usedAs: 'raw proof', sourceField: 'workoutHighlights', maxLength: 180 })),
+    ...(dayPayload.macroHighlights || []).map((macro) => makeVisualItem('Macro detail', [macro.label, macro.current, macro.left && `${macro.left} LEFT`, macro.percent !== null ? `${macro.percent}%` : ''].filter(Boolean).join(' · '), 'proof drawer exact macro', 'macroHighlights', { sourceSection: 'DA.EATER via THE.ASSURER', usedAs: 'raw proof', sourceField: 'macroHighlights', maxLength: 180 })),
+    ...(dayPayload.timelineHighlights || []).map((entry) => makeVisualItem('Event detail', [entry.time, entry.text || entry.type].filter(Boolean).join(' · '), 'proof drawer exact event', 'timelineHighlights', { sourceSection: 'REMEMBER.ME via THE.ASSURER', usedAs: 'raw proof', sourceField: 'timelineHighlights', maxLength: 180 })),
+  ]
+    .filter(Boolean)
+    .map((row) => ({
+      sourceSection: row.sourceSection || 'THE.ASSURER',
+      sourceField: row.sourceField || row.sourceKey || row.source || 'sourceValue',
+      sourceValue: cleanText(row.sourceValue || row.text),
+      usedAs: row.usedAs || row.form || 'source mapping',
+    }))
+    .filter((row) => row.sourceValue)
+    .slice(0, 34);
+}
+
 export const SUMMATION_REMIX_PRESETS = [
   {
     id: 'variation-1',
-    selectorLabel: 'Variation 1',
+    selectorLabel: 'THE MASQUERADE MAP',
     name: 'THE MASQUERADE MAP',
     visualFocus: 'The day becomes a ballroom map of emotional motion.',
     textSources: ['Title of the Day', 'Date', 'Day of Week', 'Chaotica Day #', 'Word of the Day', 'Assured Thoughts excerpt'],
@@ -513,34 +579,55 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
   const finalTruth = truthAnswer || assuredTruth;
 
   const byPreset = {
-    'variation-1': {
-      text: compactItems([titleItem, dateItem, wordItem, assuredExcerpt], 4),
-      drawings: compactItems([
-        makeVisualItem('Mood', dayPayload.mood, 'mask illustration'),
-        makeVisualItem('Era', dayPayload.era, 'costume posture cue'),
-        makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart-orbit symbol'),
-        makeVisualItem('WOW moment', wow, 'tiny masquerade scene', 'moments'),
-        makeVisualItem('WTF moment', wtf, 'tiny masquerade scene', 'moments'),
-        makeVisualItem('PLOT TWIST moment', plotTwist, 'tiny masquerade scene', 'moments'),
-      ], 6),
-      animated: compactItems([
-        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'subtle moving ribbon', 'battleCry'),
-        makeVisualItem('Head Hummer', dayPayload.headHummer, 'pulsing music-note glyphs'),
-      ], 3),
-      icons: compactItems([
-        makeVisualItem('Word of the Day', dayPayload.wordOfDay?.word, 'word pin', 'wordOfDay'),
-        makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart orbit'),
-        makeVisualItem('Chaotica Day #', dayPayload.chaoticaDayNumber, 'number charm'),
-      ], 4),
-      texture: compactItems([
-        makeVisualItem('Weather', weather, 'atmospheric marks'),
-        makeVisualItem('Location', location, 'room haze'),
-      ], 4),
-      focal: firstFocalItem(
-        makeFocalItem('Title of the Day', title, 'titleOfDay'),
-        makeFocalItem('Word of the Day', dayPayload.wordOfDay?.word, 'wordOfDay'),
-      ),
-    },
+    'variation-1': (() => {
+      const pennyAnswers = pennyThoughtItems(wrapAnswers);
+      const text = compactItems([
+        titleItem,
+        dateItem,
+        wordItem,
+        assuredExcerpt,
+      ], 4);
+      const maskCluster = compactItems([
+        makeVisualItem('Mood', dayPayload.mood, 'masquerade mask doodle', 'mood', { id: 'mood-mask', glyph: '◕', usedAs: 'drawing', sourceField: 'mood' }),
+        makeVisualItem('Era', dayPayload.era, 'costume / posture sketch', 'era', { id: 'era-posture', glyph: '♟', usedAs: 'drawing', sourceField: 'era' }),
+        makeVisualItem('Singleness Level', dayPayload.singlenessLevel, 'heart-orbit symbol', 'singlenessLevel', { id: 'singleness-orbit', glyph: '♡', usedAs: 'drawing', sourceField: 'singlenessLevel' }),
+      ], 3);
+      const momentPins = compactItems([
+        makeVisualItem('WOW', wow, 'small masquerade scene pin', 'moments', { id: 'wow-pin', label: 'WOW', glyph: '✧', usedAs: 'drawing', sourceSection: 'REMEMBER.ME via THE.ASSURER', sourceField: 'wowMoment' }),
+        makeVisualItem('WTF', wtf, 'small masquerade scene pin', 'moments', { id: 'wtf-pin', label: 'WTF', glyph: '☽', usedAs: 'drawing', sourceSection: 'REMEMBER.ME via THE.ASSURER', sourceField: 'wtfMoment' }),
+        makeVisualItem('PLOT TWIST', plotTwist, 'small masquerade scene pin', 'moments', { id: 'plot-twist-pin', label: 'PLOT TWIST', glyph: '⟡', usedAs: 'drawing', sourceSection: 'REMEMBER.ME via THE.ASSURER', sourceField: 'plotTwistMoment' }),
+      ], 3);
+      const animated = compactItems([
+        makeVisualItem('Battle Cry', dayPayload.battleCry?.text, 'slow moving ribbon line', 'battleCry', { kind: 'battle-ribbon', glyph: '〰', usedAs: 'animation', sourceSection: 'THICC.FITT via THE.ASSURER', sourceField: 'battleCry', maxLength: 110 }),
+        makeVisualItem('Head Hummer', dayPayload.headHummer, 'pulsing music-note marks', 'headHummer', { kind: 'head-hummer-notes', glyph: '♪', usedAs: 'animation', sourceField: 'headHummer' }),
+      ], 2);
+      const icons = compactItems([
+        makeVisualItem('Location', location, 'ballroom floor marker', 'location', { kind: 'location-marker', glyph: '⌖', usedAs: 'icon / floor marker', sourceField: 'location' }),
+        makeVisualItem('Weather', weather, 'atmospheric haze / tiny weather glyph', 'weather', { kind: 'weather-haze', glyph: '☁', usedAs: 'icon / atmospheric haze', sourceField: 'weather' }),
+        makeVisualItem('Meal signal', food, 'tiny table / plate pin', 'mealLogHighlights', { kind: 'meal-pin', glyph: '◌', usedAs: 'icon / texture', sourceSection: 'DA.EATER via THE.ASSURER', sourceField: 'mealLogHighlights' }),
+        makeVisualItem('Workout signal', workout, 'tiny movement path / step mark', 'workoutHighlights', { kind: 'workout-path', glyph: '⋯', usedAs: 'icon / movement path', sourceSection: 'THICC.FITT via THE.ASSURER', sourceField: 'workoutHighlights' }),
+        makeVisualItem('Timeline fleck', timeline, 'event fleck', 'timelineHighlights', { kind: 'timeline-fleck', glyph: '•', usedAs: 'texture / event fleck', sourceSection: 'REMEMBER.ME via THE.ASSURER', sourceField: 'timelineHighlights' }),
+      ], 5);
+      const remix = {
+        text,
+        drawings: [...maskCluster, ...momentPins],
+        maskCluster,
+        momentPins,
+        animated,
+        icons,
+        texture: compactItems([
+          makeVisualItem('Weather', weather, 'smoked ivory atmospheric haze', 'weather', { usedAs: 'texture', sourceField: 'weather' }),
+          makeVisualItem('Location', location, 'ballroom room haze', 'location', { usedAs: 'texture', sourceField: 'location' }),
+        ], 2),
+        pennyAnswers,
+        focal: firstFocalItem(
+          makeFocalItem('Title of the Day', title, 'titleOfDay'),
+          makeFocalItem('Word of the Day', dayPayload.wordOfDay?.word, 'wordOfDay'),
+        ),
+      };
+      remix.proofRows = proofRowsForMasquerade(dayPayload, remix);
+      return remix;
+    })(),
     'variation-2': {
       text: compactItems([titleItem, wordItem, battleExcerpt, assuredExcerpt], 4),
       drawings: compactItems([
@@ -682,6 +769,10 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
     animatedItems: remix.animated,
     iconItems: remix.icons,
     textureItems: remix.texture,
+    maskCluster: remix.maskCluster || [],
+    momentPins: remix.momentPins || [],
+    pennyAnswers: remix.pennyAnswers || [],
+    proofRows: remix.proofRows || [],
     storyFragments: storyFragments.slice(0, 9),
     sourceMap: {
       text: preset.textSources,
@@ -691,7 +782,14 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
       backgroundTexture: preset.backgroundTextureSources,
       title: titleItem ? { source: titleItem.source, sourceKey: titleItem.sourceKey, text: titleItem.text } : null,
       emotionalFocalPoint: remix.focal ? { source: remix.focal.source, sourceKey: remix.focal.sourceKey, text: remix.focal.text } : null,
-      pennyForYourThoughts: collectPennySourceMap(remix),
+      renderedItems: [
+        ...remix.text,
+        ...remix.drawings,
+        ...remix.animated,
+        ...remix.icons,
+        ...(remix.pennyAnswers || []),
+      ].filter(Boolean),
+      proofRows: remix.proofRows || [],
     },
     sourceTruth: {
       source: dayPayload.source || 'THE.ASSURER',
@@ -792,8 +890,8 @@ export function generateSummationVariations(dayPayload = null, pennyForYourThoug
   return SUMMATION_REMIX_PRESETS.map((preset) => buildPresetRemix(payload, preset, mergedWrapAnswers));
 }
 
-export function generateSummationSketchStory(dayPayload = null, selectedVariation = 'Variation 1', pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
-  const variations = generateSummationVariations(dayPayload, pennyForYourThoughts);
+export function generateSummationSketchStory(dayPayload = null, selectedVariation = 'THE MASQUERADE MAP', wrapAnswers = {}) {
+  const variations = generateSummationVariations(dayPayload, wrapAnswers);
   const selectedNumber = Number(cleanText(selectedVariation).match(/\d+/)?.[0] || 1);
   return variations[selectedNumber - 1] || variations[0];
 }
