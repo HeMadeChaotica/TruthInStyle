@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  buildSummationSealPayload,
   generateSummationSketchStory,
   getChaoticaDayNumber,
   getSummationRemixPresets,
@@ -80,23 +81,34 @@ export default function TheSummationSection() {
     setAnswers((current) => ({ ...current, [key]: value }));
   };
 
-  const sealPage = () => {
-    if (!assurerDay || !activeStory) return;
+  const sealableStoryPayload = useMemo(
+    () => buildSummationSealPayload(activeStory, answers),
+    [activeStory, answers],
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !sealableStoryPayload) return;
+    window.localStorage.setItem('completed_summation_sketch', JSON.stringify(sealableStoryPayload));
+  }, [sealableStoryPayload]);
+
+  const sealPage = useCallback(() => {
+    if (!assurerDay || !sealableStoryPayload) return;
     const sealed = sealSummationVariation(
       { ...assurerDay, chaoticaDayNumber },
-      {
-        id: activeStory.id,
-        name: activeStory.name,
-        renderedStoryPayload: activeStory,
-        wrapAnswers: answers,
-      },
+      sealableStoryPayload,
     );
 
     if (sealed) {
       setChaoticaDayNumber(sealed.chaoticaDayNumber);
       setSealStatus(`SEALED AS CHAOTICA DAY # ${sealed.chaoticaDayNumber}`);
     }
-  };
+  }, [assurerDay, chaoticaDayNumber, sealableStoryPayload]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    window.addEventListener('so-let-it-be-done', sealPage);
+    return () => window.removeEventListener('so-let-it-be-done', sealPage);
+  }, [sealPage]);
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
@@ -190,9 +202,6 @@ export default function TheSummationSection() {
               ))}
             </div>
             <p className="summation-active-preset">{activeStory.name}</p>
-            <button type="button" onClick={sealPage} disabled={!assurerDay || loadingState !== 'READY'}>
-              Seal Selected Remix
-            </button>
             {sealStatus ? <p className="summation-seal-status">{sealStatus}</p> : null}
           </div>
         </aside>

@@ -546,6 +546,8 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
 
   return {
     ...preset,
+    variationId: preset.id,
+    presetName: preset.name,
     title,
     hasAssurerTitle: Boolean(title),
     emptyTitleText: 'Title of the Day is empty in THE.ASSURER.',
@@ -672,8 +674,19 @@ export function generateSummationSketchStory(dayPayload = null, selectedVariatio
   return variations[selectedNumber - 1] || variations[0];
 }
 
+export function buildSummationSealPayload(selectedVariation, wrapAnswers = {}) {
+  if (!selectedVariation) return null;
+  return {
+    ...selectedVariation,
+    variationId: selectedVariation.variationId || selectedVariation.id,
+    presetName: selectedVariation.presetName || selectedVariation.name,
+    wrapAnswers,
+  };
+}
+
 export function sealSummationVariation(dayPayload, selectedVariation) {
-  if (!hasStorage() || !dayPayload?.sourceDate || !selectedVariation?.id) return null;
+  const directVariationId = selectedVariation?.variationId || selectedVariation?.id;
+  if (!hasStorage() || !dayPayload?.sourceDate || !directVariationId) return null;
 
   const existingRecord = readSealedRecords().find((record) => String(record?.sourceDate || '') === String(dayPayload.sourceDate));
   const sealedRecord = {
@@ -683,8 +696,8 @@ export function sealSummationVariation(dayPayload, selectedVariation) {
     displayDate: dayPayload.displayDate,
     dayOfWeek: dayPayload.dayOfWeek,
     chaoticaDayNumber: existingRecord?.chaoticaDayNumber || getChaoticaDayNumber(dayPayload.sourceDate),
-    selectedVariationId: selectedVariation.id,
-    selectedVariationName: selectedVariation.name,
+    selectedVariationId: directVariationId,
+    selectedVariationName: selectedVariation.presetName || selectedVariation.name,
     renderedStoryPayload: selectedVariation,
     sourceTruthSnapshot: dayPayload,
     sealedAt: new Date().toISOString(),
