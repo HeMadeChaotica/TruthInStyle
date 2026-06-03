@@ -22,6 +22,29 @@ const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfD
 const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
+
+export const PENNY_FOR_YOUR_THOUGHTS_AREA = 'PENNY FOR YOUR THOUGHTS';
+
+export const PENNY_FOR_YOUR_THOUGHTS_QUESTIONS = [
+  { id: 'penny-1', text: 'What needs to be released before tomorrow?' },
+  { id: 'penny-2', text: 'What did today prove that I keep trying to ignore?' },
+  { id: 'penny-3', text: 'What part of today deserves to be remembered exactly as it happened?' },
+  { id: 'penny-4', text: 'What did my body, mood, appetite, or attention reveal today?' },
+  { id: 'penny-5', text: 'What truth am I sealing, not explaining away?' },
+  { id: 'penny-6', text: 'What moment today changed the room, even quietly?' },
+  { id: 'penny-7', text: 'What did I survive today that future me should not minimize?' },
+  { id: 'penny-8', text: 'What felt louder than it looked?' },
+  { id: 'penny-9', text: 'What did I want, and what did I actually choose?' },
+  { id: 'penny-10', text: 'What part of me showed up today without asking for applause?' },
+];
+
+export function createEmptyPennyForYourThoughts() {
+  return {
+    selectedQuestionIds: [],
+    answers: [],
+  };
+}
+
 const ASSURER_DAILY_FIELD_KEYS = {
   mood: ['the_assurer_mood', 'assurer:mood'],
   era: ['the_assurer_era', 'assurer:era'],
@@ -45,6 +68,11 @@ function cleanText(value) {
 
 function cleanUpper(value) {
   return cleanText(value).toUpperCase();
+}
+
+function preserveText(value) {
+  if (value === null || value === undefined) return '';
+  return String(value);
 }
 
 function safeJsonParse(raw, fallback) {
@@ -249,17 +277,45 @@ function truncateText(value, maxLength = 96) {
   return `${text.slice(0, maxLength - 1).trim()}…`;
 }
 
-function mergeWrapAnswers(storedAnswers = [], liveAnswers = {}) {
-  const live = Object.entries(liveAnswers || {})
-    .map(([question, answer]) => ({ id: question, question: cleanUpper(question), answer: cleanText(answer) }))
-    .filter((answer) => answer.answer);
-  return [...live, ...(Array.isArray(storedAnswers) ? storedAnswers : [])]
-    .filter((answer, index, all) => answer.answer && all.findIndex((candidate) => candidate.id === answer.id && candidate.answer === answer.answer) === index);
+function normalizePennyForYourThoughts(value = createEmptyPennyForYourThoughts()) {
+  const parsed = typeof value === 'string' ? safeJsonParse(value, createEmptyPennyForYourThoughts()) : value;
+  const selectedQuestionIds = (Array.isArray(parsed?.selectedQuestionIds) ? parsed.selectedQuestionIds : [])
+    .map(cleanText)
+    .filter(Boolean)
+    .slice(0, 2);
+  const answerRows = Array.isArray(parsed?.answers) ? parsed.answers : [];
+  const answerById = new Map(answerRows.map((answer) => [cleanText(answer?.questionId), answer]));
+
+  return {
+    selectedQuestionIds,
+    answers: PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
+      .filter((question) => selectedQuestionIds.includes(question.id))
+      .map((question) => {
+        const answer = answerById.get(question.id) || {};
+        return {
+          questionId: question.id,
+          questionText: question.text,
+          answerText: preserveText(answer.answerText),
+        };
+      }),
+  };
 }
 
-function wrapAnswerById(wrapAnswers, ids) {
-  const wanted = Array.isArray(ids) ? ids : [ids];
-  return firstPresent(...wanted.map((id) => wrapAnswers.find((answer) => answer.id === id || answer.question.toLowerCase().includes(id))?.answer));
+function mergeWrapAnswers(storedAnswers = [], pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
+  const selectedPennyAnswers = normalizePennyForYourThoughts(pennyForYourThoughts).answers
+    .map((answer) => ({
+      id: answer.questionId,
+      question: answer.questionText,
+      answer: preserveText(answer.answerText),
+      sourceSection: 'THE.SUMMATION',
+      sourceArea: PENNY_FOR_YOUR_THOUGHTS_AREA,
+      sourceQuestionId: answer.questionId,
+      sourceQuestionText: answer.questionText,
+      sourceValue: answer.answerText,
+    }))
+    .filter((answer) => cleanText(answer.answer));
+  return [...selectedPennyAnswers, ...(Array.isArray(storedAnswers) ? storedAnswers : [])]
+    .filter((answer, index, all) => answer.answer && all.findIndex((candidate) => candidate.id === answer.id && candidate.answer === answer.answer) === index);
 }
 
 function momentByType(dayPayload, label) {
@@ -285,24 +341,53 @@ function timelineText(dayPayload, index = 0) {
   return entry ? [entry.time, entry.text || entry.type].filter(Boolean).join(' · ') : '';
 }
 
+function pennySourceMetadata(sourceAnswer, usedAs) {
+  if (!sourceAnswer?.sourceQuestionId) return null;
+  return {
+    sourceSection: 'THE.SUMMATION',
+    sourceArea: PENNY_FOR_YOUR_THOUGHTS_AREA,
+    sourceQuestionId: sourceAnswer.sourceQuestionId,
+    sourceQuestionText: sourceAnswer.sourceQuestionText,
+    sourceValue: sourceAnswer.sourceValue,
+    usedAs,
+  };
+}
+
 function makeTextItem(source, value, options = {}) {
   const text = truncateText(value, options.maxLength || 112);
   const sourceKey = cleanText(options.sourceKey);
-  return text && sourceKey ? { source, sourceKey, text, role: options.role || 'line' } : null;
+  const sourceMap = pennySourceMetadata(options.sourceAnswer, options.usedAs || 'text');
+  return text && sourceKey ? { source, sourceKey, text, role: options.role || 'line', ...(sourceMap ? { sourceMap } : {}) } : null;
 }
 
-function makeVisualItem(source, value, form, sourceKey = 'otherAssurerSource') {
+function makeVisualItem(source, value, form, sourceKey = 'otherAssurerSource', options = {}) {
   const text = truncateText(value, 92);
-  return text ? { source, sourceKey, text, form } : null;
+  const sourceMap = pennySourceMetadata(options.sourceAnswer, options.usedAs || 'drawing');
+  return text ? { source, sourceKey, text, form, ...(sourceMap ? { sourceMap } : {}) } : null;
 }
 
-function makeFocalItem(source, value, sourceKey) {
+function makeFocalItem(source, value, sourceKey, options = {}) {
   const text = truncateText(value, 88);
-  return text && sourceKey ? { source, sourceKey, text } : null;
+  const sourceMap = pennySourceMetadata(options.sourceAnswer, options.usedAs || 'focal');
+  return text && sourceKey ? { source, sourceKey, text, ...(sourceMap ? { sourceMap } : {}) } : null;
 }
 
 function firstFocalItem(...items) {
   return items.find((item) => item?.text) || null;
+}
+
+
+function collectPennySourceMap(remix) {
+  return [
+    ...remix.text.map((item) => ({ item, usedAs: 'text' })),
+    ...remix.drawings.map((item) => ({ item, usedAs: 'drawing' })),
+    ...remix.animated.map((item) => ({ item, usedAs: 'animation' })),
+    ...remix.icons.map((item) => ({ item, usedAs: 'icon' })),
+    ...remix.texture.map((item) => ({ item, usedAs: 'texture' })),
+    ...(remix.focal ? [{ item: remix.focal, usedAs: 'focal' }] : []),
+  ]
+    .map(({ item, usedAs }) => item?.sourceMap ? { ...item.sourceMap, usedAs } : null)
+    .filter(Boolean);
 }
 
 function compactItems(items, limit = 6) {
@@ -401,10 +486,17 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
   const assuredExcerpt = makeTextItem('Assured Thoughts', dayPayload.assuredThoughts, { sourceKey: 'assuredThoughts', role: 'thought', maxLength: 120 });
   const battleExcerpt = makeTextItem('Battle Cry', dayPayload.battleCry?.text, { sourceKey: 'battleCry', role: 'cry', maxLength: 94 });
   const dateItem = makeTextItem('Date / Day / Chaotica', identityLine(dayPayload), { sourceKey: 'otherAssurerSource', role: 'identity', maxLength: 120 });
-  const definedAnswer = makeTextItem('What defined today?', wrapAnswerById(wrapAnswers, 'defined'), { sourceKey: 'wrapAnswers', role: 'wrap', maxLength: 100 });
-  const truthAnswer = makeTextItem('What truth are you sealing?', wrapAnswerById(wrapAnswers, ['truth', 'sealing']), { sourceKey: 'wrapAnswers', role: 'truth', maxLength: 100 });
-  const futureAnswer = makeTextItem('Future-me reminder', wrapAnswerById(wrapAnswers, ['remember', 'future']), { sourceKey: 'wrapAnswers', role: 'future', maxLength: 100 });
-  const wrapTextItems = wrapAnswers.map((answer) => makeTextItem(answer.question || 'Wrap answer', answer.answer, { sourceKey: 'wrapAnswers', role: 'wrap', maxLength: 100 }));
+  const pennyAnswerById = (id) => wrapAnswers.find((answer) => answer.id === id && answer.sourceArea === PENNY_FOR_YOUR_THOUGHTS_AREA);
+  const firstPennyAnswer = wrapAnswers.find((answer) => answer.sourceArea === PENNY_FOR_YOUR_THOUGHTS_AREA);
+  const releaseAnswerSource = pennyAnswerById('penny-1') || firstPennyAnswer;
+  const truthAnswerSource = pennyAnswerById('penny-5') || firstPennyAnswer;
+  const futureAnswerSource = pennyAnswerById('penny-7') || firstPennyAnswer;
+  const definedAnswer = releaseAnswerSource ? makeTextItem(releaseAnswerSource.question, releaseAnswerSource.answer, { sourceKey: 'pennyForYourThoughts', role: 'wrap', maxLength: 100, sourceAnswer: releaseAnswerSource }) : null;
+  const truthAnswer = truthAnswerSource ? makeTextItem(truthAnswerSource.question, truthAnswerSource.answer, { sourceKey: 'pennyForYourThoughts', role: 'truth', maxLength: 100, sourceAnswer: truthAnswerSource }) : null;
+  const futureAnswer = futureAnswerSource ? makeTextItem(futureAnswerSource.question, futureAnswerSource.answer, { sourceKey: 'pennyForYourThoughts', role: 'future', maxLength: 100, sourceAnswer: futureAnswerSource }) : null;
+  const wrapTextItems = wrapAnswers
+    .filter((answer) => answer.sourceArea === PENNY_FOR_YOUR_THOUGHTS_AREA)
+    .map((answer) => makeTextItem(answer.question, answer.answer, { sourceKey: 'pennyForYourThoughts', role: 'wrap', maxLength: 100, sourceAnswer: answer }));
 
   const wow = momentByType(dayPayload, 'wow') || momentText(dayPayload, 0);
   const wtf = momentByType(dayPayload, 'wtf') || momentText(dayPayload, 1);
@@ -417,9 +509,8 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
   const weather = dayPayload.weather?.summary;
   const location = dayPayload.location;
   const timeline = timelineText(dayPayload, 0);
-  const storedTruthAnswer = makeTextItem('Final sealed truth', wrapAnswerById(dayPayload.wrapAnswers || [], ['truth', 'sealing']), { sourceKey: 'wrapAnswers', role: 'truth' });
   const assuredTruth = makeTextItem('Final sealed truth', dayPayload.assuredThoughts, { sourceKey: 'assuredThoughts', role: 'truth' });
-  const finalTruth = truthAnswer || storedTruthAnswer || assuredTruth;
+  const finalTruth = truthAnswer || assuredTruth;
 
   const byPreset = {
     'variation-1': {
@@ -600,6 +691,7 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
       backgroundTexture: preset.backgroundTextureSources,
       title: titleItem ? { source: titleItem.source, sourceKey: titleItem.sourceKey, text: titleItem.text } : null,
       emotionalFocalPoint: remix.focal ? { source: remix.focal.source, sourceKey: remix.focal.sourceKey, text: remix.focal.text } : null,
+      pennyForYourThoughts: collectPennySourceMap(remix),
     },
     sourceTruth: {
       source: dayPayload.source || 'THE.ASSURER',
@@ -694,25 +786,25 @@ export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
   return records.length + 1;
 }
 
-export function generateSummationVariations(dayPayload = null, wrapAnswers = {}) {
+export function generateSummationVariations(dayPayload = null, pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
   const payload = dayPayload || {};
-  const mergedWrapAnswers = mergeWrapAnswers(payload.wrapAnswers, wrapAnswers);
+  const mergedWrapAnswers = mergeWrapAnswers(payload.wrapAnswers, pennyForYourThoughts);
   return SUMMATION_REMIX_PRESETS.map((preset) => buildPresetRemix(payload, preset, mergedWrapAnswers));
 }
 
-export function generateSummationSketchStory(dayPayload = null, selectedVariation = 'Variation 1', wrapAnswers = {}) {
-  const variations = generateSummationVariations(dayPayload, wrapAnswers);
+export function generateSummationSketchStory(dayPayload = null, selectedVariation = 'Variation 1', pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
+  const variations = generateSummationVariations(dayPayload, pennyForYourThoughts);
   const selectedNumber = Number(cleanText(selectedVariation).match(/\d+/)?.[0] || 1);
   return variations[selectedNumber - 1] || variations[0];
 }
 
-export function buildSummationSealPayload(selectedVariation, wrapAnswers = {}) {
+export function buildSummationSealPayload(selectedVariation, pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
   if (!selectedVariation) return null;
   return {
     ...selectedVariation,
     variationId: selectedVariation.variationId || selectedVariation.id,
     presetName: selectedVariation.presetName || selectedVariation.name,
-    wrapAnswers,
+    pennyForYourThoughts: normalizePennyForYourThoughts(pennyForYourThoughts),
   };
 }
 
