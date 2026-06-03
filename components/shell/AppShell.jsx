@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { isSummationSketchSealable } from '../../src/services/summationService';
 import ControlPanelOverlay from './ControlPanelOverlay';
 
 const ROUTE_BY_KEY = {
@@ -25,7 +26,8 @@ export default function AppShell({ children }) {
 
   const completedSummationSketch = useMemo(() => {
     if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem('completed_summation_sketch');
+    const storedSketch = window.localStorage.getItem('completed_summation_sketch');
+    return isSummationSketchSealable(storedSketch) ? storedSketch : null;
   }, [pathname]);
 
   const onSelect = (key) => {
@@ -42,9 +44,18 @@ export default function AppShell({ children }) {
   };
 
   const onSoLetItBeDone = (payload) => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('so-let-it-be-done', { detail: payload ?? null }));
+    if (typeof window === 'undefined') return;
+
+    const storedSketch = window.localStorage.getItem('completed_summation_sketch');
+    const sealPayload = isSummationSketchSealable(payload) ? payload : storedSketch;
+    if (!isSummationSketchSealable(sealPayload)) {
+      window.localStorage.removeItem('completed_summation_sketch');
+      console.warn('THE.SUMMATION seal blocked: completed_summation_sketch is missing or has incomplete Penny answers.');
+      setIsOpen(false);
+      return;
     }
+
+    window.dispatchEvent(new CustomEvent('so-let-it-be-done', { detail: sealPayload }));
     router.push('/hopewood');
     setIsOpen(false);
   };

@@ -7,6 +7,7 @@ import {
   generateSummationSketchStory,
   getChaoticaDayNumber,
   getSummationRemixPresets,
+  isSummationSketchSealable,
   readAssurerDayForSummation,
   sealSummationVariation,
 } from '../../src/services/summationService';
@@ -22,7 +23,8 @@ const VARIATIONS = getSummationRemixPresets();
 export default function TheSummationSection() {
   const today = useMemo(() => new Date(), []);
   const [assurerDay, setAssurerDay] = useState(null);
-  const [answers] = useState(EMPTY_ANSWERS);
+  const [selectedPennyQuestionIds, setSelectedPennyQuestionIds] = useState([]);
+  const [pennyAnswerTextById, setPennyAnswerTextById] = useState({});
   const [selectedVariation] = useState(VARIATIONS[0].selectorLabel);
   const [chaoticaDayNumber, setChaoticaDayNumber] = useState(1);
   const [sealStatus, setSealStatus] = useState('');
@@ -78,12 +80,36 @@ export default function TheSummationSection() {
   );
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !sealableStoryPayload) return;
+    if (typeof window === 'undefined') return;
+    if (!isSummationSketchSealable(sealableStoryPayload)) {
+      window.localStorage.removeItem('completed_summation_sketch');
+      return;
+    }
     window.localStorage.setItem('completed_summation_sketch', JSON.stringify(sealableStoryPayload));
   }, [sealableStoryPayload]);
 
+  const handlePennyQuestionToggle = useCallback((questionId) => {
+    setSelectedPennyQuestionIds((currentIds) => {
+      if (currentIds.includes(questionId)) {
+        return currentIds.filter((id) => id !== questionId);
+      }
+      if (currentIds.length >= PENNY_LIMIT) return currentIds;
+      return [...currentIds, questionId];
+    });
+  }, []);
+
+  const handlePennyAnswerChange = useCallback((questionId, answerText) => {
+    setPennyAnswerTextById((currentAnswers) => ({
+      ...currentAnswers,
+      [questionId]: answerText,
+    }));
+  }, []);
+
   const sealPage = useCallback(() => {
-    if (!assurerDay || !sealableStoryPayload) return;
+    if (!assurerDay || !isSummationSketchSealable(sealableStoryPayload)) {
+      console.warn('THE.SUMMATION seal blocked: exactly two answered Pennies are required.');
+      return;
+    }
     const sealed = sealSummationVariation(
       { ...assurerDay, chaoticaDayNumber },
       sealableStoryPayload,
@@ -256,6 +282,32 @@ export default function TheSummationSection() {
               <div><dt>Sketch art</dt><dd>Mood mask, era posture, singleness orbit, three moment pins, location, weather, meal, workout.</dd></div>
               <div><dt>Quiet proof</dt><dd>Exact raw values stay inside the proof drawer on the map.</dd></div>
             </dl>
+            <section className="summation-penny-picker" aria-label="Choose exactly two Penny questions">
+              <h3>PENNY FOR YOUR THOUGHTS?</h3>
+              <p>Choose exactly 2 and answer both before the Control Panel can seal.</p>
+              {PENNY_FOR_YOUR_THOUGHTS_QUESTIONS.map((question) => {
+                const selected = selectedPennyQuestionIds.includes(question.id);
+                const disabled = !selected && selectedPennyQuestionIds.length >= PENNY_LIMIT;
+                return (
+                  <label key={question.id}>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      disabled={disabled}
+                      onChange={() => handlePennyQuestionToggle(question.id)}
+                    />
+                    <span>{question.text}</span>
+                    {selected ? (
+                      <textarea
+                        value={pennyAnswerTextById[question.id] || ''}
+                        onChange={(event) => handlePennyAnswerChange(question.id, event.target.value)}
+                        aria-label={`Answer for ${question.text}`}
+                      />
+                    ) : null}
+                  </label>
+                );
+              })}
+            </section>
             {sealStatus ? <p className="summation-seal-status">{sealStatus}</p> : null}
           </section>
         </aside>

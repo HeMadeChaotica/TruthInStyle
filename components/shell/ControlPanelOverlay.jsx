@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import { isSummationSketchSealable } from '../../src/services/summationService';
 
 const CONTROL_ITEMS = [
   { key: 'home', src: '/control-panel/control-home.PNG', alt: 'Home' },
@@ -39,7 +40,17 @@ export default function ControlPanelOverlay({
 
   const handlers = useMemo(
     () => ({
-      'so-let-it-be-done': () => onSoLetItBeDone?.(completedSummationSketch)
+      'so-let-it-be-done': () => {
+        const storedSketch = typeof window !== 'undefined'
+          ? window.localStorage.getItem('completed_summation_sketch')
+          : completedSummationSketch;
+        const sealPayload = isSummationSketchSealable(completedSummationSketch) ? completedSummationSketch : storedSketch;
+        if (!isSummationSketchSealable(sealPayload)) {
+          console.warn('THE.SUMMATION seal blocked: completed_summation_sketch is not sealable.');
+          return;
+        }
+        onSoLetItBeDone?.(sealPayload);
+      }
     }),
     [completedSummationSketch, onSoLetItBeDone]
   );

@@ -301,6 +301,32 @@ function normalizePennyForYourThoughts(value = createEmptyPennyForYourThoughts()
   };
 }
 
+export function isSummationSketchSealable(payload) {
+  const parsedPayload = typeof payload === 'string' ? safeJsonParse(payload, null) : payload;
+  const pennyForYourThoughts = parsedPayload?.pennyForYourThoughts;
+  if (!parsedPayload || !pennyForYourThoughts) return false;
+
+  const selectedQuestionIds = Array.isArray(pennyForYourThoughts.selectedQuestionIds)
+    ? pennyForYourThoughts.selectedQuestionIds.map(cleanText).filter(Boolean)
+    : [];
+  const answers = Array.isArray(pennyForYourThoughts.answers) ? pennyForYourThoughts.answers : [];
+  if (selectedQuestionIds.length !== 2 || answers.length !== 2) return false;
+
+  const selectedQuestionIdSet = new Set(selectedQuestionIds);
+  if (selectedQuestionIdSet.size !== 2) return false;
+
+  const answerQuestionIds = answers.map((answer) => cleanText(answer?.questionId));
+  if (new Set(answerQuestionIds).size !== 2) return false;
+
+  return answers.every((answer) => {
+    const questionId = cleanText(answer?.questionId);
+    return (
+      selectedQuestionIdSet.has(questionId)
+      && cleanText(answer?.answerText).length > 0
+    );
+  });
+}
+
 function mergeWrapAnswers(storedAnswers = [], pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
   const selectedPennyAnswers = normalizePennyForYourThoughts(pennyForYourThoughts).answers
     .map((answer) => ({
@@ -898,17 +924,22 @@ export function generateSummationSketchStory(dayPayload = null, selectedVariatio
 
 export function buildSummationSealPayload(selectedVariation, pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
   if (!selectedVariation) return null;
-  return {
+  const sealPayload = {
     ...selectedVariation,
     variationId: selectedVariation.variationId || selectedVariation.id,
     presetName: selectedVariation.presetName || selectedVariation.name,
+    pennyForYourThoughts,
+  };
+  if (!isSummationSketchSealable(sealPayload)) return null;
+  return {
+    ...sealPayload,
     pennyForYourThoughts: normalizePennyForYourThoughts(pennyForYourThoughts),
   };
 }
 
 export function sealSummationVariation(dayPayload, selectedVariation) {
   const directVariationId = selectedVariation?.variationId || selectedVariation?.id;
-  if (!hasStorage() || !dayPayload?.sourceDate || !directVariationId) return null;
+  if (!hasStorage() || !dayPayload?.sourceDate || !directVariationId || !isSummationSketchSealable(selectedVariation)) return null;
 
   const existingRecord = readSealedRecords().find((record) => String(record?.sourceDate || '') === String(dayPayload.sourceDate));
   const sealedRecord = {
