@@ -62,3 +62,11 @@ small{display:block;margin:4px 0;color: var(--app-text-primary);opacity:.9}
 .booking-more{font-size:.55rem;opacity:.9;color: var(--app-text-primary)}
 .time-editor label{letter-spacing:.08em}
 .assurer-preview{margin-top:10px;font-size:.58rem;opacity:.9;letter-spacing:.1em}
+.day-entry-stack{display:grid;gap:4px;align-content:start;max-height:none;overflow:visible}
+.time-day-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin-top:10px;padding:10px;border:1px solid rgba(255,138,213,.38);border-radius:14px;background:rgba(16,0,20,.36)}
+.time-day-panel p{margin:3px 0 0;font-size:.58rem;letter-spacing:.08em;opacity:.9}
+.time-day-entry-list{grid-column:1/-1;display:grid;gap:6px;max-height:none;overflow:visible}
+.time-day-entry{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 8px;text-align:left;border-left:6px solid #3b82f6;border-radius:8px;padding:7px 8px;background:rgba(12,0,14,.42)}
+.time-day-entry small{grid-column:1/-1;margin:0;color:#ffdff5;overflow:visible;white-space:normal}
+.time-editor-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.time-editor-actions{grid-template-columns:auto auto auto 1fr}

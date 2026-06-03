@@ -201,13 +201,20 @@ export async function fetchScheduleEntries() {
 }
 
 export function normalizeScheduleEntry(row = {}) {
+  const entryType = row.entry_type === 'personal' ? 'personal' : row.entry_type === 'new_client' ? 'new_client' : 'client';
+  const scheduleLayer = row.schedule_layer || (entryType === 'personal' ? 'mista_thicc' : entryType === 'new_client' ? 'new_client' : 'the_thiccens');
+  const colorOptionKey = scheduleLayer === 'mista_thicc'
+    ? 'mista-thicc-pink'
+    : scheduleLayer === 'the_thiccens' && row.color_option_key === 'mista-thicc-pink'
+      ? 'cobalt'
+      : row.color_option_key || (scheduleLayer === 'new_client' ? 'new-client-white' : 'cobalt');
   return {
     id: row.id || createLocalScheduleId(),
-    client_id: row.client_id ?? null,
+    client_id: entryType === 'personal' ? null : row.client_id ?? null,
     client_name: row.client_name || '',
-    entry_type: row.entry_type || 'client',
-    schedule_layer: row.schedule_layer || (row.entry_type === 'personal' ? 'mista_thicc' : 'the_thiccens'),
-    entry_date: row.entry_date || '',
+    entry_type: entryType,
+    schedule_layer: scheduleLayer,
+    entry_date: isLocalIsoDateKey(row.entry_date) ? row.entry_date : '',
     start_time: row.start_time || '',
     end_time: row.end_time || '',
     workout_label: row.workout_label || '',
@@ -216,7 +223,7 @@ export function normalizeScheduleEntry(row = {}) {
     prospect_contact: row.prospect_contact || '',
     location: row.location || '',
     notes: row.notes || '',
-    color_option_key: row.color_option_key || 'cobalt',
+    color_option_key: colorOptionKey,
     recurrence_type: row.recurrence_type || 'none',
     recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [],
     recurrence_active: Boolean(row.recurrence_active),
@@ -242,12 +249,16 @@ const formatDisplayDate = (isoDate) => {
   return `${month}/${day}/${year}`;
 };
 
-const toLocalIsoDate = (value) => {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
+export const toLocalIsoDate = (value = new Date()) => {
+  const safeDate = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(safeDate.getTime())) return '';
+  const year = safeDate.getFullYear();
+  const month = String(safeDate.getMonth() + 1).padStart(2, '0');
+  const day = String(safeDate.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+export const isLocalIsoDateKey = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
 
 export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new Date()) {
   const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
@@ -307,6 +318,18 @@ export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new 
   return { source: 'THICC.TIME', range: '7_DAY', entries };
 }
 
+
+export function validateScheduleEntry(entry = {}) {
+  const normalized = normalizeScheduleEntry(entry);
+  if (!isLocalIsoDateKey(normalized.entry_date)) return 'Select a valid THICC.TIME date first.';
+  if (!normalized.start_time) return 'Set START TIME first.';
+  if (!String(normalized.workout_label || '').trim() && !String(normalized.notes || '').trim()) {
+    return 'Add a workout label or notes before saving.';
+  }
+  if (normalized.entry_type === 'client' && !normalized.client_id) return 'Select a logged client for THE.THICCENS.';
+  return '';
+}
+
 export async function saveScheduleEntry(entry) {
   const allowedScheduleKeys = [
     'id',
@@ -334,6 +357,9 @@ export async function saveScheduleEntry(entry) {
     Object.entries(entry || {}).filter(([key, value]) => allowedScheduleKeys.includes(key) && value !== undefined),
   );
 
+  const validationError = validateScheduleEntry(cleanPayload);
+  if (validationError) throw new Error(validationError);
+
   if (hasSupabase) {
     if (cleanPayload.entry_type === 'client' && !isUuid(cleanPayload.client_id)) {
       throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');
@@ -353,9 +379,12 @@ export async function saveScheduleEntry(entry) {
     saveScheduleEntries(next);
     return safeEntry;
   }
-  const hasExistingId = isUuid(cleanPayload.id);
-  if (!hasExistingId) delete cleanPayload.id;
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([cleanPayload]) });
+  const supabasePayload = Object.fromEntries(
+    Object.entries(cleanPayload).filter(([key]) => !['schedule_layer', 'prospect_name', 'prospect_contact', 'recurrence_type', 'recurrence_days', 'recurrence_active'].includes(key)),
+  );
+  const hasExistingId = isUuid(supabasePayload.id);
+  if (!hasExistingId) delete supabasePayload.id;
+  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([supabasePayload]) });
   if (!res.ok) await throwSupabaseError('SAVE', res);
   const rows = await res.json();
   return rows[0];
