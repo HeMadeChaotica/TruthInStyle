@@ -147,12 +147,21 @@ export default function TheSummationSection() {
 
           <div className={`summation-sketch-board variation-${activeNumber}`} data-theme={activeStory.id}>
             <div className="summation-board-wash" aria-hidden="true" />
-            <div className="summation-ballroom-route summation-ballroom-route-one" aria-hidden="true" />
-            <div className="summation-ballroom-route summation-ballroom-route-two" aria-hidden="true" />
-            <div className="summation-ballroom-route summation-ballroom-route-three" aria-hidden="true" />
-            <div className="summation-route-arrow summation-route-arrow-one" aria-hidden="true">↝</div>
-            <div className="summation-route-arrow summation-route-arrow-two" aria-hidden="true">↜</div>
-            <div className="summation-route-arrow summation-route-arrow-three" aria-hidden="true">↬</div>
+            <svg className="summation-ballroom-route" viewBox="0 0 1000 620" aria-hidden="true" focusable="false">
+              <path className="summation-route-shadow" d="M80 418 C180 306 248 300 318 214 S478 118 572 210 706 352 848 258" />
+              <path className="summation-route-main" d="M80 418 C180 306 248 300 318 214 S478 118 572 210 706 352 848 258" />
+              <path className="summation-route-branch" d="M318 214 C356 288 414 348 498 372 S648 402 732 504" />
+              <path className="summation-route-branch" d="M572 210 C548 288 540 352 498 372" />
+              <circle className="summation-route-stop stop-one" cx="80" cy="418" r="8" />
+              <circle className="summation-route-stop stop-two" cx="318" cy="214" r="8" />
+              <circle className="summation-route-stop stop-three" cx="572" cy="210" r="8" />
+              <circle className="summation-route-stop stop-four" cx="848" cy="258" r="8" />
+              <circle className="summation-route-stop stop-five" cx="498" cy="372" r="8" />
+              <circle className="summation-route-stop stop-six" cx="732" cy="504" r="8" />
+            </svg>
+            <div className="summation-route-arrow summation-route-arrow-one" aria-hidden="true">MASK</div>
+            <div className="summation-route-arrow summation-route-arrow-two" aria-hidden="true">TURN</div>
+            <div className="summation-route-arrow summation-route-arrow-three" aria-hidden="true">AFTERGLOW</div>
 
             <section className="summation-theme-label" aria-label="Active theme">
               <span>{activeStory.name}</span>
