@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  PENNY_FOR_YOUR_THOUGHTS_QUESTIONS,
   buildSummationSealPayload,
   generateSummationSketchStory,
   getChaoticaDayNumber,
@@ -13,16 +14,9 @@ import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-masquerade-official.png';
 
-const WRAP_QUESTIONS = [
-  { key: 'defined', label: 'What defined today?' },
-  { key: 'taught', label: 'What did today teach you?' },
-  { key: 'remember', label: 'What do you want future you to remember?' },
-  { key: 'truth', label: 'What truth are you sealing?' },
-  { key: 'release', label: 'What needs to be released before tomorrow?' },
-];
+const PENNY_LIMIT = 2;
 
 const VARIATIONS = getSummationRemixPresets();
-const EMPTY_ANSWERS = Object.fromEntries(WRAP_QUESTIONS.map((question) => [question.key, '']));
 
 function RemixText({ item, index }) {
   return (
@@ -44,7 +38,8 @@ function RemixMark({ item, index, className }) {
 export default function TheSummationSection() {
   const today = useMemo(() => new Date(), []);
   const [assurerDay, setAssurerDay] = useState(null);
-  const [answers, setAnswers] = useState(EMPTY_ANSWERS);
+  const [pennyAnswerTextById, setPennyAnswerTextById] = useState({});
+  const [selectedPennyQuestionIds, setSelectedPennyQuestionIds] = useState([]);
   const [selectedVariation, setSelectedVariation] = useState(VARIATIONS[0].selectorLabel);
   const [chaoticaDayNumber, setChaoticaDayNumber] = useState(1);
   const [sealStatus, setSealStatus] = useState('');
@@ -70,20 +65,46 @@ export default function TheSummationSection() {
     };
   }, [today]);
 
+  const pennyForYourThoughts = useMemo(() => {
+    const selectedQuestionIds = PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
+      .filter((question) => selectedPennyQuestionIds.includes(question.id))
+      .map((question) => question.id);
+
+    return {
+      selectedQuestionIds,
+      answers: PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
+        .filter((question) => selectedQuestionIds.includes(question.id))
+        .map((question) => ({
+          questionId: question.id,
+          questionText: question.text,
+          answerText: pennyAnswerTextById[question.id] || '',
+        })),
+    };
+  }, [pennyAnswerTextById, selectedPennyQuestionIds]);
+
   const activeStory = useMemo(() => (
-    generateSummationSketchStory(assurerDay, selectedVariation, answers)
-  ), [answers, assurerDay, selectedVariation]);
+    generateSummationSketchStory(assurerDay, selectedVariation, pennyForYourThoughts)
+  ), [assurerDay, pennyForYourThoughts, selectedVariation]);
 
   const titleOfDay = activeStory.hasAssurerTitle ? activeStory.title : activeStory.emptyTitleText;
   const activeNumber = selectedVariation.match(/\d+/)?.[0] || '1';
+  const hasTwoPennyQuestions = pennyForYourThoughts.selectedQuestionIds.length === PENNY_LIMIT;
 
-  const updateAnswer = (key, value) => {
-    setAnswers((current) => ({ ...current, [key]: value }));
+  const togglePennyQuestion = (questionId) => {
+    setSelectedPennyQuestionIds((current) => {
+      if (current.includes(questionId)) return current.filter((id) => id !== questionId);
+      if (current.length >= PENNY_LIMIT) return current;
+      return [...current, questionId];
+    });
+  };
+
+  const updatePennyAnswer = (questionId, value) => {
+    setPennyAnswerTextById((current) => ({ ...current, [questionId]: value }));
   };
 
   const sealableStoryPayload = useMemo(
-    () => buildSummationSealPayload(activeStory, answers),
-    [activeStory, answers],
+    () => buildSummationSealPayload(activeStory, pennyForYourThoughts),
+    [activeStory, pennyForYourThoughts],
   );
 
   useEffect(() => {
@@ -172,17 +193,37 @@ export default function TheSummationSection() {
 
         <aside className="summation-support-zone" aria-label="End of Day Support">
           <form className="summation-wrap-zone">
-            <h2>End of Day Wrap</h2>
-            {WRAP_QUESTIONS.map((question) => (
-              <label key={question.key}>
-                <span>{question.label}</span>
-                <textarea
-                  value={answers[question.key]}
-                  onChange={(event) => updateAnswer(question.key, event.target.value)}
-                  rows={2}
-                />
-              </label>
-            ))}
+            <h2>PENNY FOR YOUR THOUGHTS?</h2>
+            <p>Choose 2. Answer 2. Today’s 2 pennies are the only answers that feed this day.</p>
+            {!hasTwoPennyQuestions ? <p>Choose 2 to unlock Today’s 2 pennies.</p> : null}
+            {PENNY_FOR_YOUR_THOUGHTS_QUESTIONS.map((question) => {
+              const isSelected = pennyForYourThoughts.selectedQuestionIds.includes(question.id);
+              const isDisabled = !isSelected && pennyForYourThoughts.selectedQuestionIds.length >= PENNY_LIMIT;
+
+              return (
+                <div key={question.id}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={isDisabled}
+                      onChange={() => togglePennyQuestion(question.id)}
+                    />
+                    <span>{question.text}</span>
+                  </label>
+                  {isSelected && hasTwoPennyQuestions ? (
+                    <label>
+                      <span>Answer 2</span>
+                      <textarea
+                        value={pennyAnswerTextById[question.id] || ''}
+                        onChange={(event) => updatePennyAnswer(question.id, event.target.value)}
+                        rows={2}
+                      />
+                    </label>
+                  ) : null}
+                </div>
+              );
+            })}
           </form>
 
           <div className="summation-variation-zone">
