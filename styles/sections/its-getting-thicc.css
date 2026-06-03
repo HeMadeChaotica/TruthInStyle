@@ -1,13 +1,13 @@
-.igtv2-page{color:#ffd6f0}
+.igtv2-page{color: var(--app-text-primary)}
 .igtv2-scene-plate,.igtv2-bg{position:absolute;inset:0}
 .igtv2-bg{background:url('/backgrounds/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center center/cover no-repeat fixed}
 .igtv2-left{display:block;position:relative;overflow:visible}
-.igtv2-glyph{color:#ffd3ee;font-size:.95rem;letter-spacing:.28em}
+.igtv2-glyph{color: var(--app-text-primary);font-size:.95rem;letter-spacing:.28em}
 .igtv2-cabinet{position:absolute;left:10px;bottom:24%;display:grid;gap:8px;max-width:180px}
-.igtv2-cabinet-btn{background:rgba(20,0,20,.34);color:#ffd7ef;border:1px solid rgba(255,138,213,.55);font:inherit;font-size:.72rem;padding:10px 8px;text-align:left}
+.igtv2-cabinet-btn{background:rgba(20,0,20,.34);color: var(--app-text-primary);border:1px solid rgba(255,138,213,.55);font:inherit;font-size:.72rem;padding:10px 8px;text-align:left}
 .igtv2-cabinet-btn.active{background:rgba(255,126,209,.28)}
 .igtv2-time-panel{min-height:74dvh}
-button,input,select,textarea{background:rgba(14,0,14,.42);color:#ffd5ee;border:1px solid rgba(255,138,213,.45);font:inherit;font-size:.66rem}
+button,input,select,textarea{background:rgba(14,0,14,.42);color: var(--app-text-primary);border:1px solid rgba(255,138,213,.45);font:inherit;font-size:.66rem}
 textarea{min-height:76px;resize:vertical}
 .hz{display:grid;grid-template-columns:repeat(7,minmax(96px,1fr));gap:8px}
 .upload,.slot{min-height:112px;display:grid;place-items:center;border:1px dashed rgba(255,138,213,.45);position:relative;background:rgba(18,0,22,.3)}
@@ -16,14 +16,14 @@ textarea{min-height:76px;resize:vertical}
 .people-list{display:grid;gap:8px}.people-item{display:grid;grid-template-columns:1fr auto;padding:10px;border-left:6px solid #3b82f6;background:rgba(16,0,18,.4)}
 .people-item div{display:grid;gap:4px}
 .month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.day{min-height:128px;border:1px solid rgba(255,138,213,.35);padding:6px;background:rgba(15,0,17,.28);display:grid;align-content:start;text-align:left;gap:4px}.day.selected{border-color:#ff78cb;box-shadow:0 0 0 1px rgba(255,120,203,.55) inset}
-.booking{margin-top:4px;padding:3px 6px;color:#fff;border-radius:4px;font-size:.58rem;font-weight:700;cursor:pointer;border:0}
+.booking{margin-top:4px;padding:3px 6px;color: var(--app-text-primary);border-radius:4px;font-size:.58rem;font-weight:700;cursor:pointer;border:0}
 .time-month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .time-selected-date{margin:0 0 8px;font-weight:700;letter-spacing:.08em}
 .time-calendar-shell{position:relative}
 .time-editor{position:absolute;top:52px;left:50%;transform:translateX(-50%);width:min(92vw,520px);max-height:min(78vh,620px);overflow-y:auto;z-index:30;border-radius:18px;border:1px solid rgba(255,120,203,.65);padding:10px;background:rgba(16,0,20,.74);backdrop-filter:blur(10px);box-shadow:0 20px 48px rgba(255,78,182,.22),0 8px 30px rgba(0,0,0,.45);margin-top:0}
-.booking-del{margin-left:6px;background:transparent;border:none;color:#fff;cursor:pointer}
+.booking-del{margin-left:6px;background:transparent;border:none;color: var(--app-text-primary);cursor:pointer}
 .form-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,138,213,.2)}
-small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
+small{display:block;margin:4px 0;color: var(--app-text-primary);opacity:.9}
 
 .igtv2-page .usf-stack,.igtv2-page .usf-shelf{gap:8px}
 .igtv2-page .usf-panel{padding:10px;min-height:0;height:auto;overflow:visible;background:rgba(22,6,24,.33)}
@@ -59,6 +59,6 @@ small{display:block;margin:4px 0;color:#ffdff5;opacity:.9}
 .weekday-grid{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1}
 .weekday-pill{padding:4px 8px;font-size:.58rem;border:1px solid rgba(255,138,213,.45)}
 .weekday-pill.active{background:rgba(255,120,203,.3);border-color:#ff78cb}
-.booking-more{font-size:.55rem;opacity:.9;color:#ffd3ec}
+.booking-more{font-size:.55rem;opacity:.9;color: var(--app-text-primary)}
 .time-editor label{letter-spacing:.08em}
 .assurer-preview{margin-top:10px;font-size:.58rem;opacity:.9;letter-spacing:.1em}
