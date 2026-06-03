@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   padding: 24px 16px 48px;
-  color: #f4b2bd;
+  color: var(--app-text-primary);
 }
 
 .assurer-card {
@@ -18,13 +18,13 @@
 .assurer-card h2 {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2rem);
-  color: #f4b2bd;
+  color: var(--app-text-primary);
   letter-spacing: 0.06em;
 }
 
 .assurer-date {
   margin: 8px 0 18px;
-  color: #ef8fa3;
+  color: var(--app-text-primary);
   font-size: 1rem;
 }
 
@@ -33,7 +33,7 @@
   margin: 12px 0 6px;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #f4b2bd;
+  color: var(--app-text-primary);
 }
 
 .assurer-card input,
@@ -43,7 +43,7 @@
   border: 1px solid #ef8fa3;
   border-radius: 10px;
   background: rgba(244, 178, 189, 0.08);
-  color: #f4b2bd;
+  color: var(--app-text-primary);
   font-size: 1rem;
   line-height: 1.35;
   padding: 10px 12px;
@@ -52,7 +52,7 @@
 
 .assurer-card input::placeholder,
 .assurer-card textarea::placeholder {
-  color: rgba(244, 178, 189, 0.72);
+  color: var(--app-text-primary);
 }
 
 .assurer-card textarea {

@@ -1,5 +1,9 @@
 :root {
-  --tis-signature-pink: #ff5bbd;
+  --app-text-primary: #F4B2BD;
+  --signature-pink: var(--app-text-primary);
+  --tis-signature-pink: var(--app-text-primary);
+  --assurer-text: var(--app-text-primary);
+  --summation-text: var(--app-text-primary);
 }
 
 @font-face {
@@ -32,7 +36,7 @@ option,
 ::placeholder,
 * {
   font-family: 'Same Same But Different', system-ui, sans-serif !important;
-  color: var(--tis-signature-pink) !important;
+  color: var(--app-text-primary) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em;
   line-height: 1.3;

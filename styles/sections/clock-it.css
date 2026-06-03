@@ -1,13 +1,13 @@
-.clockit-page{width:min(1366px,100vw);height:min(1024px,100vh);margin:0 auto;background:url('/backgrounds/CLOCK-IT/clock-it-bg-v2.png') left center/cover no-repeat;color:#ff69c6;font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;overflow:auto}
+.clockit-page{width:min(1366px,100vw);height:min(1024px,100vh);margin:0 auto;background:url('/backgrounds/CLOCK-IT/clock-it-bg-v2.png') left center/cover no-repeat;color: var(--app-text-primary);font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;overflow:auto}
 .clockit-layout{display:grid;grid-template-columns:30% 70%;min-height:100%;padding:10px}
 .clockit-art{min-height:100%}
 .clockit-controls{display:grid;gap:8px;align-content:start}
-.clockit-row h2{margin:0 0 4px;font-size:19px;letter-spacing:.8px;color:#ff75cf}
+.clockit-row h2{margin:0 0 4px;font-size:19px;letter-spacing:.8px;color: var(--app-text-primary)}
 .clockit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .clockit-panel{background:rgba(20,14,14,.18);backdrop-filter:blur(2px);border:1px solid transparent;border-radius:10px;padding:6px;position:relative}
 .clockit-panel::before{content:'';position:absolute;inset:-1px;border-radius:10px;padding:1px;background:linear-gradient(90deg,#ff6fcf,#ffbf40,#58f8ff,#ff6fcf);background-size:220% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;animation:clockitShimmer 4s linear infinite}
-.clockit-panel h3{margin:0 0 5px;font-size:15px;color:#ff8bda;line-height:1.2}
+.clockit-panel h3{margin:0 0 5px;font-size:15px;color: var(--app-text-primary);line-height:1.2}
 .clockit-list{display:grid;gap:4px;max-height:112px;overflow:auto;padding-right:2px}
 .clockit-list label{display:grid;gap:2px;font-size:11px}
-.clockit-list select{height:24px;background:rgba(8,8,8,.32);border:1px solid rgba(255,112,200,.45);color:#ffb6e9;border-radius:6px;font-size:10px;padding:0 6px;text-transform:uppercase}
+.clockit-list select{height:24px;background:rgba(8,8,8,.32);border:1px solid rgba(255,112,200,.45);color: var(--app-text-primary);border-radius:6px;font-size:10px;padding:0 6px;text-transform:uppercase}
 @keyframes clockitShimmer{0%{background-position:0 0}100%{background-position:220% 0}}
