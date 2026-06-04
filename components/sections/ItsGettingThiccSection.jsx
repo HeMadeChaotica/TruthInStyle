@@ -89,8 +89,10 @@ export default function ItsGettingThiccSection() {
       setEntriesByDate(groupScheduleEntriesByDate(safeRows));
       setTimeLoadStatus('loaded');
     } catch (error) {
-      setTimeLoadStatus('error');
-      setTimeError(error?.message || 'THICC.TIME LOAD FAILED: Unknown error');
+      console.error('THICC.TIME schedule load diagnostic', error);
+      setEntriesByDate({});
+      setTimeLoadStatus('loaded');
+      setTimeError(process.env.NODE_ENV === 'development' ? `THICC.TIME schedule diagnostic: ${error?.message || 'Unknown error'}` : '');
     }
   };
 
@@ -256,10 +258,6 @@ export default function ItsGettingThiccSection() {
         setTimeError('Select a logged client for THE.THICCENS.');
         return;
       }
-      if (timeDraft.schedule_layer === 'new_client' && !timeDraft.prospect_name) {
-        setTimeError('Prospect name required for NEW CLIENT.');
-        return;
-      }
       const base = normalizeSchedulePayload({ currentEntryForm: timeDraft, currentActive: active });
       let payload = {
         ...base,
@@ -272,11 +270,10 @@ export default function ItsGettingThiccSection() {
       };
       if (timeDraft.schedule_layer === 'mista_thicc') {
         payload = { ...payload, entry_type: 'personal', client_id: null, client_name: '', color_option_key: 'mista-thicc-pink' };
-      } else if (timeDraft.schedule_layer === 'new_client') {
-        payload = { ...payload, entry_type: 'new_client', client_id: null, client_name: '', color_option_key: 'new-client-white' };
       } else {
-        const ensuredClient = isSupabase ? await ensureClientDbId(active) : active;
-        const scheduleClientId = isSupabase ? getClientDbId(ensuredClient) : ensuredClient.id;
+        const selectedClient = safeClients.find((client) => getClientDbId(client) === timeDraft.client_id) || active;
+        const ensuredClient = isSupabase ? await ensureClientDbId(selectedClient) : selectedClient;
+        const scheduleClientId = isSupabase ? getClientDbId(ensuredClient) : getClientDbId(ensuredClient);
         if (!scheduleClientId) {
           setTimeError('Select a logged client for THE.THICCENS.');
           return;
@@ -370,7 +367,7 @@ export default function ItsGettingThiccSection() {
             {selectedDayEntries.map((entry) => <button type="button" key={entry.id} className="time-day-entry" onClick={() => openEditor(resolveEditableEntry(entry))} style={{ borderLeftColor: entryColor(entry) }}>
               <span style={{ color: entryColor(entry) }}>{entry.start_time || 'NO TIME'}{entry.end_time ? `–${entry.end_time}` : ''}</span>
               <strong>{getChipLabel(entry)}</strong>
-              <small>{entry.workout_label || entry.notes || entry.location || 'SCHEDULE ENTRY'}</small>
+              <small>{[entry.workout_label, entry.location, entry.notes].filter(Boolean).join(' • ') || 'SCHEDULE ENTRY'}</small>
             </button>)}
           </div>
         </section>
@@ -383,8 +380,8 @@ export default function ItsGettingThiccSection() {
             {(visibleEntriesByDate[timeDraft.entry_date] || []).map((entry) => <button type="button" key={entry.id} className={editingEntryId === entry.id ? 'active' : ''} onClick={() => openEditor(resolveEditableEntry(entry))}>{getChipLabel(entry)} {entry.start_time ? `• ${entry.start_time}` : ''}</button>)}
           </div>
           <div className="form-grid">
-            <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : layer === 'new_client' ? 'new_client' : 'personal', client_id: layer === 'the_thiccens' ? getClientDbId(active) : null, client_name: layer === 'the_thiccens' ? (active?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : layer === 'new_client' ? 'new-client-white' : getClientScheduleColorKey(active?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">MISTA.THICC PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
-            {timeDraft.schedule_layer === 'new_client' ? <><label>PROSPECT NAME<input value={timeDraft.prospect_name || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, prospect_name: e.target.value }))} /></label><label>PROSPECT CONTACT<input value={timeDraft.prospect_contact || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, prospect_contact: e.target.value }))} /></label></> : null}
+            <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; const nextClient = safeClients.find((client) => getClientDbId(client) === timeDraft.client_id) || active; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : 'personal', client_id: layer === 'the_thiccens' ? getClientDbId(nextClient) : null, client_name: layer === 'the_thiccens' ? (nextClient?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
+            {timeDraft.schedule_layer === 'the_thiccens' ? <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientDbId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => <option key={client.id} value={getClientDbId(client)}>{client.name || 'THICC CLIENT'}</option>)}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'EMPTY CLIENT LIST: PERSONAL ENTRIES STILL SAVE.'}</small></label> : null}
             <label>START TIME<input type="time" value={timeDraft.start_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, start_time: e.target.value }))} /></label>
             <label>END TIME<input type="time" value={timeDraft.end_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, end_time: e.target.value }))} /></label>
             <label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label>

@@ -67,12 +67,12 @@ export async function fetchRememberMeEntriesSafe() {
     const res = await fetch(`${sbUrl}/rest/v1/remember_me_entries?select=*&order=date_key.asc,updated_at.asc`, { headers: sbHeaders, cache: 'no-store' });
     if (!res.ok) {
       const body = await readErrorBody(res);
-      return { rows: local, error: `REMEMBER.ME LOAD FAILED: ${res.status} ${body}`, source: 'local-fallback' };
+      return { rows: local, error: `REMEMBER.ME sync diagnostic: ${res.status} ${body}`, source: 'local-fallback' };
     }
     const rows = await res.json();
     return { rows: Array.isArray(rows) ? rows.map(normalizeRow) : [], error: null, source: 'supabase' };
   } catch (error) {
-    return { rows: local, error: `REMEMBER.ME LOAD FAILED: ${error?.message || 'Unknown load error'}`, source: 'local-fallback' };
+    return { rows: local, error: `REMEMBER.ME sync diagnostic: ${error?.message || 'Unknown load error'}`, source: 'local-fallback' };
   }
 }
 
