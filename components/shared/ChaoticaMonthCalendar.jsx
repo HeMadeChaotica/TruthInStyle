@@ -20,9 +20,19 @@ export const getLocalDayFromDateKey = (dateKey) => {
   return parts[2];
 };
 
+export const getSafeMonthDate = (value = new Date()) => {
+  const candidate = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(candidate.getTime())) {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return new Date(candidate.getFullYear(), candidate.getMonth(), 1);
+};
+
 export const buildMonthGrid = (viewDate) => {
-  const y = viewDate.getFullYear();
-  const m = viewDate.getMonth();
+  const safeViewDate = getSafeMonthDate(viewDate);
+  const y = safeViewDate.getFullYear();
+  const m = safeViewDate.getMonth();
   const first = new Date(y, m, 1).getDay();
   const dim = daysInMonth(y, m);
   const previousMonth = new Date(y, m - 1, 1);
@@ -73,11 +83,13 @@ export default function ChaoticaMonthCalendar({
   previousLabel = '‹',
   nextLabel = '›',
 }) {
-  const monthGrid = useMemo(() => buildMonthGrid(viewDate), [viewDate]);
+  const safeViewDate = useMemo(() => getSafeMonthDate(viewDate), [viewDate]);
+  const safeEntriesByDate = entriesByDate && typeof entriesByDate === 'object' ? entriesByDate : {};
+  const monthGrid = useMemo(() => buildMonthGrid(safeViewDate), [safeViewDate]);
 
   const shiftMonth = (delta) => {
     const selectedDay = getLocalDayFromDateKey(selectedDateKey) || 1;
-    const next = new Date(viewDate.getFullYear(), viewDate.getMonth() + delta, 1);
+    const next = new Date(safeViewDate.getFullYear(), safeViewDate.getMonth() + delta, 1);
     const nextDateKey = safeDateKey(next.getFullYear(), next.getMonth(), Math.min(selectedDay, daysInMonth(next.getFullYear(), next.getMonth())));
     onMonthChange?.(next, nextDateKey);
   };
@@ -86,13 +98,14 @@ export default function ChaoticaMonthCalendar({
     <>
       <div className={classNames.monthRow || 'remember-month-row'}>
         <button type="button" onClick={() => shiftMonth(-1)}>{previousLabel}</button>
-        <strong>{viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong>
+        <strong>{safeViewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong>
         <button type="button" onClick={() => shiftMonth(1)}>{nextLabel}</button>
       </div>
       <div className={classNames.weekdays || 'remember-weekdays'}>{CHAOTICA_WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div>
       <div className={classNames.grid || 'remember-grid'}>
         {monthGrid.map((cell, index) => {
-          const entries = cell.dateKey ? (entriesByDate[cell.dateKey] || []) : [];
+          const dayEntries = cell.dateKey ? safeEntriesByDate[cell.dateKey] : [];
+          const entries = Array.isArray(dayEntries) ? dayEntries : [];
           const visibleEntries = entries.slice(0, maxEntriesPerDay);
           const outsideClass = !cell.inMonth ? (classNames.outsideDay || 'remember-outside') : '';
           const selectedClass = cell.dateKey === selectedDateKey ? (classNames.selectedDay || 'remember-selected') : '';
@@ -106,9 +119,9 @@ export default function ChaoticaMonthCalendar({
             >
               <span className={classNames.dayNumber || 'remember-day-num'}>{cell.day}</span>
               <span className={classNames.entryStack || 'remember-day-chips'}>
-                {visibleEntries.map((entry) => (
+                {visibleEntries.map((entry, entryIndex) => (
                   <span
-                    key={entry.id}
+                    key={entry.id || `${cell.dateKey}-entry-${index}-${entryIndex}`}
                     className={classNames.entryChip || 'remember-chip remember-chip-entry'}
                     style={{ background: getEntryColor(entry), color: getEntryTextColor(entry) }}
                     onClick={(event) => {
