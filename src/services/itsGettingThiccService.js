@@ -5,7 +5,7 @@ const LOGS_KEY = 'thicc_client_logs';
 const MEDIA_KEY = 'media_library';
 const FORMS_KEY = 'thicc_client_forms';
 const ASSIGNMENTS_KEY = 'thicc_client_form_assignments';
-const SCHEDULE_KEY = 'thicc_client_schedule_entries';
+const SCHEDULE_KEY = 'thicc_time_entries_v1';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const createLocalScheduleId = () => `local_schedule_${Date.now()}_${uid()}`;
@@ -202,18 +202,21 @@ const isEmptyScheduleStoreError = (status, body = '') => {
 };
 
 export async function fetchScheduleEntries() {
-  if (!hasSupabase) return loadScheduleEntries().map(normalizeScheduleEntry);
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc,start_time.asc`, { headers: sbHeaders, cache: 'no-store' });
-  if (!res.ok) {
-    const body = await readErrorBody(res);
-    if (isEmptyScheduleStoreError(res.status, body)) {
-      console.warn(`THICC.TIME schedule store unavailable; rendering empty calendar. ${res.status} ${body}`);
-      return [];
+  const localRows = loadScheduleEntries().map(normalizeScheduleEntry);
+  if (!hasSupabase) return localRows;
+  try {
+    const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc,start_time.asc`, { headers: sbHeaders, cache: 'no-store' });
+    if (!res.ok) {
+      const body = await readErrorBody(res);
+      console.warn(`THICC.TIME schedule store unavailable; using local calendar fallback. ${res.status} ${body}`);
+      return localRows;
     }
-    throw new Error(`THICC.TIME LOAD FAILED: ${res.status} ${body}`);
+    const rows = await res.json();
+    return (Array.isArray(rows) ? rows : []).map(normalizeScheduleEntry);
+  } catch (error) {
+    console.warn('THICC.TIME schedule fetch unavailable; using local calendar fallback.', error);
+    return localRows;
   }
-  const rows = await res.json();
-  return (Array.isArray(rows) ? rows : []).map(normalizeScheduleEntry);
 }
 
 export function normalizeScheduleEntry(row = {}) {
@@ -376,44 +379,55 @@ export async function saveScheduleEntry(entry) {
   const validationError = validateScheduleEntry(cleanPayload);
   if (validationError) throw new Error(validationError);
 
-  if (hasSupabase) {
-    if (cleanPayload.entry_type === 'client' && !isUuid(cleanPayload.client_id)) {
-      throw new Error('Cannot save THICC.TIME entry: active client is missing a database UUID.');
-    }
-  }
-  if (!hasSupabase) {
-    const safeEntry = {
-      ...cleanPayload,
-      id: cleanPayload.id || createLocalScheduleId(),
-      created_at: cleanPayload.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    const existing = loadScheduleEntries();
-    const next = existing.some((row) => row.id === safeEntry.id)
-      ? existing.map((row) => (row.id === safeEntry.id ? safeEntry : row))
-      : [...existing, safeEntry];
-    saveScheduleEntries(next);
+  const safeEntry = {
+    ...cleanPayload,
+    id: cleanPayload.id || createLocalScheduleId(),
+    created_at: cleanPayload.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  const existing = loadScheduleEntries();
+  const next = existing.some((row) => row.id === safeEntry.id)
+    ? existing.map((row) => (row.id === safeEntry.id ? safeEntry : row))
+    : [...existing, safeEntry];
+  saveScheduleEntries(next);
+  if (!hasSupabase) return safeEntry;
+  if (safeEntry.entry_type === 'client' && !isUuid(safeEntry.client_id)) {
+    console.warn('THICC.TIME client entry saved locally because active client has no database UUID.');
     return safeEntry;
   }
   const supabasePayload = Object.fromEntries(
-    Object.entries(cleanPayload).filter(([key]) => !['schedule_layer', 'prospect_name', 'prospect_contact', 'recurrence_type', 'recurrence_days', 'recurrence_active'].includes(key)),
+    Object.entries(safeEntry).filter(([key]) => !['schedule_layer', 'prospect_name', 'prospect_contact', 'recurrence_type', 'recurrence_days', 'recurrence_active'].includes(key)),
   );
   const hasExistingId = isUuid(supabasePayload.id);
   if (!hasExistingId) delete supabasePayload.id;
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([supabasePayload]) });
-  if (!res.ok) await throwSupabaseError('SAVE', res);
-  const rows = await res.json();
-  return rows[0];
+  try {
+    const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'return=representation,resolution=merge-duplicates' }, body: JSON.stringify([supabasePayload]) });
+    if (!res.ok) {
+      const body = await readErrorBody(res);
+      console.warn(`THICC.TIME save using local calendar fallback: ${res.status} ${body}`);
+      return safeEntry;
+    }
+    const rows = await res.json();
+    return rows[0] || safeEntry;
+  } catch (error) {
+    console.warn('THICC.TIME save using local calendar fallback.', error);
+    return safeEntry;
+  }
 }
 
 export async function deleteScheduleEntry(id) {
-  if (!hasSupabase) {
-    const next = loadScheduleEntries().filter((row) => row.id !== id);
-    saveScheduleEntries(next);
-    return true;
+  const next = loadScheduleEntries().filter((row) => row.id !== id);
+  saveScheduleEntries(next);
+  if (!hasSupabase) return true;
+  try {
+    const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' } });
+    if (!res.ok) {
+      const body = await readErrorBody(res);
+      console.warn(`THICC.TIME delete using local calendar fallback: ${res.status} ${body}`);
+    }
+  } catch (error) {
+    console.warn('THICC.TIME delete using local calendar fallback.', error);
   }
-  const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: { ...sbHeaders, Prefer: 'return=minimal' } });
-  if (!res.ok) await throwSupabaseError('DELETE', res);
   return true;
 }
 
