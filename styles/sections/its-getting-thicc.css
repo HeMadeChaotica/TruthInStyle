@@ -70,3 +70,7 @@ small{display:block;margin:4px 0;color: var(--app-text-primary);opacity:.9}
 .time-day-entry small{grid-column:1/-1;margin:0;color:#ffdff5;overflow:visible;white-space:normal}
 .time-editor-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .time-editor-actions{grid-template-columns:auto auto auto 1fr}
+.time-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:6px 0}.time-weekdays span{text-align:center;font-size:.58rem;letter-spacing:.12em;color:var(--app-text-primary)}
+.day.outside{opacity:.28;cursor:not-allowed}.day:disabled{color:var(--app-text-primary)}
+.time-day-num{font-weight:800;font-size:.72rem;line-height:1;color:var(--app-text-primary)}
+.time-existing-items{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.time-existing-items button.active{box-shadow:0 0 0 2px rgba(255,128,201,.95)}

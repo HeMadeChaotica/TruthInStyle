@@ -9,6 +9,7 @@ import {
   saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload, toLocalIsoDate, isLocalIsoDateKey, validateScheduleEntry,
 } from '../../src/services/itsGettingThiccService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
+import ChaoticaMonthCalendar from '../shared/ChaoticaMonthCalendar';
 import { normalizeObjectStrings, normalizeUserText } from '../../lib/utils/textCasing';
 
 const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -195,7 +196,6 @@ export default function ItsGettingThiccSection() {
       { id: 'H', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /></div>)}</div></> }] },
   ];
 
-  const weekdayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const getLayerFromEntry = (entry = {}) => entry.schedule_layer || (entry.entry_type === 'personal' ? 'mista_thicc' : 'the_thiccens');
   const getClientScheduleColorKey = (key) => (key === 'mista-thicc-pink' ? 'cobalt' : resolveClientColor(key).key === 'mista-thicc-pink' ? 'cobalt' : (key || 'cobalt'));
   const entryColor = (entry = {}) => {
@@ -224,36 +224,7 @@ export default function ItsGettingThiccSection() {
     setTimeDraft({ ...row, schedule_layer: getLayerFromEntry(row), recurrence_type: row.recurrence_type || 'none', recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [], recurrence_active: Boolean(row.recurrence_active) });
   };
 
-  const monthDates = useMemo(() => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    return Array.from({ length: daysInMonth }, (_, i) => `${year}-${String(month + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`);
-  }, [viewDate]);
-
-  const visibleEntriesByDate = useMemo(() => {
-    const grouped = {};
-    Object.entries(entriesByDate && typeof entriesByDate === 'object' ? entriesByDate : {}).forEach(([dateKey, rows]) => {
-      (Array.isArray(rows) ? rows : []).forEach((entry) => {
-        const normalized = normalizeScheduleEntry(entry);
-        const sourceDate = new Date(`${normalized.entry_date}T12:00:00`);
-        if (!Number.isNaN(sourceDate.getTime())) {
-          grouped[normalized.entry_date] = [...(grouped[normalized.entry_date] || []), normalized];
-          if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && Array.isArray(normalized.recurrence_days)) {
-            monthDates.forEach((mk) => {
-              if (mk < normalized.entry_date) return;
-              const d = new Date(`${mk}T12:00:00`);
-              const key = weekdayKeys[d.getDay()];
-              if (normalized.recurrence_days.includes(key) && mk !== normalized.entry_date) {
-                grouped[mk] = [...(grouped[mk] || []), { ...normalized, id: `${normalized.id}__${mk}`, original_entry_id: normalized.id, original_entry_date: normalized.entry_date, entry_date: mk, derived_recurrence: true }];
-              }
-            });
-          }
-        }
-      });
-    });
-    return grouped;
-  }, [entriesByDate, monthDates]);
+  const visibleEntriesByDate = useMemo(() => entriesByDate && typeof entriesByDate === 'object' ? entriesByDate : {}, [entriesByDate]);
   const assurerPayloadPreview = useMemo(() => buildThiccTimeAssurerPayload(entriesByDate), [entriesByDate]);
 
   const selectedDayEntries = visibleEntriesByDate[selectedTimeDate] || [];
@@ -285,10 +256,6 @@ export default function ItsGettingThiccSection() {
         setTimeError('Select a logged client for THE.THICCENS.');
         return;
       }
-      if (timeDraft.recurrence_type === 'weekly' && !(timeDraft.recurrence_days || []).length) {
-        setTimeError('Select at least one weekday for RECURRING.');
-        return;
-      }
       if (timeDraft.schedule_layer === 'new_client' && !timeDraft.prospect_name) {
         setTimeError('Prospect name required for NEW CLIENT.');
         return;
@@ -299,9 +266,9 @@ export default function ItsGettingThiccSection() {
         schedule_layer: timeDraft.schedule_layer,
         prospect_name: normalizeUserText(timeDraft.prospect_name || ''),
         prospect_contact: normalizeUserText(timeDraft.prospect_contact || ''),
-        recurrence_type: timeDraft.recurrence_type || 'none',
-        recurrence_days: timeDraft.recurrence_type === 'weekly' ? (timeDraft.recurrence_days || []) : [],
-        recurrence_active: timeDraft.recurrence_type === 'weekly' && Boolean((timeDraft.recurrence_days || []).length),
+        recurrence_type: 'none',
+        recurrence_days: [],
+        recurrence_active: false,
       };
       if (timeDraft.schedule_layer === 'mista_thicc') {
         payload = { ...payload, entry_type: 'personal', client_id: null, client_name: '', color_option_key: 'mista-thicc-pink' };
@@ -365,25 +332,34 @@ export default function ItsGettingThiccSection() {
   try {
     timeContent = <>
       <h3>THICC.TIME</h3>
-      <div className="time-month-nav">
-        <button type="button" onClick={() => setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}>PREV</button>
-        <strong>{viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong>
-        <button type="button" onClick={() => setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}>NEXT</button>
-      </div>
       <div className="time-calendar-shell">
         <p className="time-selected-date">SELECTED DATE: {formatDisplayDate(selectedTimeDate)}</p>
-        <div className="month">
-          {monthDates.map((dateKey) => {
-            const dayRows = visibleEntriesByDate[dateKey] || [];
-            return <button type="button" key={dateKey} className={`day ${selectedTimeDate === dateKey ? 'selected' : ''}`} onClick={() => openNewEditor(dateKey)}>
-              <b>{Number(dateKey.slice(-2))}</b>
-              <span className="day-entry-stack">
-                {dayRows.slice(0, 6).map((r) => <span key={r.id} className="booking" onClick={(event) => { event.stopPropagation(); openEditor(resolveEditableEntry(r)); }} style={{ background: entryColor(r), color: r.schedule_layer === 'new_client' ? '#120014' : '#fff' }}>{getChipLabel(r)}</span>)}
-                {dayRows.length > 6 ? <span className="booking-more">+{dayRows.length - 6} MORE — OPEN DAY</span> : null}
-              </span>
-            </button>;
-          })}
-        </div>
+        <ChaoticaMonthCalendar
+          viewDate={viewDate}
+          selectedDateKey={selectedTimeDate}
+          entriesByDate={visibleEntriesByDate}
+          onMonthChange={(next, nextDateKey) => { setViewDate(next); if (nextDateKey) setSelectedTimeDate(nextDateKey); }}
+          onSelectDate={(dateKey) => openNewEditor(dateKey)}
+          onEntryClick={(entry) => openEditor(resolveEditableEntry(entry))}
+          getEntryLabel={(entry) => getChipLabel(entry)}
+          getEntryColor={(entry) => entryColor(entry)}
+          getEntryTextColor={(entry) => entry.schedule_layer === 'new_client' ? '#120014' : '#fff'}
+          maxEntriesPerDay={6}
+          previousLabel="PREV"
+          nextLabel="NEXT"
+          classNames={{
+            monthRow: 'time-month-nav',
+            weekdays: 'time-weekdays',
+            grid: 'month',
+            day: 'day',
+            selectedDay: 'selected',
+            outsideDay: 'outside',
+            dayNumber: 'time-day-num',
+            entryStack: 'day-entry-stack',
+            entryChip: 'booking',
+            moreChip: 'booking-more',
+          }}
+        />
         <section className="time-day-panel" aria-label="Selected THICC.TIME day entries">
           <div>
             <strong>{formatDisplayDate(selectedTimeDate)} ENTRIES</strong>
@@ -403,16 +379,17 @@ export default function ItsGettingThiccSection() {
             <strong>{editingEntryId ? 'EDIT ENTRY' : 'NEW ENTRY'} — {formatDisplayDate(timeDraft.entry_date)}</strong>
             <button type="button" onClick={closeTimeEditor}>CANCEL</button>
           </div>
+          <div className="remember-existing-items time-existing-items">
+            {(visibleEntriesByDate[timeDraft.entry_date] || []).map((entry) => <button type="button" key={entry.id} className={editingEntryId === entry.id ? 'active' : ''} onClick={() => openEditor(resolveEditableEntry(entry))}>{getChipLabel(entry)} {entry.start_time ? `• ${entry.start_time}` : ''}</button>)}
+          </div>
           <div className="form-grid">
-            <label>LAYER<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : layer === 'new_client' ? 'new_client' : 'personal', client_id: layer === 'the_thiccens' ? getClientDbId(active) : null, client_name: layer === 'the_thiccens' ? (active?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : layer === 'new_client' ? 'new-client-white' : getClientScheduleColorKey(active?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">MISTA.THICC</option><option value="new_client">NEW CLIENT</option><option value="the_thiccens">THE.THICCENS</option></select></label>
+            <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : layer === 'new_client' ? 'new_client' : 'personal', client_id: layer === 'the_thiccens' ? getClientDbId(active) : null, client_name: layer === 'the_thiccens' ? (active?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : layer === 'new_client' ? 'new-client-white' : getClientScheduleColorKey(active?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">MISTA.THICC PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
             {timeDraft.schedule_layer === 'new_client' ? <><label>PROSPECT NAME<input value={timeDraft.prospect_name || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, prospect_name: e.target.value }))} /></label><label>PROSPECT CONTACT<input value={timeDraft.prospect_contact || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, prospect_contact: e.target.value }))} /></label></> : null}
             <label>START TIME<input type="time" value={timeDraft.start_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, start_time: e.target.value }))} /></label>
             <label>END TIME<input type="time" value={timeDraft.end_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, end_time: e.target.value }))} /></label>
             <label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label>
             <label>LOCATION<input value={timeDraft.location || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, location: e.target.value }))} /></label>
             <label>NOTES<textarea value={timeDraft.notes || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, notes: e.target.value }))} /></label>
-            <label>SCHEDULE MODE<select value={timeDraft.recurrence_type || 'none'} onChange={(e) => setTimeDraft((prev) => ({ ...prev, recurrence_type: e.target.value, recurrence_active: e.target.value === 'weekly', recurrence_days: e.target.value === 'weekly' ? (prev.recurrence_days?.length ? prev.recurrence_days : [weekdayKeys[new Date(`${prev.entry_date}T12:00:00`).getDay()]]) : [] }))}><option value="none">ONE AND DONE</option><option value="weekly">RECURRING</option></select></label>
-            {timeDraft.recurrence_type === 'weekly' ? <div className="weekday-grid">{weekdayKeys.map((k) => <button type="button" key={k} className={`weekday-pill ${(timeDraft.recurrence_days || []).includes(k) ? 'active' : ''}`} onClick={() => setTimeDraft((prev) => ({ ...prev, recurrence_days: (prev.recurrence_days || []).includes(k) ? prev.recurrence_days.filter((d) => d !== k) : [...(prev.recurrence_days || []), k] }))}>{k.toUpperCase()}</button>)}</div> : null}
           </div>
           <div className="form-row time-editor-actions">
             <button type="button" disabled={timeActionStatus === 'saving'} onClick={saveTimeDraft}>SAVE</button>

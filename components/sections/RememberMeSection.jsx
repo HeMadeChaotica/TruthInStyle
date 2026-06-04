@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import ChaoticaMonthCalendar, { daysInMonth, safeDateKey } from '../shared/ChaoticaMonthCalendar';
 import '../../styles/sections/remember-me.css';
 import { normalizeUserText } from '../../lib/utils/textCasing';
 
@@ -75,14 +76,6 @@ const formatDisplayDate = (value) => {
   return `${month}/${day}/${year}`;
 };
 
-const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
-const safeDateKey = (y, m, d) => {
-  const dim = daysInMonth(y, m);
-  if (!Number.isInteger(d) || d < 1) return null;
-  const safeDay = Math.min(d, dim);
-  return `${y}-${String(m + 1).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`;
-};
-
 export default function RememberMeSection() {
   const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
@@ -112,14 +105,6 @@ export default function RememberMeSection() {
       setEntriesByDate(grouped);
     })();
   }, []);
-
-  const shiftMonth = (delta) => {
-    setViewDate((cur) => {
-      const next = new Date(cur.getFullYear(), cur.getMonth() + delta, 1);
-      setSelectedDay((prev) => Math.min(prev, daysInMonth(next.getFullYear(), next.getMonth())));
-      return next;
-    });
-  };
 
   const saveEntry = async () => {
     setError('');
@@ -210,23 +195,6 @@ export default function RememberMeSection() {
     setPostcardOpen(false);
   };
 
-  const monthGrid = useMemo(() => {
-    const y = viewDate.getFullYear();
-    const m = viewDate.getMonth();
-    const first = new Date(y, m, 1).getDay();
-    const dim = daysInMonth(y, m);
-    const dip = daysInMonth(y, m - 1);
-    const cells = [];
-    for (let i = first - 1; i >= 0; i -= 1) cells.push({ day: dip - i, inMonth: false });
-    for (let d = 1; d <= dim; d += 1) cells.push({ day: d, inMonth: true });
-    let nextMonthDay = 1;
-    while (cells.length % 7 !== 0) {
-      cells.push({ day: nextMonthDay, inMonth: false });
-      nextMonthDay += 1;
-    }
-    return cells;
-  }, [viewDate]);
-
   return (
     <section className="remember-page">
       <div
@@ -251,9 +219,15 @@ export default function RememberMeSection() {
         <div className="remember-content">
         <main className="remember-main">
           <section className="remember-calendar-panel">
-            <div className="remember-month-row"><button type="button" onClick={() => shiftMonth(-1)}>‹</button><strong>{viewDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}</strong><button type="button" onClick={() => shiftMonth(1)}>›</button></div>
-            <div className="remember-weekdays">{['SUN','MON','TUE','WED','THU','FRI','SAT'].map((d) => <span key={d}>{d}</span>)}</div>
-            <div className="remember-grid">{monthGrid.map((cell, idx) => <button key={`${idx}-${cell.day}`} type="button" className={`remember-day ${!cell.inMonth ? 'remember-outside' : ''}`} onClick={() => { if (cell.inMonth) { setSelectedDay(cell.day); setPostcardOpen(true); } }}><span className="remember-day-num">{cell.day}</span></button>)}</div>
+            <ChaoticaMonthCalendar
+              viewDate={viewDate}
+              selectedDateKey={selectedDateKey}
+              entriesByDate={entriesByDate}
+              onMonthChange={(next, nextDateKey) => { setViewDate(next); setSelectedDay(Number(nextDateKey?.slice(-2)) || Math.min(selectedDay, daysInMonth(next.getFullYear(), next.getMonth()))); }}
+              onSelectDate={(dateKey, day) => { setSelectedDay(day); setPostcardOpen(true); }}
+              getEntryLabel={(entry) => `${entry.type}${entry.time ? ` • ${entry.time}` : ''}`}
+              maxEntriesPerDay={2}
+            />
           </section>
         </main>
         </div>
