@@ -108,8 +108,11 @@ export const loadForms = () => get(FORMS_KEY, DEFAULT_FORMS);
 export const saveForms = (forms) => set(FORMS_KEY, forms);
 export const loadAssignments = () => get(ASSIGNMENTS_KEY, []);
 export const saveAssignments = (assignments) => set(ASSIGNMENTS_KEY, assignments);
-export const loadScheduleEntries = () => get(SCHEDULE_KEY, []);
-export const saveScheduleEntries = (entries) => set(SCHEDULE_KEY, entries);
+export const loadScheduleEntries = () => {
+  const rawEntries = get(SCHEDULE_KEY, []);
+  return Array.isArray(rawEntries) ? rawEntries : [];
+};
+export const saveScheduleEntries = (entries) => set(SCHEDULE_KEY, Array.isArray(entries) ? entries : []);
 
 const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -192,10 +195,23 @@ async function throwSupabaseError(action, res) {
   throw new Error(`THICC.TIME ${action} FAILED: ${res.status} ${body}`);
 }
 
+const isEmptyScheduleStoreError = (status, body = '') => {
+  const normalized = String(body || '').toLowerCase();
+  return status === 404
+    || normalized.includes('thicc_client_schedule_entries') && (normalized.includes('does not exist') || normalized.includes('not found') || normalized.includes('could not find'));
+};
+
 export async function fetchScheduleEntries() {
   if (!hasSupabase) return loadScheduleEntries().map(normalizeScheduleEntry);
   const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc,start_time.asc`, { headers: sbHeaders, cache: 'no-store' });
-  if (!res.ok) await throwSupabaseError('LOAD', res);
+  if (!res.ok) {
+    const body = await readErrorBody(res);
+    if (isEmptyScheduleStoreError(res.status, body)) {
+      console.warn(`THICC.TIME schedule store unavailable; rendering empty calendar. ${res.status} ${body}`);
+      return [];
+    }
+    throw new Error(`THICC.TIME LOAD FAILED: ${res.status} ${body}`);
+  }
   const rows = await res.json();
   return (Array.isArray(rows) ? rows : []).map(normalizeScheduleEntry);
 }
