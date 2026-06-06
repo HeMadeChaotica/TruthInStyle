@@ -6,7 +6,7 @@ import '../../styles/sections/universal-frame.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import {
   appendLog, deleteScheduleEntry, fetchClientColors, fetchFormAssignments, fetchForms, fetchScheduleEntries, groupScheduleEntriesByDate, loadClients, readMedia, resolveClientColor,
-  saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload, toLocalIsoDate, isLocalIsoDateKey, validateScheduleEntry,
+  saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, getScheduleClientId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload, toLocalIsoDate, isLocalIsoDateKey, validateScheduleEntry,
 } from '../../src/services/itsGettingThiccService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 import ChaoticaMonthCalendar from '../shared/ChaoticaMonthCalendar';
@@ -79,6 +79,7 @@ export default function ItsGettingThiccSection() {
   const active = useMemo(() => safeClients.find((c) => c.id === activeId) || safeClients[0] || safeFallbackClient, [safeClients, activeId]);
   const activeClientDbId = useMemo(() => getClientDbId(active), [active]);
   const isSupabase = isSupabaseEnabled();
+  const getClientScheduleId = (client) => getScheduleClientId(client, isSupabase);
 
   const loadTimeEntries = async () => {
     try {
@@ -271,9 +272,9 @@ export default function ItsGettingThiccSection() {
       if (timeDraft.schedule_layer === 'mista_thicc') {
         payload = { ...payload, entry_type: 'personal', client_id: null, client_name: '', color_option_key: 'mista-thicc-pink' };
       } else {
-        const selectedClient = safeClients.find((client) => getClientDbId(client) === timeDraft.client_id) || active;
+        const selectedClient = safeClients.find((client) => getClientScheduleId(client) === timeDraft.client_id) || active;
         const ensuredClient = isSupabase ? await ensureClientDbId(selectedClient) : selectedClient;
-        const scheduleClientId = isSupabase ? getClientDbId(ensuredClient) : getClientDbId(ensuredClient);
+        const scheduleClientId = getClientScheduleId(ensuredClient);
         if (!scheduleClientId) {
           setTimeError('Select a logged client for THE.THICCENS.');
           return;
@@ -380,8 +381,8 @@ export default function ItsGettingThiccSection() {
             {(visibleEntriesByDate[timeDraft.entry_date] || []).map((entry) => <button type="button" key={entry.id} className={editingEntryId === entry.id ? 'active' : ''} onClick={() => openEditor(resolveEditableEntry(entry))}>{getChipLabel(entry)} {entry.start_time ? `• ${entry.start_time}` : ''}</button>)}
           </div>
           <div className="form-grid">
-            <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; const nextClient = safeClients.find((client) => getClientDbId(client) === timeDraft.client_id) || active; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : 'personal', client_id: layer === 'the_thiccens' ? getClientDbId(nextClient) : null, client_name: layer === 'the_thiccens' ? (nextClient?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
-            {timeDraft.schedule_layer === 'the_thiccens' ? <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientDbId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => <option key={client.id} value={getClientDbId(client)}>{client.name || 'THICC CLIENT'}</option>)}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'EMPTY CLIENT LIST: PERSONAL ENTRIES STILL SAVE.'}</small></label> : null}
+            <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; const nextClient = safeClients.find((client) => getClientScheduleId(client) === timeDraft.client_id) || active; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : 'personal', client_id: layer === 'the_thiccens' ? getClientScheduleId(nextClient) : null, client_name: layer === 'the_thiccens' ? (nextClient?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
+            {timeDraft.schedule_layer === 'the_thiccens' ? <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientScheduleId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => { const scheduleId = getClientScheduleId(client); return <option key={client.id} value={scheduleId || ''} disabled={!scheduleId}>{client.name || 'THICC CLIENT'}</option>; })}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'EMPTY CLIENT LIST: PERSONAL ENTRIES STILL SAVE.'}</small></label> : null}
             <label>START TIME<input type="time" value={timeDraft.start_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, start_time: e.target.value }))} /></label>
             <label>END TIME<input type="time" value={timeDraft.end_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, end_time: e.target.value }))} /></label>
             <label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label>

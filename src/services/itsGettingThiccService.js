@@ -6,6 +6,7 @@ const MEDIA_KEY = 'media_library';
 const FORMS_KEY = 'thicc_client_forms';
 const ASSIGNMENTS_KEY = 'thicc_client_form_assignments';
 const SCHEDULE_KEY = 'thicc_time_entries_v1';
+const LEGACY_SCHEDULE_KEY = 'thicc_client_schedule_entries';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const createLocalScheduleId = () => `local_schedule_${Date.now()}_${uid()}`;
@@ -47,16 +48,21 @@ export const createClientTemplate = () => ({
   eventNotes: '', paymentDate: '', thoughts: '', myfitMeals: '', myfitVerified: false, celebration: createCelebration(), active: true,
 });
 
+const hasLocalStorage = () => typeof window !== 'undefined' && Boolean(window.localStorage);
+
 const get = (k, fb) => {
-  if (typeof window === 'undefined') return fb;
+  if (!hasLocalStorage()) return fb;
   try {
-    return JSON.parse(localStorage.getItem(k) || 'null') ?? fb;
+    return JSON.parse(window.localStorage.getItem(k) || 'null') ?? fb;
   } catch (error) {
     console.warn(`ITS.GETTING.THICC localStorage parse failed for ${k}`, error);
     return fb;
   }
 };
-const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const set = (k, v) => {
+  if (!hasLocalStorage()) return;
+  window.localStorage.setItem(k, JSON.stringify(v));
+};
 
 export const resolveClientColor = (key) => THICC_TIME_SPECIAL_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0] || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
 
@@ -108,11 +114,74 @@ export const loadForms = () => get(FORMS_KEY, DEFAULT_FORMS);
 export const saveForms = (forms) => set(FORMS_KEY, forms);
 export const loadAssignments = () => get(ASSIGNMENTS_KEY, []);
 export const saveAssignments = (assignments) => set(ASSIGNMENTS_KEY, assignments);
-export const loadScheduleEntries = () => {
-  const rawEntries = get(SCHEDULE_KEY, []);
-  return Array.isArray(rawEntries) ? rawEntries : [];
+const readScheduleStorageArray = (key) => {
+  if (!hasLocalStorage()) return { rows: [], exists: false, parseFailed: false };
+  const raw = window.localStorage.getItem(key);
+  if (raw == null || raw === '') return { rows: [], exists: raw != null, parseFailed: false };
+  try {
+    const parsed = JSON.parse(raw);
+    return { rows: Array.isArray(parsed) ? parsed : [], exists: true, parseFailed: false };
+  } catch (error) {
+    console.warn(`THICC.TIME localStorage parse failed for ${key}`, error);
+    return { rows: [], exists: true, parseFailed: true };
+  }
 };
-export const saveScheduleEntries = (entries) => set(SCHEDULE_KEY, Array.isArray(entries) ? entries : []);
+
+const scheduleDedupKey = (entry = {}) => {
+  if (entry.id) return `id:${entry.id}`;
+  return [
+    entry.entry_type || '',
+    entry.client_id || '',
+    entry.client_name || '',
+    entry.entry_date || '',
+    entry.start_time || '',
+    entry.end_time || '',
+    entry.workout_label || '',
+    entry.location || '',
+    entry.notes || '',
+  ].join('|');
+};
+
+const normalizeScheduleStorageRows = (rows = [], sourceKey = SCHEDULE_KEY) => {
+  const skipped = { count: 0 };
+  const seen = new Set();
+  const normalizedRows = [];
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    if (!row || typeof row !== 'object') {
+      skipped.count += 1;
+      return;
+    }
+    const normalized = normalizeScheduleEntry(row);
+    if (!normalized.entry_date || !['personal', 'client', 'new_client'].includes(normalized.entry_type)) {
+      skipped.count += 1;
+      return;
+    }
+    const dedupKey = scheduleDedupKey(normalized);
+    if (seen.has(dedupKey)) return;
+    seen.add(dedupKey);
+    normalizedRows.push(normalized);
+  });
+  if (skipped.count) console.warn(`THICC.TIME skipped ${skipped.count} malformed schedule record(s) from ${sourceKey}.`);
+  return normalizedRows;
+};
+
+export const loadScheduleEntries = () => {
+  const currentStore = readScheduleStorageArray(SCHEDULE_KEY);
+  if (currentStore.rows.length) {
+    const canonicalRows = normalizeScheduleStorageRows(currentStore.rows, SCHEDULE_KEY);
+    if (canonicalRows.length !== currentStore.rows.length) set(SCHEDULE_KEY, canonicalRows);
+    return canonicalRows;
+  }
+
+  const legacyStore = readScheduleStorageArray(LEGACY_SCHEDULE_KEY);
+  if (!legacyStore.rows.length) return [];
+
+  const migratedRows = normalizeScheduleStorageRows(legacyStore.rows, LEGACY_SCHEDULE_KEY);
+  set(SCHEDULE_KEY, migratedRows);
+  console.info(`THICC.TIME migrated ${migratedRows.length} schedule record(s) from ${LEGACY_SCHEDULE_KEY} to ${SCHEDULE_KEY}.`);
+  return migratedRows;
+};
+export const saveScheduleEntries = (entries) => set(SCHEDULE_KEY, normalizeScheduleStorageRows(Array.isArray(entries) ? entries : [], SCHEDULE_KEY));
 
 const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -130,6 +199,28 @@ export function getClientDbId(client) {
     if (isUuid(candidate)) return candidate;
   }
   return isUuid(client.id) ? client.id : null;
+}
+
+export function getLocalClientId(client) {
+  if (!client || typeof client !== 'object') return null;
+  const candidates = [client.id, client.localId, client.local_id, client.client_id];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return null;
+}
+
+export function getScheduleClientId(client, supabaseEnabled = hasSupabase) {
+  if (!client || typeof client !== 'object') return null;
+  const dbId = getClientDbId(client);
+  if (dbId) return dbId;
+  if (supabaseEnabled) return null;
+  return getLocalClientId(client);
+}
+
+export function isValidScheduleClientId(value, supabaseEnabled = hasSupabase) {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  return supabaseEnabled ? isUuid(value) : true;
 }
 
 export function normalizeForm(row = {}) {
@@ -345,7 +436,7 @@ export function validateScheduleEntry(entry = {}) {
   if (!String(normalized.workout_label || '').trim() && !String(normalized.notes || '').trim()) {
     return 'Add a workout label or notes before saving.';
   }
-  if (normalized.entry_type === 'client' && !normalized.client_id) return 'Select a logged client for THE.THICCENS.';
+  if (normalized.entry_type === 'client' && !isValidScheduleClientId(normalized.client_id)) return 'Select a logged client for THE.THICCENS.';
   return '';
 }
 
