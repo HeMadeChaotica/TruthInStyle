@@ -638,10 +638,10 @@
 }
 
 .assurer-assured-thoughts {
-  left: 42.8%;
-  top: 72.6%;
-  width: 29.0%;
-  height: 25.8%;
+  left: 28.2%;
+  top: 73.8%;
+  width: 43.2%;
+  height: 24.2%;
 }
 
 .assurer-title-content,
@@ -693,13 +693,13 @@
   min-height: clamp(17px, 1.25vw, 24px);
   border: 1px solid rgba(244, 178, 189, 0.54);
   border-radius: 9px;
-  background: rgba(12, 4, 5, 0.44);
+  background: rgba(12, 4, 5, 0.52);
   color: var(--app-text-primary);
   box-shadow: inset 0 0 10px rgba(239, 143, 163, 0.08);
   caret-color: #EF8FA3;
   font: inherit;
   font-size: clamp(9px, 0.56vw, 12px);
-  line-height: 1.05;
+  line-height: 1.18;
   letter-spacing: 0.04em;
   padding: clamp(2px, 0.28vw, 5px) clamp(5px, 0.45vw, 8px);
   text-transform: uppercase;
@@ -1022,8 +1022,9 @@
 }
 
 .assurer-thoughts-content {
-  gap: clamp(4px, 0.42vw, 8px);
+  gap: clamp(5px, 0.5vw, 10px);
   min-height: 0;
+  padding-bottom: clamp(0.65rem, 0.95vw, 1rem);
 }
 
 .assurer-lined-writing {
@@ -1031,7 +1032,7 @@
   min-height: 0;
   resize: none;
   border-radius: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
   background:
     repeating-linear-gradient(
       to bottom,
@@ -1042,8 +1043,10 @@
 }
 
 .assurer-thoughts-textarea {
+  position: relative;
+  z-index: 3;
   height: 100%;
-  min-height: 0;
+  min-height: clamp(118px, 13vw, 190px);
   overflow-y: auto;
   resize: none;
 }

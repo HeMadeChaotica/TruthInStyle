@@ -112,13 +112,42 @@ function buildAssurerDayPayload({
   location,
   weatherCity,
   weatherSummary,
+  weatherResult,
   headHummer,
   wordOfDay,
   wordDefinition,
   assuredThoughts,
+  battleCry,
+  thiccTime,
+  rememberMe,
+  thiccFitt,
+  daEater,
 }) {
+  const nativeFields = {
+    titleOfDay,
+    mood,
+    era,
+    singlenessLevel,
+    lobitoCheckIn,
+    headHummer,
+    location,
+    assuredThoughts,
+  };
+  const wordOfDayPayload = {
+    source: 'THE.ASSURER WORD OF THE DAY',
+    word: wordOfDay,
+    definition: wordDefinition,
+  };
+  const weatherPayload = {
+    source: 'THE.ASSURER WEATHER',
+    city: weatherCity,
+    summary: weatherSummary,
+    current: weatherResult || null,
+  };
+
   return {
     source: 'THE.ASSURER',
+    date: dateKey,
     dateKey,
     displayDate,
     dayOfWeek,
@@ -130,12 +159,18 @@ function buildAssurerDayPayload({
     location,
     weatherCity,
     weatherSummary,
+    weatherResult,
     headHummer,
-    wordOfDay: {
-      word: wordOfDay,
-      definition: wordDefinition,
-    },
+    wordOfDay: wordOfDayPayload,
     assuredThoughts,
+    nativeFields,
+    thiccTime: thiccTime || EMPTY_THICC_TIME_WEEK_MIRROR,
+    rememberMe: rememberMe || EMPTY_REMEMBER_ME_MOMENT_MIRROR,
+    thiccFitt: thiccFitt || EMPTY_THICC_FITT_WORKOUT_MIRROR,
+    daEater: daEater || { macros: ASSURER_MACRO_FALLBACK_MIRROR, meals: EMPTY_DA_EATER_MEAL_LOG },
+    weather: weatherPayload,
+    battleCry: battleCry || null,
+    wordOfTheDay: wordOfDayPayload,
   };
 }
 
@@ -146,20 +181,20 @@ function getDailyWordDefault(storageDate) {
 
 
 function AssurerTimelineRows({ entries, limit, expanded = false }) {
-  const visibleEntries = typeof limit === 'number' ? entries.slice(0, limit) : entries;
+  const safeEntries = Array.isArray(entries) ? entries : [];
+  const visibleEntries = typeof limit === 'number' ? safeEntries.slice(0, limit) : safeEntries;
 
   if (!visibleEntries.length) {
-    return <p className="assurer-timeline-empty">NO REMEMBER.ME EVENTS TODAY</p>;
+    return <p className="assurer-timeline-empty">NO THICC.TIME ENTRIES THIS WEEK</p>;
   }
 
   return (
     <div className={`assurer-timeline-list ${expanded ? 'assurer-timeline-list-expanded' : ''}`.trim()}>
       {visibleEntries.map((entry) => (
-        <article className="assurer-timeline-row" key={entry.id}>
-          <span className="assurer-timeline-time">{entry.time || 'ALL DAY'}</span>
-          <span className="assurer-timeline-type">{entry.type}</span>
-          <span className="assurer-timeline-text">{entry.text}</span>
-          {expanded && entry.mediaRef ? <span className="assurer-timeline-media">MEDIA</span> : null}
+        <article className="assurer-timeline-row" key={entry.id} style={{ borderLeftColor: entry.color }}>
+          <span className="assurer-timeline-time">{entry.startTime || 'TIME TBD'}{entry.endTime ? `-${entry.endTime}` : ''}</span>
+          <span className="assurer-timeline-type">{entry.person}</span>
+          <span className="assurer-timeline-text">{entry.label}</span>
         </article>
       ))}
     </div>
@@ -266,6 +301,7 @@ function AssurerWorkoutMirror({ mirror, expanded = false }) {
 
       <div className="assurer-workout-footer" aria-label="THICC.FITT DAILY SIGNALS">
         <SignalTile label="CARDIO" value={[cardio.type, cardio.duration].filter(Boolean).join(' • ')} />
+        <SignalTile label="SLEEP" value={safeMirror.sleep?.isValid ? [safeMirror.sleep.sleep_total, safeMirror.sleep.sleep_quality].filter(Boolean).join(' • ') : ''} />
         <SignalTile label="RECOVERY" value={[recovery.soreness, recovery.status].filter(Boolean).join(' • ')} />
         <SignalTile label="VAULT" value={[vault.compoundSummary, vault.cycleWeek && `WEEK ${vault.cycleWeek}`, vault.shotTrackingSummary && `SHOT ${vault.shotTrackingSummary}`].filter(Boolean).join(' • ')} />
         <SignalTile label="SO HOW YOU DOIN 🫪⁉️" value={dailySignals.soHowYouDoin} />
@@ -406,7 +442,6 @@ function AssurerMomentCards({ cards, expanded = false }) {
             <strong className="assurer-moment-type">{card.type}</strong>
             {hasMoment ? <small className="assurer-moment-time">{card.displayDateTime}</small> : null}
             <p className={`assurer-moment-preview ${hasMoment ? '' : 'assurer-moment-empty'}`.trim()}>{previewText}</p>
-            {!hasMoment && expanded ? <span className="assurer-moment-empty">READY FOR REMEMBER.ME</span> : null}
           </article>
         );
       })}
@@ -614,6 +649,24 @@ export default function TheAssurerSection() {
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [expandedWidget]);
 
+  const thiccTimeTodayEntries = useMemo(() => (
+    (Array.isArray(thiccTimeWeekMirror.entries) ? thiccTimeWeekMirror.entries : [])
+      .filter((entry) => entry.date === storageDate)
+  ), [storageDate, thiccTimeWeekMirror.entries]);
+
+  const rememberMeSource = useMemo(() => ({
+    source: 'REMEMBER.ME',
+    dateKey: rememberMeMomentDateKey,
+    moments: rememberMeMomentMirror,
+    events: rememberMeDayTimeline.entries || [],
+  }), [rememberMeDayTimeline.entries, rememberMeMomentDateKey, rememberMeMomentMirror]);
+
+  const daEaterSource = useMemo(() => ({
+    source: 'DA.EATER',
+    macros: macroMirror,
+    meals: daEaterMeals,
+  }), [daEaterMeals, macroMirror]);
+
   const momentCards = REMEMBER_ME_MOMENT_TYPES.map((momentType) => {
     const moment = rememberMeMomentMirror[momentType.key];
 
@@ -703,8 +756,8 @@ export default function TheAssurerSection() {
       case 'dayTimeline':
         return (
           <div className="assurer-expanded-timeline">
-            <p className="assurer-source-note">READ-ONLY FROM REMEMBER.ME EVENTS</p>
-            <AssurerTimelineRows entries={rememberMeDayTimeline.entries} expanded />
+            <p className="assurer-source-note">READ-ONLY FROM THICC.TIME</p>
+            <AssurerTimelineRows entries={thiccTimeTodayEntries} expanded />
           </div>
         );
       case 'weekStrip':
@@ -796,10 +849,16 @@ export default function TheAssurerSection() {
     location,
     weatherCity,
     weatherSummary,
+    weatherResult,
     headHummer,
     wordOfDay,
     wordDefinition,
     assuredThoughts,
+    battleCry: dailyBattleCry,
+    thiccTime: thiccTimeWeekMirror,
+    rememberMe: rememberMeSource,
+    thiccFitt: thiccFittWorkoutMirror,
+    daEater: daEaterSource,
   }), [
     storageDate,
     date,
@@ -812,10 +871,16 @@ export default function TheAssurerSection() {
     location,
     weatherCity,
     weatherSummary,
+    weatherResult,
     headHummer,
     wordOfDay,
     wordDefinition,
     assuredThoughts,
+    dailyBattleCry,
+    thiccTimeWeekMirror,
+    rememberMeSource,
+    thiccFittWorkoutMirror,
+    daEaterSource,
   ]);
 
   useEffect(() => {
@@ -914,7 +979,7 @@ export default function TheAssurerSection() {
             <div className="assurer-widget-content assurer-timeline-content">
               <strong>DAY TIMELINE</strong>
               <small>{date}</small>
-              <AssurerTimelineRows entries={rememberMeDayTimeline.entries} limit={4} />
+              <AssurerTimelineRows entries={thiccTimeTodayEntries} limit={4} />
             </div>
           </article>
 
