@@ -86,45 +86,75 @@ const getMomentStamp = (moment) => {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 };
 
-function RememberMomentFlipCard({ type, moment, flipped, onToggle }) {
+const getMomentTitle = (moment) => String(moment?.title || moment?.label || moment?.shortLabel || moment?.detail || '').trim();
+
+const getMomentDescription = (moment, title) => {
+  const candidates = [moment?.description, moment?.note, moment?.text, moment?.body, moment?.detail];
+  const found = candidates.map((value) => String(value || '').trim()).find((value) => value && value !== title);
+  return found || '';
+};
+
+function MomentFlipCard({ type, moment, isFlipped, onToggle }) {
   const hasMoment = Boolean(moment);
-  const title = String(moment?.detail || '').trim();
-  const description = String(moment?.description || '').trim();
+  const title = getMomentTitle(moment);
+  const description = getMomentDescription(moment, title);
   const mediaRef = getMomentMediaRef(moment);
+  const displayTime = String(moment?.time || moment?.time_value || '').trim();
+  const displayDate = formatDisplayDate(moment?.date_key || moment?.date || '');
+  const frontSummary = title || description;
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onToggle();
+    }
+  };
 
   return (
-    <button
-      type="button"
-      className={`remember-moment-card${flipped ? ' remember-moment-card-flipped' : ''}`}
+    <article
+      className={`moment-card-shell remember-moment-card${isFlipped ? ' is-flipped remember-moment-card-flipped' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isFlipped}
+      aria-label={`${type} REMEMBER.ME moment card${hasMoment ? ', saved moment available' : ', no moment recorded yet'}`}
+      data-moment-type={type}
+      data-flipped={isFlipped ? 'true' : 'false'}
       onClick={onToggle}
-      aria-pressed={flipped}
-      aria-label={`${type} REMEMBER.ME moment card`}
+      onKeyDown={handleKeyDown}
     >
-      <span className="remember-moment-plane">
-        <span className="remember-moment-face remember-moment-front" aria-hidden={flipped}>
-          <span className="remember-moment-kicker">{hasMoment ? 'REMEMBER.ME MOMENT' : 'READY FOR REMEMBER.ME'}</span>
+      <div className="moment-card-plane remember-moment-plane">
+        <div className="moment-card-face front remember-moment-face remember-moment-front" aria-hidden={isFlipped}>
+          <span className="remember-moment-kicker">{hasMoment ? 'SAVED REMEMBER.ME' : 'READY FOR REMEMBER.ME'}</span>
           <strong>{type}</strong>
-          <span className="remember-moment-empty">{hasMoment ? 'TAP TO VIEW SAVED MOMENT' : 'NO MOMENT RECORDED YET'}</span>
-        </span>
-        <span className="remember-moment-face remember-moment-back" aria-hidden={!flipped}>
-          <span className="remember-moment-back-scroll">
+          {hasMoment ? (
+            <>
+              <span className="remember-moment-saved-indicator">SAVED • TAP TO FLIP</span>
+              {frontSummary ? <span className="remember-moment-front-summary">{frontSummary}</span> : null}
+            </>
+          ) : (
+            <span className="remember-moment-empty">NO MOMENT RECORDED YET</span>
+          )}
+        </div>
+
+        <div className="moment-card-face back remember-moment-face remember-moment-back" aria-hidden={!isFlipped}>
+          <div className="remember-moment-back-scroll">
             <span className="remember-moment-kicker">{hasMoment ? 'REMEMBER.ME SAVED MOMENT' : 'READY FOR REMEMBER.ME'}</span>
             <strong>{type}</strong>
             {hasMoment ? (
-              <>
-                {moment.time ? <span className="remember-moment-time">{moment.time}</span> : null}
+              <div className="remember-moment-saved-data">
+                {displayDate || displayTime ? <span className="remember-moment-time">{[displayDate, displayTime].filter(Boolean).join(' • ')}</span> : null}
                 {title ? <span className="remember-moment-title">{title}</span> : null}
                 {description ? <span className="remember-moment-description">{description}</span> : null}
                 {!title && !description ? <span className="remember-moment-empty">NO MOMENT TEXT RECORDED</span> : null}
                 {mediaRef ? <img src={mediaRef} alt={`${type} REMEMBER.ME moment`} /> : null}
-              </>
+              </div>
             ) : (
-              <span className="remember-moment-empty">Tap a date in Remember.Me to add this moment.</span>
+              <span className="remember-moment-empty">NO MOMENT RECORDED YET</span>
             )}
-          </span>
-        </span>
-      </span>
-    </button>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -321,11 +351,11 @@ export default function RememberMeSection() {
           </section>
           <section className="remember-standout-postcards" aria-label="REMEMBER.ME moment flip cards">
             {momentCards.map((card) => (
-              <RememberMomentFlipCard
+              <MomentFlipCard
                 key={card.type}
                 type={card.type}
                 moment={card.moment}
-                flipped={flippedMomentType === card.type}
+                isFlipped={flippedMomentType === card.type}
                 onToggle={() => setFlippedMomentType((current) => (current === card.type ? '' : card.type))}
               />
             ))}
