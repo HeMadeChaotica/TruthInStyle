@@ -1,10 +1,7 @@
 .thicc-fitt-page,.thicc-fitt-page *,.thicc-fitt-page *::before,.thicc-fitt-page *::after{box-sizing:border-box}
 .tf30-shell{color: var(--app-text-primary);--thicc-fitt-content-peep-offset:clamp(78px,10vh,128px)}
 .tf30-bg{position:absolute;inset:0;background:url('/backgrounds/THICC-FITT/thicc-fitt-arena-bg.png') center center/cover no-repeat}
-.tf30-overlay{position:absolute;inset:0;background:
-radial-gradient(circle at 18% 12%,rgba(255,166,110,.10),transparent 40%),
-radial-gradient(circle at 84% 74%,rgba(126,58,102,.14),transparent 42%),
-linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
+.tf30-overlay{position:absolute;inset:0;pointer-events:none;background:none}
 .tf30-left{position:relative}
 .tf30-content{padding-top:var(--thicc-fitt-content-peep-offset);padding-bottom:8px}
 .thicc-fitt-access-trigger {
@@ -189,22 +186,22 @@ linear-gradient(135deg,rgba(18,8,14,.42),rgba(12,6,10,.2))}
 
 /* THICC.FITT readability repair: keep the original layout, but make panels/fields legible and tappable. */
 .tf30-shell{--tf30-readable-text:var(--app-text-primary)}
-.tf30-overlay{pointer-events:none;background:linear-gradient(135deg,rgba(8,3,7,.62),rgba(10,5,8,.44)),radial-gradient(circle at 18% 12%,rgba(255,166,110,.08),transparent 40%),radial-gradient(circle at 84% 74%,rgba(126,58,102,.10),transparent 42%)}
+.tf30-overlay{pointer-events:none;background:none}
 .tf30-content{position:relative;z-index:2}
-.tf30-shell .usf-panel{overflow:visible;background:linear-gradient(150deg,rgba(16,7,12,.92),rgba(28,10,18,.82))!important;box-shadow:0 14px 30px rgba(5,0,4,.45),inset 0 0 0 1px rgba(244,178,189,.18)!important}
+.tf30-shell .usf-panel{overflow:visible;background:linear-gradient(150deg,rgba(10,7,9,.78),rgba(22,12,16,.66))!important;box-shadow:0 12px 24px rgba(5,0,4,.32),inset 0 0 0 1px rgba(244,178,189,.2)!important;backdrop-filter:none!important}
 .tf30-shell h2{font-size:clamp(1rem,1.7vw,1.24rem);line-height:1.25;color:var(--tf30-readable-text);text-shadow:0 2px 12px rgba(0,0,0,.88)}
 .tf30-shell h3{font-size:clamp(.88rem,1.25vw,1rem);line-height:1.3;color:var(--tf30-readable-text);text-shadow:0 2px 10px rgba(0,0,0,.85)}
 .tf30-shell label,.tf30-shell span,.tf30-shell strong,.tf30-shell button{font-size:clamp(.78rem,1.05vw,.95rem);line-height:1.35;color:var(--tf30-readable-text);opacity:1;text-shadow:0 2px 10px rgba(0,0,0,.82)}
-.tf30-shell input,.tf30-shell select,.tf30-shell textarea{min-height:44px;font-size:clamp(.86rem,1.08vw,1rem);line-height:1.35;color:var(--tf30-readable-text);-webkit-text-fill-color:var(--tf30-readable-text);background:linear-gradient(145deg,rgba(9,4,8,.96),rgba(25,9,16,.9));border:1px solid rgba(244,178,189,.72);border-radius:12px;padding:10px 12px;opacity:1;box-shadow:inset 0 0 0 1px rgba(244,178,189,.18),0 6px 16px rgba(0,0,0,.28)}
+.tf30-shell input,.tf30-shell select,.tf30-shell textarea{min-height:44px;font-size:clamp(.86rem,1.08vw,1rem);line-height:1.35;color:var(--tf30-readable-text);-webkit-text-fill-color:var(--tf30-readable-text);background:linear-gradient(145deg,rgba(8,6,8,.94),rgba(18,12,14,.9));border:1px solid rgba(244,178,189,.78);border-radius:12px;padding:10px 12px;opacity:1;box-shadow:inset 0 0 0 1px rgba(244,178,189,.18),0 6px 16px rgba(0,0,0,.28)}
 .tf30-shell input:focus,.tf30-shell select:focus,.tf30-shell textarea:focus{outline:2px solid rgba(244,178,189,.95);outline-offset:2px;border-color:var(--tf30-readable-text);box-shadow:0 0 0 4px rgba(244,178,189,.16),inset 0 0 0 1px rgba(244,178,189,.28)}
 .tf30-shell select option{background:#12070d;color:var(--tf30-readable-text)}
 .tf30-table-head,.tf30-table-row,.tf30-metric-header,.tf30-metric-row,.tf30-week-row{overflow:visible}
-.tf30-table-row,.tf30-week-row,.tf30-photo-spot,.tf30-upup-vial{background:linear-gradient(145deg,rgba(13,5,10,.88),rgba(33,12,20,.74));border-color:rgba(244,178,189,.42)}
+.tf30-table-row,.tf30-week-row,.tf30-photo-spot,.tf30-upup-vial{background:linear-gradient(145deg,rgba(10,7,9,.82),rgba(24,13,17,.68));border-color:rgba(244,178,189,.48)}
 .tf30-week-row.is-rest{opacity:1;filter:none}
-.tf30-sleep-panel{display:grid;gap:12px;align-content:start;grid-template-rows:auto auto auto auto;background:linear-gradient(150deg,rgba(12,5,10,.96),rgba(28,10,18,.88))!important}
+.tf30-sleep-panel{display:grid;gap:12px;align-content:start;grid-template-rows:auto auto auto;background:linear-gradient(150deg,rgba(8,6,8,.86),rgba(20,12,15,.76))!important}
 .tf30-sleep-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
-.tf30-sleep-grid label{display:grid;gap:7px;font-weight:800;letter-spacing:.08em}
+.tf30-sleep-grid label,.tf30-sleep-total-field{display:grid;gap:7px;font-weight:800;letter-spacing:.08em}
 .tf30-sleep-grid textarea{min-height:86px;resize:vertical}
-.tf30-sleep-total-chip{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:46px;padding:11px 14px;border:1px solid rgba(244,178,189,.76);border-radius:999px;background:rgba(9,4,8,.94);color:var(--tf30-readable-text);font-size:clamp(.98rem,1.45vw,1.2rem);font-weight:900;letter-spacing:.06em;text-shadow:0 2px 12px rgba(0,0,0,.8);box-shadow:inset 0 0 0 1px rgba(244,178,189,.2),0 8px 18px rgba(0,0,0,.32)}
-.tf30-sleep-summary{margin-top:0;padding:10px;border:1px solid rgba(244,178,189,.32);border-radius:12px;background:rgba(10,4,8,.7)}
+.tf30-sleep-total-chip{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:46px;padding:11px 14px;border:1px solid rgba(244,178,189,.76);border-radius:999px;background:rgba(8,6,8,.92);color:var(--tf30-readable-text);font-size:clamp(.98rem,1.45vw,1.2rem);font-weight:900;letter-spacing:.06em;text-shadow:0 2px 12px rgba(0,0,0,.8);box-shadow:inset 0 0 0 1px rgba(244,178,189,.2),0 8px 18px rgba(0,0,0,.28)}
+.tf30-sleep-summary{margin-top:0;padding:10px;border:1px solid rgba(244,178,189,.32);border-radius:12px;background:rgba(8,6,8,.68)}
 @media (max-width:760px){.tf30-content{padding-left:10px;padding-right:10px}.tf30-shell .usf-panel{padding:12px!important}.tf30-table-head,.tf30-table-row{grid-template-columns:minmax(0,24px) minmax(120px,1fr);overflow-x:auto}.tf30-week-row{grid-template-columns:1fr 1fr;gap:8px}.tf30-upup-rack{grid-template-columns:repeat(2,minmax(0,1fr))}.tf30-sleep-grid{grid-template-columns:1fr}.tf30-sleep-grid .tf30-span-2{grid-column:1}.tf30-footer{grid-template-columns:1fr 1fr}}
