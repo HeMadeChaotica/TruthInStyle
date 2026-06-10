@@ -61,7 +61,11 @@ const get = (k, fb) => {
 };
 const set = (k, v) => {
   if (!hasLocalStorage()) return;
-  window.localStorage.setItem(k, JSON.stringify(v));
+  try {
+    window.localStorage.setItem(k, JSON.stringify(v));
+  } catch (error) {
+    console.error('THICC.TIME localStorage write failed', { storageKey: k, message: error?.message || '', stack: error?.stack || '', error });
+  }
 };
 
 export const resolveClientColor = (key) => THICC_TIME_SPECIAL_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0] || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
@@ -102,11 +106,6 @@ const normalizeClient = (client = {}) => {
 export function loadClients() {
   const rawClients = get(CLIENTS_KEY, []);
   const clients = Array.isArray(rawClients) ? rawClients : [];
-  if (!clients.length) {
-    const seeded = [createClientTemplate()];
-    set(CLIENTS_KEY, seeded);
-    return seeded;
-  }
   return clients.filter(Boolean).map(normalizeClient);
 }
 export const saveClients = (clients) => set(CLIENTS_KEY, clients);
@@ -167,6 +166,9 @@ const normalizeScheduleStorageRows = (rows = [], sourceKey = SCHEDULE_KEY) => {
 
 export const loadScheduleEntries = () => {
   const currentStore = readScheduleStorageArray(SCHEDULE_KEY);
+  if (currentStore.parseFailed) {
+    console.error('THICC.TIME schedule load diagnostic', { loader: 'loadScheduleEntries', failureType: 'localStorage parse', storageKey: SCHEDULE_KEY, message: `Malformed ${SCHEDULE_KEY}; using empty canonical schedule and checking legacy migration.` });
+  }
   if (currentStore.rows.length) {
     const canonicalRows = normalizeScheduleStorageRows(currentStore.rows, SCHEDULE_KEY);
     if (canonicalRows.length !== currentStore.rows.length) set(SCHEDULE_KEY, canonicalRows);
@@ -174,6 +176,9 @@ export const loadScheduleEntries = () => {
   }
 
   const legacyStore = readScheduleStorageArray(LEGACY_SCHEDULE_KEY);
+  if (legacyStore.parseFailed) {
+    console.error('THICC.TIME schedule load diagnostic', { loader: 'loadScheduleEntries', failureType: 'localStorage parse', storageKey: LEGACY_SCHEDULE_KEY, message: `Malformed ${LEGACY_SCHEDULE_KEY}; skipping legacy migration.` });
+  }
   if (!legacyStore.rows.length) return [];
 
   const migratedRows = normalizeScheduleStorageRows(legacyStore.rows, LEGACY_SCHEDULE_KEY);
@@ -293,7 +298,13 @@ const isEmptyScheduleStoreError = (status, body = '') => {
 };
 
 export async function fetchScheduleEntries() {
-  const localRows = loadScheduleEntries().map(normalizeScheduleEntry);
+  let localRows = [];
+  try {
+    localRows = loadScheduleEntries().map(normalizeScheduleEntry);
+  } catch (error) {
+    console.error('THICC.TIME schedule load diagnostic', { loader: 'fetchScheduleEntries', failureType: 'schedule load', message: error?.message || '', stack: error?.stack || '', error });
+    localRows = [];
+  }
   if (!hasSupabase) return localRows;
   try {
     const res = await fetch(`${sbUrl}/rest/v1/thicc_client_schedule_entries?select=*&order=entry_date.asc,start_time.asc`, { headers: sbHeaders, cache: 'no-store' });
@@ -305,7 +316,7 @@ export async function fetchScheduleEntries() {
     const rows = await res.json();
     return (Array.isArray(rows) ? rows : []).map(normalizeScheduleEntry);
   } catch (error) {
-    console.warn('THICC.TIME schedule fetch unavailable; using local calendar fallback.', error);
+    console.error('THICC.TIME schedule load diagnostic', { loader: 'fetchScheduleEntries', failureType: 'Supabase call', message: error?.message || '', stack: error?.stack || '', error });
     return localRows;
   }
 }

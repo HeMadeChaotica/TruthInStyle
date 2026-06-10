@@ -45,6 +45,12 @@ const normalizeClientForView = (client) => {
   };
 };
 
+const getTodayDateKey = () => toLocalIsoDate(new Date()) || '1970-01-01';
+
+const logThiccTimeDiagnostic = (loader, failureType, error, extra = {}) => {
+  console.error('THICC.TIME diagnostic', { loader, failureType, message: error?.message || '', stack: error?.stack || '', error, ...extra });
+};
+
 const formatDisplayDate = (value) => {
   if (!value) return '';
   if (typeof value === 'string' && value.includes('-')) {
@@ -63,7 +69,7 @@ export default function ItsGettingThiccSection() {
   const [clients, setClients] = useState([]); const [activeId, setActiveId] = useState(''); const [activeTab, setActiveTab] = useState('THICC.INFO');
   const [forms, setForms] = useState([]); const [assignments, setAssignments] = useState([]); const [colorMap, setColorMap] = useState([]);
   const [formsError, setFormsError] = useState('');
-  const [selectedTimeDate, setSelectedTimeDate] = useState(() => toLocalIsoDate(new Date()));
+  const [selectedTimeDate, setSelectedTimeDate] = useState(() => getTodayDateKey());
   const [entriesByDate, setEntriesByDate] = useState({});
   const [timeLoadStatus, setTimeLoadStatus] = useState('idle');
   const [timeError, setTimeError] = useState('');
@@ -75,7 +81,7 @@ export default function ItsGettingThiccSection() {
   });
   const [editorOpen, setEditorOpen] = useState(false);
   const [timeDraft, setTimeDraft] = useState({ entry_type: 'client', client_id: '', client_name: '', entry_date: '', start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: '', location: '', notes: '', color_option_key: 'cobalt' });
-  const safeClients = useMemo(() => (Array.isArray(clients) ? clients.filter(Boolean).map((c) => normalizeClientForView(c)).filter(Boolean) : []), [clients]);
+  const safeClients = useMemo(() => { try { return (Array.isArray(clients) ? clients : []).filter(Boolean).map((c) => normalizeClientForView(c)).filter(Boolean); } catch (error) { logThiccTimeDiagnostic('safeClients', 'undefined data shape', error); return []; } }, [clients]);
   const active = useMemo(() => safeClients.find((c) => c.id === activeId) || safeClients[0] || safeFallbackClient, [safeClients, activeId]);
   const activeClientDbId = useMemo(() => getClientDbId(active), [active]);
   const isSupabase = isSupabaseEnabled();
@@ -90,29 +96,35 @@ export default function ItsGettingThiccSection() {
       setEntriesByDate(groupScheduleEntriesByDate(safeRows));
       setTimeLoadStatus('loaded');
     } catch (error) {
-      console.error('THICC.TIME schedule load diagnostic', error);
+      logThiccTimeDiagnostic('loadTimeEntries', 'schedule load', error);
       setEntriesByDate({});
       setTimeLoadStatus('loaded');
-      setTimeError(process.env.NODE_ENV === 'development' ? `THICC.TIME schedule diagnostic: ${error?.message || 'Unknown error'}` : '');
+      setTimeError('');
     }
   };
 
   useEffect(() => {
-    const seeded = loadClients();
-    const safeSeeded = Array.isArray(seeded) ? seeded : [];
-    setClients(safeSeeded);
-    setActiveId(safeSeeded[0]?.id || '');
+    try {
+      const seeded = loadClients();
+      const safeSeeded = Array.isArray(seeded) ? seeded : [];
+      setClients(safeSeeded);
+      setActiveId(safeSeeded[0]?.id || '');
+    } catch (error) {
+      logThiccTimeDiagnostic('loadClients', 'client load', error);
+      setClients([]);
+      setActiveId('');
+    }
     loadTimeEntries();
     fetchClientColors().then((rows) => setColorMap(Array.isArray(rows) ? rows : [])).catch((error) => {
-      console.error('ITS.GETTING.THICC color load failed', error);
+      logThiccTimeDiagnostic('fetchClientColors', 'color load', error);
       setColorMap([]);
     });
     fetchForms().then((rows) => setForms(Array.isArray(rows) ? rows : [])).catch((error) => {
-      console.error('ITS.GETTING.THICC forms load failed', error);
+      console.error('ITS.GETTING.THICC forms load failed', { message: error?.message || '', stack: error?.stack || '', error });
       setForms([]);
     });
     fetchFormAssignments().then((rows) => setAssignments(Array.isArray(rows) ? rows : [])).catch((error) => {
-      console.error('ITS.GETTING.THICC assignments load failed', error);
+      console.error('ITS.GETTING.THICC assignments load failed', { message: error?.message || '', stack: error?.stack || '', error });
       setAssignments([]);
     });
   }, []);
@@ -202,10 +214,16 @@ export default function ItsGettingThiccSection() {
   const getLayerFromEntry = (entry = {}) => entry.schedule_layer || (entry.entry_type === 'personal' ? 'mista_thicc' : 'the_thiccens');
   const getClientScheduleColorKey = (key) => (key === 'mista-thicc-pink' ? 'cobalt' : resolveClientColor(key).key === 'mista-thicc-pink' ? 'cobalt' : (key || 'cobalt'));
   const entryColor = (entry = {}) => {
-    if (entry.schedule_layer === 'mista_thicc') return '#ff4db8';
-    if (entry.schedule_layer === 'new_client') return '#f8f8f8';
-    const safeKey = getClientScheduleColorKey(entry.color_option_key);
-    return colorMap.find((c) => c.key === safeKey)?.value || resolveClientColor(safeKey).value;
+    try {
+      if (entry.schedule_layer === 'mista_thicc') return '#ff4db8';
+      if (entry.schedule_layer === 'new_client') return '#f8f8f8';
+      const safeKey = getClientScheduleColorKey(entry.color_option_key);
+      const safeColorMap = Array.isArray(colorMap) ? colorMap : [];
+      return safeColorMap.find((c) => c.key === safeKey)?.value || resolveClientColor(safeKey).value;
+    } catch (error) {
+      logThiccTimeDiagnostic('entryColor', 'calendar component props', error);
+      return '#3b82f6';
+    }
   };
   const getChipLabel = (entry = {}) => {
     if (entry.schedule_layer === 'mista_thicc') return entry.workout_label || 'MISTA.THICC';
@@ -221,16 +239,25 @@ export default function ItsGettingThiccSection() {
     setTimeDraft({ entry_type: 'personal', schedule_layer: 'mista_thicc', client_id: null, client_name: '', prospect_name: '', prospect_contact: '', entry_date: dateKey, start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: days[new Date(`${dateKey}T12:00:00`).getDay()], location: '', notes: '', color_option_key: 'mista-thicc-pink', recurrence_type: 'none', recurrence_days: [], recurrence_active: false });
   };
   const openEditor = (row) => {
-    setSelectedTimeDate(row.entry_date);
-    setEditingEntryId(row.id);
+    const safeDateKey = isLocalIsoDateKey(row?.entry_date) ? row.entry_date : getTodayDateKey();
+    setSelectedTimeDate(safeDateKey);
+    setEditingEntryId(row?.id || '');
     setEditorOpen(true);
-    setTimeDraft({ ...row, schedule_layer: getLayerFromEntry(row), recurrence_type: row.recurrence_type || 'none', recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [], recurrence_active: Boolean(row.recurrence_active) });
+    setTimeDraft({ ...row, entry_date: safeDateKey, schedule_layer: getLayerFromEntry(row), recurrence_type: row?.recurrence_type || 'none', recurrence_days: Array.isArray(row?.recurrence_days) ? row.recurrence_days : [], recurrence_active: Boolean(row?.recurrence_active) });
   };
 
   const visibleEntriesByDate = useMemo(() => entriesByDate && typeof entriesByDate === 'object' ? entriesByDate : {}, [entriesByDate]);
-  const assurerPayloadPreview = useMemo(() => buildThiccTimeAssurerPayload(entriesByDate), [entriesByDate]);
+  const safeSelectedTimeDate = isLocalIsoDateKey(selectedTimeDate) ? selectedTimeDate : getTodayDateKey();
+  const assurerPayloadPreview = useMemo(() => {
+    try {
+      return buildThiccTimeAssurerPayload(visibleEntriesByDate);
+    } catch (error) {
+      logThiccTimeDiagnostic('buildThiccTimeAssurerPayload', 'date helper', error);
+      return { source: 'THICC.TIME', range: '7_DAY', entries: [] };
+    }
+  }, [visibleEntriesByDate]);
 
-  const selectedDayEntries = visibleEntriesByDate[selectedTimeDate] || [];
+  const selectedDayEntries = Array.isArray(visibleEntriesByDate[safeSelectedTimeDate]) ? visibleEntriesByDate[safeSelectedTimeDate] : [];
   const closeTimeEditor = () => {
     setEditorOpen(false);
     setEditingEntryId('');
@@ -301,7 +328,7 @@ export default function ItsGettingThiccSection() {
       setSelectedTimeDate(savedEntry.entry_date);
       closeTimeEditor();
     } catch (error) {
-      console.error('THICC.TIME save failed', error);
+      logThiccTimeDiagnostic('saveTimeDraft', 'schedule load', error);
       setEntriesByDate(previousEntries);
       setTimeError(error?.message || 'Unable to save THICC.TIME entry.');
     } finally {
@@ -318,7 +345,7 @@ export default function ItsGettingThiccSection() {
       await loadTimeEntries();
       closeTimeEditor();
     } catch (error) {
-      console.error('THICC.TIME delete failed', error);
+      logThiccTimeDiagnostic('deleteTimeDraft', 'schedule load', error);
       setEntriesByDate(previousEntries);
       setTimeError('Unable to delete THICC.TIME entry.');
     } finally {
@@ -326,17 +353,15 @@ export default function ItsGettingThiccSection() {
     }
   };
 
-  let timeContent;
-  try {
-    timeContent = <>
+  const timeContent = <>
       <h3>THICC.TIME</h3>
       <div className="time-calendar-shell">
-        <p className="time-selected-date">SELECTED DATE: {formatDisplayDate(selectedTimeDate)}</p>
+        <p className="time-selected-date">SELECTED DATE: {formatDisplayDate(safeSelectedTimeDate)}</p>
         <ChaoticaMonthCalendar
           viewDate={viewDate}
-          selectedDateKey={selectedTimeDate}
+          selectedDateKey={safeSelectedTimeDate}
           entriesByDate={visibleEntriesByDate}
-          onMonthChange={(next, nextDateKey) => { setViewDate(next); if (nextDateKey) setSelectedTimeDate(nextDateKey); }}
+          onMonthChange={(next, nextDateKey) => { setViewDate(next || new Date()); setSelectedTimeDate(isLocalIsoDateKey(nextDateKey) ? nextDateKey : getTodayDateKey()); }}
           onSelectDate={(dateKey) => openNewEditor(dateKey)}
           onEntryClick={(entry) => openEditor(resolveEditableEntry(entry))}
           getEntryLabel={(entry) => getChipLabel(entry)}
@@ -360,10 +385,10 @@ export default function ItsGettingThiccSection() {
         />
         <section className="time-day-panel" aria-label="Selected THICC.TIME day entries">
           <div>
-            <strong>{formatDisplayDate(selectedTimeDate)} ENTRIES</strong>
+            <strong>{formatDisplayDate(safeSelectedTimeDate)} ENTRIES</strong>
             <p>{selectedDayEntries.length ? `${selectedDayEntries.length} SAVED` : 'NO ENTRIES YET'}</p>
           </div>
-          <button type="button" onClick={() => openNewEditor(selectedTimeDate)}>ADD ENTRY</button>
+          <button type="button" onClick={() => openNewEditor(safeSelectedTimeDate)}>ADD ENTRY</button>
           <div className="time-day-entry-list">
             {selectedDayEntries.map((entry) => <button type="button" key={entry.id} className="time-day-entry" onClick={() => openEditor(resolveEditableEntry(entry))} style={{ borderLeftColor: entryColor(entry) }}>
               <span style={{ color: entryColor(entry) }}>{entry.start_time || 'NO TIME'}{entry.end_time ? `–${entry.end_time}` : ''}</span>
@@ -400,10 +425,6 @@ export default function ItsGettingThiccSection() {
       {timeError ? <p className="time-error">{timeError}</p> : null}
       <p className="assurer-preview">ASSURER 7-DAY READY: {assurerPayloadPreview.entries.length}</p>
     </>;
-  } catch (error) {
-    console.error('THICC.TIME render failed', error);
-    timeContent = <><h3>THICC.TIME</h3><p>THICC.TIME LOAD SAFE MODE</p><p>SCHEDULER RECOVERY STILL REQUIRED</p><p className="time-error">THICC.TIME COULD NOT LOAD YET.</p></>;
-  }
 
   const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: timeContent }] }];
   const nomoShelves = [{ id: 'nomo', columns: 1, panels: [{ id: 'n1', token: 'medium', content: <><h3>THICC.NOMO</h3><p>Deactivate/archive current client from active roster.</p><button onClick={() => { if (!window.confirm('THICC.NOMO this client?')) return; const nextClients = clients.map((c) => (c.id === active.id ? { ...c, active: false } : c)); persist(nextClients, 'client:nomo'); const nextActive = nextClients.find((c) => c.active !== false); setActiveId(nextActive?.id || ''); setActiveTab('THICC.INFO'); }}>THICC.NOMO</button></> }] }];
