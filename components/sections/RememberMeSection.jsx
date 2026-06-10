@@ -132,7 +132,8 @@ export default function RememberMeSection() {
   const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [entriesByDate, setEntriesByDate] = useState({});
-  const [momentByDate, setMomentByDate] = useState(readStoredMoments);
+  const [momentByDate, setMomentByDate] = useState({});
+  const [isClientReady, setIsClientReady] = useState(false);
   const [error, setError] = useState('');
   const [postcardOpen, setPostcardOpen] = useState(false);
   const [editorMode, setEditorMode] = useState('EVENT');
@@ -141,7 +142,7 @@ export default function RememberMeSection() {
   const [flippedMomentType, setFlippedMomentType] = useState('');
   const selectedDateKey = useMemo(() => safeDateKey(viewDate.getFullYear(), viewDate.getMonth(), selectedDay), [viewDate, selectedDay]);
   const currentEntries = selectedDateKey ? (entriesByDate[selectedDateKey] || []) : [];
-  const currentMoments = selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
+  const currentMoments = isClientReady && selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
   const momentCards = STANDOUT_TYPES.map((type) => ({
     type,
     moment: currentMoments
@@ -150,6 +151,11 @@ export default function RememberMeSection() {
   }));
   const monthIndex = viewDate.getMonth();
   const visual = REMEMBER_MONTH_VISUALS[monthIndex] || REMEMBER_MONTH_VISUALS[0];
+
+  useEffect(() => {
+    setIsClientReady(true);
+    setMomentByDate(readStoredMoments());
+  }, []);
 
   useEffect(() => {
     setFlippedMomentType('');
