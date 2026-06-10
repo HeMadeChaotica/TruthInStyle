@@ -7,6 +7,7 @@ import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import {
   appendLog, deleteScheduleEntry, fetchClientColors, fetchFormAssignments, fetchForms, fetchScheduleEntries, groupScheduleEntriesByDate, loadClients, readMedia, resolveClientColor,
   saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, getScheduleClientId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload, toLocalIsoDate, isLocalIsoDateKey, validateScheduleEntry,
+  createClientTemplate, createLocalClientId, generatePublicThiccenId, getPublicThiccenId,
 } from '../../src/services/itsGettingThiccService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 import ChaoticaMonthCalendar from '../shared/ChaoticaMonthCalendar';
@@ -36,6 +37,7 @@ const normalizeClientForView = (client) => {
   return {
     ...client,
     id: typeof client.id === 'string' ? client.id : '',
+    thiccen_id: getPublicThiccenId(client) || client.thiccen_id || 'Thiccen # pending',
     name: typeof client.name === 'string' ? client.name : 'THICC CLIENT',
     clientColorOptionKey: resolveClientColor(client.clientColorOptionKey).key,
     referrals: Array.isArray(client.referrals) && client.referrals.length ? client.referrals : [{ name: '', date: '', status: '', notes: '' }],
@@ -80,12 +82,23 @@ export default function ItsGettingThiccSection() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [editorOpen, setEditorOpen] = useState(false);
+  const [infoDraft, setInfoDraft] = useState(null);
+  const [isNewInfoDraft, setIsNewInfoDraft] = useState(false);
+  const [infoStatus, setInfoStatus] = useState('');
   const [timeDraft, setTimeDraft] = useState({ entry_type: 'client', client_id: '', client_name: '', entry_date: '', start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: '', location: '', notes: '', color_option_key: 'cobalt' });
   const safeClients = useMemo(() => { try { return (Array.isArray(clients) ? clients : []).filter(Boolean).map((c) => normalizeClientForView(c)).filter(Boolean); } catch (error) { logThiccTimeDiagnostic('safeClients', 'undefined data shape', error); return []; } }, [clients]);
   const active = useMemo(() => safeClients.find((c) => c.id === activeId) || safeClients[0] || safeFallbackClient, [safeClients, activeId]);
   const activeClientDbId = useMemo(() => getClientDbId(active), [active]);
   const isSupabase = isSupabaseEnabled();
   const getClientScheduleId = (client) => getScheduleClientId(client, isSupabase);
+  const infoClient = infoDraft || active;
+  const publicThiccenId = getPublicThiccenId(infoClient) || infoClient?.thiccen_id || 'Thiccen # pending';
+  const displayClientName = (client = {}) => {
+    const name = String(client.name || '').trim();
+    const publicId = getPublicThiccenId(client) || client.thiccen_id || 'Thiccen # pending';
+    return [name || 'THICC CLIENT', publicId].filter(Boolean).join(' • ');
+  };
+
 
   const loadTimeEntries = async () => {
     try {
@@ -109,6 +122,10 @@ export default function ItsGettingThiccSection() {
       const safeSeeded = Array.isArray(seeded) ? seeded : [];
       setClients(safeSeeded);
       setActiveId(safeSeeded[0]?.id || '');
+      if (!safeSeeded.length) {
+        setInfoDraft(createClientTemplate([]));
+        setIsNewInfoDraft(true);
+      }
     } catch (error) {
       logThiccTimeDiagnostic('loadClients', 'client load', error);
       setClients([]);
@@ -128,16 +145,47 @@ export default function ItsGettingThiccSection() {
       setAssignments([]);
     });
   }, []);
-  const persist = (next, event = 'autosave') => { setClients(next); saveClients(next); appendLog(event, { activeId }); };
-  const update = (key, value) => { if (!active) return; persist((Array.isArray(clients) ? clients : []).map((c) => (c.id === active.id ? { ...c, [key]: normalizeObjectStrings(value) } : c)), `field:${key}`); };
-  const updateArray = (key, i, value) => update(key, (active[key] || []).map((v, idx) => (idx === i ? value : v)));
-  const onUpload = (slot) => (e) => { const f = e.target.files?.[0]; if (!f || !active) return; const fr = new FileReader(); fr.onload = () => { const d = upsertMedia(active.id, slot, fr.result); if (slot === 'photo') update('photo', d); else update('celebration', (active.celebration || []).map((t, i) => (i === Number(slot) ? { ...t, media: d } : t))); }; fr.readAsDataURL(f); };
-  function Food() { return <><h3>FOOD: THE GOOD, THE BAD & THE “I DESERVE THIS”</h3>{foodPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={active[`food${i + 1}`] || ''} onChange={(e) => update(`food${i + 1}`, e.target.value)} /></label>)}</>; }
-  function Movement() { return <><h3>MOVEMENT: THE MEASURE AND THE PRESSURES</h3>{movementPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}{i === 1 && <small>THINK WORK, ERRANDS, SITTING, STANDING, STEPS, STRESS, AND HOW OFTEN YOUR BODY IS ACTUALLY IN MOTION, NOT JUST HOW OFTEN YOU MEANT TO WORK OUT.</small>}<textarea value={active[`move${i + 1}`] || ''} onChange={(e) => update(`move${i + 1}`, e.target.value)} /></label>)}<label>5. SELECT CURRENT OVERALL LEVEL OF ACTIVITY<select value={active.activity || 'SEDENTARY'} onChange={(e) => update('activity', e.target.value)}>{['SEDENTARY', 'LIGHTLY', 'MODERATELY', 'ACTIVE', 'I DO THIS S@$&!', 'I SWEAR I’M ACTIVE BUT MY APPLE WATCH SAYS OTHERWISE'].map((o) => <option key={o}>{o}</option>)}</select></label></>; }
-  function Medical() { const keys=['emergencyContact','injuries','surgeries','allergies','medications','limits','painfulMovements','flexibility','hardNos','trainingFears']; return <><h3>MEDICAL ADVISORY</h3>{medicalPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={active[keys[i]] || ''} onChange={(e) => update(keys[i], e.target.value)} /></label>)}</>; }
+  useEffect(() => {
+    const selected = safeClients.find((c) => c.id === activeId);
+    if (selected) {
+      setInfoDraft({ ...selected, thiccen_id: getPublicThiccenId(selected) || selected.thiccen_id || generatePublicThiccenId(safeClients) });
+      setIsNewInfoDraft(false);
+      setInfoStatus('');
+    }
+  }, [activeId, safeClients]);
+
+  const persist = (next, event = 'save') => { setClients(next); saveClients(next); appendLog(event, { activeId }); };
+  const update = (key, value) => { setInfoDraft((prev) => ({ ...(prev || infoClient || createClientTemplate(clients)), [key]: normalizeObjectStrings(value) })); setInfoStatus('UNSAVED CHANGES'); };
+  const updateArray = (key, i, value) => update(key, (infoClient[key] || []).map((v, idx) => (idx === i ? value : v)));
+  const startNewClient = () => {
+    const fresh = createClientTemplate(clients);
+    fresh.id = createLocalClientId();
+    fresh.thiccen_id = generatePublicThiccenId(clients);
+    setInfoDraft(fresh);
+    setIsNewInfoDraft(true);
+    setInfoStatus('NEW CLIENT DRAFT READY');
+    setActiveTab('THICC.INFO');
+  };
+  const saveInfoDraft = () => {
+    const draft = { ...(infoDraft || infoClient || createClientTemplate(clients)) };
+    draft.id = draft.id || createLocalClientId();
+    draft.thiccen_id = getPublicThiccenId(draft) || draft.thiccen_id || generatePublicThiccenId(clients);
+    const next = (Array.isArray(clients) ? clients : []).some((c) => c.id === draft.id)
+      ? clients.map((c) => (c.id === draft.id ? draft : c))
+      : [...(Array.isArray(clients) ? clients : []), draft];
+    persist(next, isNewInfoDraft ? 'client:new' : 'client:update');
+    setActiveId(draft.id);
+    setInfoDraft(draft);
+    setIsNewInfoDraft(false);
+    setInfoStatus('THICC.INFO SAVED');
+  };
+  const onUpload = (slot) => (e) => { const f = e.target.files?.[0]; if (!f || !infoClient) return; const fr = new FileReader(); fr.onload = () => { const d = upsertMedia(infoClient.id, slot, fr.result); if (slot === 'photo') update('photo', d); else update('celebration', (infoClient.celebration || []).map((t, i) => (i === Number(slot) ? { ...t, media: d } : t))); }; fr.readAsDataURL(f); };
+  function Food() { return <><h3>FOOD: THE GOOD, THE BAD & THE “I DESERVE THIS”</h3>{foodPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={infoClient[`food${i + 1}`] || ''} onChange={(e) => update(`food${i + 1}`, e.target.value)} /></label>)}</>; }
+  function Movement() { return <><h3>MOVEMENT: THE MEASURE AND THE PRESSURES</h3>{movementPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}{i === 1 && <small>THINK WORK, ERRANDS, SITTING, STANDING, STEPS, STRESS, AND HOW OFTEN YOUR BODY IS ACTUALLY IN MOTION, NOT JUST HOW OFTEN YOU MEANT TO WORK OUT.</small>}<textarea value={infoClient[`move${i + 1}`] || ''} onChange={(e) => update(`move${i + 1}`, e.target.value)} /></label>)}<label>5. SELECT CURRENT OVERALL LEVEL OF ACTIVITY<select value={infoClient.activity || 'SEDENTARY'} onChange={(e) => update('activity', e.target.value)}>{['SEDENTARY', 'LIGHTLY', 'MODERATELY', 'ACTIVE', 'I DO THIS S@$&!', 'I SWEAR I’M ACTIVE BUT MY APPLE WATCH SAYS OTHERWISE'].map((o) => <option key={o}>{o}</option>)}</select></label></>; }
+  function Medical() { const keys=['emergencyContact','injuries','surgeries','allergies','medications','limits','painfulMovements','flexibility','hardNos','trainingFears']; return <><h3>MEDICAL ADVISORY</h3>{medicalPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={infoClient[keys[i]] || ''} onChange={(e) => update(keys[i], e.target.value)} /></label>)}</>; }
 
   const hasRealClients = safeClients.length > 0;
-  const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'medium', content: <><h3>THICC.PEOPLE</h3>{!hasRealClients ? <p>NO CLIENTS YET. ADD A CLIENT IN THICC.PEOPLE TO ENABLE CLIENT SCHEDULING.</p> : null}<div className="people-list">{safeClients.map((c) => { const cc = resolveClientColor(c.clientColorOptionKey); return <button key={c.id} className="people-item" style={{ borderLeftColor: cc.value }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><div><strong>{c.name}</strong><span>{c.id}</span></div><div><em style={{ color: cc.value }}>{cc.label}</em><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></div></button>; })}</div></> }] }];
+  const peopleShelves = [{ id: 'people', columns: 1, panels: [{ id: 'p1', token: 'medium', content: <><h3>THICC.PEOPLE</h3>{!hasRealClients ? <p>NO CLIENTS YET. ADD A CLIENT IN THICC.PEOPLE TO ENABLE CLIENT SCHEDULING.</p> : null}<div className="people-list">{safeClients.map((c) => { const cc = resolveClientColor(c.clientColorOptionKey); return <button key={c.id} className="people-item" style={{ borderLeftColor: cc.value }} onClick={() => { setActiveId(c.id); setActiveTab('THICC.INFO'); }}><div><strong>{c.name || 'THICC CLIENT'}</strong><span>{getPublicThiccenId(c) || c.thiccen_id || 'Thiccen # pending'}</span></div><div><em style={{ color: cc.value }}>{cc.label}</em><span>{c.active === false ? 'INACTIVE' : 'ACTIVE'}</span></div></button>; })}</div></> }] }];
   const activeClientId = active?.id || '';
   const canAssignInSupabase = Boolean(active) && (!isSupabase || Boolean(activeClientDbId));
   const formsShelves = [{ id: 'forms', columns: 1, panels: [{ id: 'f1', token: 'medium', content: <><h3>THICC.FORMS</h3>{forms.map((f) => <div key={f.id} className="form-row"><strong>{f.formName}</strong><span>{f.formCategory}</span><button disabled={!canAssignInSupabase} title={!canAssignInSupabase ? 'ASSIGN disabled: active client is missing a database UUID.' : ''} onClick={async () => { try { setFormsError(''); const ensuredClient = isSupabase ? await ensureClientDbId(active) : active; if (isSupabase && ensuredClient.dbId && ensuredClient.dbId !== active.dbId) { const nextClients = clients.map((c) => (c.id === active.id ? ensuredClient : c)); setClients(nextClients); saveClients(nextClients); } const created = await upsertFormAssignment({ client: ensuredClient, client_id: ensuredClient.dbId || ensuredClient.id, formDbId: f.dbId || f.id, form_id: f.id, status: 'assigned', response_json: {}, notes: '', assigned_at: new Date().toISOString() }); setAssignments((prev) => [...prev, created]); } catch (error) { setFormsError(error?.message || 'Unable to assign form.'); } }}>ASSIGN</button></div>)}{formsError ? <p>{formsError}</p> : null}<p>ASSIGNMENTS {assignments.filter((a) => (isSupabase ? a.client_id === activeClientDbId : (a.client_id || a.clientId) === activeClientId)).length}</p></> }] }];
@@ -190,25 +238,26 @@ export default function ItsGettingThiccSection() {
   useEffect(() => { resetTimeDraft(); }, [activeId]);
 
 
-  const highlightPhoto = active?.livingThiccPhoto || (active ? readMedia(active.id, 'livingThiccPhoto') : '');
+  const highlightPhoto = infoClient?.livingThiccPhoto || (infoClient ? readMedia(infoClient.id, 'livingThiccPhoto') : '');
 
   const infoShelves = [
     { id: 'A', columns: 3, panels: [
-      { id: 'stats', token: 'tall', className:'igtv2-client-core', content: <><h3>THICC.STATS</h3><div className="client-core-grid">{['name','id','phone','sex','sexualOrientation','height','age','email','relationshipStatus','clientColorOptionKey','currentWeight','goalWeight','currentBmi','goalBmi'].map((k) => <label key={k}>{k==='relationshipStatus'?'MARRIED / SINGLE':k==='phone'?'PHONE NUMBER':k==='sexualOrientation'?'SEXUAL ORIENTATION':k==='clientColorOptionKey'?'CLIENT COLOR':k.replace(/([A-Z])/g,' $1').toUpperCase()}{k==='clientColorOptionKey'?<select value={active.clientColorOptionKey||''} onChange={(e)=>update('clientColorOptionKey',e.target.value)}>{optionRegistry.itsGettingThicc.clientColors.map((o)=><option key={o.key} value={o.key}>{o.label}</option>)}</select>:k==='relationshipStatus'?<select value={active.relationshipStatus||'SINGLE'} onChange={(e)=>update('relationshipStatus',e.target.value)}><option>SINGLE</option><option>MARRIED</option></select>:<input value={active[k]||''} onChange={(e)=>update(k,e.target.value)} />}</label>)}</div></> },
-      { id: 'living-thicc', token: 'tall', className:'igtv2-living-thicc', content: <><h3>LIVIN THICC SINCE</h3><label><input type="date" value={active.livingThiccSinceDate||''} onChange={(e)=>update('livingThiccSinceDate',e.target.value)} /></label><label className="upload">{highlightPhoto ? <img src={highlightPhoto} alt="living thicc" /> : 'PHOTO UPLOAD FROM LIBRARY'}<input type="file" accept="image/*" onChange={onUpload('livingThiccPhoto')} /></label></> },
+      { id: 'info-actions', token: 'strip', className: 'igtv2-info-actions', content: <><div><h3>THICC.INFO</h3><strong>{publicThiccenId}</strong><small>{isNewInfoDraft ? 'NEW UNSAVED CLIENT' : 'EDITING SAVED CLIENT'}</small></div><div className="info-action-buttons"><button type="button" onClick={startNewClient}>NEW CLIENT</button><button type="button" onClick={saveInfoDraft}>SAVE THICC.INFO</button></div>{infoStatus ? <p>{infoStatus}</p> : null}</> },
+      { id: 'stats', token: 'tall', className:'igtv2-client-core', content: <><h3>THICC.STATS</h3><div className="client-core-grid">{['name','thiccen_id','phone','sex','sexualOrientation','height','age','email','relationshipStatus','clientColorOptionKey','currentWeight','goalWeight','currentBmi','goalBmi'].map((k) => <label key={k}>{k==='thiccen_id'?'THICC ID':k==='relationshipStatus'?'MARRIED / SINGLE':k==='phone'?'PHONE NUMBER':k==='sexualOrientation'?'SEXUAL ORIENTATION':k==='clientColorOptionKey'?'CLIENT COLOR':k.replace(/([A-Z])/g,' $1').toUpperCase()}{k==='thiccen_id'?<input value={publicThiccenId} readOnly aria-readonly="true" />:k==='clientColorOptionKey'?<select value={infoClient.clientColorOptionKey||''} onChange={(e)=>update('clientColorOptionKey',e.target.value)}>{optionRegistry.itsGettingThicc.clientColors.map((o)=><option key={o.key} value={o.key}>{o.label}</option>)}</select>:k==='relationshipStatus'?<select value={infoClient.relationshipStatus||'SINGLE'} onChange={(e)=>update('relationshipStatus',e.target.value)}><option>SINGLE</option><option>MARRIED</option></select>:<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />}</label>)}</div></> },
+      { id: 'living-thicc', token: 'tall', className:'igtv2-living-thicc', content: <><h3>LIVIN THICC SINCE</h3><label><input type="date" value={infoClient.livingThiccSinceDate||''} onChange={(e)=>update('livingThiccSinceDate',e.target.value)} /></label><label className="upload">{highlightPhoto ? <img src={highlightPhoto} alt="living thicc" /> : 'PHOTO UPLOAD FROM LIBRARY'}<input type="file" accept="image/*" onChange={onUpload('livingThiccPhoto')} /></label></> },
     ] },
     { id: 'B', columns: 1, panels: [{ id: 'food', token: 'tall', content: <Food /> }] },
     { id: 'C', columns: 2, panels: [{ id: 'move', token: 'tall', content: <Movement /> }, { id: 'med', token: 'tall', content: <Medical /> }] },
     { id: 'D', columns: 4, panels: [
-      { id: 'macro', token: 'standard', content: <><h3>MACRO TARGETS</h3><div className="macro-inline-wrap">{[['macro_protein','PROTEIN'],['macro_carbs','CARBS'],['macro_fats','FATS'],['macro_water','WATER'],['macro_calories','CALORIES']].map(([k,l])=><label key={k}>{l}<input value={active[k]||''} onChange={(e)=>update(k,e.target.value)} /></label>)}</div></> },
-      { id: 'vault', token: 'standard', content: <><h3>VAULT</h3>{[['juice_substance','COMPOUND'],['juice_ester','ESTER / FORM'],['juice_amount','AMOUNT'],['juice_shot','SHOT __ OF __'],['juice_sensitivity','SENSITIVITY / SIDE EFFECTS'],['juice_cycle','CYCLE WEEK __ OF __'],['juice_location','LOCATION'],['juice_notes','NOTES']].map(([k,l])=><label key={k}>{l}{k.includes('notes')||k.includes('sensitivity')?<textarea value={active[k]||''} onChange={(e)=>update(k,e.target.value)} />:<input value={active[k]||''} onChange={(e)=>update(k,e.target.value)} />}</label>)}</> },
-      { id: 'spw', token: 'standard', content: <><h3>SEASONS PER WEEK</h3><input value={active.seasonsPerWeek||''} onChange={(e)=>update('seasonsPerWeek',e.target.value)} /></> },
-      { id: 'ref', token: 'standard', content: <><h3>REFERRAL TRACKER</h3>{(active.referrals||[]).slice(0,1).map((r,i)=><div key={i} className="form-row"><input placeholder="NAME" value={r.name||''} onChange={(e)=>update('referrals',[{...r,name:e.target.value}])}/><input placeholder="DATE" value={r.date||''} onChange={(e)=>update('referrals',[{...r,date:e.target.value}])}/><input placeholder="STATUS" value={r.status||''} onChange={(e)=>update('referrals',[{...r,status:e.target.value}])}/></div>)}<textarea placeholder="NOTES" value={active.referrals?.[0]?.notes||''} onChange={(e)=>update('referrals',[{...(active.referrals?.[0]||{}),notes:e.target.value}])} /></> },
+      { id: 'macro', token: 'standard', content: <><h3>MACRO TARGETS</h3><div className="macro-inline-wrap">{[['macro_protein','PROTEIN'],['macro_carbs','CARBS'],['macro_fats','FATS'],['macro_water','WATER'],['macro_calories','CALORIES']].map(([k,l])=><label key={k}>{l}<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} /></label>)}</div></> },
+      { id: 'vault', token: 'standard', content: <><h3>VAULT</h3>{[['juice_substance','COMPOUND'],['juice_ester','ESTER / FORM'],['juice_amount','AMOUNT'],['juice_shot','SHOT __ OF __'],['juice_sensitivity','SENSITIVITY / SIDE EFFECTS'],['juice_cycle','CYCLE WEEK __ OF __'],['juice_location','LOCATION'],['juice_notes','NOTES']].map(([k,l])=><label key={k}>{l}{k.includes('notes')||k.includes('sensitivity')?<textarea value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />:<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />}</label>)}</> },
+      { id: 'spw', token: 'standard', content: <><h3>SEASONS PER WEEK</h3><input value={infoClient.seasonsPerWeek||''} onChange={(e)=>update('seasonsPerWeek',e.target.value)} /></> },
+      { id: 'ref', token: 'standard', content: <><h3>REFERRAL TRACKER</h3>{(infoClient.referrals||[]).slice(0,1).map((r,i)=><div key={i} className="form-row"><input placeholder="NAME" value={r.name||''} onChange={(e)=>update('referrals',[{...r,name:e.target.value}])}/><input placeholder="DATE" value={r.date||''} onChange={(e)=>update('referrals',[{...r,date:e.target.value}])}/><input placeholder="STATUS" value={r.status||''} onChange={(e)=>update('referrals',[{...r,status:e.target.value}])}/></div>)}<textarea placeholder="NOTES" value={infoClient.referrals?.[0]?.notes||''} onChange={(e)=>update('referrals',[{...(infoClient.referrals?.[0]||{}),notes:e.target.value}])} /></> },
     ]},
-    { id: 'E', columns: 1, panels: [{ id: 'train', token: 'tall', className:'igtv2-training-system', content: <><h3>TRAINING SYSTEM</h3><div className="training-system-band"><h4>TRAINING / REST</h4><div className="hz">{days.map((d,i)=><label key={d}>{d}<select value={active.trainingRest?.[i]||'TRAINING'} onChange={(e)=>updateArray('trainingRest',i,e.target.value)}>{optionRegistry.itsGettingThicc.trainingRest.map((o)=><option key={o}>{o}</option>)}</select></label>)}</div></div><div className="training-system-band"><h4>CURRENT EXERCISE PROGRAM SPLIT / WORKOUT DAY</h4><div className="hz">{days.map((d,i)=><label key={d}>{d}<select value={active.programSplit?.[i]||'FULLBODY'} onChange={(e)=>updateArray('programSplit',i,e.target.value)}>{optionRegistry.itsGettingThicc.programSplit.map((o)=><option key={o}>{o}</option>)}</select></label>)}</div></div></> }] },
-    { id: 'F', columns: 2, panels: [{ id: 'event', token: 'standard', content: <><h3>UPCOMING TRAINING FOCUS EVENTS</h3><textarea value={active.eventNotes||''} onChange={(e)=>update('eventNotes',e.target.value)} /></> }, { id: 'pay', token: 'standard', content: <><h3>PAYMENT</h3><input value={active.paymentDate||''} onChange={(e)=>update('paymentDate',e.target.value)} /></> }] },
-    { id: 'G', columns: 2, panels: [{ id: 'thoughts', token: 'tall', content: <><h3>THICC THOUGHTS</h3><textarea className="notes" value={active.thoughts||''} onChange={(e)=>update('thoughts',e.target.value)} /></> }, { id: 'myfit', token: 'standard', content: <><h3>MYFITFOODS CHECK-IN</h3><label>WEEKLY # OF MEALS ______<input value={active.myfitMeals||''} onChange={(e)=>update('myfitMeals',e.target.value)} /></label><label>HAS BEEN VERIFIED BY ANTHONY  Y / N<select value={active.myfitVerified ? 'Y' : 'N'} onChange={(e)=>update('myfitVerified', e.target.value === 'Y')}><option>Y</option><option>N</option></select></label></> }] },
-      { id: 'H', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(active.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (active.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /></div>)}</div></> }] },
+    { id: 'E', columns: 1, panels: [{ id: 'train', token: 'tall', className:'igtv2-training-system', content: <><h3>TRAINING SYSTEM</h3><div className="training-system-band"><h4>TRAINING / REST</h4><div className="hz">{days.map((d,i)=><label key={d}>{d}<select value={infoClient.trainingRest?.[i]||'TRAINING'} onChange={(e)=>updateArray('trainingRest',i,e.target.value)}>{optionRegistry.itsGettingThicc.trainingRest.map((o)=><option key={o}>{o}</option>)}</select></label>)}</div></div><div className="training-system-band"><h4>CURRENT EXERCISE PROGRAM SPLIT / WORKOUT DAY</h4><div className="hz">{days.map((d,i)=><label key={d}>{d}<select value={infoClient.programSplit?.[i]||'FULLBODY'} onChange={(e)=>updateArray('programSplit',i,e.target.value)}>{optionRegistry.itsGettingThicc.programSplit.map((o)=><option key={o}>{o}</option>)}</select></label>)}</div></div></> }] },
+    { id: 'F', columns: 2, panels: [{ id: 'event', token: 'standard', content: <><h3>UPCOMING TRAINING FOCUS EVENTS</h3><textarea value={infoClient.eventNotes||''} onChange={(e)=>update('eventNotes',e.target.value)} /></> }, { id: 'pay', token: 'standard', content: <><h3>PAYMENT</h3><input value={infoClient.paymentDate||''} onChange={(e)=>update('paymentDate',e.target.value)} /></> }] },
+    { id: 'G', columns: 2, panels: [{ id: 'thoughts', token: 'tall', content: <><h3>THICC THOUGHTS</h3><textarea className="notes" value={infoClient.thoughts||''} onChange={(e)=>update('thoughts',e.target.value)} /></> }, { id: 'myfit', token: 'standard', content: <><h3>MYFITFOODS CHECK-IN</h3><label>WEEKLY # OF MEALS ______<input value={infoClient.myfitMeals||''} onChange={(e)=>update('myfitMeals',e.target.value)} /></label><label>HAS BEEN VERIFIED BY ANTHONY  Y / N<select value={infoClient.myfitVerified ? 'Y' : 'N'} onChange={(e)=>update('myfitVerified', e.target.value === 'Y')}><option>Y</option><option>N</option></select></label></> }] },
+      { id: 'H', columns: 1, panels: [{ id: 'cele', token: 'tall', content: <><h3>CELEBRATION MOMENTS</h3><div className="cele">{(infoClient.celebration || []).slice(0, 10).map((tile, i) => <div key={tile.id || i} className="slot"><textarea placeholder="CELEBRATION MOMENT" value={tile.text || ''} onChange={(e) => update('celebration', (infoClient.celebration || []).map((t, idx) => (idx === i ? { ...t, text: e.target.value } : t)))} />{tile.media ? <img src={tile.media} alt="" /> : null}<input type="file" accept="image/*" onChange={onUpload(String(i))} /></div>)}</div></> }] },
   ];
 
   const getLayerFromEntry = (entry = {}) => entry.schedule_layer || (entry.entry_type === 'personal' ? 'mista_thicc' : 'the_thiccens');
@@ -407,7 +456,7 @@ export default function ItsGettingThiccSection() {
           </div>
           <div className="form-grid">
             <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; const nextClient = safeClients.find((client) => getClientScheduleId(client) === timeDraft.client_id) || active; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : 'personal', client_id: layer === 'the_thiccens' ? getClientScheduleId(nextClient) : null, client_name: layer === 'the_thiccens' ? (nextClient?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
-            {timeDraft.schedule_layer === 'the_thiccens' ? <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientScheduleId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => { const scheduleId = getClientScheduleId(client); return <option key={client.id} value={scheduleId || ''} disabled={!scheduleId}>{client.name || 'THICC CLIENT'}</option>; })}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'EMPTY CLIENT LIST: PERSONAL ENTRIES STILL SAVE.'}</small></label> : null}
+            {timeDraft.schedule_layer === 'the_thiccens' ? <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientScheduleId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => { const scheduleId = getClientScheduleId(client); return <option key={client.id} value={scheduleId || ''} disabled={!scheduleId}>{displayClientName(client)}</option>; })}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'EMPTY CLIENT LIST: PERSONAL ENTRIES STILL SAVE.'}</small></label> : null}
             <label>START TIME<input type="time" value={timeDraft.start_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, start_time: e.target.value }))} /></label>
             <label>END TIME<input type="time" value={timeDraft.end_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, end_time: e.target.value }))} /></label>
             <label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label>

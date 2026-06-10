@@ -10,6 +10,25 @@ const LEGACY_SCHEDULE_KEY = 'thicc_client_schedule_entries';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const createLocalScheduleId = () => `local_schedule_${Date.now()}_${uid()}`;
+const THICCEN_ID_REGEX = /^Thiccen # \d{5}$/;
+
+export const createLocalClientId = () => `local_${Date.now()}_${uid()}`;
+export const isPublicThiccenId = (value) => typeof value === 'string' && THICCEN_ID_REGEX.test(value.trim());
+
+export function getPublicThiccenId(client = {}) {
+  const candidates = [client.thiccen_id, client.thicc_id, client.public_client_id, client.client_number];
+  return candidates.find(isPublicThiccenId) || '';
+}
+
+export function generatePublicThiccenId(existingClients = []) {
+  const used = new Set((Array.isArray(existingClients) ? existingClients : []).map(getPublicThiccenId).filter(Boolean));
+  for (let attempt = 0; attempt < 500; attempt += 1) {
+    const code = String(Math.floor(10000 + Math.random() * 90000));
+    const candidate = `Thiccen # ${code}`;
+    if (!used.has(candidate)) return candidate;
+  }
+  return `Thiccen # ${String(Date.now()).slice(-5)}`;
+}
 
 export const THICC_TIME_SPECIAL_COLORS = [
   { key: 'mista-thicc-pink', label: 'MISTA.THICC PINK', value: '#ff4db8' },
@@ -35,9 +54,10 @@ const DEFAULT_FORMS = [
 
 const createCelebration = () => Array.from({ length: 10 }, (_, i) => ({ id: `tile-${i + 1}`, text: '', media: '' }));
 
-export const createClientTemplate = () => ({
-  id: `local_${uid()}`,
-  name: 'thicc.fitt', phone: '', sex: '', sexualOrientation: '', height: '', age: '', email: '', relationshipStatus: 'SINGLE',
+export const createClientTemplate = (existingClients = []) => ({
+  id: createLocalClientId(),
+  thiccen_id: generatePublicThiccenId(existingClients),
+  name: '', phone: '', sex: '', sexualOrientation: '', height: '', age: '', email: '', relationshipStatus: 'SINGLE',
   clientColorOptionKey: 'cobalt', photo: '', currentWeight: '', goalWeight: '', currentBmi: '', goalBmi: '',
   food1: '', food2: '', food3: '', food4: '', food5: '', move1: '', move2: '', move3: '', move4: '', activity: '',
   emergencyContact: '', injuries: '', surgeries: '', allergies: '', medications: '', limits: '', painfulMovements: '', flexibility: '', hardNos: '', trainingFears: '',
@@ -90,7 +110,8 @@ const normalizeClient = (client = {}) => {
     ...base,
     ...safeClient,
     id: typeof safeClient.id === 'string' && safeClient.id ? safeClient.id : base.id,
-    name: typeof safeClient.name === 'string' && safeClient.name ? safeClient.name : base.name,
+    thiccen_id: getPublicThiccenId(safeClient) || base.thiccen_id,
+    name: typeof safeClient.name === 'string' ? safeClient.name : base.name,
     clientColorOptionKey: resolveClientColor(safeClient.clientColorOptionKey).key,
     referrals: Array.isArray(safeClient.referrals) && safeClient.referrals.length
       ? safeClient.referrals.map((row) => ({ name: row?.name || '', date: row?.date || '', status: row?.status || '', notes: row?.notes || '' }))
@@ -103,12 +124,25 @@ const normalizeClient = (client = {}) => {
   };
 };
 
+export function normalizeClientsWithPublicIds(clients = []) {
+  const used = new Set();
+  return (Array.isArray(clients) ? clients : []).filter(Boolean).map((client) => {
+    const normalized = normalizeClient(client);
+    let publicId = getPublicThiccenId(normalized);
+    if (!publicId || used.has(publicId)) publicId = generatePublicThiccenId([...used].map((thiccen_id) => ({ thiccen_id })));
+    used.add(publicId);
+    return { ...normalized, thiccen_id: publicId };
+  });
+}
+
 export function loadClients() {
   const rawClients = get(CLIENTS_KEY, []);
   const clients = Array.isArray(rawClients) ? rawClients : [];
-  return clients.filter(Boolean).map(normalizeClient);
+  const normalized = normalizeClientsWithPublicIds(clients);
+  if (JSON.stringify(normalized) !== JSON.stringify(clients)) set(CLIENTS_KEY, normalized);
+  return normalized;
 }
-export const saveClients = (clients) => set(CLIENTS_KEY, clients);
+export const saveClients = (clients) => set(CLIENTS_KEY, normalizeClientsWithPublicIds(clients));
 export const loadForms = () => get(FORMS_KEY, DEFAULT_FORMS);
 export const saveForms = (forms) => set(FORMS_KEY, forms);
 export const loadAssignments = () => get(ASSIGNMENTS_KEY, []);
@@ -585,8 +619,8 @@ export const isSupabaseEnabled = () => hasSupabase;
 
 export function addClient() {
   const clients = loadClients();
-  const fresh = createClientTemplate();
-  fresh.id = `local_${uid()}`;
+  const fresh = createClientTemplate(clients);
+  fresh.id = createLocalClientId();
   fresh.name = `client-${clients.length + 1}`;
   const next = [...clients, fresh];
   saveClients(next);
