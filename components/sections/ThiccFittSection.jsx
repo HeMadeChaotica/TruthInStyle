@@ -36,27 +36,19 @@ const minutesFromTime = (time) => { const match = String(time || '').match(/^(\d
 const calculateSleepMinutes = (start, wake) => { const startMinutes = minutesFromTime(start); const wakeMinutes = minutesFromTime(wake); if (startMinutes === null || wakeMinutes === null) return null; let total = wakeMinutes - startMinutes; if (total < 0) total += 24 * 60; return total; };
 const formatSleepTotal = (minutes) => { if (!Number.isFinite(minutes) || minutes <= 0) return ''; const hours = Math.floor(minutes / 60); const mins = minutes % 60; return `${hours}h ${String(mins).padStart(2, '0')}m`; };
 const sleepHoursValue = (minutes) => (Number.isFinite(minutes) && minutes > 0 ? (minutes / 60).toFixed(2) : '');
-const sleepTotalMinutes = (sleepTotal, hoursSlept) => {
-  if (sleepTotal) return parseDurationMinutes(sleepTotal);
-  const numericHours = Number(String(hoursSlept || '').trim());
-  if (Number.isFinite(numericHours) && numericHours > 0) return Math.round(numericHours * 60);
-  return parseDurationMinutes(hoursSlept);
-};
-const sleepMinutesFromEntry = (sleep = {}) => calculateSleepMinutes(sleep.sleep_start || sleep.bedtime, sleep.wake_time || sleep.wakeTime) ?? sleepTotalMinutes(sleep.sleep_total, sleep.hoursSlept);
+const sleepMinutesFromEntry = (sleep = {}) => calculateSleepMinutes(sleep.sleep_start || sleep.bedtime, sleep.wake_time || sleep.wakeTime);
 const normalizeSleepEntry = (sleep = {}) => {
   const sleep_start = String(sleep.sleep_start ?? sleep.sleepStart ?? sleep.bedtime ?? '');
   const wake_time = String(sleep.wake_time ?? sleep.wakeTime ?? '');
-  const calculatedMinutes = calculateSleepMinutes(sleep_start, wake_time);
-  const fallbackMinutes = sleepTotalMinutes(sleep.sleep_total, sleep.hoursSlept);
-  const totalMinutes = calculatedMinutes ?? fallbackMinutes;
-  const sleep_total = formatSleepTotal(totalMinutes) || String(sleep.sleep_total ?? sleep.hoursSlept ?? '');
+  const totalMinutes = calculateSleepMinutes(sleep_start, wake_time);
+  const sleep_total = formatSleepTotal(totalMinutes);
   const sleep_quality = String(sleep.sleep_quality ?? sleep.quality ?? '');
   const sleep_notes = String(sleep.sleep_notes ?? sleep.recoveryNotes ?? '');
 
   return {
     bedtime: sleep_start,
     wakeTime: wake_time,
-    hoursSlept: sleepHoursValue(totalMinutes) || String(sleep.hoursSlept ?? ''),
+    hoursSlept: sleepHoursValue(totalMinutes),
     quality: sleep_quality,
     recoveryNotes: sleep_notes,
     sleep_start,
@@ -74,10 +66,11 @@ export default function ThiccFittSection() {
   const [dailyQuote, setDailyQuote] = useState(optionRegistry.thiccFitt.quoteOfDay[0]);
   const todayDay = WEEK_DAYS[new Date().getDay()];
   const todaySleep = normalizeSleepEntry(state.weeklyTrackers.byDay[todayDay]?.sleep || {});
+  const dailySleepMinutes = calculateSleepMinutes(todaySleep.sleep_start, todaySleep.wake_time);
   const dailySleepSignal = {
     sleep_start: todaySleep.sleep_start,
     wake_time: todaySleep.wake_time,
-    sleep_total: todaySleep.sleep_total,
+    sleep_total: formatSleepTotal(dailySleepMinutes),
     sleep_quality: todaySleep.sleep_quality,
     sleep_notes: todaySleep.sleep_notes
   };
@@ -211,11 +204,9 @@ export default function ThiccFittSection() {
     if (key === 'sleep_quality') nextSleep.quality = value;
     if (key === 'sleep_notes') nextSleep.recoveryNotes = value;
 
-    const calculatedMinutes = calculateSleepMinutes(nextSleep.sleep_start, nextSleep.wake_time);
-    const manualMinutes = key === 'sleep_total' ? parseDurationMinutes(value) : parseDurationMinutes(nextSleep.sleep_total);
-    const totalMinutes = calculatedMinutes ?? manualMinutes;
-    nextSleep.sleep_total = calculatedMinutes !== null ? formatSleepTotal(calculatedMinutes) : (key === 'sleep_total' ? value : nextSleep.sleep_total);
-    nextSleep.hoursSlept = sleepHoursValue(totalMinutes) || nextSleep.hoursSlept;
+    const totalMinutes = calculateSleepMinutes(nextSleep.sleep_start, nextSleep.wake_time);
+    nextSleep.sleep_total = formatSleepTotal(totalMinutes);
+    nextSleep.hoursSlept = sleepHoursValue(totalMinutes);
 
     return { ...p, weeklyTrackers: { ...p.weeklyTrackers, byDay: { ...p.weeklyTrackers.byDay, [day]: { ...p.weeklyTrackers.byDay[day], sleep: nextSleep } } } };
   });
