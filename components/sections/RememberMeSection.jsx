@@ -76,6 +76,58 @@ const formatDisplayDate = (value) => {
   return `${month}/${day}/${year}`;
 };
 
+const getMomentType = (moment) => String(moment?.type || moment?.standoutType || '').trim().toUpperCase();
+
+
+const getMomentMediaRef = (moment) => String(moment?.persistedMediaRef || moment?.photoRef || moment?.mediaRef || '').trim();
+
+const getMomentStamp = (moment) => {
+  const timestamp = Date.parse(moment?.updated_at || moment?.updatedAt || moment?.created_at || moment?.createdAt || moment?.stampedAt || '');
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+function RememberMomentFlipCard({ type, moment, flipped, onToggle }) {
+  const hasMoment = Boolean(moment);
+  const title = String(moment?.detail || '').trim();
+  const description = String(moment?.description || '').trim();
+  const mediaRef = getMomentMediaRef(moment);
+
+  return (
+    <button
+      type="button"
+      className={`remember-moment-card${flipped ? ' remember-moment-card-flipped' : ''}`}
+      onClick={onToggle}
+      aria-pressed={flipped}
+      aria-label={`${type} REMEMBER.ME moment card`}
+    >
+      <span className="remember-moment-plane">
+        <span className="remember-moment-face remember-moment-front" aria-hidden={flipped}>
+          <span className="remember-moment-kicker">{hasMoment ? 'REMEMBER.ME MOMENT' : 'READY FOR REMEMBER.ME'}</span>
+          <strong>{type}</strong>
+          <span className="remember-moment-empty">{hasMoment ? 'TAP TO VIEW SAVED MOMENT' : 'NO MOMENT RECORDED YET'}</span>
+        </span>
+        <span className="remember-moment-face remember-moment-back" aria-hidden={!flipped}>
+          <span className="remember-moment-back-scroll">
+            <span className="remember-moment-kicker">{hasMoment ? 'REMEMBER.ME SAVED MOMENT' : 'READY FOR REMEMBER.ME'}</span>
+            <strong>{type}</strong>
+            {hasMoment ? (
+              <>
+                {moment.time ? <span className="remember-moment-time">{moment.time}</span> : null}
+                {title ? <span className="remember-moment-title">{title}</span> : null}
+                {description ? <span className="remember-moment-description">{description}</span> : null}
+                {!title && !description ? <span className="remember-moment-empty">NO MOMENT TEXT RECORDED</span> : null}
+                {mediaRef ? <img src={mediaRef} alt={`${type} REMEMBER.ME moment`} /> : null}
+              </>
+            ) : (
+              <span className="remember-moment-empty">Tap a date in Remember.Me to add this moment.</span>
+            )}
+          </span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export default function RememberMeSection() {
   const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
@@ -86,11 +138,22 @@ export default function RememberMeSection() {
   const [editorMode, setEditorMode] = useState('EVENT');
   const [entryDraft, setEntryDraft] = useState({ type: EVENT_TYPES[0], time: '', detail: '', description: '' });
   const [momentDraft, setMomentDraft] = useState({ type: STANDOUT_TYPES[0], time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' });
+  const [flippedMomentType, setFlippedMomentType] = useState('');
   const selectedDateKey = useMemo(() => safeDateKey(viewDate.getFullYear(), viewDate.getMonth(), selectedDay), [viewDate, selectedDay]);
   const currentEntries = selectedDateKey ? (entriesByDate[selectedDateKey] || []) : [];
   const currentMoments = selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
+  const momentCards = STANDOUT_TYPES.map((type) => ({
+    type,
+    moment: currentMoments
+      .filter((moment) => getMomentType(moment) === type)
+      .sort((left, right) => getMomentStamp(right) - getMomentStamp(left))[0] || null,
+  }));
   const monthIndex = viewDate.getMonth();
   const visual = REMEMBER_MONTH_VISUALS[monthIndex] || REMEMBER_MONTH_VISUALS[0];
+
+  useEffect(() => {
+    setFlippedMomentType('');
+  }, [selectedDateKey]);
 
   useEffect(() => {
     (async () => {
@@ -153,7 +216,27 @@ export default function RememberMeSection() {
     if (!selectedDateKey) { setError('Invalid date.'); return; }
     const durableRef = momentDraft.persistedMediaRef && !momentDraft.persistedMediaRef.startsWith('blob:') ? momentDraft.persistedMediaRef : '';
     const isUpdate = Boolean(momentDraft.id);
-    const nextMoment = { ...momentDraft, id: momentDraft.id || crypto.randomUUID(), detail: normalizeUserText(momentDraft.detail), description: normalizeUserText(momentDraft.description), standoutType: momentDraft.type, stamped: true, mediaRef: durableRef, photoRef: durableRef, persistedMediaRef: durableRef };
+    const existingCreatedAt = momentDraft.created_at || momentDraft.createdAt;
+    const now = new Date().toISOString();
+    const nextMoment = {
+      ...momentDraft,
+      id: momentDraft.id || crypto.randomUUID(),
+      date: selectedDateKey,
+      date_key: selectedDateKey,
+      detail: normalizeUserText(momentDraft.detail),
+      description: normalizeUserText(momentDraft.description),
+      standoutType: momentDraft.type,
+      type: momentDraft.type,
+      stamped: true,
+      stampedAt: momentDraft.stampedAt || now,
+      mediaRef: durableRef,
+      photoRef: durableRef,
+      persistedMediaRef: durableRef,
+      created_at: existingCreatedAt || now,
+      createdAt: existingCreatedAt || now,
+      updated_at: now,
+      updatedAt: now,
+    };
 
     let blockedByMax = false;
     setMomentByDate((previous) => {
@@ -176,6 +259,7 @@ export default function RememberMeSection() {
     }
 
     setPostcardOpen(false);
+    setFlippedMomentType(nextMoment.type);
     setMomentDraft({ type: STANDOUT_TYPES[0], time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' });
   };
 
@@ -228,6 +312,17 @@ export default function RememberMeSection() {
               getEntryLabel={(entry) => `${entry.type}${entry.time ? ` • ${entry.time}` : ''}`}
               maxEntriesPerDay={2}
             />
+          </section>
+          <section className="remember-standout-postcards" aria-label="REMEMBER.ME moment flip cards">
+            {momentCards.map((card) => (
+              <RememberMomentFlipCard
+                key={card.type}
+                type={card.type}
+                moment={card.moment}
+                flipped={flippedMomentType === card.type}
+                onToggle={() => setFlippedMomentType((current) => (current === card.type ? '' : card.type))}
+              />
+            ))}
           </section>
         </main>
         </div>
