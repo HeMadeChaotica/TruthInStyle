@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ChaoticaMonthCalendar, { daysInMonth, safeDateKey } from '../shared/ChaoticaMonthCalendar';
 import '../../styles/sections/remember-me.css';
 import { normalizeUserText } from '../../lib/utils/textCasing';
+import MomentFlipCard from '../remember-me/MomentFlipCard';
 
 const EVENT_TYPES = ['SOMETHING NEW DAY','TREAT DAY','REMINDER','JOB INTERVIEW','BIRTHDAY','ANNIVERSARY','MEETING','DEADLINE','EVENT (WORK)','TRAVEL','CALL','DICK APPOINTMENT','SOCIAL NETWORKING','DATE','HEALTH','RENT','PACKAGE DELIVERY','HAIRCUT'];
 const STANDOUT_TYPES = ['WOW', 'WTF', 'PLOT TWIST'];
@@ -79,84 +80,10 @@ const formatDisplayDate = (value) => {
 const getMomentType = (moment) => String(moment?.type || moment?.standoutType || '').trim().toUpperCase();
 
 
-const getMomentMediaRef = (moment) => String(moment?.persistedMediaRef || moment?.photoRef || moment?.mediaRef || '').trim();
-
 const getMomentStamp = (moment) => {
   const timestamp = Date.parse(moment?.updated_at || moment?.updatedAt || moment?.created_at || moment?.createdAt || moment?.stampedAt || '');
   return Number.isNaN(timestamp) ? 0 : timestamp;
 };
-
-const getMomentTitle = (moment) => String(moment?.title || moment?.label || moment?.shortLabel || moment?.detail || '').trim();
-
-const getMomentDescription = (moment, title) => {
-  const candidates = [moment?.description, moment?.note, moment?.text, moment?.body, moment?.detail];
-  const found = candidates.map((value) => String(value || '').trim()).find((value) => value && value !== title);
-  return found || '';
-};
-
-function MomentFlipCard({ type, moment, isFlipped, onToggle }) {
-  const hasMoment = Boolean(moment);
-  const title = getMomentTitle(moment);
-  const description = getMomentDescription(moment, title);
-  const mediaRef = getMomentMediaRef(moment);
-  const displayTime = String(moment?.time || moment?.time_value || '').trim();
-  const displayDate = formatDisplayDate(moment?.date_key || moment?.date || '');
-  const frontSummary = title || description;
-
-  const handleKeyDown = (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onToggle();
-    }
-  };
-
-  return (
-    <article
-      className={`moment-card-shell remember-moment-card${isFlipped ? ' is-flipped remember-moment-card-flipped' : ''}`}
-      role="button"
-      tabIndex={0}
-      aria-pressed={isFlipped}
-      aria-label={`${type} REMEMBER.ME moment card${hasMoment ? ', saved moment available' : ', no moment recorded yet'}`}
-      data-moment-type={type}
-      data-flipped={isFlipped ? 'true' : 'false'}
-      onClick={onToggle}
-      onKeyDown={handleKeyDown}
-    >
-      <div className="moment-card-plane remember-moment-plane">
-        <div className="moment-card-face front remember-moment-face remember-moment-front" aria-hidden={isFlipped}>
-          <span className="remember-moment-kicker">{hasMoment ? 'SAVED REMEMBER.ME' : 'READY FOR REMEMBER.ME'}</span>
-          <strong>{type}</strong>
-          {hasMoment ? (
-            <>
-              <span className="remember-moment-saved-indicator">SAVED • TAP TO FLIP</span>
-              {frontSummary ? <span className="remember-moment-front-summary">{frontSummary}</span> : null}
-            </>
-          ) : (
-            <span className="remember-moment-empty">NO MOMENT RECORDED YET</span>
-          )}
-        </div>
-
-        <div className="moment-card-face back remember-moment-face remember-moment-back" aria-hidden={!isFlipped}>
-          <div className="remember-moment-back-scroll">
-            <span className="remember-moment-kicker">{hasMoment ? 'REMEMBER.ME SAVED MOMENT' : 'READY FOR REMEMBER.ME'}</span>
-            <strong>{type}</strong>
-            {hasMoment ? (
-              <div className="remember-moment-saved-data">
-                {displayDate || displayTime ? <span className="remember-moment-time">{[displayDate, displayTime].filter(Boolean).join(' • ')}</span> : null}
-                {title ? <span className="remember-moment-title">{title}</span> : null}
-                {description ? <span className="remember-moment-description">{description}</span> : null}
-                {!title && !description ? <span className="remember-moment-empty">NO MOMENT TEXT RECORDED</span> : null}
-                {mediaRef ? <img src={mediaRef} alt={`${type} REMEMBER.ME moment`} /> : null}
-              </div>
-            ) : (
-              <span className="remember-moment-empty">NO MOMENT RECORDED YET</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
 
 export default function RememberMeSection() {
   const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
