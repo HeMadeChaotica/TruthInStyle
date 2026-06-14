@@ -18,6 +18,11 @@ const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-masquerade-offi
 const PENNY_LIMIT = 2;
 
 const VARIATIONS = getSummationRemixPresets();
+const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
+
+function safeJsonParse(raw, fallback = null) {
+  try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+}
 
 
 export default function TheSummationSection() {
@@ -32,8 +37,10 @@ export default function TheSummationSection() {
 
   useEffect(() => {
     let active = true;
+    const storedDraft = typeof window !== 'undefined' ? safeJsonParse(window.localStorage.getItem(SUMMATION_DRAFT_KEY), null) : null;
+    const draftDate = storedDraft?.sourceDate ? new Date(`${storedDraft.sourceDate}T00:00:00`) : today;
 
-    readAssurerDayForSummation(today)
+    readAssurerDayForSummation(draftDate)
       .then((dayPayload) => {
         if (!active) return;
         setAssurerDay(dayPayload);
@@ -49,6 +56,21 @@ export default function TheSummationSection() {
       active = false;
     };
   }, [today]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const loadDraft = (event) => {
+      const sourceDate = event?.detail?.sourceDate;
+      const draftDate = sourceDate ? new Date(`${sourceDate}T00:00:00`) : new Date();
+      readAssurerDayForSummation(draftDate).then((dayPayload) => {
+        setAssurerDay(dayPayload);
+        setChaoticaDayNumber(getChaoticaDayNumber(dayPayload.sourceDate));
+        setLoadingState('READY');
+      });
+    };
+    window.addEventListener('truthinstyle-summation-draft', loadDraft);
+    return () => window.removeEventListener('truthinstyle-summation-draft', loadDraft);
+  }, []);
 
   const pennyForYourThoughts = useMemo(() => {
     const selectedQuestionIds = PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
