@@ -1,1 +1,58 @@
-/* Temporary scaffold file for local implementation. */
+.annual525600-page {
+  background: #060607;
+}
+
+.annual525600-scene-plate,
+.annual525600-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.annual525600-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.annual525600-feed-grid {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 1.15vw, 18px);
+  padding: clamp(12px, 1.5vw, 24px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.annual525600-feed-zone {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(225, 226, 232, 0.48);
+  border-radius: 18px;
+  background: rgba(8, 9, 13, 0.24);
+  backdrop-filter: blur(0.8px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 14px 30px rgba(0, 0, 0, 0.22);
+  padding: clamp(10px, 1vw, 16px);
+  overflow: auto;
+}
+
+.annual525600-feed-zone h2 {
+  margin: 0;
+  color: var(--app-text-primary);
+  font-size: clamp(1rem, 1.6vw, 1.8rem);
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 8px #000;
+}
+
+@media (max-width: 900px) {
+  .annual525600-feed-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(260px, 1fr));
+    overflow-y: auto;
+  }
+}

@@ -6,7 +6,7 @@
 }
 .igtv2-page,.igtv2-page *{box-sizing:border-box}
 .igtv2-scene-plate,.igtv2-bg{position:absolute;inset:0}
-.igtv2-bg{background:url('/backgrounds/ITS-GETTING-THICC/its-getting-thicc-bg-v2.png') center center/cover no-repeat fixed}
+.igtv2-bg{background:url('/backgrounds/ITS-GETTING-THICC/its-getting-thicc-bg.png') center center/cover no-repeat fixed}
 .igtv2-left{display:block;position:relative;overflow:visible}
 .igtv2-glyph{color:var(--igt-readable-text);font-size:1rem;letter-spacing:.18em;text-shadow:0 2px 8px #000}
 .igtv2-cabinet{position:absolute;left:10px;bottom:24%;display:grid;gap:10px;max-width:220px;z-index:2}

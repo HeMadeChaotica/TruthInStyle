@@ -13,7 +13,7 @@ import {
 } from '../../src/services/summationService';
 import '../../styles/sections/the-summation.css';
 
-const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-masquerade-official.png';
+const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
 
 const PENNY_LIMIT = 2;
 
