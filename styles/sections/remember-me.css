@@ -1,14 +1,14 @@
 .remember-page{position:relative;min-height:100dvh;overflow:hidden;isolation:isolate;background:radial-gradient(circle at 70% 55%,rgba(255,28,160,.12),transparent 42%),#080005;color: var(--app-text-primary);font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase}
 .remember-scene-frame{position:absolute;left:50%;top:50%;width:min(100vw,calc(100dvh * 16 / 9));height:min(100dvh,calc(100vw * 9 / 16));transform:translate(-50%,-50%);overflow:hidden}
 .remember-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:var(--rm-bg-fit,cover);object-position:var(--rm-bg-position,center center);z-index:0}
-.remember-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.12) 40%,rgba(0,0,0,.36) 62%,rgba(0,0,0,.68) 100%),radial-gradient(120% 120% at 96% 45%,rgba(255,99,185,.2),rgba(0,0,0,0));}
+.remember-overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(0,0,0,.03) 0%,rgba(0,0,0,.06) 55%,rgba(0,0,0,.14) 100%),radial-gradient(120% 120% at 96% 45%,rgba(255,99,185,.14),rgba(0,0,0,0));}
 .remember-content{position:relative;z-index:2;min-height:100%;padding:1rem 1.4rem 1.6rem}
 .remember-head,.remember-month-mini,.remember-calendar-title-visible{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-sr-only,.remember-floating-month-control{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-main{position:absolute;right:var(--rm-calendar-right,4.6%);bottom:var(--rm-calendar-bottom,7.4%);width:var(--rm-calendar-width,38.5%);max-width:var(--rm-calendar-max-width,635px);min-width:360px;transform:none;transform-origin:bottom right;margin:0;z-index:2;overflow:visible;display:flex;flex-direction:column;gap:12px;align-items:stretch}
-.remember-calendar-panel{width:100%;padding:clamp(8px,.8vw,12px);background:rgba(10,0,8,.48);border:1px solid rgba(255,94,190,.64);box-shadow:0 0 24px rgba(255,30,158,.16);backdrop-filter:blur(1.5px);border-radius:16px}
+.remember-calendar-panel{width:100%;padding:clamp(8px,.8vw,12px);background:rgba(10,4,12,.58);border:1px solid rgba(255,94,190,.64);box-shadow:0 0 24px rgba(255,30,158,.16);backdrop-filter:blur(1.5px);border-radius:16px}
 .remember-month-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.remember-month-row button,.remember-day,.remember-postcard-popout button{font:inherit;text-transform:inherit;color: var(--app-text-primary);background:rgba(12,5,11,.7);border:1px solid rgba(255,136,207,.65);border-radius:10px}
+.remember-month-row button,.remember-day,.remember-postcard-popout button{font:inherit;text-transform:inherit;color: var(--app-text-primary);background:rgba(0,0,0,.44);border:1px solid rgba(255,136,207,.65);border-radius:10px}
 .remember-month-row button{width:34px;height:34px;font-size:1.2rem;line-height:1;cursor:pointer}
 .remember-month-sticky{margin-top:8px;display:flex;justify-content:flex-start}
 .remember-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:8px}.remember-weekdays span{text-align:center;font-size:.78rem;color: var(--app-text-primary)}
@@ -18,7 +18,7 @@
 .remember-chip{font-size:.58rem;line-height:1;padding:3px 5px;border-radius:999px;border:1px solid rgba(255,255,255,.26);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .remember-chip-observance{background:linear-gradient(180deg,#ffaad8,#f29d51);color: var(--app-text-primary)}.remember-chip-entry{background:rgba(255,122,210,.42)}.remember-chip-moment{background:rgba(178,120,255,.44)}
 .remember-day.remember-selected{box-shadow:0 0 0 2px rgba(255,128,201,.95),0 0 12px rgba(255,74,174,.3) inset}.remember-day.remember-outside{opacity:.32;cursor:not-allowed}
-.remember-standout-postcards{position:relative;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 12px;background:rgba(12,0,10,.44);border:1px solid rgba(255,94,190,.58);border-radius:12px;overflow:hidden;contain:layout paint}
+.remember-standout-postcards{position:relative;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 12px;background:rgba(10,4,12,.58);border:1px solid rgba(255,94,190,.58);border-radius:12px;overflow:hidden;contain:layout paint}
 .moment-card-shell,.remember-moment-card{position:relative;display:block;width:100%;height:clamp(156px,19vh,214px);padding:0;border:0;background:transparent;color:var(--app-text-primary);cursor:pointer;text-align:center;appearance:none;touch-action:manipulation;outline:none;isolation:isolate;overflow:hidden}
 .moment-card-shell:focus-visible,.remember-moment-card:focus-visible{outline:2px solid var(--app-text-primary);outline-offset:3px;border-radius:14px}
 .moment-card-plane,.remember-moment-plane{position:relative;display:block;width:100%;height:100%;overflow:hidden;border-radius:14px}
@@ -58,7 +58,7 @@
 
 .remember-moment-photo-preview img{width:100%;max-height:220px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,124,209,.72)}
 .assurer-section{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-.assurer-flip-card{background:rgba(12,0,10,.44);border:1px solid rgba(255,94,190,.58);border-radius:12px;padding:0;overflow:hidden}
+.assurer-flip-card{background:rgba(10,4,12,.58);border:1px solid rgba(255,94,190,.58);border-radius:12px;padding:0;overflow:hidden}
 .assurer-flip-card img{width:100%;height:100%;min-height:220px;object-fit:cover;display:block}
 .assurer-flip-back{padding:10px;display:grid;gap:6px;text-align:left;color: var(--app-text-primary)}
 .assurer-flip-back p{margin:0;text-transform:uppercase}

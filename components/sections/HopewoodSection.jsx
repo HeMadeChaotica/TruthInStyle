@@ -12,7 +12,8 @@ export default function HopewoodSection() {
         <img className="hopewood-bg" src={BACKGROUND_URL} alt="" aria-hidden="true" />
       </ScenePlate>
       <SectionOverlay className="hopewood-overlay">
-        <ArtLane className="hopewood-left" aria-label="Hopewood lookup and art reserve" />
+        <div className="hopewood-lookup-reserve" aria-label="Hopewood lookup and day-engine reserve" />
+        <ArtLane className="hopewood-art-reserve" aria-label="Mista.Thicc art reserve" />
         <ContentScroller className="hopewood-book-space" aria-label="Open Book of Life viewing space" />
       </SectionOverlay>
     </SectionShell>

@@ -1,5 +1,5 @@
 .annual525600-page {
-  background: #060607;
+  background: transparent;
 }
 
 .annual525600-scene-plate,
@@ -13,6 +13,7 @@
   height: 100%;
   object-fit: cover;
   object-position: center center;
+  opacity: 1;
 }
 
 .annual525600-feed-grid {
@@ -34,9 +35,9 @@
   min-height: 0;
   border: 1px solid rgba(225, 226, 232, 0.48);
   border-radius: 18px;
-  background: rgba(8, 9, 13, 0.24);
+  background: rgba(10, 4, 12, 0.58);
   backdrop-filter: blur(0.8px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 14px 30px rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 30px rgba(0, 0, 0, 0.18);
   padding: clamp(10px, 1vw, 16px);
   overflow: auto;
 }
