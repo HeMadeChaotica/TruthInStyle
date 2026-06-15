@@ -33,6 +33,8 @@ function SourceBlock({ title, value }) {
 export default function TheSummationSection() {
   const [bundle, setBundle] = useState(null);
   const [activeVersionId, setActiveVersionId] = useState('');
+  const [selectedForSealVersionId, setSelectedForSealVersionId] = useState('');
+  const [activeSketchId, setActiveSketchId] = useState('');
   const [editor, setEditor] = useState({ title: '', body: '' });
   const [doodleNote, setDoodleNote] = useState('');
   const [sealMessage, setSealMessage] = useState('');
@@ -41,9 +43,12 @@ export default function TheSummationSection() {
   const loadBundle = useCallback(() => {
     const nextBundle = readSummationDraftBundle();
     setBundle(nextBundle);
-    const selected = nextBundle?.versions?.find((version) => version.selectedForSeal) || nextBundle?.versions?.[0];
-    setActiveVersionId(selected?.id || '');
-  }, []);
+    const selected = nextBundle?.versions?.find((version) => version.selectedForSeal);
+    const active = nextBundle?.versions?.find((version) => version.id === activeVersionId) || selected || nextBundle?.versions?.[0];
+    setSelectedForSealVersionId(selected?.id || '');
+    setActiveVersionId(active?.id || '');
+    setActiveSketchId((nextBundle?.sketches || []).find((sketch) => sketch.linkedVersionId === active?.id)?.sketchId || '');
+  }, [activeVersionId]);
 
   useEffect(() => {
     loadBundle();
@@ -66,8 +71,10 @@ export default function TheSummationSection() {
   const versions = bundle?.versions || [];
   const sketches = bundle?.sketches || [];
   const activeVersion = versions.find((version) => version.id === activeVersionId) || versions[0] || null;
-  const activeSketch = sketches.find((sketch) => sketch.linkedVersionId === activeVersion?.id) || null;
-  const missingFields = useMemo(() => listSummationSealMissingFields({ draft, version: activeVersion, sketch: activeSketch }), [draft, activeVersion, activeSketch]);
+  const activeSketch = sketches.find((sketch) => sketch.sketchId === activeSketchId) || sketches.find((sketch) => sketch.linkedVersionId === activeVersion?.id) || null;
+  const sealVersion = versions.find((version) => version.id === selectedForSealVersionId) || null;
+  const sealSketch = sketches.find((sketch) => sketch.linkedVersionId === selectedForSealVersionId && (sketch.selectedForSeal || sketch.sketchId === sealVersion?.sketchId)) || null;
+  const missingFields = useMemo(() => listSummationSealMissingFields({ draft, version: sealVersion, sketch: sealSketch }), [draft, sealVersion, sealSketch]);
 
   useEffect(() => {
     setEditor({ title: activeVersion?.title || '', body: activeVersion?.body || '' });
@@ -77,7 +84,7 @@ export default function TheSummationSection() {
 
   const handleGenerate = () => {
     if (!draft) return;
-    generateSummationVersions(draft);
+    generateSummationVersions(draft, { preserveSelectedVersionId: selectedForSealVersionId });
     loadBundle();
   };
 
@@ -91,6 +98,7 @@ export default function TheSummationSection() {
   const handleCreateSketch = () => {
     if (!draft || !activeVersion) return;
     const sketch = createOrUpdateSummationSketch({ draft, version: activeVersion, doodleLayer: activeSketch?.doodleLayer });
+    setActiveSketchId(sketch.sketchId || '');
     setDoodleNote(sketch.doodleLayer.annotationNotes || '');
     loadBundle();
   };
@@ -114,12 +122,13 @@ export default function TheSummationSection() {
 
   const handleSelectForSeal = () => {
     if (!activeVersion) return;
-    markSummationVersionForSeal(activeVersion.id);
+    const selected = markSummationVersionForSeal(activeVersion.id);
+    setSelectedForSealVersionId(selected?.id || activeVersion.id);
     loadBundle();
   };
 
   const handleSeal = () => {
-    const result = sealActiveSummationSelection();
+    const result = sealActiveSummationSelection(null, selectedForSealVersionId);
     setSealMessage(result?.sealedRecord ? `Sealed ${result.sealedRecord.displayDate}.` : `Seal blocked: ${(result?.missingFields || []).join(', ')}`);
     loadBundle();
   };
@@ -144,9 +153,9 @@ export default function TheSummationSection() {
       <section className="summation-stage" aria-label="THE.SUMMATION day-fusion chamber">
         <section className="summation-workspace summation-panel">
           <header className="summation-day-line">
-            <p>THE.SUMMATION DRAFT</p>
+            <p>THE.SUMMATION</p>
             <h1>{draft.titleOfDay || 'Untitled Assurer Day'}</h1>
-            <span>{draft.displayDate} • {draft.dayOfWeek} • Chaotica Day # {draft.chaoticaDayNumber}</span>
+            <span>{draft.displayDate} • {draft.dayOfWeek} • Source {draft.sourceDate} • Chaotica Day # {draft.chaoticaDayNumber}</span>
           </header>
           <div className="summation-editor-grid">
             <label>Active version title
@@ -169,10 +178,10 @@ export default function TheSummationSection() {
             {versions.map((version) => {
               const sketch = sketches.find((item) => item.linkedVersionId === version.id);
               return (
-                <button key={version.id} type="button" className={version.id === activeVersion?.id ? 'is-active' : ''} onClick={() => setActiveVersionId(version.id)}>
+                <button key={version.id} type="button" className={version.id === activeVersion?.id ? 'is-active' : ''} onClick={() => { setActiveVersionId(version.id); setActiveSketchId(sketch?.sketchId || ''); }}>
                   <strong>{version.label}</strong>
                   <span>{version.styleLabel}</span>
-                  <em>{version.status || 'Draft'}{version.id === activeVersion?.id ? ' • Active' : ''}{sketch ? ' • Sketch created' : ' • No sketch yet'}{version.selectedForSeal ? ' • Selected for Seal' : ''}{version.sealed ? ' • Sealed' : ''}</em>
+                  <em>{version.status || 'Draft'}{version.id === activeVersion?.id ? ' • Active' : ''}{sketch ? ' • Sketch created' : ' • No sketch yet'}{version.id === selectedForSealVersionId || version.selectedForSeal ? ' • Selected for Seal' : ''}{version.sealed ? ' • Sealed' : ''}</em>
                 </button>
               );
             })}
@@ -201,6 +210,8 @@ export default function TheSummationSection() {
         </section>
 
         <aside className="summation-source-panel summation-panel">
+          <h2>Penny for Your Thoughts</h2>
+          <SourceBlock title="Penny/source answers" value={pennyAnswers} />
           <h2>Source truth</h2>
           <SourceBlock title="Date" value={`${draft.displayDate} • ${draft.dayOfWeek} • ${draft.sourceDate}`} />
           <SourceBlock title="Mood / era / singleness" value={[draft.sourceTruth?.mood, draft.sourceTruth?.era, draft.sourceTruth?.singlenessLevel].filter(Boolean)} />
@@ -211,7 +222,6 @@ export default function TheSummationSection() {
           <SourceBlock title="REMEMBER.ME moments" value={draft.sourceTruth?.moments || draft.sourceTruth?.timelineHighlights} />
           <SourceBlock title="THICC.FITT signals" value={draft.sourceTruth?.workoutHighlights} />
           <SourceBlock title="DA.EATER signals" value={draft.sourceTruth?.macroHighlights || draft.sourceTruth?.mealHighlights} />
-          <SourceBlock title="Penny/source answers" value={pennyAnswers} />
         </aside>
 
         <section className="summation-seal-panel summation-panel">
