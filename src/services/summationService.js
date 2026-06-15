@@ -1002,7 +1002,15 @@ function fullSourceTruthFromDraft(draft) {
 function normalizeSummationDraft(input) {
   if (!input) return null;
   const sourceTruth = fullSourceTruthFromDraft(input);
-  if (!sourceTruth.sourceDate || !sourceTruth.displayDate) return null;
+  const missing = [];
+  if (!sourceTruth.sourceDate) missing.push('sourceDate');
+  if (!sourceTruth.displayDate) missing.push('displayDate');
+  if (!input.id && !sourceTruth.sourceDate) missing.push('draft identity');
+  if (!isPresent(input.sourceTruth || input.fullAssurerDaySnapshot || input.dayPayload || sourceTruth)) missing.push('sourceTruth/full Assurer snapshot');
+  if (missing.length) {
+    if (typeof console !== 'undefined') console.warn('Invalid Summation draft missing fields:', missing.join(', '));
+    return null;
+  }
   const now = new Date().toISOString();
   return {
     id: input.id || `summation-draft-${sourceTruth.sourceDate}`,
@@ -1076,12 +1084,26 @@ export function createSummationDraftFromAssurerDay(selectedDayPayload) {
 }
 
 export function readSummationDraftBundle() {
-  const draft = normalizeSummationDraft(hasStorage() ? safeJsonParse(window.localStorage.getItem(SUMMATION_DRAFT_KEY), null) : null);
+  if (!hasStorage()) return null;
+  const storedDraft = safeJsonParse(window.localStorage.getItem(SUMMATION_DRAFT_KEY), null);
+  const completed = safeJsonParse(window.localStorage.getItem(COMPLETED_SUMMATION_KEY), null);
+  const draft = normalizeSummationDraft(storedDraft || completed?.draft || completed);
   if (!draft) return null;
-  const versions = readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate);
+  const versions = normalizeSummationVersionSelection(readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate));
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY).filter((sketch) => sketch.sourceDate === draft.sourceDate);
   if (!versions.length) return { draft, versions: generateSummationVersions(draft), sketches };
   return { draft, versions, sketches };
+}
+
+export function normalizeSummationVersionSelection(versions = [], selectedVersionId = '') {
+  let selectionUsed = false;
+  const selectedIds = versions.filter((version) => version.selectedForSeal).map((version) => version.id);
+  const explicitId = selectedVersionId || (selectedIds.length === 1 ? selectedIds[0] : '');
+  return versions.map((version) => {
+    const selectedForSeal = Boolean(explicitId && version.id === explicitId && !selectionUsed);
+    if (selectedForSeal) selectionUsed = true;
+    return { ...version, selectedForSeal };
+  });
 }
 
 export function generateSummationVersions(draftInput, options = {}) {
@@ -1109,15 +1131,18 @@ export function generateSummationVersions(draftInput, options = {}) {
       status: 'Draft',
       createdAt: existing?.createdAt || now,
       updatedAt: now,
-      selectedForSeal: existing?.selectedForSeal || index === 0,
+      selectedForSeal: false,
       sealed: existing?.sealed || false,
       sourceTruth: draft.sourceTruth,
       sourceTruthRef: draft.id,
       sketchId: existing?.sketchId || '',
     };
   });
-  writeStorageArray(SUMMATION_VERSIONS_KEY, [...existingAll.filter((version) => version.sourceDate !== draft.sourceDate), ...versions]);
-  return versions;
+  const selectedIds = existingForDay.filter((version) => version.selectedForSeal).map((version) => version.id);
+  const stableSelectedId = selectedIds.length === 1 && versions.some((version) => version.id === selectedIds[0]) ? selectedIds[0] : '';
+  const normalizedVersions = normalizeSummationVersionSelection(versions, options.preserveSelectedVersionId || stableSelectedId);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, [...existingAll.filter((version) => version.sourceDate !== draft.sourceDate), ...normalizedVersions]);
+  return normalizedVersions;
 }
 
 export function saveSummationVersionEdits(versionId, edits = {}) {
@@ -1178,9 +1203,13 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
 export function markSummationVersionForSeal(versionId) {
   const versions = readStorageArray(SUMMATION_VERSIONS_KEY);
   const target = versions.find((version) => version.id === versionId);
+  if (!target) return null;
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY);
-  writeStorageArray(SUMMATION_VERSIONS_KEY, versions.map((version) => version.sourceDate === target?.sourceDate ? { ...version, selectedForSeal: version.id === versionId } : version));
-  writeStorageArray(SUMMATION_SKETCHES_KEY, sketches.map((sketch) => sketch.sourceDate === target?.sourceDate ? { ...sketch, selectedForSeal: sketch.linkedVersionId === versionId } : sketch));
+  const nextVersions = versions.map((version) => version.sourceDate === target.sourceDate ? { ...version, selectedForSeal: version.id === versionId } : version);
+  const nextSketches = sketches.map((sketch) => sketch.sourceDate === target.sourceDate ? { ...sketch, selectedForSeal: sketch.linkedVersionId === versionId } : sketch);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, nextVersions);
+  writeStorageArray(SUMMATION_SKETCHES_KEY, nextSketches);
+  return nextVersions.find((version) => version.id === versionId) || null;
 }
 
 export function listSummationSealMissingFields({ draft, version, sketch } = {}) {
@@ -1200,12 +1229,23 @@ export function listSummationSealMissingFields({ draft, version, sketch } = {}) 
   return missing;
 }
 
-export function sealActiveSummationSelection(completed = null) {
+export function sealActiveSummationSelection(completed = null, selectedVersionId = '') {
   if (!hasStorage()) return { sealedRecord: null, missingFields: ['localStorage'] };
+  const rawVersions = readStorageArray(SUMMATION_VERSIONS_KEY);
   const bundle = readSummationDraftBundle();
   const draft = bundle?.draft || completed?.draft || null;
-  const version = bundle?.versions?.find((item) => item.selectedForSeal) || completed?.version || null;
-  const sketch = bundle?.sketches?.find((item) => item.linkedVersionId === version?.id && (item.selectedForSeal || version?.selectedForSeal)) || completed?.sketch || null;
+  const rawSelectedVersions = rawVersions.filter((item) => item.sourceDate === draft?.sourceDate && item.selectedForSeal);
+  const selectedVersions = selectedVersionId ? [] : rawSelectedVersions;
+  if (!selectedVersionId && selectedVersions.length > 1) {
+    const missingFields = ['Multiple versions selected for seal. Please select one.'];
+    window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: missingFields[0], missingFields } }));
+    return { sealedRecord: null, missingFields };
+  }
+  const explicitId = selectedVersionId || selectedVersions[0]?.id || completed?.version?.id || '';
+  const normalizedVersions = normalizeSummationVersionSelection(bundle?.versions || [], explicitId);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.sourceDate === draft?.sourceDate ? (normalizedVersions.find((version) => version.id === item.id) || item) : item));
+  const version = normalizedVersions.find((item) => item.id === explicitId) || null;
+  const sketch = bundle?.sketches?.find((item) => item.linkedVersionId === version?.id && (item.selectedForSeal || item.sketchId === version?.sketchId)) || completed?.sketch || null;
   const missingFields = listSummationSealMissingFields({ draft, version, sketch });
   if (missingFields.length) {
     window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: `Seal blocked: ${missingFields.join(', ')}`, missingFields } }));
@@ -1245,8 +1285,8 @@ export function sealActiveSummationSelection(completed = null) {
   const records = readSealedRecords().filter((record) => record.id !== sealedRecord.id && String(record.sourceDate) !== String(sealedRecord.sourceDate));
   writeStorageArray(SUMMATION_SEALED_STORAGE_KEY, [...records, sealedRecord]);
   receiveSealedSummation(sealedRecord);
-  writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.id === version.id ? { ...item, sealed: true, selectedForSeal: true, updatedAt: now } : item));
-  writeStorageArray(SUMMATION_SKETCHES_KEY, readStorageArray(SUMMATION_SKETCHES_KEY).map((item) => item.sketchId === sketch.sketchId ? { ...item, sealed: true, selectedForSeal: true, updatedAt: now } : item));
+  writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.sourceDate === version.sourceDate ? { ...item, sealed: item.id === version.id ? true : item.sealed, selectedForSeal: item.id === version.id, updatedAt: item.id === version.id ? now : item.updatedAt } : item));
+  writeStorageArray(SUMMATION_SKETCHES_KEY, readStorageArray(SUMMATION_SKETCHES_KEY).map((item) => item.sourceDate === sketch.sourceDate ? { ...item, sealed: item.sketchId === sketch.sketchId ? true : item.sealed, selectedForSeal: item.sketchId === sketch.sketchId, updatedAt: item.sketchId === sketch.sketchId ? now : item.updatedAt } : item));
   window.dispatchEvent(new CustomEvent('truthinstyle-summation-sealed', { detail: { sealedRecord, message: `Sealed ${sealedRecord.displayDate}` } }));
   return { sealedRecord, missingFields: [] };
 }
