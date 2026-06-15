@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { readAssurerDayForSummation, sealSummationVariation } from '../../src/services/summationService';
+import {
+  getChaoticaDayNumber,
+  isSummationSketchSealable,
+  readAssurerDayForSummation,
+  sealSummationVariation,
+} from '../../src/services/summationService';
 
 const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
@@ -66,6 +71,75 @@ function safeJsonParse(raw, fallback = null) {
   try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
 }
 
+function mergeMissingTruth(base = {}, fallback = {}) {
+  return Object.entries(fallback || {}).reduce((merged, [key, value]) => {
+    if (merged[key] === undefined || merged[key] === null || merged[key] === '') {
+      return { ...merged, [key]: value };
+    }
+    return merged;
+  }, { ...(base || {}) });
+}
+
+function dateFromSourceDate(sourceDate) {
+  return sourceDate ? new Date(`${sourceDate}T00:00:00`) : null;
+}
+
+function hasCompleteDateMetadata(payload) {
+  return Boolean(payload?.displayDate && payload?.sourceDate && payload?.dayOfWeek);
+}
+
+async function resolveSealSourceTruth(completed, draft, activeDate) {
+  const completedFullSource = completed?.sourceTruthSnapshot || completed?.dayPayload || completed?.assurerDay || completed?.sourceDay || null;
+  const draftDayPayload = draft?.dayPayload || null;
+  const sourceDate = completedFullSource?.sourceDate || draftDayPayload?.sourceDate || completed?.sourceDate || completed?.sourceTruth?.sourceDate || localDateKey(activeDate);
+  const activeDayPayload = await readAssurerDayForSummation(dateFromSourceDate(sourceDate) || activeDate).catch(() => null);
+
+  let sourceTruth = {};
+  if (hasCompleteDateMetadata(completedFullSource)) {
+    sourceTruth = { ...completedFullSource };
+  } else if (hasCompleteDateMetadata(draftDayPayload)) {
+    sourceTruth = { ...draftDayPayload };
+  } else if (hasCompleteDateMetadata(activeDayPayload)) {
+    sourceTruth = { ...activeDayPayload };
+  } else {
+    sourceTruth = mergeMissingTruth(
+      {
+        sourceDate,
+        displayDate: completed?.displayDate || draft?.displayDate,
+        dayOfWeek: completed?.dayOfWeek,
+      },
+      completed?.sourceTruth || {},
+    );
+  }
+
+  sourceTruth = mergeMissingTruth(sourceTruth, activeDayPayload || {});
+  sourceTruth = mergeMissingTruth(sourceTruth, draftDayPayload || {});
+  sourceTruth = mergeMissingTruth(sourceTruth, completedFullSource || {});
+  sourceTruth = mergeMissingTruth(sourceTruth, {
+    source: completed?.sourceTruth?.source || draft?.source || 'THE.ASSURER',
+    sourceDate,
+    displayDate: completed?.displayDate || draft?.displayDate,
+    dayOfWeek: completed?.dayOfWeek,
+    chaoticaDayNumber: completed?.chaoticaDayNumber || completed?.sourceTruth?.chaoticaDayNumber || getChaoticaDayNumber(sourceTruth.sourceDate || sourceDate),
+    completedVariationId: completed?.variationId || completed?.id,
+    completedPresetName: completed?.presetName || completed?.name,
+    selectedVariationId: completed?.variationId || completed?.id,
+    selectedVariationName: completed?.presetName || completed?.name,
+    selectedSummationContent: completed,
+  });
+  sourceTruth = mergeMissingTruth(sourceTruth, completed?.sourceTruth || {});
+
+  return sourceTruth;
+}
+
+function getSealBlockReason(sourceTruth, completed) {
+  if (!sourceTruth?.displayDate) return 'THE.SUMMATION seal blocked: missing displayDate.';
+  if (!sourceTruth?.sourceDate) return 'THE.SUMMATION seal blocked: missing sourceDate.';
+  if (!sourceTruth?.dayOfWeek) return 'THE.SUMMATION seal blocked: missing dayOfWeek.';
+  if (!isSummationSketchSealable(completed)) return 'THE.SUMMATION seal blocked: missing selected Summation content/version.';
+  return '';
+}
+
 export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, onSelect }) {
   const router = useRouter();
   const initialDate = useMemo(() => new Date(), []);
@@ -86,8 +160,6 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     const timer = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-
-  const activeDateKey = localDateKey(activeDate);
 
   const applyDayChange = () => {
     const parsed = parseDisplayDate(draftDateText);
@@ -125,14 +197,22 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     router.push('/the-summation');
   };
 
-  const handleSeal = () => {
+  const handleSeal = async () => {
     const completed = safeJsonParse(window.localStorage.getItem(COMPLETED_SUMMATION_KEY), null);
+    const draft = safeJsonParse(window.localStorage.getItem(SUMMATION_DRAFT_KEY), null);
     if (!completed) {
       setStatus('COMPLETE THE.SUMMATION FIRST');
       return;
     }
-    const sourceDate = completed?.sourceTruth?.sourceDate || completed?.sourceDate || activeDateKey;
-    const sourceDay = completed?.sourceTruth || { sourceDate, displayDate: completed.displayDate || displayDate(activeDate), dayOfWeek: completed.dayOfWeek };
+
+    const sourceDay = await resolveSealSourceTruth(completed, draft, activeDate);
+    const blockReason = getSealBlockReason(sourceDay, completed);
+    if (blockReason) {
+      console.error(blockReason, { sourceDay, completed });
+      setStatus('SEAL BLOCKED: INCOMPLETE SUMMATION RECORD');
+      return;
+    }
+
     const sealed = sealSummationVariation(sourceDay, completed);
     setStatus(sealed ? `SEALED ${sealed.displayDate || sealed.sourceDate}` : 'SEAL BLOCKED');
   };
