@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ControlPanelOverlay from './ControlPanelOverlay';
-import SacredActionCluster from './SacredActionCluster';
 
 const ROUTE_BY_KEY = {
   home: '/the-assurer',
@@ -37,7 +36,6 @@ export default function AppShell({ children }) {
   return (
     <div style={{ height: '100%' }}>
       {children}
-      <SacredActionCluster />
       <ControlPanelOverlay
         isOpen={isOpen}
         onOpen={() => setIsOpen(true)}
