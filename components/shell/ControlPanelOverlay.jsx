@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { readAssurerDayForSummation, sealSummationVariation } from '../../src/services/summationService';
+import { createSummationDraftFromAssurerDay, readAssurerDayForSummation, sealActiveSummationSelection } from '../../src/services/summationService';
 
 const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
@@ -110,15 +110,11 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     }
 
     const selectedDayPayload = await readAssurerDayForSummation(selectedDate);
-    const draftPayload = {
-      source: 'THE.ASSURER',
-      sourceDate: selectedDayPayload.sourceDate,
-      displayDate: selectedDayPayload.displayDate,
-      dayPayload: selectedDayPayload,
-      createdAt: new Date().toISOString(),
-    };
-
-    window.localStorage.setItem(SUMMATION_DRAFT_KEY, JSON.stringify(draftPayload));
+    const draftPayload = createSummationDraftFromAssurerDay(selectedDayPayload);
+    if (!draftPayload) {
+      setStatus('SUMMATE BLOCKED');
+      return;
+    }
     window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: selectedDayPayload.sourceDate, draft: draftPayload } }));
     setStatus(`SUMMATED ${selectedDayPayload.displayDate}`);
     onClose?.();
@@ -127,14 +123,8 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
 
   const handleSeal = () => {
     const completed = safeJsonParse(window.localStorage.getItem(COMPLETED_SUMMATION_KEY), null);
-    if (!completed) {
-      setStatus('COMPLETE THE.SUMMATION FIRST');
-      return;
-    }
-    const sourceDate = completed?.sourceTruth?.sourceDate || completed?.sourceDate || activeDateKey;
-    const sourceDay = completed?.sourceTruth || { sourceDate, displayDate: completed.displayDate || displayDate(activeDate), dayOfWeek: completed.dayOfWeek };
-    const sealed = sealSummationVariation(sourceDay, completed);
-    setStatus(sealed ? `SEALED ${sealed.displayDate || sealed.sourceDate}` : 'SEAL BLOCKED');
+    const result = sealActiveSummationSelection(completed);
+    setStatus(result?.sealedRecord ? `SEALED ${result.sealedRecord.displayDate || result.sealedRecord.sourceDate}` : `SEAL BLOCKED: ${(result?.missingFields || []).join(', ')}`);
   };
 
   const handleRailItem = (item) => {

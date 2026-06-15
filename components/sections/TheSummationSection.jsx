@@ -2,346 +2,224 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  PENNY_FOR_YOUR_THOUGHTS_QUESTIONS,
-  buildSummationSealPayload,
-  generateSummationSketchStory,
-  getChaoticaDayNumber,
-  getSummationRemixPresets,
-  isSummationSketchSealable,
-  readAssurerDayForSummation,
-  sealSummationVariation,
+  createOrUpdateSummationSketch,
+  generateSummationVersions,
+  listSummationSealMissingFields,
+  markSummationVersionForSeal,
+  readSummationDraftBundle,
+  saveSummationVersionEdits,
+  sealActiveSummationSelection,
 } from '../../src/services/summationService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
+const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 
-const PENNY_LIMIT = 2;
-
-const VARIATIONS = getSummationRemixPresets();
-const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
-
-function safeJsonParse(raw, fallback = null) {
-  try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+function fieldValue(value) {
+  if (Array.isArray(value)) return value.length ? value.map((item) => (typeof item === 'string' ? item : JSON.stringify(item))).join(' • ') : 'Available when sourced.';
+  if (value && typeof value === 'object') return Object.keys(value).length ? JSON.stringify(value, null, 2) : 'Available when sourced.';
+  return value || 'Available when sourced.';
 }
 
+function SourceBlock({ title, value }) {
+  return (
+    <article className="summation-source-row">
+      <h3>{title}</h3>
+      <p>{fieldValue(value)}</p>
+    </article>
+  );
+}
 
 export default function TheSummationSection() {
-  const today = useMemo(() => new Date(), []);
-  const [assurerDay, setAssurerDay] = useState(null);
-  const [selectedPennyQuestionIds, setSelectedPennyQuestionIds] = useState([]);
-  const [pennyAnswerTextById, setPennyAnswerTextById] = useState({});
-  const [selectedVariation] = useState(VARIATIONS[0].selectorLabel);
-  const [chaoticaDayNumber, setChaoticaDayNumber] = useState(1);
-  const [sealStatus, setSealStatus] = useState('');
-  const [loadingState, setLoadingState] = useState('SUMMONING THE ASSURER DAY');
+  const [bundle, setBundle] = useState(null);
+  const [activeVersionId, setActiveVersionId] = useState('');
+  const [editor, setEditor] = useState({ title: '', body: '' });
+  const [doodleNote, setDoodleNote] = useState('');
+  const [sealMessage, setSealMessage] = useState('');
+  const [dirty, setDirty] = useState(false);
+
+  const loadBundle = useCallback(() => {
+    const nextBundle = readSummationDraftBundle();
+    setBundle(nextBundle);
+    const selected = nextBundle?.versions?.find((version) => version.selectedForSeal) || nextBundle?.versions?.[0];
+    setActiveVersionId(selected?.id || '');
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    const storedDraft = typeof window !== 'undefined' ? safeJsonParse(window.localStorage.getItem(SUMMATION_DRAFT_KEY), null) : null;
-    const draftDate = storedDraft?.sourceDate ? new Date(`${storedDraft.sourceDate}T00:00:00`) : today;
-
-    readAssurerDayForSummation(draftDate)
-      .then((dayPayload) => {
-        if (!active) return;
-        setAssurerDay(dayPayload);
-        setChaoticaDayNumber(getChaoticaDayNumber(dayPayload.sourceDate));
-        setLoadingState('READY');
-      })
-      .catch(() => {
-        if (!active) return;
-        setLoadingState('THE ASSURER DAY COULD NOT BE READ');
-      });
-
+    loadBundle();
+    const onDraft = () => loadBundle();
+    const onSealed = (event) => {
+      setSealMessage(event?.detail?.message || 'THE.SUMMATION sealed.');
+      loadBundle();
+    };
+    window.addEventListener(DRAFT_EVENT_NAME, onDraft);
+    window.addEventListener('truthinstyle-summation-sealed', onSealed);
+    window.addEventListener('truthinstyle-summation-seal-blocked', onSealed);
     return () => {
-      active = false;
+      window.removeEventListener(DRAFT_EVENT_NAME, onDraft);
+      window.removeEventListener('truthinstyle-summation-sealed', onSealed);
+      window.removeEventListener('truthinstyle-summation-seal-blocked', onSealed);
     };
-  }, [today]);
+  }, [loadBundle]);
+
+  const draft = bundle?.draft || null;
+  const versions = bundle?.versions || [];
+  const sketches = bundle?.sketches || [];
+  const activeVersion = versions.find((version) => version.id === activeVersionId) || versions[0] || null;
+  const activeSketch = sketches.find((sketch) => sketch.linkedVersionId === activeVersion?.id) || null;
+  const missingFields = useMemo(() => listSummationSealMissingFields({ draft, version: activeVersion, sketch: activeSketch }), [draft, activeVersion, activeSketch]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const loadDraft = (event) => {
-      const sourceDate = event?.detail?.sourceDate;
-      const draftDate = sourceDate ? new Date(`${sourceDate}T00:00:00`) : new Date();
-      readAssurerDayForSummation(draftDate).then((dayPayload) => {
-        setAssurerDay(dayPayload);
-        setChaoticaDayNumber(getChaoticaDayNumber(dayPayload.sourceDate));
-        setLoadingState('READY');
-      });
-    };
-    window.addEventListener('truthinstyle-summation-draft', loadDraft);
-    return () => window.removeEventListener('truthinstyle-summation-draft', loadDraft);
-  }, []);
+    setEditor({ title: activeVersion?.title || '', body: activeVersion?.body || '' });
+    setDoodleNote(activeSketch?.doodleLayer?.annotationNotes || '');
+    setDirty(false);
+  }, [activeVersion?.id, activeVersion?.title, activeVersion?.body, activeSketch?.sketchId, activeSketch?.doodleLayer?.annotationNotes]);
 
-  const pennyForYourThoughts = useMemo(() => {
-    const selectedQuestionIds = PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
-      .filter((question) => selectedPennyQuestionIds.includes(question.id))
-      .map((question) => question.id);
+  const handleGenerate = () => {
+    if (!draft) return;
+    generateSummationVersions(draft);
+    loadBundle();
+  };
 
-    return {
-      selectedQuestionIds,
-      answers: PENNY_FOR_YOUR_THOUGHTS_QUESTIONS
-        .filter((question) => selectedQuestionIds.includes(question.id))
-        .map((question) => ({
-          questionId: question.id,
-          questionText: question.text,
-          answerText: pennyAnswerTextById[question.id] || '',
-        })),
-    };
-  }, [pennyAnswerTextById, selectedPennyQuestionIds]);
+  const handleSaveVersion = () => {
+    if (!activeVersion) return;
+    saveSummationVersionEdits(activeVersion.id, editor);
+    setDirty(false);
+    loadBundle();
+  };
 
-  const activeStory = useMemo(() => (
-    generateSummationSketchStory(assurerDay, selectedVariation, pennyForYourThoughts)
-  ), [assurerDay, pennyForYourThoughts, selectedVariation]);
+  const handleCreateSketch = () => {
+    if (!draft || !activeVersion) return;
+    const sketch = createOrUpdateSummationSketch({ draft, version: activeVersion, doodleLayer: activeSketch?.doodleLayer });
+    setDoodleNote(sketch.doodleLayer.annotationNotes || '');
+    loadBundle();
+  };
 
-  const titleOfDay = activeStory.hasAssurerTitle ? activeStory.title : activeStory.emptyTitleText;
-  const activeNumber = '1';
-
-  const sealableStoryPayload = useMemo(
-    () => buildSummationSealPayload(activeStory, pennyForYourThoughts),
-    [activeStory, pennyForYourThoughts],
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!isSummationSketchSealable(sealableStoryPayload)) {
-      window.localStorage.removeItem('completed_summation_sketch');
-      return;
-    }
-    window.localStorage.setItem('completed_summation_sketch', JSON.stringify(sealableStoryPayload));
-  }, [sealableStoryPayload]);
-
-  const handlePennyQuestionToggle = useCallback((questionId) => {
-    setSelectedPennyQuestionIds((currentIds) => {
-      if (currentIds.includes(questionId)) {
-        return currentIds.filter((id) => id !== questionId);
-      }
-      if (currentIds.length >= PENNY_LIMIT) return currentIds;
-      return [...currentIds, questionId];
+  const handleSaveSketch = () => {
+    if (!draft || !activeVersion) return;
+    createOrUpdateSummationSketch({
+      draft,
+      version: { ...activeVersion, title: editor.title, body: editor.body },
+      doodleLayer: {
+        ...(activeSketch?.doodleLayer || {}),
+        annotationNotes: doodleNote,
+        marks: activeSketch?.doodleLayer?.marks || [],
+        decorativeStrokes: activeSketch?.doodleLayer?.decorativeStrokes || [],
+        memoryMarks: activeSketch?.doodleLayer?.memoryMarks || [],
+        stamps: activeSketch?.doodleLayer?.stamps || [],
+      },
     });
-  }, []);
+    loadBundle();
+  };
 
-  const handlePennyAnswerChange = useCallback((questionId, answerText) => {
-    setPennyAnswerTextById((currentAnswers) => ({
-      ...currentAnswers,
-      [questionId]: answerText,
-    }));
-  }, []);
+  const handleSelectForSeal = () => {
+    if (!activeVersion) return;
+    markSummationVersionForSeal(activeVersion.id);
+    loadBundle();
+  };
 
-  const sealPage = useCallback(() => {
-    if (!assurerDay || !isSummationSketchSealable(sealableStoryPayload)) {
-      console.warn('THE.SUMMATION seal blocked: exactly two answered Pennies are required.');
-      return;
-    }
-    const sealed = sealSummationVariation(
-      { ...assurerDay, chaoticaDayNumber },
-      sealableStoryPayload,
+  const handleSeal = () => {
+    const result = sealActiveSummationSelection();
+    setSealMessage(result?.sealedRecord ? `Sealed ${result.sealedRecord.displayDate}.` : `Seal blocked: ${(result?.missingFields || []).join(', ')}`);
+    loadBundle();
+  };
+
+  if (!draft) {
+    return (
+      <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
+        <div className="summation-background-plate" aria-hidden="true" />
+        <section className="summation-empty-state">
+          <h1>THE.SUMMATION</h1>
+          <p>No valid Summation draft is loaded. Open THE.ASSURER, choose the active day with Eye of Truth if needed, then use Crystal Wand / Summate from the right-side rail.</p>
+        </section>
+      </main>
     );
+  }
 
-    if (sealed) {
-      setChaoticaDayNumber(sealed.chaoticaDayNumber);
-      setSealStatus(`SEALED AS CHAOTICA DAY # ${sealed.chaoticaDayNumber}`);
-    }
-  }, [assurerDay, chaoticaDayNumber, sealableStoryPayload]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    window.addEventListener('so-let-it-be-done', sealPage);
-    return () => window.removeEventListener('so-let-it-be-done', sealPage);
-  }, [sealPage]);
+  const pennyAnswers = draft.sourceTruth?.pennyAnswers || draft.sourceTruth?.wrapAnswers || [];
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
       <div className="summation-background-plate" aria-hidden="true" />
-
-      <div className="summation-landscape-warning" role="status">
-        <strong>LANDSCAPE ONLY.</strong>
-        <span>Turn the portal sideways. THE.SUMMATION only opens as a fixed masquerade board.</span>
-      </div>
-
-      <section className="summation-stage" aria-label="THE.SUMMATION landscape masquerade map">
-        <article className="summation-board-zone" aria-label="Single Active Summation Board">
-          <header className="summation-identity-line">
-            <span className={`summation-identity-title${activeStory.hasAssurerTitle ? '' : ' is-empty'}`}>{titleOfDay}</span>
-            <span>{assurerDay?.displayDate || activeStory.displayDate}</span>
-            <span>{assurerDay?.dayOfWeek || activeStory.dayOfWeek}</span>
-            <span>Chaotica Day # {chaoticaDayNumber}</span>
+      <section className="summation-stage" aria-label="THE.SUMMATION day-fusion chamber">
+        <section className="summation-workspace summation-panel">
+          <header className="summation-day-line">
+            <p>THE.SUMMATION DRAFT</p>
+            <h1>{draft.titleOfDay || 'Untitled Assurer Day'}</h1>
+            <span>{draft.displayDate} • {draft.dayOfWeek} • Chaotica Day # {draft.chaoticaDayNumber}</span>
           </header>
-
-          <div className={`summation-sketch-board variation-${activeNumber}`} data-theme={activeStory.id}>
-            <div className="summation-board-wash" aria-hidden="true" />
-            <svg className="summation-ballroom-route" viewBox="0 0 1000 620" aria-hidden="true" focusable="false">
-              <path className="summation-route-shadow" d="M80 418 C180 306 248 300 318 214 S478 118 572 210 706 352 848 258" />
-              <path className="summation-route-main" d="M80 418 C180 306 248 300 318 214 S478 118 572 210 706 352 848 258" />
-              <path className="summation-route-branch" d="M318 214 C356 288 414 348 498 372 S648 402 732 504" />
-              <path className="summation-route-branch" d="M572 210 C548 288 540 352 498 372" />
-              <circle className="summation-route-stop stop-one" cx="80" cy="418" r="8" />
-              <circle className="summation-route-stop stop-two" cx="318" cy="214" r="8" />
-              <circle className="summation-route-stop stop-three" cx="572" cy="210" r="8" />
-              <circle className="summation-route-stop stop-four" cx="848" cy="258" r="8" />
-              <circle className="summation-route-stop stop-five" cx="498" cy="372" r="8" />
-              <circle className="summation-route-stop stop-six" cx="732" cy="504" r="8" />
-            </svg>
-            <div className="summation-route-arrow summation-route-arrow-one" aria-hidden="true">MASK</div>
-            <div className="summation-route-arrow summation-route-arrow-two" aria-hidden="true">TURN</div>
-            <div className="summation-route-arrow summation-route-arrow-three" aria-hidden="true">AFTERGLOW</div>
-
-            <section className="summation-theme-label" aria-label="Active theme">
-              <span>{activeStory.name}</span>
-              <p>{activeStory.visualFocus}</p>
-            </section>
-
-            <section className="summation-word-keepsake" aria-label="Readable source text retained from THE.ASSURER">
-              {activeStory.textItems.map((item, index) => (
-                <p
-                  key={`${item.sourceField || item.sourceKey}-${item.text}`}
-                  className={`summation-remix-text text-${index + 1} role-${item.role || 'line'}`}
-                  data-source-section={item.sourceSection}
-                  data-source-field={item.sourceField || item.sourceKey}
-                  data-used-as={item.usedAs}
-                >
-                  <small>{item.source}</small>
-                  {item.text}
-                </p>
-              ))}
-            </section>
-
-            <section className="summation-mask-cluster" aria-label="Mood, era, and singleness transformed into masquerade drawings">
-              {activeStory.maskCluster.map((item) => (
-                <figure
-                  key={item.id}
-                  className={`summation-map-symbol ${item.id}`}
-                  data-source-section={item.sourceSection}
-                  data-source-field={item.sourceField}
-                  data-used-as={item.usedAs}
-                >
-                  <span className="summation-symbol-sketch" aria-hidden="true">{item.glyph}</span>
-                  <figcaption>
-                    <em>{item.form}</em>
-                    <strong>{item.text}</strong>
-                  </figcaption>
-                </figure>
-              ))}
-            </section>
-
-            <section className="summation-moment-pins" aria-label="WOW, WTF, and PLOT TWIST scene pins">
-              {activeStory.momentPins.map((item) => (
-                <figure
-                  key={item.id}
-                  className={`summation-scene-pin ${item.id}`}
-                  data-source-section={item.sourceSection}
-                  data-source-field={item.sourceField}
-                  data-used-as={item.usedAs}
-                >
-                  <span className="summation-pin-glint" aria-hidden="true" />
-                  <span className="summation-pin-doodle" aria-hidden="true">{item.glyph}</span>
-                  <figcaption>
-                    <em>{item.label}</em>
-                    <strong>{item.text}</strong>
-                  </figcaption>
-                </figure>
-              ))}
-            </section>
-
-            <section className="summation-motion-layer" aria-label="Battle Cry ribbon and Head Hummer notes">
-              {activeStory.animatedItems.map((item) => (
-                <div
-                  key={`${item.sourceField || item.sourceKey}-${item.text}`}
-                  className={`summation-motion-mark ${item.kind || ''}`}
-                  data-source-section={item.sourceSection}
-                  data-source-field={item.sourceField || item.sourceKey}
-                  data-used-as={item.usedAs}
-                >
-                  <span aria-hidden="true">{item.glyph}</span>
-                  <strong>{item.text}</strong>
-                </div>
-              ))}
-            </section>
-
-            <section className="summation-support-glyphs" aria-label="Supporting source glyphs">
-              {activeStory.iconItems.map((item) => (
-                <figure
-                  key={`${item.sourceField || item.sourceKey}-${item.text}`}
-                  className={`summation-source-glyph ${item.kind || ''}`}
-                  data-source-section={item.sourceSection}
-                  data-source-field={item.sourceField || item.sourceKey}
-                  data-used-as={item.usedAs}
-                >
-                  <span aria-hidden="true">{item.glyph}</span>
-                  <figcaption>{item.text}</figcaption>
-                </figure>
-              ))}
-            </section>
-
-            <section className="summation-penny-alcove" aria-label="PENNY FOR YOUR THOUGHTS two chosen answers">
-              <h2>PENNY FOR YOUR THOUGHTS?</h2>
-              {activeStory.pennyAnswers.length ? activeStory.pennyAnswers.map((item) => (
-                <article
-                  key={item.sourceQuestionId}
-                  data-source-section={item.sourceSection}
-                  data-source-area={item.sourceArea}
-                  data-source-question-id={item.sourceQuestionId}
-                  data-used-as={item.usedAs}
-                >
-                  <span>{item.sourceQuestionText}</span>
-                  <p>{item.sourceValue}</p>
-                </article>
-              )) : <p className="summation-quiet-empty">No chosen Penny answers are present in THE.ASSURER.</p>}
-            </section>
-
-            <details className="summation-proof-drawer">
-              <summary>source proof</summary>
-              <div>
-                {activeStory.proofRows.map((row) => (
-                  <p key={`${row.sourceField}-${row.usedAs}`}>
-                    <span>{row.sourceSection}</span>
-                    <strong>{row.sourceField}</strong>
-                    <em>{row.usedAs}</em>
-                    <small>{row.sourceValue}</small>
-                  </p>
-                ))}
-              </div>
-            </details>
+          <div className="summation-editor-grid">
+            <label>Active version title
+              <input value={editor.title} disabled={activeVersion?.sealed} onChange={(event) => { setEditor((current) => ({ ...current, title: event.target.value })); setDirty(true); }} />
+            </label>
+            <label>Active version body
+              <textarea value={editor.body} disabled={activeVersion?.sealed} onChange={(event) => { setEditor((current) => ({ ...current, body: event.target.value })); setDirty(true); }} />
+            </label>
           </div>
-        </article>
+          <div className="summation-action-row">
+            <button type="button" onClick={handleSaveVersion} disabled={!activeVersion || activeVersion.sealed}>Save version edits</button>
+            <button type="button" onClick={handleSelectForSeal} disabled={!activeVersion || activeVersion.sealed}>Select version/sketch for seal</button>
+            <span>{dirty ? 'Unsaved edits' : 'Version metadata preserved'}</span>
+          </div>
+        </section>
 
-        <aside className="summation-support-zone" aria-label="Masquerade Map Source Preview">
-          <section className="summation-source-preview">
-            <h2>{activeStory.name}</h2>
-            <p>{loadingState === 'READY' ? 'THE.ASSURER source signals are mapped into one ballroom floor.' : loadingState}</p>
-            <dl>
-              <div><dt>Readable text</dt><dd>Title, date, day, Chaotica number, word, thoughts excerpt, Penny answers.</dd></div>
-              <div><dt>Sketch art</dt><dd>Mood mask, era posture, singleness orbit, three moment pins, location, weather, meal, workout.</dd></div>
-              <div><dt>Quiet proof</dt><dd>Exact raw values stay inside the proof drawer on the map.</dd></div>
-            </dl>
-            <section className="summation-penny-picker" aria-label="Choose exactly two Penny questions">
-              <h3>PENNY FOR YOUR THOUGHTS?</h3>
-              <p>Choose exactly 2 and answer both before the Control Panel can seal.</p>
-              {PENNY_FOR_YOUR_THOUGHTS_QUESTIONS.map((question) => {
-                const selected = selectedPennyQuestionIds.includes(question.id);
-                const disabled = !selected && selectedPennyQuestionIds.length >= PENNY_LIMIT;
-                return (
-                  <label key={question.id}>
-                    <input
-                      type="checkbox"
-                      checked={selected}
-                      disabled={disabled}
-                      onChange={() => handlePennyQuestionToggle(question.id)}
-                    />
-                    <span>{question.text}</span>
-                    {selected ? (
-                      <textarea
-                        value={pennyAnswerTextById[question.id] || ''}
-                        onChange={(event) => handlePennyAnswerChange(question.id, event.target.value)}
-                        aria-label={`Answer for ${question.text}`}
-                      />
-                    ) : null}
-                  </label>
-                );
-              })}
-            </section>
-            {sealStatus ? <p className="summation-seal-status">{sealStatus}</p> : null}
-          </section>
+        <aside className="summation-version-panel summation-panel">
+          <header><h2>Version control</h2><button type="button" onClick={handleGenerate}>Regenerate / remix versions</button></header>
+          <div className="summation-version-list">
+            {versions.map((version) => {
+              const sketch = sketches.find((item) => item.linkedVersionId === version.id);
+              return (
+                <button key={version.id} type="button" className={version.id === activeVersion?.id ? 'is-active' : ''} onClick={() => setActiveVersionId(version.id)}>
+                  <strong>{version.label}</strong>
+                  <span>{version.styleLabel}</span>
+                  <em>{version.status || 'Draft'}{version.id === activeVersion?.id ? ' • Active' : ''}{sketch ? ' • Sketch created' : ' • No sketch yet'}{version.selectedForSeal ? ' • Selected for Seal' : ''}{version.sealed ? ' • Sealed' : ''}</em>
+                </button>
+              );
+            })}
+          </div>
         </aside>
+
+        <section className="summation-sketch-panel summation-panel">
+          <header><h2>Sketch / doodle artifact</h2><span>{activeSketch ? `Sketch ${activeSketch.sketchId}` : 'No sketch yet'}</span></header>
+          {activeSketch ? (
+            <article className="summation-sketch-page">
+              <div className="summation-sketch-date">{activeSketch.displayDate} • {activeSketch.selectedVersionLabel}</div>
+              <h3>{editor.title}</h3>
+              <p>{editor.body}</p>
+              <label>Doodle / annotation layer
+                <textarea value={doodleNote} onChange={(event) => setDoodleNote(event.target.value)} disabled={activeSketch.sealed} placeholder="Add your actual annotation notes here. No marks are generated for you." />
+              </label>
+              <small>Marks: {(activeSketch.doodleLayer?.marks || []).length} • Strokes: {(activeSketch.doodleLayer?.decorativeStrokes || []).length} • Memory marks: {(activeSketch.doodleLayer?.memoryMarks || []).length} • Stamps: {(activeSketch.doodleLayer?.stamps || []).length}</small>
+            </article>
+          ) : (
+            <div className="summation-no-sketch"><p>Create a sketch from the selected version when the text is ready. No fake doodles will be created.</p></div>
+          )}
+          <div className="summation-action-row">
+            <button type="button" onClick={handleCreateSketch} disabled={!activeVersion || activeVersion.sealed}>Create sketch from selected version</button>
+            <button type="button" onClick={handleSaveSketch} disabled={!activeVersion || !activeSketch || activeSketch.sealed}>Save / update sketch</button>
+          </div>
+        </section>
+
+        <aside className="summation-source-panel summation-panel">
+          <h2>Source truth</h2>
+          <SourceBlock title="Date" value={`${draft.displayDate} • ${draft.dayOfWeek} • ${draft.sourceDate}`} />
+          <SourceBlock title="Mood / era / singleness" value={[draft.sourceTruth?.mood, draft.sourceTruth?.era, draft.sourceTruth?.singlenessLevel].filter(Boolean)} />
+          <SourceBlock title="Head hummer" value={draft.sourceTruth?.headHummer} />
+          <SourceBlock title="Word of the day" value={draft.sourceTruth?.wordOfDay} />
+          <SourceBlock title="Assured thoughts" value={draft.sourceTruth?.assuredThoughts} />
+          <SourceBlock title="THICC.TIME signals" value={draft.sourceTruth?.weekSignal} />
+          <SourceBlock title="REMEMBER.ME moments" value={draft.sourceTruth?.moments || draft.sourceTruth?.timelineHighlights} />
+          <SourceBlock title="THICC.FITT signals" value={draft.sourceTruth?.workoutHighlights} />
+          <SourceBlock title="DA.EATER signals" value={draft.sourceTruth?.macroHighlights || draft.sourceTruth?.mealHighlights} />
+          <SourceBlock title="Penny/source answers" value={pennyAnswers} />
+        </aside>
+
+        <section className="summation-seal-panel summation-panel">
+          <h2>Seal readiness</h2>
+          {missingFields.length ? <p>Not ready: {missingFields.join(', ')}</p> : <p>Ready: selected version and linked sketch can be sealed from the right-side rail.</p>}
+          <button type="button" onClick={handleSeal}>Validate seal payload</button>
+          {sealMessage ? <span>{sealMessage}</span> : null}
+        </section>
       </section>
     </main>
   );
