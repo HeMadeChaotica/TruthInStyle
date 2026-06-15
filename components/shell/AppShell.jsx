@@ -48,9 +48,11 @@ export default function AppShell({ children }) {
   const onSummate = async (activeDay) => {
     if (typeof window === 'undefined') return;
     const dayPayload = await readAssurerDayForSummation(dateFromKey(activeDay));
+    if (!window.confirm(`Send ${dayPayload.displayDate} from THE.ASSURER into THE.SUMMATION?`)) return;
+
     window.localStorage.setItem(SUMMATION_DRAFT_KEY, JSON.stringify({ sourceDate: activeDay, dayPayload, updatedAt: new Date().toISOString() }));
     window.dispatchEvent(new CustomEvent('truthinstyle-summation-draft', { detail: { sourceDate: activeDay, dayPayload } }));
-    if (window.confirm(`Send ${dayPayload.displayDate} from THE.ASSURER into THE.SUMMATION?`)) router.push('/the-summation');
+    router.push('/the-summation');
   };
 
   const onSoLetItBeDone = async () => {
