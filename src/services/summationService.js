@@ -961,3 +961,292 @@ export function sealSummationVariation(dayPayload, selectedVariation) {
   receiveSealedSummation(sealedRecord);
   return sealedRecord;
 }
+
+const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
+const SUMMATION_VERSIONS_KEY = 'the_summation_versions_v1';
+const SUMMATION_SKETCHES_KEY = 'the_summation_sketches_v1';
+const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
+
+function readStorageArray(key) {
+  if (!hasStorage()) return [];
+  const parsed = safeJsonParse(window.localStorage.getItem(key), []);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function writeStorageArray(key, records) {
+  if (hasStorage()) window.localStorage.setItem(key, JSON.stringify(records));
+}
+
+function writeStorageObject(key, record) {
+  if (hasStorage()) window.localStorage.setItem(key, JSON.stringify(record));
+}
+
+function summationId(prefix, dateKey, label = '') {
+  return `${prefix}-${cleanText(dateKey) || 'undated'}-${cleanText(label).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || Date.now()}`;
+}
+
+function fullSourceTruthFromDraft(draft) {
+  const dayPayload = draft?.sourceTruth || draft?.dayPayload || draft?.fullAssurerDaySnapshot || {};
+  return {
+    ...dayPayload,
+    ...(draft?.completed?.sourceTruth || {}),
+    ...dayPayload,
+    source: dayPayload.source || draft?.source || 'THE.ASSURER',
+    sourceDate: dayPayload.sourceDate || draft?.sourceDate,
+    displayDate: dayPayload.displayDate || draft?.displayDate,
+    dayOfWeek: dayPayload.dayOfWeek || draft?.dayOfWeek,
+    chaoticaDayNumber: dayPayload.chaoticaDayNumber || draft?.chaoticaDayNumber,
+  };
+}
+
+function normalizeSummationDraft(input) {
+  if (!input) return null;
+  const sourceTruth = fullSourceTruthFromDraft(input);
+  if (!sourceTruth.sourceDate || !sourceTruth.displayDate) return null;
+  const now = new Date().toISOString();
+  return {
+    id: input.id || `summation-draft-${sourceTruth.sourceDate}`,
+    source: 'THE.ASSURER',
+    sourceDate: sourceTruth.sourceDate,
+    displayDate: sourceTruth.displayDate,
+    dayOfWeek: sourceTruth.dayOfWeek,
+    chaoticaDayNumber: sourceTruth.chaoticaDayNumber || getChaoticaDayNumber(sourceTruth.sourceDate),
+    titleOfDay: sourceTruth.titleOfDay || sourceTruth.title || input.titleOfDay || '',
+    fullAssurerDaySnapshot: input.fullAssurerDaySnapshot || input.dayPayload || sourceTruth,
+    sourceTruth,
+    sourceMetadata: input.sourceMetadata || { intake: 'Crystal Wand / Summate', sourceSchemaPreserved: true },
+    status: input.status || 'draft',
+    createdAt: input.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+function truthLine(label, value) {
+  if (!isPresent(value)) return '';
+  return `${label}: ${Array.isArray(value) || typeof value === 'object' ? JSON.stringify(value) : value}`;
+}
+
+const SUMMATION_VERSION_TYPES = [
+  { label: 'Clean Truth', styleLabel: 'Direct polished daily summary' },
+  { label: 'Mythic Truth', styleLabel: 'Chaotica / Mista.Thicc narrative' },
+  { label: 'Shadow Truth', styleLabel: 'Deeper emotional pattern' },
+  { label: 'Receipt Truth', styleLabel: 'Evidence-heavy source record' },
+];
+
+function versionBodyForType(sourceTruth, type) {
+  const lines = [
+    truthLine('Date', `${sourceTruth.displayDate} ${sourceTruth.dayOfWeek || ''}`),
+    truthLine('Title', sourceTruth.titleOfDay || sourceTruth.title),
+    truthLine('Mood', sourceTruth.mood),
+    truthLine('Era', sourceTruth.era),
+    truthLine('Singleness', sourceTruth.singlenessLevel || sourceTruth.singleness),
+    truthLine('Head hummer', sourceTruth.headHummer),
+    truthLine('Word', sourceTruth.wordOfDay),
+    truthLine('Assured thoughts', sourceTruth.assuredThoughts),
+    truthLine('THICC.TIME', sourceTruth.weekSignal),
+    truthLine('REMEMBER.ME', sourceTruth.moments || sourceTruth.timelineHighlights),
+    truthLine('THICC.FITT', sourceTruth.workoutHighlights),
+    truthLine('DA.EATER', sourceTruth.macroHighlights || sourceTruth.mealHighlights),
+    truthLine('Penny/source answers', sourceTruth.pennyAnswers || sourceTruth.wrapAnswers),
+  ].filter(Boolean);
+  if (type.label === 'Mythic Truth') return [`${sourceTruth.titleOfDay || 'This day'} enters THE.SUMMATION as a Chaotica chamber record.`, ...lines].join('\n');
+  if (type.label === 'Shadow Truth') return [`The deeper pattern of ${sourceTruth.displayDate} is held without performance.`, ...lines].join('\n');
+  if (type.label === 'Receipt Truth') return lines.join('\n');
+  return [`${sourceTruth.displayDate} is summarized from the selected THE.ASSURER day.`, ...lines].join('\n');
+}
+
+export function createSummationDraftFromAssurerDay(selectedDayPayload) {
+  const now = new Date().toISOString();
+  const draft = normalizeSummationDraft({
+    source: 'THE.ASSURER',
+    sourceDate: selectedDayPayload?.sourceDate,
+    displayDate: selectedDayPayload?.displayDate,
+    dayOfWeek: selectedDayPayload?.dayOfWeek,
+    chaoticaDayNumber: selectedDayPayload?.chaoticaDayNumber,
+    fullAssurerDaySnapshot: selectedDayPayload,
+    sourceTruth: selectedDayPayload,
+    createdAt: now,
+    updatedAt: now,
+    status: 'draft',
+  });
+  if (!draft) return null;
+  writeStorageObject(SUMMATION_DRAFT_KEY, draft);
+  generateSummationVersions(draft, { preserveExistingEdits: true });
+  return draft;
+}
+
+export function readSummationDraftBundle() {
+  const draft = normalizeSummationDraft(hasStorage() ? safeJsonParse(window.localStorage.getItem(SUMMATION_DRAFT_KEY), null) : null);
+  if (!draft) return null;
+  const versions = readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate);
+  const sketches = readStorageArray(SUMMATION_SKETCHES_KEY).filter((sketch) => sketch.sourceDate === draft.sourceDate);
+  if (!versions.length) return { draft, versions: generateSummationVersions(draft), sketches };
+  return { draft, versions, sketches };
+}
+
+export function generateSummationVersions(draftInput, options = {}) {
+  const draft = normalizeSummationDraft(draftInput);
+  if (!draft) return [];
+  const existingAll = readStorageArray(SUMMATION_VERSIONS_KEY);
+  const existingForDay = existingAll.filter((version) => version.sourceDate === draft.sourceDate);
+  const now = new Date().toISOString();
+  const versions = SUMMATION_VERSION_TYPES.map((type, index) => {
+    const id = summationId('version', draft.sourceDate, type.label);
+    const existing = existingForDay.find((version) => version.id === id);
+    if (existing && options.preserveExistingEdits) return { ...existing, sourceTruth: draft.sourceTruth };
+    return {
+      id,
+      versionNumber: index + 1,
+      label: type.label,
+      title: `${draft.titleOfDay || 'THE.SUMMATION'} — ${type.label}`,
+      styleLabel: type.styleLabel,
+      body: versionBodyForType(draft.sourceTruth, type),
+      content: versionBodyForType(draft.sourceTruth, type),
+      sourceDate: draft.sourceDate,
+      displayDate: draft.displayDate,
+      dayOfWeek: draft.dayOfWeek,
+      chaoticaDayNumber: draft.chaoticaDayNumber,
+      status: 'Draft',
+      createdAt: existing?.createdAt || now,
+      updatedAt: now,
+      selectedForSeal: existing?.selectedForSeal || index === 0,
+      sealed: existing?.sealed || false,
+      sourceTruth: draft.sourceTruth,
+      sourceTruthRef: draft.id,
+      sketchId: existing?.sketchId || '',
+    };
+  });
+  writeStorageArray(SUMMATION_VERSIONS_KEY, [...existingAll.filter((version) => version.sourceDate !== draft.sourceDate), ...versions]);
+  return versions;
+}
+
+export function saveSummationVersionEdits(versionId, edits = {}) {
+  const versions = readStorageArray(SUMMATION_VERSIONS_KEY);
+  const now = new Date().toISOString();
+  const next = versions.map((version) => version.id === versionId && !version.sealed ? {
+    ...version,
+    title: preserveText(edits.title),
+    body: preserveText(edits.body),
+    content: preserveText(edits.body),
+    updatedAt: now,
+  } : version);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, next);
+  return next.find((version) => version.id === versionId) || null;
+}
+
+export function createOrUpdateSummationSketch({ draft: draftInput, version, doodleLayer = {} }) {
+  const draft = normalizeSummationDraft(draftInput);
+  if (!draft || !version?.id) return null;
+  const sketches = readStorageArray(SUMMATION_SKETCHES_KEY);
+  const existing = sketches.find((sketch) => sketch.linkedVersionId === version.id);
+  const now = new Date().toISOString();
+  const sketch = {
+    sketchId: existing?.sketchId || summationId('sketch', draft.sourceDate, version.label || version.id),
+    linkedVersionId: version.id,
+    sourceDate: draft.sourceDate,
+    displayDate: draft.displayDate,
+    dayOfWeek: draft.dayOfWeek,
+    chaoticaDayNumber: draft.chaoticaDayNumber,
+    title: version.title,
+    selectedVersionLabel: version.label,
+    renderedText: version.body || version.content,
+    doodleLayer: {
+      marks: doodleLayer.marks || existing?.doodleLayer?.marks || [],
+      annotationNotes: preserveText(doodleLayer.annotationNotes ?? existing?.doodleLayer?.annotationNotes),
+      decorativeStrokes: doodleLayer.decorativeStrokes || existing?.doodleLayer?.decorativeStrokes || [],
+      memoryMarks: doodleLayer.memoryMarks || existing?.doodleLayer?.memoryMarks || [],
+      stamps: doodleLayer.stamps || existing?.doodleLayer?.stamps || [],
+      positionData: doodleLayer.positionData || existing?.doodleLayer?.positionData || {},
+      createdAt: existing?.doodleLayer?.createdAt || now,
+      updatedAt: now,
+    },
+    layoutTemplateKey: existing?.layoutTemplateKey || 'summation-daily-page-v1',
+    createdAt: existing?.createdAt || now,
+    updatedAt: now,
+    sealed: existing?.sealed || false,
+    selectedForSeal: version.selectedForSeal || existing?.selectedForSeal || false,
+    sourceTruth: draft.sourceTruth,
+    sourceTruthRef: draft.id,
+  };
+  writeStorageArray(SUMMATION_SKETCHES_KEY, [...sketches.filter((item) => item.linkedVersionId !== version.id), sketch]);
+  const versions = readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.id === version.id ? { ...item, sketchId: sketch.sketchId, updatedAt: now } : item);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, versions);
+  writeStorageObject(COMPLETED_SUMMATION_KEY, { draft, version: versions.find((item) => item.id === version.id) || version, sketch });
+  return sketch;
+}
+
+export function markSummationVersionForSeal(versionId) {
+  const versions = readStorageArray(SUMMATION_VERSIONS_KEY);
+  const target = versions.find((version) => version.id === versionId);
+  const sketches = readStorageArray(SUMMATION_SKETCHES_KEY);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, versions.map((version) => version.sourceDate === target?.sourceDate ? { ...version, selectedForSeal: version.id === versionId } : version));
+  writeStorageArray(SUMMATION_SKETCHES_KEY, sketches.map((sketch) => sketch.sourceDate === target?.sourceDate ? { ...sketch, selectedForSeal: sketch.linkedVersionId === versionId } : sketch));
+}
+
+export function listSummationSealMissingFields({ draft, version, sketch } = {}) {
+  const sourceTruth = fullSourceTruthFromDraft(draft || version || sketch || {});
+  const missing = [];
+  if (!version?.id) missing.push('selected active version');
+  if (!cleanText(version?.body || version?.content)) missing.push('selected version content');
+  if (!sketch) missing.push('selected sketch/doodle artifact');
+  if (sketch && sketch.linkedVersionId !== version?.id) missing.push('sketch linked versionId');
+  if (!cleanText(sketch?.sketchId)) missing.push('sketchId');
+  if (!cleanText(sourceTruth.displayDate || version?.displayDate || sketch?.displayDate)) missing.push('displayDate');
+  if (!cleanText(sourceTruth.sourceDate || version?.sourceDate || sketch?.sourceDate)) missing.push('sourceDate');
+  if (!cleanText(sourceTruth.dayOfWeek || version?.dayOfWeek || sketch?.dayOfWeek)) missing.push('dayOfWeek');
+  if (!cleanText(sourceTruth.chaoticaDayNumber || version?.chaoticaDayNumber || sketch?.chaoticaDayNumber)) missing.push('chaoticaDayNumber');
+  if (!isPresent(sourceTruth)) missing.push('source truth payload');
+  if (!isPresent(draft?.fullAssurerDaySnapshot || sourceTruth)) missing.push('full Assurer snapshot');
+  return missing;
+}
+
+export function sealActiveSummationSelection(completed = null) {
+  if (!hasStorage()) return { sealedRecord: null, missingFields: ['localStorage'] };
+  const bundle = readSummationDraftBundle();
+  const draft = bundle?.draft || completed?.draft || null;
+  const version = bundle?.versions?.find((item) => item.selectedForSeal) || completed?.version || null;
+  const sketch = bundle?.sketches?.find((item) => item.linkedVersionId === version?.id && (item.selectedForSeal || version?.selectedForSeal)) || completed?.sketch || null;
+  const missingFields = listSummationSealMissingFields({ draft, version, sketch });
+  if (missingFields.length) {
+    window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: `Seal blocked: ${missingFields.join(', ')}`, missingFields } }));
+    return { sealedRecord: null, missingFields };
+  }
+  const sourceTruth = fullSourceTruthFromDraft({ ...draft, sourceTruth: { ...version.sourceTruth, ...sketch.sourceTruth, ...draft.sourceTruth } });
+  const now = new Date().toISOString();
+  const sealedRecord = {
+    id: `summation-${sourceTruth.sourceDate}-${sketch.sketchId}`,
+    source: 'THE.SUMMATION',
+    sourceDate: sourceTruth.sourceDate,
+    displayDate: sourceTruth.displayDate,
+    dayOfWeek: sourceTruth.dayOfWeek,
+    chaoticaDayNumber: sourceTruth.chaoticaDayNumber,
+    title: sourceTruth.titleOfDay || version.title,
+    mood: sourceTruth.mood,
+    era: sourceTruth.era,
+    singleness: sourceTruth.singlenessLevel || sourceTruth.singleness,
+    selectedVersionId: version.id,
+    selectedVersionLabel: version.label,
+    selectedVersionContent: version.body || version.content,
+    selectedSketchId: sketch.sketchId,
+    sketchArtifact: sketch,
+    doodleLayer: sketch.doodleLayer,
+    sourceTruthSnapshot: sourceTruth,
+    fullAssurerDaySnapshot: draft.fullAssurerDaySnapshot || sourceTruth,
+    sourceSignals: {
+      thiccTime: sourceTruth.weekSignal,
+      rememberMe: sourceTruth.moments || sourceTruth.timelineHighlights,
+      thiccFitt: sourceTruth.workoutHighlights,
+      daEater: sourceTruth.macroHighlights || sourceTruth.mealHighlights,
+      pennyAnswers: sourceTruth.pennyAnswers || sourceTruth.wrapAnswers || [],
+    },
+    sourceMetadata: draft.sourceMetadata,
+    sealedAt: now,
+  };
+  const records = readSealedRecords().filter((record) => record.id !== sealedRecord.id && String(record.sourceDate) !== String(sealedRecord.sourceDate));
+  writeStorageArray(SUMMATION_SEALED_STORAGE_KEY, [...records, sealedRecord]);
+  receiveSealedSummation(sealedRecord);
+  writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.id === version.id ? { ...item, sealed: true, selectedForSeal: true, updatedAt: now } : item));
+  writeStorageArray(SUMMATION_SKETCHES_KEY, readStorageArray(SUMMATION_SKETCHES_KEY).map((item) => item.sketchId === sketch.sketchId ? { ...item, sealed: true, selectedForSeal: true, updatedAt: now } : item));
+  window.dispatchEvent(new CustomEvent('truthinstyle-summation-sealed', { detail: { sealedRecord, message: `Sealed ${sealedRecord.displayDate}` } }));
+  return { sealedRecord, missingFields: [] };
+}
