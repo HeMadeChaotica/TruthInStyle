@@ -166,3 +166,121 @@
   .summation-workspace-panel { min-height: 18rem; }
   .summation-sketch-panel { min-height: 12rem; }
 }
+
+
+.summation-editor,
+.summation-version-list,
+.summation-sketch-zone,
+.summation-sketch-preview {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.summation-editor label,
+.summation-sketch-preview label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--summation-muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summation-editor input,
+.summation-editor textarea,
+.summation-sketch-preview textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(244, 205, 214, 0.34);
+  border-radius: 0.8rem;
+  background: var(--summation-input);
+  color: var(--summation-text);
+  padding: 0.7rem;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.summation-editor textarea { min-height: 16rem; resize: vertical; }
+.summation-sketch-preview textarea { min-height: 5rem; resize: vertical; }
+
+.summation-editor button,
+.summation-artifact-placeholder button,
+.summation-sketch-preview button {
+  justify-self: start;
+  border: 1px solid var(--summation-border-hot);
+  border-radius: 999px;
+  background: rgba(255, 186, 208, 0.16);
+  color: var(--summation-text);
+  padding: 0.58rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.summation-editor button:disabled,
+.summation-artifact-placeholder button:disabled,
+.summation-sketch-preview button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.summation-version-card {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  border: 1px solid rgba(244, 205, 214, 0.26);
+  border-radius: 0.95rem;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--summation-text);
+  padding: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.summation-version-card.is-active {
+  border-color: var(--summation-border-hot);
+  background: rgba(255, 186, 208, 0.14);
+}
+
+.summation-version-card span,
+.summation-version-card em {
+  color: var(--summation-muted);
+  font-size: 0.82rem;
+}
+
+.summation-version-card em {
+  color: #ffd4df;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.summation-sketch-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.summation-sketch-preview article {
+  border: 1px solid rgba(244, 205, 214, 0.30);
+  border-radius: 1rem;
+  background: var(--summation-input);
+  padding: 0.9rem;
+}
+
+.summation-sketch-preview h3 {
+  margin: 0 0 0.45rem;
+}
+
+.summation-sketch-date {
+  margin: 0 0 0.75rem;
+  color: var(--summation-muted);
+}
+
+.summation-sketch-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--summation-text);
+  font: inherit;
+  line-height: 1.45;
+}
