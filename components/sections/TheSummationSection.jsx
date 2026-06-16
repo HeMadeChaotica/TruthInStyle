@@ -42,7 +42,13 @@ export default function TheSummationSection() {
   const [annotationDraft, setAnnotationDraft] = useState('');
 
   const loadBundle = useCallback(() => {
-    setBundle(readSummationDraftBundle());
+    const nextBundle = readSummationDraftBundle();
+    if (nextBundle?.draft && !nextBundle.versions?.length) {
+      generateSummationVersions(nextBundle.draft, { preserveSelectedVersionId: false });
+      setBundle(readSummationDraftBundle());
+      return;
+    }
+    setBundle(nextBundle);
   }, []);
 
   useEffect(() => {
@@ -134,6 +140,30 @@ export default function TheSummationSection() {
   }
 
   const title = draft.titleOfDay || draft.title || `Summation for ${draft.displayDate}`;
+
+  const refresh = () => setBundle(readSummationDraftBundle());
+  const selectActiveVersion = (versionId) => {
+    setSummationActiveVersion(versionId);
+    refresh();
+  };
+  const selectForSeal = (versionId) => {
+    markSummationVersionForSeal(versionId);
+    refresh();
+  };
+  const saveActiveVersion = () => {
+    if (!activeVersion?.id) return;
+    saveSummationVersionEdits(activeVersion.id, editor);
+    setSaveStatus('Saved.');
+    refresh();
+  };
+  const regenerateVersions = () => {
+    generateSummationVersions(draft, {
+      preserveExistingEdits: false,
+      preserveSelectedVersionId: selectedForSealVersionId || false,
+      activeVersionId,
+    });
+    refresh();
+  };
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
