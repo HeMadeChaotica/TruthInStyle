@@ -1018,6 +1018,7 @@ export function sealSummationVariation(dayPayload, selectedVariation) {
 const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
 const SUMMATION_VERSIONS_KEY = 'the_summation_versions_v1';
 const SUMMATION_SKETCHES_KEY = 'the_summation_sketches_v1';
+const SUMMATION_VERSION_STATE_KEY = 'the_summation_version_state_v1';
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 
 function readStorageArray(key) {
@@ -1148,9 +1149,38 @@ export function readSummationDraftBundle() {
   const completed = safeJsonParse(window.localStorage.getItem(COMPLETED_SUMMATION_KEY), null);
   const draft = normalizeSummationDraft(storedDraft || completed?.draft || completed);
   if (!draft) return null;
-  const versions = normalizeSummationVersionSelection(readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate));
+  const state = readSummationVersionState(draft.sourceDate);
+  const versions = normalizeSummationVersionSelection(readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate), state.selectedForSealVersionId);
+  persistSummationVersionSelection(draft.sourceDate, versions, state.activeVersionId);
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY).filter((sketch) => sketch.sourceDate === draft.sourceDate);
-  return { draft, versions, sketches };
+  const activeVersionId = versions.some((version) => version.id === state.activeVersionId) ? state.activeVersionId : (versions[0]?.id || '');
+  const selectedForSealVersionId = versions.find((version) => version.selectedForSeal)?.id || '';
+  return { draft, versions, sketches, activeVersionId, selectedForSealVersionId };
+}
+
+export function readSummationVersionState(sourceDate = '') {
+  if (!hasStorage()) return { activeVersionId: '', selectedForSealVersionId: '' };
+  const allState = safeJsonParse(window.localStorage.getItem(SUMMATION_VERSION_STATE_KEY), {});
+  const state = allState?.[sourceDate] || {};
+  return {
+    activeVersionId: cleanText(state.activeVersionId),
+    selectedForSealVersionId: cleanText(state.selectedForSealVersionId),
+  };
+}
+
+function writeSummationVersionState(sourceDate, statePatch = {}) {
+  if (!hasStorage() || !sourceDate) return readSummationVersionState(sourceDate);
+  const allState = safeJsonParse(window.localStorage.getItem(SUMMATION_VERSION_STATE_KEY), {});
+  const current = allState?.[sourceDate] || {};
+  const next = { ...current, ...statePatch };
+  window.localStorage.setItem(SUMMATION_VERSION_STATE_KEY, JSON.stringify({ ...allState, [sourceDate]: next }));
+  return next;
+}
+
+function persistSummationVersionSelection(sourceDate, versions = [], activeVersionId = '') {
+  const selectedForSealVersionId = versions.find((version) => version.selectedForSeal)?.id || '';
+  const validActiveVersionId = versions.some((version) => version.id === activeVersionId) ? activeVersionId : (versions[0]?.id || '');
+  writeSummationVersionState(sourceDate, { activeVersionId: validActiveVersionId, selectedForSealVersionId });
 }
 
 export function normalizeSummationVersionSelection(versions = [], selectedVersionId = '') {
@@ -1200,11 +1230,22 @@ export function generateSummationVersions(draftInput, options = {}) {
       sketchId: existing?.sketchId || '',
     };
   });
+  const state = readSummationVersionState(draft.sourceDate);
   const selectedIds = existingForDay.filter((version) => version.selectedForSeal).map((version) => version.id);
   const stableSelectedId = selectedIds.length === 1 && versions.some((version) => version.id === selectedIds[0]) ? selectedIds[0] : '';
-  const normalizedVersions = normalizeSummationVersionSelection(versions, options.preserveSelectedVersionId || stableSelectedId);
+  const requestedSelectedId = options.preserveSelectedVersionId === false ? '' : (options.preserveSelectedVersionId || state.selectedForSealVersionId || stableSelectedId);
+  const normalizedVersions = normalizeSummationVersionSelection(versions, requestedSelectedId && versions.some((version) => version.id === requestedSelectedId) ? requestedSelectedId : '');
   writeStorageArray(SUMMATION_VERSIONS_KEY, [...existingAll.filter((version) => version.sourceDate !== draft.sourceDate), ...normalizedVersions]);
+  persistSummationVersionSelection(draft.sourceDate, normalizedVersions, options.activeVersionId || state.activeVersionId);
   return normalizedVersions;
+}
+
+export function setSummationActiveVersion(versionId) {
+  const versions = readStorageArray(SUMMATION_VERSIONS_KEY);
+  const target = versions.find((version) => version.id === versionId);
+  if (!target) return null;
+  writeSummationVersionState(target.sourceDate, { activeVersionId: versionId });
+  return target;
 }
 
 export function saveSummationVersionEdits(versionId, edits = {}) {
@@ -1271,28 +1312,132 @@ export function markSummationVersionForSeal(versionId) {
   const target = versions.find((version) => version.id === versionId);
   if (!target) return null;
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY);
-  const nextVersions = versions.map((version) => version.sourceDate === target.sourceDate ? { ...version, selectedForSeal: version.id === versionId } : version);
-  const nextSketches = sketches.map((sketch) => sketch.sourceDate === target.sourceDate ? { ...sketch, selectedForSeal: sketch.linkedVersionId === versionId } : sketch);
+  const targetSketch = sketches.find((sketch) => sketch.linkedVersionId === versionId);
+  if (!targetSketch) return null;
+  const now = new Date().toISOString();
+  const nextVersions = versions.map((version) => version.sourceDate === target.sourceDate ? {
+    ...version,
+    selectedForSeal: version.id === versionId,
+    selectedForSealVersionId: version.id === versionId ? versionId : '',
+    selectedSketchId: version.id === versionId ? targetSketch.sketchId : '',
+    updatedAt: version.id === versionId ? now : version.updatedAt,
+  } : version);
+  const nextSketches = sketches.map((sketch) => sketch.sourceDate === target.sourceDate ? {
+    ...sketch,
+    selectedForSeal: sketch.sketchId === targetSketch.sketchId && sketch.linkedVersionId === versionId,
+    selectedForSealVersionId: sketch.sketchId === targetSketch.sketchId ? versionId : '',
+    selectedSketchId: sketch.sketchId === targetSketch.sketchId ? targetSketch.sketchId : '',
+    updatedAt: sketch.sketchId === targetSketch.sketchId ? now : sketch.updatedAt,
+  } : sketch);
   writeStorageArray(SUMMATION_VERSIONS_KEY, nextVersions);
   writeStorageArray(SUMMATION_SKETCHES_KEY, nextSketches);
+  writeStorageObject(COMPLETED_SUMMATION_KEY, { draft: readSummationDraftBundle()?.draft, version: nextVersions.find((version) => version.id === versionId) || target, sketch: nextSketches.find((sketch) => sketch.sketchId === targetSketch.sketchId) || targetSketch });
   return nextVersions.find((version) => version.id === versionId) || null;
 }
 
 export function listSummationSealMissingFields({ draft, version, sketch } = {}) {
   const sourceTruth = fullSourceTruthFromDraft(draft || version || sketch || {});
   const missing = [];
-  if (!version?.id) missing.push('selected active version');
+  if (!version?.id) missing.push('selectedForSealVersionId');
+  if (!version?.selectedForSeal) missing.push('selectedForSealVersionId');
+  if (!cleanText(version?.title)) missing.push('selected version title');
   if (!cleanText(version?.body || version?.content)) missing.push('selected version content');
   if (!sketch) missing.push('selected sketch/doodle artifact');
   if (sketch && sketch.linkedVersionId !== version?.id) missing.push('sketch linked versionId');
   if (!cleanText(sketch?.sketchId)) missing.push('sketchId');
+  if (sketch && !isPresent(sketch?.doodleLayer) && !cleanText(sketch?.layoutTemplateKey)) missing.push('sketch artifact identity');
   if (!cleanText(sourceTruth.displayDate || version?.displayDate || sketch?.displayDate)) missing.push('displayDate');
   if (!cleanText(sourceTruth.sourceDate || version?.sourceDate || sketch?.sourceDate)) missing.push('sourceDate');
   if (!cleanText(sourceTruth.dayOfWeek || version?.dayOfWeek || sketch?.dayOfWeek)) missing.push('dayOfWeek');
   if (!cleanText(sourceTruth.chaoticaDayNumber || version?.chaoticaDayNumber || sketch?.chaoticaDayNumber)) missing.push('chaoticaDayNumber');
   if (!isPresent(sourceTruth)) missing.push('source truth payload');
   if (!isPresent(draft?.fullAssurerDaySnapshot || sourceTruth)) missing.push('full Assurer snapshot');
+  if (!cleanText(draft?.draftId || draft?.id || version?.sourceTruthRef || sketch?.sourceTruthRef)) missing.push('draftId/source identity');
   return missing;
+}
+
+function mergeTruthy(...payloads) {
+  return payloads.reduce((merged, payload) => {
+    if (!payload || typeof payload !== 'object') return merged;
+    Object.entries(payload).forEach(([key, value]) => {
+      if (isPresent(value) || !(key in merged)) merged[key] = value;
+    });
+    return merged;
+  }, {});
+}
+
+export function resolveSummationSealPayload({ completed = null, draft = null, version = null, sketch = null } = {}) {
+  const completedSourceTruth = completed?.sourceTruth || completed?.draft?.sourceTruth || {};
+  const activeDay = getStoredSummationActiveDay(draft?.sourceDate ? new Date(`${draft.sourceDate}T00:00:00`) : new Date());
+  const sourceTruth = mergeTruthy(
+    completedSourceTruth,
+    completed,
+    completed?.draft,
+    activeDay,
+    draft?.sourceTruth,
+    draft?.fullAssurerDaySnapshot,
+    version?.sourceTruth,
+    sketch?.sourceTruth,
+  );
+  const normalizedTruth = fullSourceTruthFromDraft({
+    ...(draft || {}),
+    sourceTruth,
+    sourceDate: sourceTruth.sourceDate || draft?.sourceDate || version?.sourceDate || sketch?.sourceDate,
+    displayDate: sourceTruth.displayDate || draft?.displayDate || version?.displayDate || sketch?.displayDate,
+    dayOfWeek: sourceTruth.dayOfWeek || draft?.dayOfWeek || version?.dayOfWeek || sketch?.dayOfWeek,
+    chaoticaDayNumber: sourceTruth.chaoticaDayNumber || draft?.chaoticaDayNumber || version?.chaoticaDayNumber || sketch?.chaoticaDayNumber,
+  });
+  const selectedVersionContent = version?.body || version?.content || sketch?.renderedText || '';
+  const sourceSignals = {
+    ...(draft?.availableSourceSignals || {}),
+    ...(normalizedTruth.availableSourceSignals || normalizedTruth.sourceAvailability || {}),
+    thiccTime: normalizedTruth.weekSignal,
+    rememberMe: normalizedTruth.moments || normalizedTruth.timelineHighlights,
+    thiccFitt: normalizedTruth.workoutHighlights,
+    daEater: normalizedTruth.macroHighlights || normalizedTruth.mealHighlights,
+    pennyAnswers: normalizedTruth.pennyAnswers || normalizedTruth.wrapAnswers || completed?.pennyForYourThoughts?.answers || [],
+  };
+  const now = new Date().toISOString();
+  return {
+    id: `summation-${normalizedTruth.sourceDate}-${sketch?.sketchId}`,
+    source: 'THE.SUMMATION',
+    sourceDate: normalizedTruth.sourceDate,
+    displayDate: normalizedTruth.displayDate,
+    dayOfWeek: normalizedTruth.dayOfWeek,
+    chaoticaDayNumber: normalizedTruth.chaoticaDayNumber || getChaoticaDayNumber(normalizedTruth.sourceDate),
+    title: normalizedTruth.titleOfDay || version?.title || sketch?.title || draft?.title,
+    mood: normalizedTruth.mood,
+    era: normalizedTruth.era,
+    singleness: normalizedTruth.singlenessLevel || normalizedTruth.singleness,
+    selectedVersionId: version?.id,
+    selectedVersionLabel: version?.label,
+    selectedVersionContent,
+    selectedSketchId: sketch?.sketchId,
+    sketchArtifact: sketch,
+    doodleLayer: sketch?.doodleLayer,
+    sourceTruthSnapshot: normalizedTruth,
+    fullAssurerDaySnapshot: draft?.fullAssurerDaySnapshot || normalizedTruth,
+    sourceSignals,
+    sourceMetadata: {
+      ...(draft?.sourceMetadata || {}),
+      draftId: draft?.draftId || draft?.id,
+      sourceTruthRef: draft?.id || version?.sourceTruthRef || sketch?.sourceTruthRef,
+    },
+    future525600: {
+      sourceDate: normalizedTruth.sourceDate,
+      displayDate: normalizedTruth.displayDate,
+      chaoticaDayNumber: normalizedTruth.chaoticaDayNumber || getChaoticaDayNumber(normalizedTruth.sourceDate),
+      mood: normalizedTruth.mood,
+      era: normalizedTruth.era,
+      singleness: normalizedTruth.singlenessLevel || normalizedTruth.singleness,
+      title: normalizedTruth.titleOfDay || version?.title || sketch?.title || draft?.title,
+      sourceSignals,
+      selectedVersionLabel: version?.label,
+      sketchId: sketch?.sketchId,
+      sealedAt: now,
+    },
+    sealedAt: now,
+  };
 }
 
 export function sealActiveSummationSelection(completed = null, selectedVersionId = '') {
@@ -1307,13 +1452,14 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
     window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: missingFields[0], missingFields } }));
     return { sealedRecord: null, missingFields };
   }
-  const explicitId = selectedVersionId || selectedVersions[0]?.id || completed?.version?.id || '';
+  const explicitId = selectedVersionId || selectedVersions[0]?.id || '';
   const normalizedVersions = normalizeSummationVersionSelection(bundle?.versions || [], explicitId);
   writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.sourceDate === draft?.sourceDate ? (normalizedVersions.find((version) => version.id === item.id) || item) : item));
   const version = normalizedVersions.find((item) => item.id === explicitId) || null;
   const sketch = bundle?.sketches?.find((item) => item.linkedVersionId === version?.id && (item.selectedForSeal || item.sketchId === version?.sketchId)) || completed?.sketch || null;
   const missingFields = listSummationSealMissingFields({ draft, version, sketch });
   if (missingFields.length) {
+    if (typeof console !== 'undefined') console.warn('THE.SUMMATION seal blocked:', missingFields.join(', '));
     window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: `Seal blocked: ${missingFields.join(', ')}`, missingFields } }));
     return { sealedRecord: null, missingFields };
   }

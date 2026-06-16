@@ -119,6 +119,105 @@
   line-height: 1.45;
 }
 
+.summation-editor,
+.summation-version-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.summation-editor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.summation-field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--summation-muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.summation-field input,
+.summation-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(244, 205, 214, 0.36);
+  border-radius: 0.85rem;
+  background: var(--summation-input);
+  color: var(--summation-text);
+  padding: 0.75rem 0.85rem;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.summation-field textarea {
+  min-height: 15rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.summation-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  color: #ffd7e0;
+}
+
+.summation-editor-actions button,
+.summation-inline-select {
+  border: 1px solid var(--summation-border-hot);
+  border-radius: 999px;
+  background: rgba(64, 16, 42, 0.72);
+  color: var(--summation-text);
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.summation-version-card {
+  display: grid;
+  gap: 0.32rem;
+  width: 100%;
+  border: 1px solid rgba(244, 205, 214, 0.30);
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.30);
+  color: var(--summation-muted);
+  padding: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.summation-version-card.is-active {
+  border-color: #fff3f6;
+  background: rgba(255, 215, 224, 0.13);
+}
+
+.summation-version-card.is-selected-for-seal {
+  box-shadow: inset 0 0 0 2px rgba(255, 186, 208, 0.35);
+}
+
+.summation-version-title {
+  color: var(--summation-text);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.summation-version-markers {
+  color: #ffd7e0;
+  font-size: 0.78rem;
+}
+
+.summation-inline-select {
+  justify-self: start;
+  display: inline-flex;
+  margin-top: 0.25rem;
+}
+
 .summation-empty-copy {
   margin: 0.8rem 0 0;
   color: var(--summation-muted);
