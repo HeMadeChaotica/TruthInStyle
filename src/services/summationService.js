@@ -1018,6 +1018,7 @@ export function sealSummationVariation(dayPayload, selectedVariation) {
 const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
 const SUMMATION_VERSIONS_KEY = 'the_summation_versions_v1';
 const SUMMATION_SKETCHES_KEY = 'the_summation_sketches_v1';
+const SUMMATION_VERSION_STATE_KEY = 'the_summation_version_state_v1';
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 
 function readStorageArray(key) {
@@ -1145,9 +1146,38 @@ export function readSummationDraftBundle() {
   const completed = safeJsonParse(window.localStorage.getItem(COMPLETED_SUMMATION_KEY), null);
   const draft = normalizeSummationDraft(storedDraft || completed?.draft || completed);
   if (!draft) return null;
-  const versions = normalizeSummationVersionSelection(readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate));
+  const state = readSummationVersionState(draft.sourceDate);
+  const versions = normalizeSummationVersionSelection(readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate), state.selectedForSealVersionId);
+  persistSummationVersionSelection(draft.sourceDate, versions, state.activeVersionId);
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY).filter((sketch) => sketch.sourceDate === draft.sourceDate);
-  return { draft, versions, sketches };
+  const activeVersionId = versions.some((version) => version.id === state.activeVersionId) ? state.activeVersionId : (versions[0]?.id || '');
+  const selectedForSealVersionId = versions.find((version) => version.selectedForSeal)?.id || '';
+  return { draft, versions, sketches, activeVersionId, selectedForSealVersionId };
+}
+
+export function readSummationVersionState(sourceDate = '') {
+  if (!hasStorage()) return { activeVersionId: '', selectedForSealVersionId: '' };
+  const allState = safeJsonParse(window.localStorage.getItem(SUMMATION_VERSION_STATE_KEY), {});
+  const state = allState?.[sourceDate] || {};
+  return {
+    activeVersionId: cleanText(state.activeVersionId),
+    selectedForSealVersionId: cleanText(state.selectedForSealVersionId),
+  };
+}
+
+function writeSummationVersionState(sourceDate, statePatch = {}) {
+  if (!hasStorage() || !sourceDate) return readSummationVersionState(sourceDate);
+  const allState = safeJsonParse(window.localStorage.getItem(SUMMATION_VERSION_STATE_KEY), {});
+  const current = allState?.[sourceDate] || {};
+  const next = { ...current, ...statePatch };
+  window.localStorage.setItem(SUMMATION_VERSION_STATE_KEY, JSON.stringify({ ...allState, [sourceDate]: next }));
+  return next;
+}
+
+function persistSummationVersionSelection(sourceDate, versions = [], activeVersionId = '') {
+  const selectedForSealVersionId = versions.find((version) => version.selectedForSeal)?.id || '';
+  const validActiveVersionId = versions.some((version) => version.id === activeVersionId) ? activeVersionId : (versions[0]?.id || '');
+  writeSummationVersionState(sourceDate, { activeVersionId: validActiveVersionId, selectedForSealVersionId });
 }
 
 export function normalizeSummationVersionSelection(versions = [], selectedVersionId = '') {
@@ -1193,11 +1223,22 @@ export function generateSummationVersions(draftInput, options = {}) {
       sketchId: existing?.sketchId || '',
     };
   });
+  const state = readSummationVersionState(draft.sourceDate);
   const selectedIds = existingForDay.filter((version) => version.selectedForSeal).map((version) => version.id);
   const stableSelectedId = selectedIds.length === 1 && versions.some((version) => version.id === selectedIds[0]) ? selectedIds[0] : '';
-  const normalizedVersions = normalizeSummationVersionSelection(versions, options.preserveSelectedVersionId || stableSelectedId);
+  const requestedSelectedId = options.preserveSelectedVersionId === false ? '' : (options.preserveSelectedVersionId || state.selectedForSealVersionId || stableSelectedId);
+  const normalizedVersions = normalizeSummationVersionSelection(versions, requestedSelectedId && versions.some((version) => version.id === requestedSelectedId) ? requestedSelectedId : '');
   writeStorageArray(SUMMATION_VERSIONS_KEY, [...existingAll.filter((version) => version.sourceDate !== draft.sourceDate), ...normalizedVersions]);
+  persistSummationVersionSelection(draft.sourceDate, normalizedVersions, options.activeVersionId || state.activeVersionId);
   return normalizedVersions;
+}
+
+export function setSummationActiveVersion(versionId) {
+  const versions = readStorageArray(SUMMATION_VERSIONS_KEY);
+  const target = versions.find((version) => version.id === versionId);
+  if (!target) return null;
+  writeSummationVersionState(target.sourceDate, { activeVersionId: versionId });
+  return target;
 }
 
 export function saveSummationVersionEdits(versionId, edits = {}) {
@@ -1264,6 +1305,7 @@ export function markSummationVersionForSeal(versionId) {
   const nextSketches = sketches.map((sketch) => sketch.sourceDate === target.sourceDate ? { ...sketch, selectedForSeal: sketch.linkedVersionId === versionId } : sketch);
   writeStorageArray(SUMMATION_VERSIONS_KEY, nextVersions);
   writeStorageArray(SUMMATION_SKETCHES_KEY, nextSketches);
+  writeSummationVersionState(target.sourceDate, { selectedForSealVersionId: versionId });
   return nextVersions.find((version) => version.id === versionId) || null;
 }
 
