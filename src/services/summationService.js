@@ -1318,8 +1318,19 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY);
   const existing = sketches.find((sketch) => sketch.linkedVersionId === version.id);
   const now = new Date().toISOString();
+  const sketchId = existing?.sketchId || summationId('sketch', draft.sourceDate, version.label || version.id);
+  const isSamePair = Boolean(existing && existing.linkedVersionId === version.id && existing.sketchId === sketchId);
+  const shouldPreserveSealSelection = Boolean(
+    isSamePair
+    && existing?.selectedForSeal
+    && existing?.selectedForSealVersionId === version.id
+    && existing?.selectedSketchId === sketchId
+  );
+
+  if (existing?.sealed) return existing;
+
   const sketch = {
-    sketchId: existing?.sketchId || summationId('sketch', draft.sourceDate, version.label || version.id),
+    sketchId,
     linkedVersionId: version.id,
     sourceDate: draft.sourceDate,
     displayDate: draft.displayDate,
@@ -1342,7 +1353,10 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     sealed: existing?.sealed || false,
-    selectedForSeal: existing?.selectedForSeal || false,
+    sealedAt: existing?.sealedAt,
+    selectedForSeal: shouldPreserveSealSelection,
+    selectedForSealVersionId: shouldPreserveSealSelection ? existing.selectedForSealVersionId : '',
+    selectedSketchId: shouldPreserveSealSelection ? existing.selectedSketchId : '',
     sourceTruth: draft.sourceTruth,
     sourceMetadata: draft.sourceMetadata,
     pennyForYourThoughts: draft.pennyForYourThoughts,
