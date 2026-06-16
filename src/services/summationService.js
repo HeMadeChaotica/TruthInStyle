@@ -1081,11 +1081,57 @@ function normalizeSummationDraft(input) {
     availableSourceSignals: input.availableSourceSignals || sourceTruth.availableSourceSignals || sourceTruth.sourceAvailability || {},
     sourceMetadata: input.sourceMetadata || sourceTruth.sourceMetadata || { intake: 'Crystal Wand / Summate', sourceSchemaPreserved: true },
     pennyForYourThoughts: input.pennyForYourThoughts || sourceTruth.pennyForYourThoughts || null,
-    pennyAnswers: input.pennyAnswers || sourceTruth.pennyAnswers || sourceTruth.wrapAnswers || [],
+    pennyAnswers: normalizePennyAnswers({ ...input, sourceTruth }),
     sourceAnswers: input.sourceAnswers || sourceTruth.sourceAnswers || sourceTruth.wrapAnswers || [],
     status: input.status || 'draft',
     createdAt: input.createdAt || now,
     updatedAt: now,
+  };
+}
+
+
+function normalizePennyAnswers(draft = {}) {
+  const sourceTruth = draft?.sourceTruth || {};
+  const pools = [
+    draft?.pennyAnswers,
+    draft?.pennyForYourThoughts?.answers,
+    draft?.pennyForYourThoughts,
+    sourceTruth?.pennyAnswers,
+    sourceTruth?.pennyForYourThoughts?.answers,
+    sourceTruth?.pennyForYourThoughts,
+    sourceTruth?.sourceAnswers,
+    draft?.sourceAnswers,
+    sourceTruth?.wrapAnswers,
+  ];
+  const answers = [];
+  pools.forEach((pool) => {
+    const list = Array.isArray(pool) ? pool : (Array.isArray(pool?.answers) ? pool.answers : []);
+    list.forEach((answer) => {
+      if (!isPresent(answer)) return;
+      const normalized = answer && typeof answer === 'object' && !Array.isArray(answer) ? { ...answer } : { answerText: String(answer) };
+      const answerText = cleanText(normalized.answerText ?? normalized.answer ?? normalized.value ?? normalized.sourceValue ?? normalized.text ?? normalized);
+      if (!answerText) return;
+      const question = cleanText(normalized.questionText || normalized.question || normalized.prompt || normalized.sourceQuestionText || normalized.label);
+      const key = [cleanText(normalized.id || normalized.questionId || normalized.sourceQuestionId), question, answerText].join('::');
+      if (answers.some((item) => item.__dedupeKey === key)) return;
+      answers.push({ ...normalized, answerText: normalized.answerText ?? normalized.answer ?? normalized.value ?? normalized.sourceValue ?? normalized.text ?? answerText, __dedupeKey: key });
+    });
+  });
+  return answers.map(({ __dedupeKey, ...answer }) => answer);
+}
+
+function sourceTruthWithNormalizedPennyAnswers(draft) {
+  const pennyAnswers = normalizePennyAnswers(draft);
+  const sourceTruth = { ...(draft?.sourceTruth || {}) };
+  if (!pennyAnswers.length) return sourceTruth;
+  return {
+    ...sourceTruth,
+    pennyAnswers,
+    pennyForYourThoughts: {
+      ...(sourceTruth.pennyForYourThoughts || {}),
+      ...(draft?.pennyForYourThoughts || {}),
+      answers: pennyAnswers,
+    },
   };
 }
 
@@ -1199,19 +1245,23 @@ export function generateSummationVersions(draftInput, options = {}) {
   if (!draft) return [];
   const existingAll = readStorageArray(SUMMATION_VERSIONS_KEY);
   const existingForDay = existingAll.filter((version) => version.sourceDate === draft.sourceDate);
+  const normalizedSourceTruth = sourceTruthWithNormalizedPennyAnswers(draft);
+  const normalizedPennyAnswers = normalizePennyAnswers({ ...draft, sourceTruth: normalizedSourceTruth });
   const now = new Date().toISOString();
   const versions = SUMMATION_VERSION_TYPES.map((type, index) => {
     const id = summationId('version', draft.sourceDate, type.label);
     const existing = existingForDay.find((version) => version.id === id);
-    if (existing && options.preserveExistingEdits) return { ...existing, sourceTruth: draft.sourceTruth };
+    if (existing?.sealed) return existing;
+    if (existing && options.preserveExistingEdits) return { ...existing, sourceTruth: normalizedSourceTruth, pennyAnswers: normalizedPennyAnswers };
+    const body = versionBodyForType(normalizedSourceTruth, type);
     return {
       id,
       versionNumber: index + 1,
       label: type.label,
       title: `${draft.titleOfDay || 'THE.SUMMATION'} — ${type.label}`,
       styleLabel: type.styleLabel,
-      body: versionBodyForType(draft.sourceTruth, type),
-      content: versionBodyForType(draft.sourceTruth, type),
+      body,
+      content: body,
       sourceDate: draft.sourceDate,
       displayDate: draft.displayDate,
       dayOfWeek: draft.dayOfWeek,
@@ -1221,10 +1271,10 @@ export function generateSummationVersions(draftInput, options = {}) {
       updatedAt: now,
       selectedForSeal: false,
       sealed: existing?.sealed || false,
-      sourceTruth: draft.sourceTruth,
+      sourceTruth: normalizedSourceTruth,
       sourceMetadata: draft.sourceMetadata,
-      pennyForYourThoughts: draft.pennyForYourThoughts,
-      pennyAnswers: draft.pennyAnswers,
+      pennyForYourThoughts: normalizedSourceTruth.pennyForYourThoughts || draft.pennyForYourThoughts,
+      pennyAnswers: normalizedPennyAnswers,
       sourceAnswers: draft.sourceAnswers,
       sourceTruthRef: draft.id,
       sketchId: existing?.sketchId || '',
@@ -1292,7 +1342,7 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     sealed: existing?.sealed || false,
-    selectedForSeal: version.selectedForSeal || existing?.selectedForSeal || false,
+    selectedForSeal: existing?.selectedForSeal || false,
     sourceTruth: draft.sourceTruth,
     sourceMetadata: draft.sourceMetadata,
     pennyForYourThoughts: draft.pennyForYourThoughts,
@@ -1303,7 +1353,6 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
   writeStorageArray(SUMMATION_SKETCHES_KEY, [...sketches.filter((item) => item.linkedVersionId !== version.id), sketch]);
   const versions = readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.id === version.id ? { ...item, sketchId: sketch.sketchId, updatedAt: now } : item);
   writeStorageArray(SUMMATION_VERSIONS_KEY, versions);
-  writeStorageObject(COMPLETED_SUMMATION_KEY, { draft, version: versions.find((item) => item.id === version.id) || version, sketch });
   return sketch;
 }
 
@@ -1446,17 +1495,23 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
   const bundle = readSummationDraftBundle();
   const draft = bundle?.draft || completed?.draft || null;
   const rawSelectedVersions = rawVersions.filter((item) => item.sourceDate === draft?.sourceDate && item.selectedForSeal);
-  const selectedVersions = selectedVersionId ? [] : rawSelectedVersions;
-  if (!selectedVersionId && selectedVersions.length > 1) {
+  const selectedVersions = rawSelectedVersions;
+  if (selectedVersions.length > 1) {
     const missingFields = ['Multiple versions selected for seal. Please select one.'];
     window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: missingFields[0], missingFields } }));
     return { sealedRecord: null, missingFields };
   }
-  const explicitId = selectedVersionId || selectedVersions[0]?.id || '';
+  const explicitId = selectedVersions.some((version) => version.id === selectedVersionId) ? selectedVersionId : (selectedVersions[0]?.id || '');
+  if (!explicitId) {
+    const missingFields = ['Select a sketch/version pair for seal first.'];
+    if (typeof console !== 'undefined') console.warn('THE.SUMMATION seal blocked:', missingFields[0]);
+    window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: missingFields[0], missingFields } }));
+    return { sealedRecord: null, missingFields };
+  }
   const normalizedVersions = normalizeSummationVersionSelection(bundle?.versions || [], explicitId);
   writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.sourceDate === draft?.sourceDate ? (normalizedVersions.find((version) => version.id === item.id) || item) : item));
-  const version = normalizedVersions.find((item) => item.id === explicitId) || null;
-  const sketch = bundle?.sketches?.find((item) => item.linkedVersionId === version?.id && (item.selectedForSeal || item.sketchId === version?.sketchId)) || completed?.sketch || null;
+  const version = normalizedVersions.find((item) => item.id === explicitId && item.selectedForSeal) || null;
+  const sketch = bundle?.sketches?.find((item) => item.linkedVersionId === version?.id && item.selectedForSeal && item.selectedForSealVersionId === version?.id) || null;
   const missingFields = listSummationSealMissingFields({ draft, version, sketch });
   if (missingFields.length) {
     if (typeof console !== 'undefined') console.warn('THE.SUMMATION seal blocked:', missingFields.join(', '));
