@@ -154,8 +154,8 @@ export default function TheSummationSection() {
         <section className="summation-workspace summation-panel">
           <header className="summation-day-line">
             <p>THE.SUMMATION</p>
-            <h1>{draft.titleOfDay || 'Untitled Assurer Day'}</h1>
-            <span>{draft.displayDate} • {draft.dayOfWeek} • Source {draft.sourceDate} • Chaotica Day # {draft.chaoticaDayNumber}</span>
+            <h1>{draft.titleOfDay || draft.title || `Summation for ${draft.displayDate}`}</h1>
+            <span>Draft loaded • {draft.displayDate} • {draft.dayOfWeek} • Source {draft.sourceDate}{draft.chaoticaDayNumber ? ` • Chaotica Day # ${draft.chaoticaDayNumber}` : ''}</span>
           </header>
           <div className="summation-editor-grid">
             <label>Active version title
@@ -173,7 +173,7 @@ export default function TheSummationSection() {
         </section>
 
         <aside className="summation-version-panel summation-panel">
-          <header><h2>Version control</h2><button type="button" onClick={handleGenerate}>Regenerate / remix versions</button></header>
+          <header><h2>Version Selector</h2><button type="button" onClick={handleGenerate}>Regenerate / remix versions</button></header>
           <div className="summation-version-list">
             {versions.map((version) => {
               const sketch = sketches.find((item) => item.linkedVersionId === version.id);
@@ -189,7 +189,7 @@ export default function TheSummationSection() {
         </aside>
 
         <section className="summation-sketch-panel summation-panel">
-          <header><h2>Sketch / doodle artifact</h2><span>{activeSketch ? `Sketch ${activeSketch.sketchId}` : 'No sketch yet'}</span></header>
+          <header><h2>Sketch / Doodle</h2><span>{activeSketch ? `Sketch ${activeSketch.sketchId}` : 'No sketch yet'}</span></header>
           {activeSketch ? (
             <article className="summation-sketch-page">
               <div className="summation-sketch-date">{activeSketch.displayDate} • {activeSketch.selectedVersionLabel}</div>

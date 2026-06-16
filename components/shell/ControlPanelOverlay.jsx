@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
+import { createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
 
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
@@ -139,6 +139,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   const initialDate = useMemo(() => new Date(), []);
   const [activeDate, setActiveDate] = useState(initialDate);
   const [draftDateText, setDraftDateText] = useState(displayDate(initialDate));
+  const [draftDatePickerValue, setDraftDatePickerValue] = useState(localDateKey(initialDate));
   const [dayPanelOpen, setDayPanelOpen] = useState(false);
   const [now, setNow] = useState(initialDate);
   const [status, setStatus] = useState('');
@@ -161,6 +162,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     if (storedDate) {
       setActiveDate(storedDate);
       setDraftDateText(displayDate(storedDate));
+      setDraftDatePickerValue(localDateKey(storedDate));
     }
   }, []);
 
@@ -168,12 +170,14 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     const stored = getStoredSummationActiveDay();
     const storedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : activeDate;
     setDraftDateText(displayDate(storedDate));
+    setDraftDatePickerValue(localDateKey(storedDate));
     setDayPanelOpen(true);
     setStatus('EYE OF TRUTH OPEN');
   };
 
   const cancelDayChange = () => {
     setDraftDateText(displayDate(activeDate));
+    setDraftDatePickerValue(localDateKey(activeDate));
     setDayPanelOpen(false);
     setStatus('ACTIVE DAY UNCHANGED');
   };
@@ -187,32 +191,30 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     const saved = setStoredSummationActiveDay(parsed);
     setActiveDate(parsed);
     setDraftDateText(displayDate(parsed));
+    setDraftDatePickerValue(localDateKey(parsed));
     setDayPanelOpen(false);
     setStatus(`ACTIVE DAY ${saved.displayDate}`);
   };
 
   const handleSummate = async () => {
-    const stored = getStoredSummationActiveDay();
-    const selectedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : new Date(activeDate.getTime());
-    if (!selectedDate) {
-      setStatus('CHOOSE A DAY WITH EYE OF TRUTH');
+    const activeDay = await resolveSummationActiveDay();
+    if (!activeDay?.sourceDate || !activeDay?.displayDate) {
+      setStatus('Choose an active day with Eye of Truth first.');
       return;
     }
-    const selectedDisplayDate = displayDate(selectedDate);
-    const confirmed = window.confirm(`SUMMATE THE.ASSURER DAY ${selectedDisplayDate} INTO THE.SUMMATION?`);
+    const confirmed = window.confirm(`SUMMATE THE.ASSURER DAY ${activeDay.displayDate} INTO THE.SUMMATION?`);
     if (!confirmed) {
       setStatus('SUMMATE CANCELED');
       return;
     }
 
-    const selectedDayPayload = await readAssurerDayForSummation(selectedDate);
-    const draftPayload = createSummationDraftFromAssurerDay(selectedDayPayload);
+    const draftPayload = createSummationDraftFromAssurerDay(activeDay);
     if (!draftPayload) {
       setStatus('SUMMATE BLOCKED');
       return;
     }
-    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: selectedDayPayload.sourceDate, draft: draftPayload } }));
-    setStatus(`SUMMATED ${selectedDayPayload.displayDate}`);
+    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: activeDay.sourceDate, draft: draftPayload } }));
+    setStatus(`SUMMATED ${activeDay.displayDate}`);
     onClose?.();
     router.push('/the-summation');
   };
@@ -262,6 +264,16 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
                       onChange={(event) => setDraftDateText(event.target.value)}
                       placeholder="MM/DD/YYYY"
                       inputMode="numeric"
+                    />
+                    <input
+                      type="date"
+                      value={draftDatePickerValue}
+                      onChange={(event) => {
+                        const picked = dateFromSourceDate(event.target.value);
+                        setDraftDatePickerValue(event.target.value);
+                        if (picked) setDraftDateText(displayDate(picked));
+                      }}
+                      aria-label="Pick active day"
                     />
                   </label>
                   <div className="tis-day-popover-actions">

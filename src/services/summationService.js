@@ -124,6 +124,30 @@ export function getStoredSummationActiveDay(fallbackDate = new Date()) {
   return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate) };
 }
 
+
+export async function resolveSummationActiveDay(dateOverride = null) {
+  const baseDate = dateOverride ? (dateOverride instanceof Date ? dateOverride : new Date(dateOverride)) : null;
+  const stored = !baseDate && hasStorage() ? safeJsonParse(window.localStorage.getItem(SUMMATION_ACTIVE_DAY_KEY), null) : null;
+  const sourceDate = baseDate ? getLocalDateKey(baseDate) : stored?.sourceDate;
+  const activeDate = sourceDate ? new Date(`${sourceDate}T00:00:00`) : new Date();
+  if (Number.isNaN(activeDate.getTime())) return null;
+  const dayPayload = await readAssurerDayForSummation(activeDate).catch(() => null);
+  const display = dayPayload?.displayDate || formatDisplayDate(activeDate);
+  const title = cleanText(dayPayload?.titleOfDay || dayPayload?.title) || `Summation for ${display}`;
+  return {
+    ...(dayPayload || {}),
+    sourceDate: dayPayload?.sourceDate || getLocalDateKey(activeDate),
+    displayDate: display,
+    dayOfWeek: dayPayload?.dayOfWeek || dayOfWeek(activeDate),
+    chaoticaDayNumber: dayPayload?.chaoticaDayNumber || getChaoticaDayNumber(dayPayload?.sourceDate || getLocalDateKey(activeDate)),
+    titleOfDay: title,
+    title,
+    fullAssurerDaySnapshot: dayPayload || null,
+    availableSourceSignals: dayPayload?.sourceAvailability || {},
+    sourceAvailability: dayPayload?.sourceAvailability || {},
+  };
+}
+
 export function setStoredSummationActiveDay(date = new Date()) {
   const activeDate = date instanceof Date ? date : new Date(date);
   const payload = {
@@ -1042,15 +1066,18 @@ function normalizeSummationDraft(input) {
   }
   const now = new Date().toISOString();
   return {
-    id: input.id || `summation-draft-${sourceTruth.sourceDate}`,
+    id: input.id || input.draftId || `summation-draft-${sourceTruth.sourceDate}`,
+    draftId: input.draftId || input.id || `summation-draft-${sourceTruth.sourceDate}`,
     source: 'THE.ASSURER',
     sourceDate: sourceTruth.sourceDate,
     displayDate: sourceTruth.displayDate,
     dayOfWeek: sourceTruth.dayOfWeek,
     chaoticaDayNumber: sourceTruth.chaoticaDayNumber || getChaoticaDayNumber(sourceTruth.sourceDate),
-    titleOfDay: sourceTruth.titleOfDay || sourceTruth.title || input.titleOfDay || '',
+    titleOfDay: sourceTruth.titleOfDay || sourceTruth.title || input.titleOfDay || `Summation for ${sourceTruth.displayDate}`,
+    title: sourceTruth.titleOfDay || sourceTruth.title || input.title || input.titleOfDay || `Summation for ${sourceTruth.displayDate}`,
     fullAssurerDaySnapshot: input.fullAssurerDaySnapshot || input.dayPayload || sourceTruth,
     sourceTruth,
+    availableSourceSignals: input.availableSourceSignals || sourceTruth.availableSourceSignals || sourceTruth.sourceAvailability || {},
     sourceMetadata: input.sourceMetadata || { intake: 'Crystal Wand / Summate', sourceSchemaPreserved: true },
     status: input.status || 'draft',
     createdAt: input.createdAt || now,
@@ -1102,6 +1129,7 @@ export function createSummationDraftFromAssurerDay(selectedDayPayload) {
     chaoticaDayNumber: selectedDayPayload?.chaoticaDayNumber,
     fullAssurerDaySnapshot: selectedDayPayload,
     sourceTruth: selectedDayPayload,
+    availableSourceSignals: selectedDayPayload?.availableSourceSignals || selectedDayPayload?.sourceAvailability || {},
     createdAt: now,
     updatedAt: now,
     status: 'draft',
