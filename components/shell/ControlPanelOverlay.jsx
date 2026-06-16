@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
 
@@ -143,6 +143,8 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   const [dayPanelOpen, setDayPanelOpen] = useState(false);
   const [now, setNow] = useState(initialDate);
   const [status, setStatus] = useState('');
+  const eyeButtonRef = useRef(null);
+  const [dayPanelPosition, setDayPanelPosition] = useState({ top: 96, right: 96 });
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -150,6 +152,11 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) return;
+    setDayPanelOpen(false);
+  }, [isOpen]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -166,7 +173,37 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     }
   }, []);
 
+  const updateDayPanelPosition = useCallback(() => {
+    const button = eyeButtonRef.current;
+    if (!button || typeof window === 'undefined') return;
+
+    const rect = button.getBoundingClientRect();
+    const safeGap = 12;
+    const estimatedPanelHeight = 260;
+    const top = Math.min(
+      Math.max(rect.top, safeGap),
+      Math.max(safeGap, window.innerHeight - estimatedPanelHeight - safeGap),
+    );
+    const right = Math.max(safeGap, window.innerWidth - rect.left + 10);
+
+    setDayPanelPosition({ top, right });
+  }, []);
+
+  useEffect(() => {
+    if (!dayPanelOpen || !isOpen) return undefined;
+
+    updateDayPanelPosition();
+    window.addEventListener('resize', updateDayPanelPosition);
+    window.addEventListener('scroll', updateDayPanelPosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updateDayPanelPosition);
+      window.removeEventListener('scroll', updateDayPanelPosition, true);
+    };
+  }, [dayPanelOpen, isOpen, updateDayPanelPosition]);
+
   const openEyePanel = () => {
+    updateDayPanelPosition();
     const stored = getStoredSummationActiveDay();
     const storedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : activeDate;
     setDraftDateText(displayDate(storedDate));
@@ -246,46 +283,56 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     <>
       <button type="button" className="tis-rail-tab" aria-expanded={isOpen} aria-controls="tis-control-rail" onClick={() => (isOpen ? onClose?.() : onOpen?.())}>☽</button>
       <aside className="tis-control-overlay" aria-hidden={!isOpen} data-open={isOpen}>
-        <div className="tis-control-scrim" onClick={() => onClose?.()} />
+        <div
+          className="tis-control-scrim"
+          onClick={() => {
+            if (dayPanelOpen) cancelDayChange();
+            onClose?.();
+          }}
+        />
         <nav id="tis-control-rail" className="tis-control-rail" aria-label="Right-side global control rail">
           {RAIL_ITEMS.map((item) => (
             <div key={item.key} className="tis-rail-control">
-              <button type="button" className="tis-glyph-button tis-rail-glyph" onClick={() => handleRailItem(item)} aria-label={item.alt} title={item.alt}>
+              <button type="button" className="tis-glyph-button tis-rail-glyph" ref={item.key === 'eye-of-truth' ? eyeButtonRef : null} onClick={() => handleRailItem(item)} aria-label={item.alt} title={item.alt}>
                 <img src={item.src} alt="" draggable={false} aria-hidden="true" />
               </button>
-              {item.key === 'eye-of-truth' && dayPanelOpen ? (
-                <section className="tis-day-popover" aria-label="Eye of Truth day control">
-                  <strong>ACTIVE DAY {displayDate(activeDate)}</strong>
-                  <span>12:01 AM AUTO-SEAL IN {countdownToAutoSeal(now)}</span>
-                  <label>
-                    CHANGE / BACKFILL DAY
-                    <input
-                      value={draftDateText}
-                      onChange={(event) => setDraftDateText(event.target.value)}
-                      placeholder="MM/DD/YYYY"
-                      inputMode="numeric"
-                    />
-                    <input
-                      type="date"
-                      value={draftDatePickerValue}
-                      onChange={(event) => {
-                        const picked = dateFromSourceDate(event.target.value);
-                        setDraftDatePickerValue(event.target.value);
-                        if (picked) setDraftDateText(displayDate(picked));
-                      }}
-                      aria-label="Pick active day"
-                    />
-                  </label>
-                  <div className="tis-day-popover-actions">
-                    <button type="button" onClick={applyDayChange}>APPLY DAY</button>
-                    <button type="button" onClick={cancelDayChange}>CANCEL</button>
-                  </div>
-                  {status ? <span aria-live="polite">{status}</span> : null}
-                </section>
-              ) : null}
             </div>
           ))}
         </nav>
+        {dayPanelOpen && isOpen ? (
+          <section
+            className="tis-day-popover"
+            style={{ '--tis-day-popover-top': `${dayPanelPosition.top}px`, '--tis-day-popover-right': `${dayPanelPosition.right}px` }}
+            aria-label="Eye of Truth day control"
+          >
+            <strong>ACTIVE DAY {displayDate(activeDate)}</strong>
+            <span>12:01 AM AUTO-SEAL IN {countdownToAutoSeal(now)}</span>
+            <label>
+              CHANGE / BACKFILL DAY
+              <input
+                value={draftDateText}
+                onChange={(event) => setDraftDateText(event.target.value)}
+                placeholder="MM/DD/YYYY"
+                inputMode="numeric"
+              />
+              <input
+                type="date"
+                value={draftDatePickerValue}
+                onChange={(event) => {
+                  const picked = dateFromSourceDate(event.target.value);
+                  setDraftDatePickerValue(event.target.value);
+                  if (picked) setDraftDateText(displayDate(picked));
+                }}
+                aria-label="Pick active day"
+              />
+            </label>
+            <div className="tis-day-popover-actions">
+              <button type="button" onClick={applyDayChange}>APPLY DAY</button>
+              <button type="button" onClick={cancelDayChange}>CANCEL</button>
+            </div>
+            {status ? <span aria-live="polite">{status}</span> : null}
+          </section>
+        ) : null}
       </aside>
     </>
   );
