@@ -33,11 +33,12 @@
   z-index: 1;
   display: grid;
   grid-template-columns: minmax(20rem, 1fr) minmax(16rem, 0.58fr) minmax(16rem, 0.58fr);
-  grid-template-rows: auto minmax(18rem, 1fr) minmax(10rem, 0.44fr);
+  grid-template-rows: auto minmax(14rem, 0.76fr) minmax(10rem, 0.48fr) minmax(10rem, 0.44fr);
   grid-template-areas:
     "identity penny version"
-    "workspace spacer seal"
-    "sketch sketch seal";
+    "workspace preview seal"
+    "workspace sketch seal"
+    "workspace sketch seal";
   gap: clamp(0.75rem, 1.15vw, 1.15rem);
   min-height: 100vh;
   padding: clamp(0.85rem, 1.4vw, 1.35rem) clamp(5rem, 7vw, 6.75rem) clamp(0.85rem, 1.4vw, 1.35rem) clamp(0.85rem, 1.4vw, 1.35rem);
@@ -60,6 +61,7 @@
 .summation-workspace-panel { grid-area: workspace; }
 .summation-penny-panel { grid-area: penny; align-self: start; }
 .summation-version-panel { grid-area: version; align-self: start; }
+.summation-preview-panel { grid-area: preview; min-height: 10rem; }
 .summation-sketch-panel { grid-area: sketch; min-height: 10rem; }
 .summation-seal-panel { grid-area: seal; align-self: end; max-height: 32rem; }
 
@@ -218,6 +220,39 @@
   margin-top: 0.25rem;
 }
 
+
+.summation-bootstrap-actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.summation-bootstrap-actions button,
+.summation-sketch-preview button,
+.summation-artifact-placeholder button {
+  border: 1px solid var(--summation-border-hot);
+  border-radius: 999px;
+  background: rgba(255, 186, 208, 0.14);
+  color: var(--summation-text);
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.65rem 0.9rem;
+  text-transform: uppercase;
+}
+
+.summation-bootstrap-actions p,
+.summation-active-preview p {
+  margin: 0;
+  color: var(--summation-muted);
+  line-height: 1.45;
+}
+
+.summation-active-preview h3 {
+  margin: 0 0 0.6rem;
+  color: var(--summation-text);
+}
+
 .summation-empty-copy {
   margin: 0.8rem 0 0;
   color: var(--summation-muted);
@@ -245,6 +280,7 @@
     grid-template-areas:
       "identity penny"
       "workspace version"
+      "preview seal"
       "sketch seal";
   }
 }
@@ -258,7 +294,7 @@
   .summation-stage {
     grid-template-columns: 1fr;
     grid-template-rows: none;
-    grid-template-areas: "identity" "workspace" "penny" "version" "sketch" "seal";
+    grid-template-areas: "identity" "workspace" "penny" "version" "preview" "sketch" "seal";
     min-height: auto;
     padding-right: 4.75rem;
   }
