@@ -1,7 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { readSummationDraftBundle } from '../../src/services/summationService';
+import {
+  generateSummationVersions,
+  markSummationVersionForSeal,
+  readSummationDraftBundle,
+  saveSummationVersionEdits,
+  setSummationActiveVersion,
+} from '../../src/services/summationService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
@@ -31,9 +37,17 @@ function DetailPill({ label, value }) {
 
 export default function TheSummationSection() {
   const [bundle, setBundle] = useState(null);
+  const [editor, setEditor] = useState({ title: '', body: '' });
+  const [saveStatus, setSaveStatus] = useState('');
 
   const loadBundle = useCallback(() => {
-    setBundle(readSummationDraftBundle());
+    const nextBundle = readSummationDraftBundle();
+    if (nextBundle?.draft && !nextBundle.versions?.length) {
+      generateSummationVersions(nextBundle.draft, { preserveSelectedVersionId: false });
+      setBundle(readSummationDraftBundle());
+      return;
+    }
+    setBundle(nextBundle);
   }, []);
 
   useEffect(() => {
@@ -50,6 +64,18 @@ export default function TheSummationSection() {
   }, [loadBundle]);
 
   const draft = bundle?.draft || null;
+  const versions = bundle?.versions || [];
+  const activeVersionId = bundle?.activeVersionId || versions[0]?.id || '';
+  const selectedForSealVersionId = bundle?.selectedForSealVersionId || '';
+  const activeVersion = versions.find((version) => version.id === activeVersionId) || versions[0] || null;
+
+  useEffect(() => {
+    setEditor({
+      title: activeVersion?.title || '',
+      body: activeVersion?.body || activeVersion?.content || '',
+    });
+    setSaveStatus('');
+  }, [activeVersion?.id, activeVersion?.title, activeVersion?.body, activeVersion?.content]);
 
   if (!draft) {
     return (
@@ -64,6 +90,30 @@ export default function TheSummationSection() {
   }
 
   const title = draft.titleOfDay || draft.title || `Summation for ${draft.displayDate}`;
+
+  const refresh = () => setBundle(readSummationDraftBundle());
+  const selectActiveVersion = (versionId) => {
+    setSummationActiveVersion(versionId);
+    refresh();
+  };
+  const selectForSeal = (versionId) => {
+    markSummationVersionForSeal(versionId);
+    refresh();
+  };
+  const saveActiveVersion = () => {
+    if (!activeVersion?.id) return;
+    saveSummationVersionEdits(activeVersion.id, editor);
+    setSaveStatus('Saved.');
+    refresh();
+  };
+  const regenerateVersions = () => {
+    generateSummationVersions(draft, {
+      preserveExistingEdits: false,
+      preserveSelectedVersionId: selectedForSealVersionId || false,
+      activeVersionId,
+    });
+    refresh();
+  };
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
@@ -80,9 +130,35 @@ export default function TheSummationSection() {
         </ShellPanel>
 
         <ShellPanel className="summation-workspace-panel" eyebrow="Main Workspace Zone" title="Writing / Version Preview">
-          <div className="summation-reserved-surface">
-            <p>Draft loaded. Active Summation writing and preview controls will land here in the next functional pass.</p>
-          </div>
+          {activeVersion ? (
+            <div className="summation-editor">
+              <div className="summation-editor-meta">
+                <DetailPill label="Active" value={activeVersion.label || activeVersion.versionNumber} />
+                <DetailPill label="Version ID" value={activeVersion.id} />
+                <DetailPill label="Seal Pick" value={activeVersion.selectedForSeal ? 'Selected for seal' : 'Not selected'} />
+              </div>
+              <label className="summation-field">
+                <span>Editable title</span>
+                <input value={editor.title} onChange={(event) => setEditor((current) => ({ ...current, title: event.target.value }))} />
+              </label>
+              <label className="summation-field">
+                <span>Editable body / content</span>
+                <textarea value={editor.body} onChange={(event) => setEditor((current) => ({ ...current, body: event.target.value }))} />
+              </label>
+              <div className="summation-editor-actions">
+                <button type="button" onClick={saveActiveVersion}>Save / Update Version</button>
+                <button type="button" onClick={() => selectForSeal(activeVersion.id)} aria-pressed={activeVersion.selectedForSeal}>
+                  {activeVersion.selectedForSeal ? 'Selected for Seal' : 'Mark Selected for Seal'}
+                </button>
+                <button type="button" onClick={regenerateVersions}>Regenerate / Remix Versions</button>
+                {saveStatus ? <span>{saveStatus}</span> : null}
+              </div>
+            </div>
+          ) : (
+            <div className="summation-reserved-surface">
+              <p>No generated Summation versions are available yet.</p>
+            </div>
+          )}
         </ShellPanel>
 
         <ShellPanel className="summation-penny-panel" eyebrow="Reserved Panel" title="Penny for Your Thoughts">
@@ -90,7 +166,46 @@ export default function TheSummationSection() {
         </ShellPanel>
 
         <ShellPanel className="summation-version-panel" eyebrow="Reserved Panel" title="Version Selector">
-          <p className="summation-empty-copy">Empty structural state. Version selector logic is not built in this pass.</p>
+          <div className="summation-version-list">
+            {versions.map((version) => (
+              <button
+                type="button"
+                key={version.id}
+                className={`summation-version-card${version.id === activeVersionId ? ' is-active' : ''}${version.selectedForSeal ? ' is-selected-for-seal' : ''}`}
+                onClick={() => selectActiveVersion(version.id)}
+              >
+                <span className="summation-version-title">{version.label || `Version ${version.versionNumber}`}</span>
+                <span>{version.title}</span>
+                <span>{version.styleLabel || version.tone || 'Truth style'}</span>
+                <span className="summation-version-markers">
+                  {version.id === activeVersionId ? 'Active' : 'Inactive'}
+                  {' · '}
+                  {version.selectedForSeal ? 'Selected for seal' : 'Not for seal'}
+                  {' · '}
+                  {version.sketchId ? 'Sketch linked' : 'Sketch pending'}
+                  {version.sealed ? ' · Sealed' : ''}
+                </span>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="summation-inline-select"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    selectForSeal(version.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      selectForSeal(version.id);
+                    }
+                  }}
+                >
+                  Mark for seal
+                </span>
+              </button>
+            ))}
+          </div>
         </ShellPanel>
 
         <ShellPanel className="summation-sketch-panel" eyebrow="Reserved Panel" title="Sketch / Doodle Artifact">
