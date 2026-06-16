@@ -35,6 +35,151 @@ function DetailPill({ label, value }) {
   );
 }
 
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function cleanText(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function hasValue(value) {
+  if (Array.isArray(value)) return value.some(hasValue);
+  if (isPlainObject(value)) return Object.values(value).some(hasValue);
+  return cleanText(value).length > 0;
+}
+
+function displayValue(value) {
+  if (!hasValue(value)) return <span className="summation-missing-value">Missing / empty</span>;
+  if (Array.isArray(value)) {
+    return (
+      <ul className="summation-source-list">
+        {value.filter(hasValue).map((item, index) => (
+          <li key={`${index}-${cleanText(item?.id || item?.label || item?.type || item)}`}>{displayInlineValue(item)}</li>
+        ))}
+      </ul>
+    );
+  }
+  if (isPlainObject(value)) {
+    return (
+      <dl className="summation-source-subgrid">
+        {Object.entries(value).filter(([, entryValue]) => hasValue(entryValue)).map(([key, entryValue]) => (
+          <div key={key}>
+            <dt>{humanizeKey(key)}</dt>
+            <dd>{displayInlineValue(entryValue)}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
+  return <span>{String(value)}</span>;
+}
+
+function displayInlineValue(value) {
+  if (!hasValue(value)) return <span className="summation-missing-value">Missing / empty</span>;
+  if (Array.isArray(value)) return value.filter(hasValue).map(displayInlineValue).reduce((nodes, node, index) => [...nodes, index ? ', ' : '', node], []);
+  if (isPlainObject(value)) {
+    const labelParts = [value.time, value.type, value.label, value.word, value.current, value.left, value.status].filter(hasValue).map(String);
+    const text = cleanText(value.text || value.answer || value.answerText || value.definition || value.summary || value.macroText || value.sourceValue);
+    const compact = [...labelParts, text].filter(Boolean).join(' · ');
+    if (compact) return <span>{compact}</span>;
+    return <span>{JSON.stringify(value)}</span>;
+  }
+  return <span>{String(value)}</span>;
+}
+
+function humanizeKey(key) {
+  return String(key).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').toUpperCase();
+}
+
+function SourceTruthRow({ label, value }) {
+  return (
+    <div className="summation-source-row">
+      <dt>{label}</dt>
+      <dd>{displayValue(value)}</dd>
+    </div>
+  );
+}
+
+function normalizePennyAnswerRows(draft) {
+  const sourceTruth = draft?.sourceTruth || {};
+  const pools = [
+    draft?.pennyForYourThoughts?.answers,
+    sourceTruth?.pennyForYourThoughts?.answers,
+    sourceTruth?.pennyAnswers,
+    draft?.pennyAnswers,
+    sourceTruth?.wrapAnswers,
+  ].filter(Array.isArray);
+
+  return pools.flatMap((answers, poolIndex) => answers.map((answer, index) => {
+    if (!isPlainObject(answer)) {
+      return {
+        id: `penny-${poolIndex}-${index}`,
+        question: '',
+        answerText: String(answer),
+        metadata: {},
+      };
+    }
+    return {
+      id: cleanText(answer.id || answer.questionId || answer.sourceQuestionId || `penny-${poolIndex}-${index}`),
+      question: cleanText(answer.questionText || answer.question || answer.prompt || answer.sourceQuestionText),
+      answerText: answer.answerText ?? answer.answer ?? answer.value ?? answer.sourceValue ?? '',
+      metadata: {
+        sourceSection: answer.sourceSection,
+        sourceArea: answer.sourceArea,
+        sourceQuestionId: answer.sourceQuestionId || answer.questionId,
+        sourceDate: answer.sourceDate || sourceTruth.sourceDate || draft?.sourceDate,
+        displayDate: answer.displayDate || sourceTruth.displayDate || draft?.displayDate,
+      },
+    };
+  })).filter((answer, index, all) => hasValue(answer.answerText) && all.findIndex((candidate) => candidate.id === answer.id && cleanText(candidate.answerText) === cleanText(answer.answerText)) === index);
+}
+
+function SourceTruthPanel({ draft }) {
+  const sourceTruth = draft?.sourceTruth || {};
+  const titleFallback = sourceTruth.titleOfDay || sourceTruth.title || draft?.titleOfDay || draft?.title || (draft?.displayDate ? `Summation for ${draft.displayDate}` : '');
+  const rows = [
+    ['Display date', sourceTruth.displayDate || draft?.displayDate],
+    ['Day of week', sourceTruth.dayOfWeek || draft?.dayOfWeek],
+    ['Source date', sourceTruth.sourceDate || draft?.sourceDate],
+    ['Chaotica day number', sourceTruth.chaoticaDayNumber || draft?.chaoticaDayNumber],
+    ['Title of the day', titleFallback],
+    ['Mood', sourceTruth.mood],
+    ['Era', sourceTruth.era],
+    ['Singleness', sourceTruth.singlenessLevel || sourceTruth.singleness],
+    ['Head hummer', sourceTruth.headHummer],
+    ['Word of the day', sourceTruth.wordOfDay],
+    ['Assured thoughts', sourceTruth.assuredThoughts],
+    ['THICC.TIME signals', sourceTruth.weekSignal || sourceTruth.thiccTimeSignals || sourceTruth.thiccTime],
+    ['REMEMBER.ME moments', sourceTruth.moments || sourceTruth.timelineHighlights || sourceTruth.rememberMeMoments],
+    ['THICC.FITT signals', sourceTruth.workoutHighlights || sourceTruth.thiccFittSignals],
+    ['DA.EATER signals', sourceTruth.macroHighlights || sourceTruth.mealHighlights || sourceTruth.daEaterSignals],
+    ['Source metadata', draft?.sourceMetadata || sourceTruth.sourceMetadata || sourceTruth.sourceAvailability || draft?.availableSourceSignals],
+  ];
+  return <dl className="summation-source-truth-list">{rows.map(([label, value]) => <SourceTruthRow key={label} label={label} value={value} />)}</dl>;
+}
+
+function PennyPanel({ draft }) {
+  const answers = normalizePennyAnswerRows(draft);
+  if (!answers.length) return <p className="summation-empty-copy">No Penny answers saved for this day yet.</p>;
+  return (
+    <div className="summation-penny-answer-list">
+      {answers.map((answer, index) => (
+        <article className="summation-penny-answer" key={`${answer.id}-${index}`}>
+          {answer.question ? <h3>{answer.question}</h3> : <h3>Penny answer</h3>}
+          <p>{String(answer.answerText)}</p>
+          <dl>
+            {Object.entries(answer.metadata).filter(([, value]) => hasValue(value)).map(([key, value]) => (
+              <div key={key}><dt>{humanizeKey(key)}</dt><dd>{String(value)}</dd></div>
+            ))}
+          </dl>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export default function TheSummationSection() {
   const [bundle, setBundle] = useState(null);
   const [activeVersionId, setActiveVersionId] = useState('');
@@ -139,7 +284,7 @@ export default function TheSummationSection() {
     );
   }
 
-  const title = draft.titleOfDay || draft.title || `Summation for ${draft.displayDate}`;
+  const title = draft.titleOfDay || draft.title || (draft.displayDate ? `Summation for ${draft.displayDate}` : 'THE.SUMMATION');
 
   const refresh = () => setBundle(readSummationDraftBundle());
   const selectActiveVersion = (versionId) => {
@@ -179,26 +324,12 @@ export default function TheSummationSection() {
           </div>
         </ShellPanel>
 
-        <ShellPanel className="summation-workspace-panel" eyebrow="Main Workspace Zone" title="Writing / Version Preview">
-          {activeVersion ? (
-            <div className="summation-editor">
-              <label>
-                Version title
-                <input value={versionDraft.title} onChange={(event) => setVersionDraft((current) => ({ ...current, title: event.target.value }))} />
-              </label>
-              <label>
-                Rendered body
-                <textarea value={versionDraft.body} onChange={(event) => setVersionDraft((current) => ({ ...current, body: event.target.value }))} />
-              </label>
-              <button type="button" onClick={handleSaveVersion}>Save version text</button>
-            </div>
-          ) : (
-            <div className="summation-reserved-surface"><p>No active version is available yet.</p></div>
-          )}
+        <ShellPanel className="summation-workspace-panel" eyebrow="Source Truth Panel" title="Source Truth">
+          <SourceTruthPanel draft={draft} />
         </ShellPanel>
 
-        <ShellPanel className="summation-penny-panel" eyebrow="Reserved Panel" title="Penny for Your Thoughts">
-          <p className="summation-empty-copy">Empty structural state. Penny logic is not built in this pass.</p>
+        <ShellPanel className="summation-penny-panel" eyebrow="Source Answers" title="Penny for Your Thoughts">
+          <PennyPanel draft={draft} />
         </ShellPanel>
 
         <ShellPanel className="summation-version-panel" eyebrow="Version Selector" title="Version Selector">
