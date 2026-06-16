@@ -3,15 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createOrUpdateSummationSketch,
+  createSummationDraftFromAssurerDay,
   generateSummationVersions,
   markSummationVersionForSeal,
   readSummationDraftBundle,
   saveSummationVersionEdits,
+  resolveSummationActiveDay,
 } from '../../src/services/summationService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
+const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
 
 function ShellPanel({ className = '', eyebrow, title, children }) {
   return (
@@ -185,6 +188,7 @@ export default function TheSummationSection() {
   const [activeVersionId, setActiveVersionId] = useState('');
   const [versionDraft, setVersionDraft] = useState({ title: '', body: '' });
   const [annotationDraft, setAnnotationDraft] = useState('');
+  const [bootstrapStatus, setBootstrapStatus] = useState('');
 
   const loadBundle = useCallback(() => {
     const nextBundle = readSummationDraftBundle();
@@ -271,44 +275,29 @@ export default function TheSummationSection() {
     refreshBundle();
   };
 
+  const handleLoadActiveAssurerDay = async () => {
+    setBootstrapStatus('Checking active Assurer day…');
+    const activeDay = await resolveSummationActiveDay();
+    if (!activeDay?.sourceDate || !activeDay?.displayDate) {
+      setBootstrapStatus('No active Assurer day data found. Open Eye of Truth and choose a saved day.');
+      return;
+    }
+    const draftPayload = createSummationDraftFromAssurerDay(activeDay);
+    if (!draftPayload) {
+      setBootstrapStatus('Active day exists, but it is missing required draft identity fields. Nothing was invented.');
+      return;
+    }
+    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: activeDay.sourceDate, draft: draftPayload } }));
+    setBootstrapStatus(`Loaded real Assurer day ${activeDay.displayDate}.`);
+    loadBundle();
+  };
 
-  if (!draft) {
-    return (
-      <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
-        <div className="summation-background-plate" aria-hidden="true" />
-        <section className="summation-empty-state">
-          <h1>THE.SUMMATION</h1>
-          <p>No valid Summation draft is loaded. Open THE.ASSURER, choose the active day with Eye of Truth if needed, then use Crystal Wand / Summate from the right-side rail.</p>
-        </section>
-      </main>
-    );
-  }
+  const handleOpenEye = () => {
+    window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
+    setBootstrapStatus('Eye of Truth opened from the right-side rail.');
+  };
 
-  const title = draft.titleOfDay || draft.title || (draft.displayDate ? `Summation for ${draft.displayDate}` : 'THE.SUMMATION');
-
-  const refresh = () => setBundle(readSummationDraftBundle());
-  const selectActiveVersion = (versionId) => {
-    setSummationActiveVersion(versionId);
-    refresh();
-  };
-  const selectForSeal = (versionId) => {
-    markSummationVersionForSeal(versionId);
-    refresh();
-  };
-  const saveActiveVersion = () => {
-    if (!activeVersion?.id) return;
-    saveSummationVersionEdits(activeVersion.id, editor);
-    setSaveStatus('Saved.');
-    refresh();
-  };
-  const regenerateVersions = () => {
-    generateSummationVersions(draft, {
-      preserveExistingEdits: false,
-      preserveSelectedVersionId: selectedForSealVersionId || false,
-      activeVersionId,
-    });
-    refresh();
-  };
+  const title = draft?.titleOfDay || draft?.title || (draft?.displayDate ? `Summation for ${draft.displayDate}` : 'No draft loaded');
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
@@ -316,24 +305,35 @@ export default function TheSummationSection() {
       <section className="summation-stage" aria-label="THE.SUMMATION visual layout shell">
         <ShellPanel className="summation-identity-panel" eyebrow="Day Identity / Header Zone" title="THE.SUMMATION">
           <h1>{title}</h1>
-          <div className="summation-detail-grid" aria-label="Loaded draft identity">
-            <DetailPill label="Display" value={draft.displayDate} />
-            <DetailPill label="Day" value={draft.dayOfWeek} />
-            <DetailPill label="Source" value={draft.sourceDate} />
-            <DetailPill label="Chaotica" value={draft.chaoticaDayNumber ? `Day #${draft.chaoticaDayNumber}` : ''} />
+          <div className="summation-detail-grid" aria-label={draft ? "Loaded draft identity" : "Empty draft identity"}>
+            {draft ? (<>
+              <DetailPill label="Display" value={draft.displayDate} />
+              <DetailPill label="Day" value={draft.dayOfWeek} />
+              <DetailPill label="Source" value={draft.sourceDate} />
+              <DetailPill label="Chaotica" value={draft.chaoticaDayNumber ? `Day #${draft.chaoticaDayNumber}` : ''} />
+            </>) : <span className="summation-detail-pill"><strong>Status</strong>No draft loaded</span>}
           </div>
+          {!draft ? (
+            <div className="summation-bootstrap-actions" aria-label="Real-data bootstrap actions">
+              <button type="button" onClick={handleLoadActiveAssurerDay}>Load Active Assurer Day</button>
+              <button type="button" onClick={handleOpenEye}>Open Eye of Truth</button>
+              <p>Use Crystal Wand / Summate from the right-side rail when an active Assurer day is ready. No duplicate Wand glyph is placed here.</p>
+              {bootstrapStatus ? <p role="status">{bootstrapStatus}</p> : null}
+            </div>
+          ) : null}
         </ShellPanel>
 
         <ShellPanel className="summation-workspace-panel" eyebrow="Source Truth Panel" title="Source Truth">
-          <SourceTruthPanel draft={draft} />
+          {draft ? <SourceTruthPanel draft={draft} /> : <p className="summation-empty-copy">No active day loaded yet.</p>}
         </ShellPanel>
 
         <ShellPanel className="summation-penny-panel" eyebrow="Source Answers" title="Penny for Your Thoughts">
-          <PennyPanel draft={draft} />
+          {draft ? <PennyPanel draft={draft} /> : <p className="summation-empty-copy">No Penny answers loaded yet.</p>}
         </ShellPanel>
 
         <ShellPanel className="summation-version-panel" eyebrow="Version Selector" title="Version Selector">
           <div className="summation-version-list">
+            {!versions.length ? <p className="summation-empty-copy">Summate a day to generate versions.</p> : null}
             {versions.map((version) => (
               <button key={version.id} type="button" className={`summation-version-card ${activeVersion?.id === version.id ? 'is-active' : ''}`} onClick={() => setActiveVersionId(version.id)}>
                 <strong>{version.label}</strong>
@@ -344,8 +344,18 @@ export default function TheSummationSection() {
           </div>
         </ShellPanel>
 
+        <ShellPanel className="summation-preview-panel" eyebrow="Active Version Preview" title="Active Version Preview">
+          {activeVersion ? (
+            <article className="summation-active-preview">
+              <h3>{activeVersion.title}</h3>
+              <p>{activeVersion.body || activeVersion.content}</p>
+            </article>
+          ) : <p className="summation-empty-copy">No active version selected.</p>}
+        </ShellPanel>
+
         <ShellPanel className="summation-sketch-panel" eyebrow="Sketch / Doodle Artifact Zone" title="Sketch / Doodle Artifact">
-          <div className="summation-sketch-zone">
+          {!draft ? <p className="summation-empty-copy">Create a draft before sketching.</p> : null}
+          {draft ? <div className="summation-sketch-zone">
             <div className="summation-sketch-meta">
               <DetailPill label="Status" value={activeVersion ? sketchStatusFor(activeVersion) : 'no active version'} />
               <DetailPill label="Version" value={activeVersion?.label} />
@@ -372,11 +382,11 @@ export default function TheSummationSection() {
                 <button type="button" onClick={handleCreateSketch} disabled={!activeVersion?.id}>Create sketch from selected version</button>
               </div>
             )}
-          </div>
+          </div> : null}
         </ShellPanel>
 
         <ShellPanel className="summation-seal-panel" eyebrow="Reserved Panel" title="Seal Readiness">
-          <p className="summation-empty-copy">Hopewood sealing logic remains untouched for later passes. This pass only marks one valid sketch/version pair as selected.</p>
+          <p className="summation-empty-copy">{draft && activeVersion && activeSketch ? 'Ready for version/sketch selection. Hopewood sealing remains untouched for later passes.' : 'Not seal-ready. Missing draft, version, and sketch.'}</p>
         </ShellPanel>
       </section>
     </main>

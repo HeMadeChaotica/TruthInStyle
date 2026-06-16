@@ -6,6 +6,7 @@ import { createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSumm
 
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
+const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
 
 const RAIL_ITEMS = [
   { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home.png', alt: 'HOME / THE.ASSURER', type: 'route' },
@@ -202,7 +203,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     };
   }, [dayPanelOpen, isOpen, updateDayPanelPosition]);
 
-  const openEyePanel = () => {
+  const openEyePanel = useCallback(() => {
     updateDayPanelPosition();
     const stored = getStoredSummationActiveDay();
     const storedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : activeDate;
@@ -210,7 +211,16 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     setDraftDatePickerValue(localDateKey(storedDate));
     setDayPanelOpen(true);
     setStatus('EYE OF TRUTH OPEN');
-  };
+  }, [activeDate, updateDayPanelPosition]);
+
+  useEffect(() => {
+    const onOpenEye = () => {
+      onOpen?.();
+      openEyePanel();
+    };
+    window.addEventListener(OPEN_EYE_EVENT_NAME, onOpenEye);
+    return () => window.removeEventListener(OPEN_EYE_EVENT_NAME, onOpenEye);
+  }, [onOpen, openEyePanel]);
 
   const cancelDayChange = () => {
     setDraftDateText(displayDate(activeDate));
