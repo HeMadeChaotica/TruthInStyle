@@ -22,6 +22,8 @@ const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfD
 const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
+const SUMMATION_ACTIVE_DAY_KEY = 'the_summation_active_day_v1';
+export const SUMMATION_ACTIVE_DAY_CHANGED_EVENT = 'truthinstyle-summation-active-day-changed';
 
 export const PENNY_FOR_YOUR_THOUGHTS_AREA = 'PENNY FOR YOUR THOUGHTS';
 
@@ -108,6 +110,33 @@ function dayOfYear(date) {
 
 function normalizeDateKeys(dateKeys) {
   return Array.isArray(dateKeys) ? dateKeys.filter(Boolean) : [dateKeys].filter(Boolean);
+}
+
+
+export function getStoredSummationActiveDay(fallbackDate = new Date()) {
+  if (!hasStorage()) {
+    const sourceDate = getLocalDateKey(fallbackDate);
+    return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate) };
+  }
+  const stored = safeJsonParse(window.localStorage.getItem(SUMMATION_ACTIVE_DAY_KEY), null);
+  if (stored?.sourceDate) return stored;
+  const sourceDate = getLocalDateKey(fallbackDate);
+  return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate) };
+}
+
+export function setStoredSummationActiveDay(date = new Date()) {
+  const activeDate = date instanceof Date ? date : new Date(date);
+  const payload = {
+    sourceDate: getLocalDateKey(activeDate),
+    displayDate: formatDisplayDate(activeDate),
+    dayOfWeek: dayOfWeek(activeDate),
+    updatedAt: new Date().toISOString(),
+  };
+  if (hasStorage()) {
+    window.localStorage.setItem(SUMMATION_ACTIVE_DAY_KEY, JSON.stringify(payload));
+    window.dispatchEvent(new CustomEvent(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, { detail: payload }));
+  }
+  return payload;
 }
 
 function readStoredValue(baseKeys, dateKeys) {
@@ -1079,7 +1108,6 @@ export function createSummationDraftFromAssurerDay(selectedDayPayload) {
   });
   if (!draft) return null;
   writeStorageObject(SUMMATION_DRAFT_KEY, draft);
-  generateSummationVersions(draft, { preserveExistingEdits: true });
   return draft;
 }
 
@@ -1091,7 +1119,6 @@ export function readSummationDraftBundle() {
   if (!draft) return null;
   const versions = normalizeSummationVersionSelection(readStorageArray(SUMMATION_VERSIONS_KEY).filter((version) => version.sourceDate === draft.sourceDate));
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY).filter((sketch) => sketch.sourceDate === draft.sourceDate);
-  if (!versions.length) return { draft, versions: generateSummationVersions(draft), sketches };
   return { draft, versions, sketches };
 }
 

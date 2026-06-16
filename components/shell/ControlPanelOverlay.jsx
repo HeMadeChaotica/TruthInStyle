@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSummationDraftFromAssurerDay, readAssurerDayForSummation, sealActiveSummationSelection } from '../../src/services/summationService';
+import { createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
 
-const SUMMATION_DRAFT_KEY = 'the_summation_active_draft_v1';
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 
@@ -156,19 +155,49 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const stored = getStoredSummationActiveDay();
+    const storedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : null;
+    if (storedDate) {
+      setActiveDate(storedDate);
+      setDraftDateText(displayDate(storedDate));
+    }
+  }, []);
+
+  const openEyePanel = () => {
+    const stored = getStoredSummationActiveDay();
+    const storedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : activeDate;
+    setDraftDateText(displayDate(storedDate));
+    setDayPanelOpen(true);
+    setStatus('EYE OF TRUTH OPEN');
+  };
+
+  const cancelDayChange = () => {
+    setDraftDateText(displayDate(activeDate));
+    setDayPanelOpen(false);
+    setStatus('ACTIVE DAY UNCHANGED');
+  };
+
   const applyDayChange = () => {
     const parsed = parseDisplayDate(draftDateText);
     if (!parsed) {
       setStatus('USE MM/DD/YYYY');
       return;
     }
+    const saved = setStoredSummationActiveDay(parsed);
     setActiveDate(parsed);
     setDraftDateText(displayDate(parsed));
-    setStatus(`ACTIVE DAY ${displayDate(parsed)}`);
+    setDayPanelOpen(false);
+    setStatus(`ACTIVE DAY ${saved.displayDate}`);
   };
 
   const handleSummate = async () => {
-    const selectedDate = new Date(activeDate.getTime());
+    const stored = getStoredSummationActiveDay();
+    const selectedDate = stored?.sourceDate ? dateFromSourceDate(stored.sourceDate) : new Date(activeDate.getTime());
+    if (!selectedDate) {
+      setStatus('CHOOSE A DAY WITH EYE OF TRUTH');
+      return;
+    }
     const selectedDisplayDate = displayDate(selectedDate);
     const confirmed = window.confirm(`SUMMATE THE.ASSURER DAY ${selectedDisplayDate} INTO THE.SUMMATION?`);
     if (!confirmed) {
@@ -196,7 +225,8 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
 
   const handleRailItem = (item) => {
     if (item.key === 'eye-of-truth') {
-      setDayPanelOpen((open) => !open);
+      if (dayPanelOpen) cancelDayChange();
+      else openEyePanel();
       return;
     }
     if (item.key === 'crystal-wand-summate') {
@@ -234,7 +264,10 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
                       inputMode="numeric"
                     />
                   </label>
-                  <button type="button" onClick={applyDayChange}>SET ACTIVE DAY</button>
+                  <div className="tis-day-popover-actions">
+                    <button type="button" onClick={applyDayChange}>APPLY DAY</button>
+                    <button type="button" onClick={cancelDayChange}>CANCEL</button>
+                  </div>
                   {status ? <span aria-live="polite">{status}</span> : null}
                 </section>
               ) : null}
