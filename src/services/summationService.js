@@ -1078,7 +1078,10 @@ function normalizeSummationDraft(input) {
     fullAssurerDaySnapshot: input.fullAssurerDaySnapshot || input.dayPayload || sourceTruth,
     sourceTruth,
     availableSourceSignals: input.availableSourceSignals || sourceTruth.availableSourceSignals || sourceTruth.sourceAvailability || {},
-    sourceMetadata: input.sourceMetadata || { intake: 'Crystal Wand / Summate', sourceSchemaPreserved: true },
+    sourceMetadata: input.sourceMetadata || sourceTruth.sourceMetadata || { intake: 'Crystal Wand / Summate', sourceSchemaPreserved: true },
+    pennyForYourThoughts: input.pennyForYourThoughts || sourceTruth.pennyForYourThoughts || null,
+    pennyAnswers: input.pennyAnswers || sourceTruth.pennyAnswers || sourceTruth.wrapAnswers || [],
+    sourceAnswers: input.sourceAnswers || sourceTruth.sourceAnswers || sourceTruth.wrapAnswers || [],
     status: input.status || 'draft',
     createdAt: input.createdAt || now,
     updatedAt: now,
@@ -1189,6 +1192,10 @@ export function generateSummationVersions(draftInput, options = {}) {
       selectedForSeal: false,
       sealed: existing?.sealed || false,
       sourceTruth: draft.sourceTruth,
+      sourceMetadata: draft.sourceMetadata,
+      pennyForYourThoughts: draft.pennyForYourThoughts,
+      pennyAnswers: draft.pennyAnswers,
+      sourceAnswers: draft.sourceAnswers,
       sourceTruthRef: draft.id,
       sketchId: existing?.sketchId || '',
     };
@@ -1246,6 +1253,10 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
     sealed: existing?.sealed || false,
     selectedForSeal: version.selectedForSeal || existing?.selectedForSeal || false,
     sourceTruth: draft.sourceTruth,
+    sourceMetadata: draft.sourceMetadata,
+    pennyForYourThoughts: draft.pennyForYourThoughts,
+    pennyAnswers: draft.pennyAnswers,
+    sourceAnswers: draft.sourceAnswers,
     sourceTruthRef: draft.id,
   };
   writeStorageArray(SUMMATION_SKETCHES_KEY, [...sketches.filter((item) => item.linkedVersionId !== version.id), sketch]);
@@ -1327,6 +1338,10 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
     doodleLayer: sketch.doodleLayer,
     sourceTruthSnapshot: sourceTruth,
     fullAssurerDaySnapshot: draft.fullAssurerDaySnapshot || sourceTruth,
+    sourceMetadata: draft.sourceMetadata,
+    pennyForYourThoughts: draft.pennyForYourThoughts,
+    pennyAnswers: draft.pennyAnswers,
+    sourceAnswers: draft.sourceAnswers,
     sourceSignals: {
       thiccTime: sourceTruth.weekSignal,
       rememberMe: sourceTruth.moments || sourceTruth.timelineHighlights,
@@ -1334,7 +1349,6 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
       daEater: sourceTruth.macroHighlights || sourceTruth.mealHighlights,
       pennyAnswers: sourceTruth.pennyAnswers || sourceTruth.wrapAnswers || [],
     },
-    sourceMetadata: draft.sourceMetadata,
     sealedAt: now,
   };
   const records = readSealedRecords().filter((record) => record.id !== sealedRecord.id && String(record.sourceDate) !== String(sealedRecord.sourceDate));

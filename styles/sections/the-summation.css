@@ -166,3 +166,77 @@
   .summation-workspace-panel { min-height: 18rem; }
   .summation-sketch-panel { min-height: 12rem; }
 }
+
+.summation-source-truth-list,
+.summation-source-subgrid,
+.summation-penny-answer dl {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.85rem 0 0;
+}
+
+.summation-source-row,
+.summation-source-subgrid > div,
+.summation-penny-answer {
+  border: 1px solid rgba(244, 205, 214, 0.26);
+  border-radius: 0.9rem;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0.72rem 0.78rem;
+}
+
+.summation-source-row dt,
+.summation-source-subgrid dt,
+.summation-penny-answer dt {
+  margin: 0 0 0.22rem;
+  color: #ffbad0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.summation-source-row dd,
+.summation-source-subgrid dd,
+.summation-penny-answer dd {
+  margin: 0;
+  color: #fff3f6;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.summation-source-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.05rem;
+}
+
+.summation-missing-value {
+  color: rgba(231, 196, 203, 0.78);
+  font-style: italic;
+}
+
+.summation-penny-answer-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.summation-penny-answer h3 {
+  margin: 0 0 0.5rem;
+  color: #fff3f6;
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.summation-penny-answer p {
+  margin: 0;
+  color: #fff3f6;
+  line-height: 1.48;
+  white-space: pre-wrap;
+}
+
+.summation-penny-answer dl {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.45rem;
+}
