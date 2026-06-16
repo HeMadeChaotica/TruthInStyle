@@ -1301,11 +1301,26 @@ export function markSummationVersionForSeal(versionId) {
   const target = versions.find((version) => version.id === versionId);
   if (!target) return null;
   const sketches = readStorageArray(SUMMATION_SKETCHES_KEY);
-  const nextVersions = versions.map((version) => version.sourceDate === target.sourceDate ? { ...version, selectedForSeal: version.id === versionId } : version);
-  const nextSketches = sketches.map((sketch) => sketch.sourceDate === target.sourceDate ? { ...sketch, selectedForSeal: sketch.linkedVersionId === versionId } : sketch);
+  const targetSketch = sketches.find((sketch) => sketch.linkedVersionId === versionId);
+  if (!targetSketch) return null;
+  const now = new Date().toISOString();
+  const nextVersions = versions.map((version) => version.sourceDate === target.sourceDate ? {
+    ...version,
+    selectedForSeal: version.id === versionId,
+    selectedForSealVersionId: version.id === versionId ? versionId : '',
+    selectedSketchId: version.id === versionId ? targetSketch.sketchId : '',
+    updatedAt: version.id === versionId ? now : version.updatedAt,
+  } : version);
+  const nextSketches = sketches.map((sketch) => sketch.sourceDate === target.sourceDate ? {
+    ...sketch,
+    selectedForSeal: sketch.sketchId === targetSketch.sketchId && sketch.linkedVersionId === versionId,
+    selectedForSealVersionId: sketch.sketchId === targetSketch.sketchId ? versionId : '',
+    selectedSketchId: sketch.sketchId === targetSketch.sketchId ? targetSketch.sketchId : '',
+    updatedAt: sketch.sketchId === targetSketch.sketchId ? now : sketch.updatedAt,
+  } : sketch);
   writeStorageArray(SUMMATION_VERSIONS_KEY, nextVersions);
   writeStorageArray(SUMMATION_SKETCHES_KEY, nextSketches);
-  writeSummationVersionState(target.sourceDate, { selectedForSealVersionId: versionId });
+  writeStorageObject(COMPLETED_SUMMATION_KEY, { draft: readSummationDraftBundle()?.draft, version: nextVersions.find((version) => version.id === versionId) || target, sketch: nextSketches.find((sketch) => sketch.sketchId === targetSketch.sketchId) || targetSketch });
   return nextVersions.find((version) => version.id === versionId) || null;
 }
 

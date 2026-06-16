@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  createOrUpdateSummationSketch,
   generateSummationVersions,
   markSummationVersionForSeal,
   readSummationDraftBundle,
   saveSummationVersionEdits,
-  setSummationActiveVersion,
 } from '../../src/services/summationService';
 import '../../styles/sections/the-summation.css';
 
@@ -37,8 +37,9 @@ function DetailPill({ label, value }) {
 
 export default function TheSummationSection() {
   const [bundle, setBundle] = useState(null);
-  const [editor, setEditor] = useState({ title: '', body: '' });
-  const [saveStatus, setSaveStatus] = useState('');
+  const [activeVersionId, setActiveVersionId] = useState('');
+  const [versionDraft, setVersionDraft] = useState({ title: '', body: '' });
+  const [annotationDraft, setAnnotationDraft] = useState('');
 
   const loadBundle = useCallback(() => {
     const nextBundle = readSummationDraftBundle();
@@ -64,18 +65,67 @@ export default function TheSummationSection() {
   }, [loadBundle]);
 
   const draft = bundle?.draft || null;
-  const versions = bundle?.versions || [];
-  const activeVersionId = bundle?.activeVersionId || versions[0]?.id || '';
-  const selectedForSealVersionId = bundle?.selectedForSealVersionId || '';
-  const activeVersion = versions.find((version) => version.id === activeVersionId) || versions[0] || null;
+  const versions = useMemo(() => bundle?.versions || [], [bundle]);
+  const sketches = useMemo(() => bundle?.sketches || [], [bundle]);
 
   useEffect(() => {
-    setEditor({
-      title: activeVersion?.title || '',
-      body: activeVersion?.body || activeVersion?.content || '',
+    if (!draft) return;
+    if (!versions.length) {
+      const generated = generateSummationVersions(draft, { preserveExistingEdits: true });
+      setBundle({ draft, versions: generated, sketches });
+      return;
+    }
+    const selected = versions.find((version) => version.selectedForSeal) || versions[0];
+    if (!activeVersionId || !versions.some((version) => version.id === activeVersionId)) setActiveVersionId(selected?.id || '');
+  }, [activeVersionId, draft, sketches, versions]);
+
+  const activeVersion = versions.find((version) => version.id === activeVersionId) || versions[0] || null;
+  const activeSketch = sketches.find((sketch) => sketch.linkedVersionId === activeVersion?.id) || null;
+
+  useEffect(() => {
+    setVersionDraft({ title: activeVersion?.title || '', body: activeVersion?.body || activeVersion?.content || '' });
+    setAnnotationDraft(activeSketch?.doodleLayer?.annotationNotes || '');
+  }, [activeVersion?.id, activeVersion?.title, activeVersion?.body, activeVersion?.content, activeSketch?.sketchId, activeSketch?.doodleLayer?.annotationNotes]);
+
+  const refreshBundle = () => setBundle(readSummationDraftBundle());
+
+  const sketchStatusFor = (version) => {
+    const sketch = sketches.find((item) => item.linkedVersionId === version.id);
+    if (!sketch) return 'no sketch yet';
+    if (sketch.sealed) return 'sealed sketch';
+    if (sketch.selectedForSeal) return 'selected sketch for seal';
+    if (sketch.doodleLayer?.updatedAt && sketch.doodleLayer.updatedAt !== sketch.doodleLayer.createdAt) return 'sketch edited';
+    return 'sketch created';
+  };
+
+  const handleSaveVersion = () => {
+    if (!activeVersion?.id) return;
+    saveSummationVersionEdits(activeVersion.id, versionDraft);
+    refreshBundle();
+  };
+
+  const handleCreateSketch = () => {
+    if (!draft || !activeVersion?.id) return;
+    createOrUpdateSummationSketch({ draft, version: activeVersion, doodleLayer: { marks: [], annotationNotes: '', decorativeStrokes: [], memoryMarks: [], stamps: [], positionData: {} } });
+    refreshBundle();
+  };
+
+  const handleSaveAnnotation = () => {
+    if (!draft || !activeVersion?.id) return;
+    createOrUpdateSummationSketch({
+      draft,
+      version: activeVersion,
+      doodleLayer: { ...(activeSketch?.doodleLayer || {}), annotationNotes: annotationDraft },
     });
-    setSaveStatus('');
-  }, [activeVersion?.id, activeVersion?.title, activeVersion?.body, activeVersion?.content]);
+    refreshBundle();
+  };
+
+  const handleSelectForSeal = () => {
+    if (!activeVersion?.id || !activeSketch || activeSketch.linkedVersionId !== activeVersion.id) return;
+    markSummationVersionForSeal(activeVersion.id);
+    refreshBundle();
+  };
+
 
   if (!draft) {
     return (
@@ -132,32 +182,18 @@ export default function TheSummationSection() {
         <ShellPanel className="summation-workspace-panel" eyebrow="Main Workspace Zone" title="Writing / Version Preview">
           {activeVersion ? (
             <div className="summation-editor">
-              <div className="summation-editor-meta">
-                <DetailPill label="Active" value={activeVersion.label || activeVersion.versionNumber} />
-                <DetailPill label="Version ID" value={activeVersion.id} />
-                <DetailPill label="Seal Pick" value={activeVersion.selectedForSeal ? 'Selected for seal' : 'Not selected'} />
-              </div>
-              <label className="summation-field">
-                <span>Editable title</span>
-                <input value={editor.title} onChange={(event) => setEditor((current) => ({ ...current, title: event.target.value }))} />
+              <label>
+                Version title
+                <input value={versionDraft.title} onChange={(event) => setVersionDraft((current) => ({ ...current, title: event.target.value }))} />
               </label>
-              <label className="summation-field">
-                <span>Editable body / content</span>
-                <textarea value={editor.body} onChange={(event) => setEditor((current) => ({ ...current, body: event.target.value }))} />
+              <label>
+                Rendered body
+                <textarea value={versionDraft.body} onChange={(event) => setVersionDraft((current) => ({ ...current, body: event.target.value }))} />
               </label>
-              <div className="summation-editor-actions">
-                <button type="button" onClick={saveActiveVersion}>Save / Update Version</button>
-                <button type="button" onClick={() => selectForSeal(activeVersion.id)} aria-pressed={activeVersion.selectedForSeal}>
-                  {activeVersion.selectedForSeal ? 'Selected for Seal' : 'Mark Selected for Seal'}
-                </button>
-                <button type="button" onClick={regenerateVersions}>Regenerate / Remix Versions</button>
-                {saveStatus ? <span>{saveStatus}</span> : null}
-              </div>
+              <button type="button" onClick={handleSaveVersion}>Save version text</button>
             </div>
           ) : (
-            <div className="summation-reserved-surface">
-              <p>No generated Summation versions are available yet.</p>
-            </div>
+            <div className="summation-reserved-surface"><p>No active version is available yet.</p></div>
           )}
         </ShellPanel>
 
@@ -165,57 +201,51 @@ export default function TheSummationSection() {
           <p className="summation-empty-copy">Empty structural state. Penny logic is not built in this pass.</p>
         </ShellPanel>
 
-        <ShellPanel className="summation-version-panel" eyebrow="Reserved Panel" title="Version Selector">
+        <ShellPanel className="summation-version-panel" eyebrow="Version Selector" title="Version Selector">
           <div className="summation-version-list">
             {versions.map((version) => (
-              <button
-                type="button"
-                key={version.id}
-                className={`summation-version-card${version.id === activeVersionId ? ' is-active' : ''}${version.selectedForSeal ? ' is-selected-for-seal' : ''}`}
-                onClick={() => selectActiveVersion(version.id)}
-              >
-                <span className="summation-version-title">{version.label || `Version ${version.versionNumber}`}</span>
-                <span>{version.title}</span>
-                <span>{version.styleLabel || version.tone || 'Truth style'}</span>
-                <span className="summation-version-markers">
-                  {version.id === activeVersionId ? 'Active' : 'Inactive'}
-                  {' · '}
-                  {version.selectedForSeal ? 'Selected for seal' : 'Not for seal'}
-                  {' · '}
-                  {version.sketchId ? 'Sketch linked' : 'Sketch pending'}
-                  {version.sealed ? ' · Sealed' : ''}
-                </span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="summation-inline-select"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    selectForSeal(version.id);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      selectForSeal(version.id);
-                    }
-                  }}
-                >
-                  Mark for seal
-                </span>
+              <button key={version.id} type="button" className={`summation-version-card ${activeVersion?.id === version.id ? 'is-active' : ''}`} onClick={() => setActiveVersionId(version.id)}>
+                <strong>{version.label}</strong>
+                <span>{version.styleLabel}</span>
+                <em>{sketchStatusFor(version)}</em>
               </button>
             ))}
           </div>
         </ShellPanel>
 
-        <ShellPanel className="summation-sketch-panel" eyebrow="Reserved Panel" title="Sketch / Doodle Artifact">
-          <div className="summation-artifact-placeholder">
-            <p>Empty structural state. No fake doodles or sketch content are created.</p>
+        <ShellPanel className="summation-sketch-panel" eyebrow="Sketch / Doodle Artifact Zone" title="Sketch / Doodle Artifact">
+          <div className="summation-sketch-zone">
+            <div className="summation-sketch-meta">
+              <DetailPill label="Status" value={activeVersion ? sketchStatusFor(activeVersion) : 'no active version'} />
+              <DetailPill label="Version" value={activeVersion?.label} />
+              <DetailPill label="Sketch ID" value={activeSketch?.sketchId} />
+              <DetailPill label="Linked Version" value={activeSketch?.linkedVersionId || activeVersion?.id} />
+            </div>
+            {activeSketch ? (
+              <div className="summation-sketch-preview">
+                <article>
+                  <h3>{activeSketch.title}</h3>
+                  <p className="summation-sketch-date">{activeSketch.displayDate} · {activeSketch.dayOfWeek} · Chaotica Day #{activeSketch.chaoticaDayNumber}</p>
+                  <pre>{activeSketch.renderedText}</pre>
+                </article>
+                <label>
+                  Annotation notes / real doodle-layer mark
+                  <textarea value={annotationDraft} onChange={(event) => setAnnotationDraft(event.target.value)} />
+                </label>
+                <button type="button" onClick={handleSaveAnnotation}>Save doodle / annotation layer</button>
+                <button type="button" onClick={handleSelectForSeal} disabled={activeSketch.linkedVersionId !== activeVersion?.id}>Select this sketch/version pair for seal</button>
+              </div>
+            ) : (
+              <div className="summation-artifact-placeholder">
+                <p>No sketch exists for the selected version. No fake doodles are generated.</p>
+                <button type="button" onClick={handleCreateSketch} disabled={!activeVersion?.id}>Create sketch from selected version</button>
+              </div>
+            )}
           </div>
         </ShellPanel>
 
         <ShellPanel className="summation-seal-panel" eyebrow="Reserved Panel" title="Seal Readiness">
-          <p className="summation-empty-copy">Empty structural state. Hopewood sealing logic remains untouched for later passes.</p>
+          <p className="summation-empty-copy">Hopewood sealing logic remains untouched for later passes. This pass only marks one valid sketch/version pair as selected.</p>
         </ShellPanel>
       </section>
     </main>
