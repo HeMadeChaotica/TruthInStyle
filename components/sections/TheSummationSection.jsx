@@ -1,15 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  createOrUpdateSummationSketch,
-  createSummationDraftFromAssurerDay,
-  generateSummationVersions,
-  markSummationVersionForSeal,
-  readSummationDraftBundle,
-  saveSummationVersionEdits,
-  resolveSummationActiveDay,
-} from '../../src/services/summationService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
@@ -315,34 +305,18 @@ export default function TheSummationSection() {
               <DetailPill label="Chaotica" value={(dayIdentity.chaoticaDayNumber ?? draft.chaoticaDayNumber) ? `Day #${dayIdentity.chaoticaDayNumber ?? draft.chaoticaDayNumber}` : ''} />
             </>) : <span className="summation-detail-pill"><strong>Status</strong>No draft loaded</span>}
           </div>
-          {!draft ? (
-            <div className="summation-bootstrap-actions" aria-label="Real-data bootstrap actions">
-              <button type="button" onClick={handleLoadActiveAssurerDay}>Load Active Assurer Day</button>
-              <button type="button" onClick={handleOpenEye}>Open Eye of Truth</button>
-              <p>Use Crystal Wand / Summate from the right-side rail when an active Assurer day is ready. No duplicate Wand glyph is placed here.</p>
-              {bootstrapStatus ? <p role="status">{bootstrapStatus}</p> : null}
-            </div>
-          ) : null}
-        </ShellPanel>
+        </div>
 
-        <ShellPanel className="summation-workspace-panel" eyebrow="Source Truth Panel" title="Source Truth">
-          {draft ? <SourceTruthPanel draft={draft} /> : <p className="summation-empty-copy">No active day loaded yet.</p>}
-        </ShellPanel>
-
-        <ShellPanel className="summation-penny-panel" eyebrow="Source Answers" title="Penny for Your Thoughts">
-          {draft ? <PennyPanel draft={draft} /> : <p className="summation-empty-copy">No Penny answers loaded yet.</p>}
-        </ShellPanel>
-
-        <ShellPanel className="summation-version-panel" eyebrow="Version Selector" title="Version Selector">
-          <div className="summation-version-list">
-            {!versions.length ? <p className="summation-empty-copy">Summate a day to generate versions.</p> : null}
-            {versions.map((version) => (
-              <button key={version.id} type="button" className={`summation-version-card ${activeVersion?.id === version.id ? 'is-active' : ''}`} onClick={() => setActiveVersionId(version.id)}>
-                <strong>{version.label}</strong>
-                <span>{version.styleLabel}</span>
-                <em>{sketchStatusFor(version)}</em>
-              </button>
-            ))}
+        <aside className="summation-art-preserve" aria-label="Approved Summation background art preserve area">
+          <div className="summation-tailoring-box" aria-label="Tailoring Notes">
+            <label htmlFor="summation-tailoring-notes">Tailoring Notes</label>
+            <textarea
+              id="summation-tailoring-notes"
+              disabled={!hasRender}
+              aria-disabled={!hasRender}
+              placeholder="Available after first render."
+            />
+            <p>Available after first render.</p>
           </div>
         </ShellPanel>
 
