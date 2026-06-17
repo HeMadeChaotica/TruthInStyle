@@ -42,7 +42,36 @@
   min-height: 0;
 }
 
-.summation-render-zone {
+.summation-panel-header h2 {
+  margin: 0;
+  color: #fff3f6;
+  font-size: clamp(1rem, 1.3vw, 1.3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summation-identity-panel h1 {
+  margin: 0.8rem 0 0.9rem;
+  font-size: clamp(1.9rem, 3.6vw, 3.8rem);
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+.summation-detail-grid,
+.summation-day-identity-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.summation-day-identity-strip {
+  border: 1px solid rgba(255, 243, 246, 0.38);
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.24);
+  padding: 0.55rem;
+}
+
+.summation-detail-pill {
   display: grid;
 }
 
