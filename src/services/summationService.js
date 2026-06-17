@@ -99,7 +99,56 @@ function formatDisplayDate(date) {
 }
 
 function dayOfWeek(date) {
-  return date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  return date.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function parseSourceDate(value) {
+  const text = cleanText(value);
+  if (!text) return null;
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+  const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    const [, month, day, year] = slashMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function normalizeDisplayDate(value, fallbackDate = new Date()) {
+  const parsed = parseSourceDate(value) || parseSourceDate(fallbackDate);
+  return parsed ? formatDisplayDate(parsed) : cleanText(value);
+}
+
+function normalizeDayOfWeek(value, fallbackDate = null) {
+  const cleaned = cleanText(value);
+  const matched = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    .find((weekday) => weekday.toLowerCase() === cleaned.toLowerCase());
+  if (matched) return matched;
+  const parsed = parseSourceDate(fallbackDate);
+  return parsed ? dayOfWeek(parsed) : cleaned;
+}
+
+export function resolveDayIdentityClump(dayPayload = {}, options = {}) {
+  const sourceDate = cleanText(dayPayload?.sourceDate || dayPayload?.dateKey || options.sourceDate || getLocalDateKey(new Date()));
+  const dateForFallback = parseSourceDate(sourceDate) || parseSourceDate(dayPayload?.displayDate) || new Date();
+  const displayDate = normalizeDisplayDate(dayPayload?.displayDate || sourceDate, dateForFallback);
+  const titleOfDay = cleanText(dayPayload?.titleOfDay || dayPayload?.title) || `Summation for ${displayDate}`;
+  const chaoticaValue = dayPayload?.chaoticaDayNumber ?? options.chaoticaDayNumber ?? getChaoticaDayNumber(sourceDate);
+  const numericChaotica = Number(chaoticaValue);
+  return {
+    titleOfDay,
+    displayDate,
+    dayOfWeek: normalizeDayOfWeek(dayPayload?.dayOfWeek, dateForFallback),
+    chaoticaDayNumber: Number.isFinite(numericChaotica) ? numericChaotica : chaoticaValue,
+    sourceDate,
+    createdAt: dayPayload?.dayIdentity?.createdAt || dayPayload?.createdAt || options.createdAt || new Date().toISOString(),
+    updatedAt: options.updatedAt || dayPayload?.updatedAt || new Date().toISOString(),
+  };
 }
 
 function dayOfYear(date) {
@@ -116,12 +165,12 @@ function normalizeDateKeys(dateKeys) {
 export function getStoredSummationActiveDay(fallbackDate = new Date()) {
   if (!hasStorage()) {
     const sourceDate = getLocalDateKey(fallbackDate);
-    return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate) };
+    return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate), dayIdentity: resolveDayIdentityClump({ sourceDate }, { createdAt: new Date().toISOString() }) };
   }
   const stored = safeJsonParse(window.localStorage.getItem(SUMMATION_ACTIVE_DAY_KEY), null);
   if (stored?.sourceDate) return stored;
   const sourceDate = getLocalDateKey(fallbackDate);
-  return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate) };
+  return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate), dayIdentity: resolveDayIdentityClump({ sourceDate }, { createdAt: new Date().toISOString() }) };
 }
 
 
@@ -133,15 +182,16 @@ export async function resolveSummationActiveDay(dateOverride = null) {
   if (Number.isNaN(activeDate.getTime())) return null;
   const dayPayload = await readAssurerDayForSummation(activeDate).catch(() => null);
   const display = dayPayload?.displayDate || formatDisplayDate(activeDate);
-  const title = cleanText(dayPayload?.titleOfDay || dayPayload?.title) || `Summation for ${display}`;
+  const dayIdentity = resolveDayIdentityClump({ ...(dayPayload || {}), sourceDate: dayPayload?.sourceDate || getLocalDateKey(activeDate), displayDate: display }, { updatedAt: new Date().toISOString() });
   return {
     ...(dayPayload || {}),
-    sourceDate: dayPayload?.sourceDate || getLocalDateKey(activeDate),
-    displayDate: display,
-    dayOfWeek: dayPayload?.dayOfWeek || dayOfWeek(activeDate),
-    chaoticaDayNumber: dayPayload?.chaoticaDayNumber || getChaoticaDayNumber(dayPayload?.sourceDate || getLocalDateKey(activeDate)),
-    titleOfDay: title,
-    title,
+    dayIdentity,
+    sourceDate: dayIdentity.sourceDate,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+    titleOfDay: dayIdentity.titleOfDay,
+    title: dayIdentity.titleOfDay,
     fullAssurerDaySnapshot: dayPayload || null,
     availableSourceSignals: dayPayload?.sourceAvailability || {},
     sourceAvailability: dayPayload?.sourceAvailability || {},
@@ -150,11 +200,14 @@ export async function resolveSummationActiveDay(dateOverride = null) {
 
 export function setStoredSummationActiveDay(date = new Date()) {
   const activeDate = date instanceof Date ? date : new Date(date);
+  const updatedAt = new Date().toISOString();
+  const dayIdentity = resolveDayIdentityClump({ sourceDate: getLocalDateKey(activeDate) }, { updatedAt });
   const payload = {
-    sourceDate: getLocalDateKey(activeDate),
-    displayDate: formatDisplayDate(activeDate),
-    dayOfWeek: dayOfWeek(activeDate),
-    updatedAt: new Date().toISOString(),
+    sourceDate: dayIdentity.sourceDate,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    dayIdentity,
+    updatedAt,
   };
   if (hasStorage()) {
     window.localStorage.setItem(SUMMATION_ACTIVE_DAY_KEY, JSON.stringify(payload));
@@ -831,6 +884,8 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
     ...remix.texture.map((item) => item.text),
   ].filter(Boolean);
 
+  const dayIdentity = resolveDayIdentityClump(dayPayload);
+
   return {
     ...preset,
     variationId: preset.id,
@@ -838,9 +893,10 @@ function buildPresetRemix(dayPayload, preset, wrapAnswers) {
     title,
     hasAssurerTitle: Boolean(title),
     emptyTitleText: 'Title of the Day is empty in THE.ASSURER.',
-    displayDate: dayPayload.displayDate || formatDisplayDate(new Date()),
-    dayOfWeek: dayPayload.dayOfWeek || dayOfWeek(new Date()),
-    chaoticaDayNumber: dayPayload.chaoticaDayNumber || getChaoticaDayNumber(dayPayload.sourceDate),
+    dayIdentity,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
     focalPhrase: cleanUpper(remix.focal?.text || ''),
     focalSource: remix.focal ? { source: remix.focal.source, sourceKey: remix.focal.sourceKey } : null,
     textItems: remix.text.filter((item) => item?.sourceKey),
@@ -906,7 +962,7 @@ export async function readAssurerDayForSummation(date = new Date()) {
     sourceDate,
     displayDate,
     dateKey: readAssurerNativeField(assurerDayPayload, 'dateKey', ASSURER_DAILY_FIELD_KEYS.dateKey, sourceDateCandidates) || sourceDate,
-    dayOfWeek: readAssurerNativeField(assurerDayPayload, 'dayOfWeek', ASSURER_DAILY_FIELD_KEYS.dayOfWeek, sourceDateCandidates, cleanUpper) || dayOfWeek(date),
+    dayOfWeek: normalizeDayOfWeek(readAssurerNativeField(assurerDayPayload, 'dayOfWeek', ASSURER_DAILY_FIELD_KEYS.dayOfWeek, sourceDateCandidates), date) || dayOfWeek(date),
     chaoticaDayNumber: getChaoticaDayNumber(sourceDate),
     titleOfDay,
     mood: readAssurerNativeField(assurerDayPayload, 'mood', ASSURER_DAILY_FIELD_KEYS.mood, sourceDateCandidates, cleanUpper),
@@ -1066,18 +1122,20 @@ function normalizeSummationDraft(input) {
     return null;
   }
   const now = new Date().toISOString();
+  const dayIdentity = resolveDayIdentityClump({ ...sourceTruth, ...input, sourceDate: sourceTruth.sourceDate, displayDate: sourceTruth.displayDate }, { createdAt: input.createdAt || now, updatedAt: now });
   return {
     id: input.id || input.draftId || `summation-draft-${sourceTruth.sourceDate}`,
     draftId: input.draftId || input.id || `summation-draft-${sourceTruth.sourceDate}`,
     source: 'THE.ASSURER',
-    sourceDate: sourceTruth.sourceDate,
-    displayDate: sourceTruth.displayDate,
-    dayOfWeek: sourceTruth.dayOfWeek,
-    chaoticaDayNumber: sourceTruth.chaoticaDayNumber || getChaoticaDayNumber(sourceTruth.sourceDate),
-    titleOfDay: sourceTruth.titleOfDay || sourceTruth.title || input.titleOfDay || `Summation for ${sourceTruth.displayDate}`,
-    title: sourceTruth.titleOfDay || sourceTruth.title || input.title || input.titleOfDay || `Summation for ${sourceTruth.displayDate}`,
+    sourceDate: dayIdentity.sourceDate,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+    dayIdentity,
+    titleOfDay: dayIdentity.titleOfDay,
+    title: dayIdentity.titleOfDay,
     fullAssurerDaySnapshot: input.fullAssurerDaySnapshot || input.dayPayload || sourceTruth,
-    sourceTruth,
+    sourceTruth: { ...sourceTruth, dayIdentity },
     availableSourceSignals: input.availableSourceSignals || sourceTruth.availableSourceSignals || sourceTruth.sourceAvailability || {},
     sourceMetadata: input.sourceMetadata || sourceTruth.sourceMetadata || { intake: 'Crystal Wand / Summate', sourceSchemaPreserved: true },
     pennyForYourThoughts: input.pennyForYourThoughts || sourceTruth.pennyForYourThoughts || null,
@@ -1266,13 +1324,15 @@ export function generateSummationVersions(draftInput, options = {}) {
       displayDate: draft.displayDate,
       dayOfWeek: draft.dayOfWeek,
       chaoticaDayNumber: draft.chaoticaDayNumber,
+      dayIdentity: draft.dayIdentity,
+      renderMetadata: { dayIdentity: draft.dayIdentity },
       status: 'Draft',
       createdAt: existing?.createdAt || now,
       updatedAt: now,
       selectedForSeal: false,
       sealed: existing?.sealed || false,
       sourceTruth: normalizedSourceTruth,
-      sourceMetadata: draft.sourceMetadata,
+      sourceMetadata: { ...(draft.sourceMetadata || {}), dayIdentity: draft.dayIdentity },
       pennyForYourThoughts: normalizedSourceTruth.pennyForYourThoughts || draft.pennyForYourThoughts,
       pennyAnswers: normalizedPennyAnswers,
       sourceAnswers: draft.sourceAnswers,
@@ -1336,6 +1396,7 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
     displayDate: draft.displayDate,
     dayOfWeek: draft.dayOfWeek,
     chaoticaDayNumber: draft.chaoticaDayNumber,
+    dayIdentity: draft.dayIdentity,
     title: version.title,
     selectedVersionLabel: version.label,
     renderedText: version.body || version.content,
@@ -1358,7 +1419,7 @@ export function createOrUpdateSummationSketch({ draft: draftInput, version, dood
     selectedForSealVersionId: shouldPreserveSealSelection ? existing.selectedForSealVersionId : '',
     selectedSketchId: shouldPreserveSealSelection ? existing.selectedSketchId : '',
     sourceTruth: draft.sourceTruth,
-    sourceMetadata: draft.sourceMetadata,
+    sourceMetadata: { ...(draft.sourceMetadata || {}), dayIdentity: draft.dayIdentity },
     pennyForYourThoughts: draft.pennyForYourThoughts,
     pennyAnswers: draft.pennyAnswers,
     sourceAnswers: draft.sourceAnswers,
@@ -1394,7 +1455,8 @@ export function markSummationVersionForSeal(versionId) {
   } : sketch);
   writeStorageArray(SUMMATION_VERSIONS_KEY, nextVersions);
   writeStorageArray(SUMMATION_SKETCHES_KEY, nextSketches);
-  writeStorageObject(COMPLETED_SUMMATION_KEY, { draft: readSummationDraftBundle()?.draft, version: nextVersions.find((version) => version.id === versionId) || target, sketch: nextSketches.find((sketch) => sketch.sketchId === targetSketch.sketchId) || targetSketch });
+  const completedDraft = readSummationDraftBundle()?.draft;
+  writeStorageObject(COMPLETED_SUMMATION_KEY, { dayIdentity: completedDraft?.dayIdentity || target.dayIdentity || targetSketch.dayIdentity, draft: completedDraft, version: nextVersions.find((version) => version.id === versionId) || target, sketch: nextSketches.find((sketch) => sketch.sketchId === targetSketch.sketchId) || targetSketch });
   return nextVersions.find((version) => version.id === versionId) || null;
 }
 
@@ -1461,14 +1523,16 @@ export function resolveSummationSealPayload({ completed = null, draft = null, ve
     pennyAnswers: normalizedTruth.pennyAnswers || normalizedTruth.wrapAnswers || completed?.pennyForYourThoughts?.answers || [],
   };
   const now = new Date().toISOString();
+  const dayIdentity = resolveDayIdentityClump({ ...normalizedTruth, ...completed?.dayIdentity, ...draft?.dayIdentity, ...version?.dayIdentity, ...sketch?.dayIdentity }, { updatedAt: now });
   return {
     id: `summation-${normalizedTruth.sourceDate}-${sketch?.sketchId}`,
     source: 'THE.SUMMATION',
-    sourceDate: normalizedTruth.sourceDate,
-    displayDate: normalizedTruth.displayDate,
-    dayOfWeek: normalizedTruth.dayOfWeek,
-    chaoticaDayNumber: normalizedTruth.chaoticaDayNumber || getChaoticaDayNumber(normalizedTruth.sourceDate),
-    title: normalizedTruth.titleOfDay || version?.title || sketch?.title || draft?.title,
+    sourceDate: dayIdentity.sourceDate,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+    dayIdentity,
+    title: dayIdentity.titleOfDay || version?.title || sketch?.title || draft?.title,
     mood: normalizedTruth.mood,
     era: normalizedTruth.era,
     singleness: normalizedTruth.singlenessLevel || normalizedTruth.singleness,
@@ -1485,15 +1549,18 @@ export function resolveSummationSealPayload({ completed = null, draft = null, ve
       ...(draft?.sourceMetadata || {}),
       draftId: draft?.draftId || draft?.id,
       sourceTruthRef: draft?.id || version?.sourceTruthRef || sketch?.sourceTruthRef,
+      dayIdentity,
     },
     future525600: {
-      sourceDate: normalizedTruth.sourceDate,
-      displayDate: normalizedTruth.displayDate,
-      chaoticaDayNumber: normalizedTruth.chaoticaDayNumber || getChaoticaDayNumber(normalizedTruth.sourceDate),
+      sourceDate: dayIdentity.sourceDate,
+      displayDate: dayIdentity.displayDate,
+      dayOfWeek: dayIdentity.dayOfWeek,
+      chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
       mood: normalizedTruth.mood,
       era: normalizedTruth.era,
       singleness: normalizedTruth.singlenessLevel || normalizedTruth.singleness,
-      title: normalizedTruth.titleOfDay || version?.title || sketch?.title || draft?.title,
+      title: dayIdentity.titleOfDay || version?.title || sketch?.title || draft?.title,
+      dayIdentity,
       sourceSignals,
       selectedVersionLabel: version?.label,
       sketchId: sketch?.sketchId,

@@ -141,12 +141,13 @@ function normalizePennyAnswerRows(draft) {
 
 function SourceTruthPanel({ draft }) {
   const sourceTruth = draft?.sourceTruth || {};
-  const titleFallback = sourceTruth.titleOfDay || sourceTruth.title || draft?.titleOfDay || draft?.title || (draft?.displayDate ? `Summation for ${draft.displayDate}` : '');
+  const dayIdentity = draft?.dayIdentity || sourceTruth.dayIdentity || {};
+  const titleFallback = dayIdentity.titleOfDay || sourceTruth.titleOfDay || sourceTruth.title || draft?.titleOfDay || draft?.title || (draft?.displayDate ? `Summation for ${draft.displayDate}` : '');
   const rows = [
-    ['Display date', sourceTruth.displayDate || draft?.displayDate],
-    ['Day of week', sourceTruth.dayOfWeek || draft?.dayOfWeek],
-    ['Source date', sourceTruth.sourceDate || draft?.sourceDate],
-    ['Chaotica day number', sourceTruth.chaoticaDayNumber || draft?.chaoticaDayNumber],
+    ['Display date', dayIdentity.displayDate || sourceTruth.displayDate || draft?.displayDate],
+    ['Day of week', dayIdentity.dayOfWeek || sourceTruth.dayOfWeek || draft?.dayOfWeek],
+    ['Source date', dayIdentity.sourceDate || sourceTruth.sourceDate || draft?.sourceDate],
+    ['Chaotica day number', dayIdentity.chaoticaDayNumber || sourceTruth.chaoticaDayNumber || draft?.chaoticaDayNumber],
     ['Title of the day', titleFallback],
     ['Mood', sourceTruth.mood],
     ['Era', sourceTruth.era],
@@ -297,7 +298,8 @@ export default function TheSummationSection() {
     setBootstrapStatus('Eye of Truth opened from the right-side rail.');
   };
 
-  const title = draft?.titleOfDay || draft?.title || (draft?.displayDate ? `Summation for ${draft.displayDate}` : 'No draft loaded');
+  const dayIdentity = draft?.dayIdentity || {};
+  const title = dayIdentity.titleOfDay || draft?.titleOfDay || draft?.title || (draft?.displayDate ? `Summation for ${draft.displayDate}` : 'No draft loaded');
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
@@ -305,12 +307,12 @@ export default function TheSummationSection() {
       <section className="summation-stage" aria-label="THE.SUMMATION visual layout shell">
         <ShellPanel className="summation-identity-panel" eyebrow="Day Identity / Header Zone" title="THE.SUMMATION">
           <h1>{title}</h1>
-          <div className="summation-detail-grid" aria-label={draft ? "Loaded draft identity" : "Empty draft identity"}>
+          <div className="summation-day-identity-strip" aria-label={draft ? "Locked Day Identity Clump" : "Empty draft identity"}>
             {draft ? (<>
-              <DetailPill label="Display" value={draft.displayDate} />
-              <DetailPill label="Day" value={draft.dayOfWeek} />
-              <DetailPill label="Source" value={draft.sourceDate} />
-              <DetailPill label="Chaotica" value={draft.chaoticaDayNumber ? `Day #${draft.chaoticaDayNumber}` : ''} />
+              <DetailPill label="Title of Day" value={dayIdentity.titleOfDay || title} />
+              <DetailPill label="Display Date" value={dayIdentity.displayDate || draft.displayDate} />
+              <DetailPill label="Day of Week" value={dayIdentity.dayOfWeek || draft.dayOfWeek} />
+              <DetailPill label="Chaotica" value={(dayIdentity.chaoticaDayNumber ?? draft.chaoticaDayNumber) ? `Day #${dayIdentity.chaoticaDayNumber ?? draft.chaoticaDayNumber}` : ''} />
             </>) : <span className="summation-detail-pill"><strong>Status</strong>No draft loaded</span>}
           </div>
           {!draft ? (
@@ -366,7 +368,7 @@ export default function TheSummationSection() {
               <div className="summation-sketch-preview">
                 <article>
                   <h3>{activeSketch.title}</h3>
-                  <p className="summation-sketch-date">{activeSketch.displayDate} · {activeSketch.dayOfWeek} · Chaotica Day #{activeSketch.chaoticaDayNumber}</p>
+                  <p className="summation-sketch-date">{activeSketch.dayIdentity?.displayDate || activeSketch.displayDate} · {activeSketch.dayIdentity?.dayOfWeek || activeSketch.dayOfWeek} · Chaotica Day #{activeSketch.dayIdentity?.chaoticaDayNumber ?? activeSketch.chaoticaDayNumber}</p>
                   <pre>{activeSketch.renderedText}</pre>
                 </article>
                 <label>
