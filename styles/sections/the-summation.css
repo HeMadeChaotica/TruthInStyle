@@ -25,7 +25,7 @@
   pointer-events: none;
 }
 
-.summation-stage {
+.summation-cleared-shell {
   position: relative;
   z-index: 1;
   display: grid;
