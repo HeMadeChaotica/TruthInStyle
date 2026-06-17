@@ -105,39 +105,6 @@ function SourceTruthRow({ label, value }) {
   );
 }
 
-function normalizePennyAnswerRows(draft) {
-  const sourceTruth = draft?.sourceTruth || {};
-  const pools = [
-    draft?.pennyForYourThoughts?.answers,
-    sourceTruth?.pennyForYourThoughts?.answers,
-    sourceTruth?.pennyAnswers,
-    draft?.pennyAnswers,
-    sourceTruth?.wrapAnswers,
-  ].filter(Array.isArray);
-
-  return pools.flatMap((answers, poolIndex) => answers.map((answer, index) => {
-    if (!isPlainObject(answer)) {
-      return {
-        id: `penny-${poolIndex}-${index}`,
-        question: '',
-        answerText: String(answer),
-        metadata: {},
-      };
-    }
-    return {
-      id: cleanText(answer.id || answer.questionId || answer.sourceQuestionId || `penny-${poolIndex}-${index}`),
-      question: cleanText(answer.questionText || answer.question || answer.prompt || answer.sourceQuestionText),
-      answerText: answer.answerText ?? answer.answer ?? answer.value ?? answer.sourceValue ?? '',
-      metadata: {
-        sourceSection: answer.sourceSection,
-        sourceArea: answer.sourceArea,
-        sourceQuestionId: answer.sourceQuestionId || answer.questionId,
-        sourceDate: answer.sourceDate || sourceTruth.sourceDate || draft?.sourceDate,
-        displayDate: answer.displayDate || sourceTruth.displayDate || draft?.displayDate,
-      },
-    };
-  })).filter((answer, index, all) => hasValue(answer.answerText) && all.findIndex((candidate) => candidate.id === answer.id && cleanText(candidate.answerText) === cleanText(answer.answerText)) === index);
-}
 
 function SourceTruthPanel({ draft }) {
   const sourceTruth = draft?.sourceTruth || {};
@@ -154,6 +121,7 @@ function SourceTruthPanel({ draft }) {
     ['Head hummer', sourceTruth.headHummer],
     ['Word of the day', sourceTruth.wordOfDay],
     ['Assured thoughts', sourceTruth.assuredThoughts],
+    ['Penny questions / answers', sourceTruth.pennyQuestions || sourceTruth.pennyAnswers || sourceTruth.pennyForYourThoughts],
     ['THICC.TIME signals', sourceTruth.weekSignal || sourceTruth.thiccTimeSignals || sourceTruth.thiccTime],
     ['REMEMBER.ME moments', sourceTruth.moments || sourceTruth.timelineHighlights || sourceTruth.rememberMeMoments],
     ['THICC.FITT signals', sourceTruth.workoutHighlights || sourceTruth.thiccFittSignals],
@@ -163,25 +131,6 @@ function SourceTruthPanel({ draft }) {
   return <dl className="summation-source-truth-list">{rows.map(([label, value]) => <SourceTruthRow key={label} label={label} value={value} />)}</dl>;
 }
 
-function PennyPanel({ draft }) {
-  const answers = normalizePennyAnswerRows(draft);
-  if (!answers.length) return <p className="summation-empty-copy">No Penny answers saved for this day yet.</p>;
-  return (
-    <div className="summation-penny-answer-list">
-      {answers.map((answer, index) => (
-        <article className="summation-penny-answer" key={`${answer.id}-${index}`}>
-          {answer.question ? <h3>{answer.question}</h3> : <h3>Penny answer</h3>}
-          <p>{String(answer.answerText)}</p>
-          <dl>
-            {Object.entries(answer.metadata).filter(([, value]) => hasValue(value)).map(([key, value]) => (
-              <div key={key}><dt>{humanizeKey(key)}</dt><dd>{String(value)}</dd></div>
-            ))}
-          </dl>
-        </article>
-      ))}
-    </div>
-  );
-}
 
 export default function TheSummationSection() {
   const [bundle, setBundle] = useState(null);
@@ -327,9 +276,6 @@ export default function TheSummationSection() {
           {draft ? <SourceTruthPanel draft={draft} /> : <p className="summation-empty-copy">No active day loaded yet.</p>}
         </ShellPanel>
 
-        <ShellPanel className="summation-penny-panel" eyebrow="Source Answers" title="Penny for Your Thoughts">
-          {draft ? <PennyPanel draft={draft} /> : <p className="summation-empty-copy">No Penny answers loaded yet.</p>}
-        </ShellPanel>
 
         <ShellPanel className="summation-version-panel" eyebrow="Version Selector" title="Version Selector">
           <div className="summation-version-list">

@@ -77,6 +77,18 @@ function preserveText(value) {
   return String(value);
 }
 
+
+function normalizeAssuredPennyQuestions(value = []) {
+  return (Array.isArray(value) ? value : [])
+    .map((entry) => ({
+      id: cleanText(entry?.id),
+      question: cleanText(entry?.question || entry?.text),
+      answer: preserveText(entry?.answer),
+    }))
+    .filter((entry) => entry.id && entry.question)
+    .slice(0, 2);
+}
+
 function safeJsonParse(raw, fallback) {
   try {
     return raw ? JSON.parse(raw) : fallback;
@@ -900,6 +912,15 @@ export async function readAssurerDayForSummation(date = new Date()) {
   const rememberMeMomentMirror = readRememberMeMomentMirror(rememberMeMomentDate) || EMPTY_REMEMBER_ME_MOMENT_MIRROR;
   const thiccFittWorkoutMirror = readThiccFittWorkoutMirror(sourceDateCandidates) || EMPTY_THICC_FITT_WORKOUT_MIRROR;
   const wrapAnswers = normalizeWrapAnswers(readStoredValue(ASSURER_DAILY_FIELD_KEYS.wrapAnswers, sourceDateCandidates));
+  const pennyQuestions = normalizeAssuredPennyQuestions(assurerDayPayload?.pennyQuestions);
+  const pennyAnswers = pennyQuestions.filter((entry) => cleanText(entry.answer)).map((entry) => ({
+    id: entry.id,
+    question: entry.question,
+    answer: entry.answer,
+    answerText: entry.answer,
+    sourceArea: PENNY_FOR_YOUR_THOUGHTS_AREA,
+    sourceSection: 'THE.ASSURER ASSURED THOUGHTS',
+  }));
 
   return {
     source: 'THE.ASSURER',
@@ -916,6 +937,12 @@ export async function readAssurerDayForSummation(date = new Date()) {
     headHummer: readAssurerNativeField(assurerDayPayload, ['headHummer', 'headHum', 'songLoop'], ASSURER_DAILY_FIELD_KEYS.headHummer, sourceDateCandidates, cleanUpper),
     wordOfDay,
     assuredThoughts: readAssurerNativeField(assurerDayPayload, ['assuredThoughts', 'thoughts', 'assurerThoughts'], ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates),
+    pennyQuestions,
+    pennyAnswers,
+    pennyForYourThoughts: {
+      selectedQuestionIds: pennyQuestions.map((entry) => entry.id),
+      answers: pennyAnswers,
+    },
     battleCry: {
       text: cleanText(dailyBattleCry?.text),
       attribution: cleanText(dailyBattleCry?.attribution),
@@ -945,6 +972,8 @@ export async function readAssurerDayForSummation(date = new Date()) {
       momentCards: Boolean(momentHighlights(rememberMeMomentMirror).length),
       thiccTimeWeek: Boolean(weekSignal(thiccTimeWeekMirror)),
       wrapAnswers: Boolean(wrapAnswers.length),
+      pennyQuestions: Boolean(pennyQuestions.length),
+      pennyAnswers: Boolean(pennyAnswers.length),
     },
   };
 }

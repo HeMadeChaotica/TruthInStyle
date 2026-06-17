@@ -35,7 +35,7 @@
   grid-template-columns: minmax(20rem, 1fr) minmax(16rem, 0.58fr) minmax(16rem, 0.58fr);
   grid-template-rows: auto minmax(14rem, 0.76fr) minmax(10rem, 0.48fr) minmax(10rem, 0.44fr);
   grid-template-areas:
-    "identity penny version"
+    "identity version seal"
     "workspace preview seal"
     "workspace sketch seal"
     "workspace sketch seal";
@@ -59,7 +59,6 @@
 
 .summation-identity-panel { grid-area: identity; align-self: start; }
 .summation-workspace-panel { grid-area: workspace; }
-.summation-penny-panel { grid-area: penny; align-self: start; }
 .summation-version-panel { grid-area: version; align-self: start; }
 .summation-preview-panel { grid-area: preview; min-height: 10rem; }
 .summation-sketch-panel { grid-area: sketch; min-height: 10rem; }
@@ -278,7 +277,7 @@
   .summation-stage {
     grid-template-columns: minmax(19rem, 1fr) minmax(15rem, 0.7fr);
     grid-template-areas:
-      "identity penny"
+      "identity version"
       "workspace version"
       "preview seal"
       "sketch seal";
@@ -294,7 +293,7 @@
   .summation-stage {
     grid-template-columns: 1fr;
     grid-template-rows: none;
-    grid-template-areas: "identity" "workspace" "penny" "version" "preview" "sketch" "seal";
+    grid-template-areas: "identity" "workspace" "version" "preview" "sketch" "seal";
     min-height: auto;
     padding-right: 4.75rem;
   }
