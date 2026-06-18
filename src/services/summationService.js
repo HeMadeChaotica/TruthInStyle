@@ -418,7 +418,11 @@ function normalizePennyForYourThoughts(value = createEmptyPennyForYourThoughts()
     .filter(Boolean)
     .slice(0, 2);
   const answerRows = Array.isArray(parsed?.answers) ? parsed.answers : [];
-  const answerById = new Map(answerRows.map((answer) => [cleanText(answer?.questionId), answer]));
+  const answerById = new Map();
+  answerRows.forEach((answer) => {
+    const questionId = cleanText(answer?.questionId || answer?.id || answer?.sourceQuestionId);
+    if (questionId && !answerById.has(questionId)) answerById.set(questionId, answer);
+  });
 
   return {
     selectedQuestionIds,
@@ -426,10 +430,14 @@ function normalizePennyForYourThoughts(value = createEmptyPennyForYourThoughts()
       .filter((question) => selectedQuestionIds.includes(question.id))
       .map((question) => {
         const answer = answerById.get(question.id) || {};
+        const answerText = preserveText(answer.answerText ?? answer.answer);
         return {
+          id: question.id,
+          question: question.text,
           questionId: question.id,
           questionText: question.text,
-          answerText: preserveText(answer.answerText),
+          answer: answerText,
+          answerText,
         };
       }),
   };
@@ -449,14 +457,14 @@ export function isSummationSketchSealable(payload) {
   const selectedQuestionIdSet = new Set(selectedQuestionIds);
   if (selectedQuestionIdSet.size !== 2) return false;
 
-  const answerQuestionIds = answers.map((answer) => cleanText(answer?.questionId));
+  const answerQuestionIds = answers.map((answer) => cleanText(answer?.questionId || answer?.id || answer?.sourceQuestionId));
   if (new Set(answerQuestionIds).size !== 2) return false;
 
   return answers.every((answer) => {
-    const questionId = cleanText(answer?.questionId);
+    const questionId = cleanText(answer?.questionId || answer?.id || answer?.sourceQuestionId);
     return (
       selectedQuestionIdSet.has(questionId)
-      && cleanText(answer?.answerText).length > 0
+      && cleanText(answer?.answerText ?? answer?.answer).length > 0
     );
   });
 }
@@ -988,6 +996,8 @@ export async function readAssurerDayForSummation(date = new Date()) {
   const pennyAnswers = pennyQuestions.filter((entry) => cleanText(entry.answer)).map((entry) => ({
     id: entry.id,
     question: entry.question,
+    questionId: entry.id,
+    questionText: entry.question,
     answer: entry.answer,
     answerText: entry.answer,
     sourceArea: PENNY_FOR_YOUR_THOUGHTS_AREA,
