@@ -146,18 +146,33 @@ function normalizeDayOfWeek(value, fallbackDate = null) {
   return parsed ? dayOfWeek(parsed) : cleaned;
 }
 
+function isMissingChaoticaDayNumber(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'number') return !Number.isFinite(value);
+  if (typeof value === 'string' && value.trim() === '') return true;
+  return !Number.isFinite(Number(typeof value === 'string' ? value.trim() : value));
+}
+
+export function resolveChaoticaDayNumber(input, sourceDate) {
+  const fallbackDayNumber = getChaoticaDayNumber(sourceDate);
+  if (isMissingChaoticaDayNumber(input)) return fallbackDayNumber;
+  return Number(typeof input === 'string' ? input.trim() : input);
+}
+
 export function resolveDayIdentityClump(dayPayload = {}, options = {}) {
   const sourceDate = cleanText(dayPayload?.sourceDate || dayPayload?.dateKey || options.sourceDate || getLocalDateKey(new Date()));
   const dateForFallback = parseSourceDate(sourceDate) || parseSourceDate(dayPayload?.displayDate) || new Date();
   const displayDate = normalizeDisplayDate(dayPayload?.displayDate || sourceDate, dateForFallback);
   const titleOfDay = cleanText(dayPayload?.titleOfDay || dayPayload?.title) || `Summation for ${displayDate}`;
-  const chaoticaValue = dayPayload?.chaoticaDayNumber ?? options.chaoticaDayNumber ?? getChaoticaDayNumber(sourceDate);
-  const numericChaotica = Number(chaoticaValue);
+  const chaoticaSourceValue = isMissingChaoticaDayNumber(dayPayload?.chaoticaDayNumber)
+    ? options.chaoticaDayNumber
+    : dayPayload?.chaoticaDayNumber;
+  const chaoticaDayNumber = resolveChaoticaDayNumber(chaoticaSourceValue, sourceDate);
   return {
     titleOfDay,
     displayDate,
     dayOfWeek: normalizeDayOfWeek(dayPayload?.dayOfWeek, dateForFallback),
-    chaoticaDayNumber: Number.isFinite(numericChaotica) ? numericChaotica : chaoticaValue,
+    chaoticaDayNumber,
     sourceDate,
     createdAt: dayPayload?.dayIdentity?.createdAt || dayPayload?.createdAt || options.createdAt || new Date().toISOString(),
     updatedAt: options.updatedAt || dayPayload?.updatedAt || new Date().toISOString(),
