@@ -23,6 +23,7 @@ const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay'
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
 const SUMMATION_ACTIVE_DAY_KEY = 'the_summation_active_day_v1';
+const DAY_CAPSULE_PAYLOAD_KEY = 'the_summation_day_capsule_payload_v1';
 export const SUMMATION_ACTIVE_DAY_CHANGED_EVENT = 'truthinstyle-summation-active-day-changed';
 
 export const PENNY_FOR_YOUR_THOUGHTS_AREA = 'PENNY FOR YOUR THOUGHTS';
@@ -1254,6 +1255,109 @@ function versionBodyForType(sourceTruth, type) {
   if (type.label === 'Shadow Truth') return [`The deeper pattern of ${sourceTruth.displayDate} is held without performance.`, ...lines].join('\n');
   if (type.label === 'Receipt Truth') return lines.join('\n');
   return [`${sourceTruth.displayDate} is summarized from the selected THE.ASSURER day.`, ...lines].join('\n');
+}
+
+
+export function readStoredDayCapsulePayload() {
+  if (!hasStorage()) return null;
+  const payload = safeJsonParse(window.localStorage.getItem(DAY_CAPSULE_PAYLOAD_KEY), null);
+  return payload && typeof payload === 'object' ? payload : null;
+}
+
+export function hasStoredSummationActiveDay() {
+  if (!hasStorage()) return false;
+  return Boolean(safeJsonParse(window.localStorage.getItem(SUMMATION_ACTIVE_DAY_KEY), null)?.sourceDate);
+}
+
+function normalizeNullable(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') return value;
+  const text = cleanText(value);
+  return text ? value : null;
+}
+
+function normalizeList(value) {
+  if (Array.isArray(value)) return value;
+  return isPresent(value) ? [value] : [];
+}
+
+function detectThemesFromDay(dayPayload = {}) {
+  return [dayPayload.mood, dayPayload.era, dayPayload.wordOfDay?.word, dayPayload.headHummer]
+    .map(cleanText)
+    .filter(Boolean);
+}
+
+export function buildDayCapsuleRenderPayload(activeDayPayload) {
+  if (!activeDayPayload?.sourceDate || !activeDayPayload?.displayDate) return null;
+  const now = new Date().toISOString();
+  const dayIdentity = {
+    ...resolveDayIdentityClump(activeDayPayload, { updatedAt: now }),
+    titleOfDay: cleanText(activeDayPayload.titleOfDay || activeDayPayload.title) || null,
+  };
+  const pennyQuestions = normalizeAssuredPennyQuestions(activeDayPayload.pennyQuestions);
+  const sourceSnapshot = {
+    mood: normalizeNullable(activeDayPayload.mood),
+    wordOfDay: normalizeNullable(activeDayPayload.wordOfDay),
+    headHummer: normalizeNullable(activeDayPayload.headHummer),
+    era: normalizeNullable(activeDayPayload.era),
+    singlenessLevel: normalizeNullable(activeDayPayload.singlenessLevel || activeDayPayload.singleness),
+    moments: normalizeList(activeDayPayload.moments || activeDayPayload.timelineHighlights),
+    thiccTimeSignals: normalizeNullable(activeDayPayload.thiccTimeSignals || activeDayPayload.weekSignal || activeDayPayload.thiccTime),
+    rememberMeMoments: normalizeList(activeDayPayload.rememberMeMoments || activeDayPayload.moments || activeDayPayload.timelineHighlights),
+    thiccFittSignals: normalizeList(activeDayPayload.thiccFittSignals || activeDayPayload.workoutHighlights),
+    daEaterSignals: {
+      macroHighlights: normalizeList(activeDayPayload.daEaterSignals?.macroHighlights || activeDayPayload.macroHighlights),
+      mealHighlights: normalizeList(activeDayPayload.daEaterSignals?.mealHighlights || activeDayPayload.mealHighlights),
+    },
+    otherSignals: {
+      battleCry: normalizeNullable(activeDayPayload.battleCry),
+      weather: normalizeNullable(activeDayPayload.weather),
+      location: normalizeNullable(activeDayPayload.location),
+      wrapAnswers: normalizeList(activeDayPayload.wrapAnswers),
+      sourceAvailability: activeDayPayload.sourceAvailability || activeDayPayload.availableSourceSignals || {},
+    },
+  };
+  return {
+    payloadId: `day-capsule-${dayIdentity.sourceDate}`,
+    dayIdentity,
+    assuredThoughts: {
+      diaryEntry: normalizeNullable(activeDayPayload.assuredThoughts),
+      pennyQuestions: [0, 1].map((index) => ({
+        id: pennyQuestions[index]?.id || `penny-${index + 1}`,
+        question: pennyQuestions[index]?.question || null,
+        answer: normalizeNullable(pennyQuestions[index]?.answer),
+      })),
+    },
+    sourceSnapshot,
+    renderInstructions: {
+      goal: 'Create one full-page Day Capsule render from the day content.',
+      identityClumpRequired: true,
+      styleReference: 'structured editorial page with art accents, similar in spirit to the resume reference',
+      textAccuracyRule: 'App must preserve identity clump deterministically.',
+    },
+    detectedThemes: detectThemesFromDay(activeDayPayload),
+    detectedMotifs: [],
+    suggestedPalette: null,
+    suggestedLayoutFamily: 'day-capsule-editorial',
+    renderPrompt: null,
+    status: 'Day Capsule payload ready',
+    createdAt: readStoredDayCapsulePayload()?.payloadId === `day-capsule-${dayIdentity.sourceDate}` ? readStoredDayCapsulePayload()?.createdAt || now : now,
+    updatedAt: now,
+  };
+}
+
+export function saveDayCapsuleRenderPayload(payload) {
+  if (!hasStorage() || !payload) return payload;
+  writeStorageObject(DAY_CAPSULE_PAYLOAD_KEY, payload);
+  return payload;
+}
+
+export async function createDayCapsulePayloadFromActiveDay() {
+  if (!hasStoredSummationActiveDay()) return { payload: null, error: 'Choose an active day with Eye of Truth first.' };
+  const activeDay = await resolveSummationActiveDay();
+  if (!activeDay?.sourceDate || !activeDay?.displayDate) return { payload: null, error: 'Choose an active day with Eye of Truth first.' };
+  const payload = saveDayCapsuleRenderPayload(buildDayCapsuleRenderPayload(activeDay));
+  return { payload, activeDay };
 }
 
 export function createSummationDraftFromAssurerDay(selectedDayPayload) {
