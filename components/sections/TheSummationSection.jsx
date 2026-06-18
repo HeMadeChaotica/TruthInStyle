@@ -95,39 +95,6 @@ function SourceTruthRow({ label, value }) {
   );
 }
 
-function normalizePennyAnswerRows(draft) {
-  const sourceTruth = draft?.sourceTruth || {};
-  const pools = [
-    draft?.pennyForYourThoughts?.answers,
-    sourceTruth?.pennyForYourThoughts?.answers,
-    sourceTruth?.pennyAnswers,
-    draft?.pennyAnswers,
-    sourceTruth?.wrapAnswers,
-  ].filter(Array.isArray);
-
-  return pools.flatMap((answers, poolIndex) => answers.map((answer, index) => {
-    if (!isPlainObject(answer)) {
-      return {
-        id: `penny-${poolIndex}-${index}`,
-        question: '',
-        answerText: String(answer),
-        metadata: {},
-      };
-    }
-    return {
-      id: cleanText(answer.id || answer.questionId || answer.sourceQuestionId || `penny-${poolIndex}-${index}`),
-      question: cleanText(answer.questionText || answer.question || answer.prompt || answer.sourceQuestionText),
-      answerText: answer.answerText ?? answer.answer ?? answer.value ?? answer.sourceValue ?? '',
-      metadata: {
-        sourceSection: answer.sourceSection,
-        sourceArea: answer.sourceArea,
-        sourceQuestionId: answer.sourceQuestionId || answer.questionId,
-        sourceDate: answer.sourceDate || sourceTruth.sourceDate || draft?.sourceDate,
-        displayDate: answer.displayDate || sourceTruth.displayDate || draft?.displayDate,
-      },
-    };
-  })).filter((answer, index, all) => hasValue(answer.answerText) && all.findIndex((candidate) => candidate.id === answer.id && cleanText(candidate.answerText) === cleanText(answer.answerText)) === index);
-}
 
 function SourceTruthPanel({ draft }) {
   const sourceTruth = draft?.sourceTruth || {};
@@ -145,6 +112,7 @@ function SourceTruthPanel({ draft }) {
     ['Head hummer', sourceTruth.headHummer],
     ['Word of the day', sourceTruth.wordOfDay],
     ['Assured thoughts', sourceTruth.assuredThoughts],
+    ['Penny questions / answers', sourceTruth.pennyQuestions || sourceTruth.pennyAnswers || sourceTruth.pennyForYourThoughts],
     ['THICC.TIME signals', sourceTruth.weekSignal || sourceTruth.thiccTimeSignals || sourceTruth.thiccTime],
     ['REMEMBER.ME moments', sourceTruth.moments || sourceTruth.timelineHighlights || sourceTruth.rememberMeMoments],
     ['THICC.FITT signals', sourceTruth.workoutHighlights || sourceTruth.thiccFittSignals],
@@ -154,25 +122,6 @@ function SourceTruthPanel({ draft }) {
   return <dl className="summation-source-truth-list">{rows.map(([label, value]) => <SourceTruthRow key={label} label={label} value={value} />)}</dl>;
 }
 
-function PennyPanel({ draft }) {
-  const answers = normalizePennyAnswerRows(draft);
-  if (!answers.length) return <p className="summation-empty-copy">No Penny answers saved for this day yet.</p>;
-  return (
-    <div className="summation-penny-answer-list">
-      {answers.map((answer, index) => (
-        <article className="summation-penny-answer" key={`${answer.id}-${index}`}>
-          {answer.question ? <h3>{answer.question}</h3> : <h3>Penny answer</h3>}
-          <p>{String(answer.answerText)}</p>
-          <dl>
-            {Object.entries(answer.metadata).filter(([, value]) => hasValue(value)).map(([key, value]) => (
-              <div key={key}><dt>{humanizeKey(key)}</dt><dd>{String(value)}</dd></div>
-            ))}
-          </dl>
-        </article>
-      ))}
-    </div>
-  );
-}
 
 export default function TheSummationSection() {
   const [bundle, setBundle] = useState(null);
@@ -305,18 +254,31 @@ export default function TheSummationSection() {
               <DetailPill label="Chaotica" value={(dayIdentity.chaoticaDayNumber ?? draft.chaoticaDayNumber) ? `Day #${dayIdentity.chaoticaDayNumber ?? draft.chaoticaDayNumber}` : ''} />
             </>) : <span className="summation-detail-pill"><strong>Status</strong>No draft loaded</span>}
           </div>
-        </div>
+          {!draft ? (
+            <div className="summation-bootstrap-actions" aria-label="Real-data bootstrap actions">
+              <button type="button" onClick={handleLoadActiveAssurerDay}>Load Active Assurer Day</button>
+              <button type="button" onClick={handleOpenEye}>Open Eye of Truth</button>
+              <p>Use Crystal Wand / Summate from the right-side rail when an active Assurer day is ready. No duplicate Wand glyph is placed here.</p>
+              {bootstrapStatus ? <p role="status">{bootstrapStatus}</p> : null}
+            </div>
+          ) : null}
+        </ShellPanel>
 
-        <aside className="summation-art-preserve" aria-label="Approved Summation background art preserve area">
-          <div className="summation-tailoring-box" aria-label="Tailoring Notes">
-            <label htmlFor="summation-tailoring-notes">Tailoring Notes</label>
-            <textarea
-              id="summation-tailoring-notes"
-              disabled={!hasRender}
-              aria-disabled={!hasRender}
-              placeholder="Available after first render."
-            />
-            <p>Available after first render.</p>
+        <ShellPanel className="summation-workspace-panel" eyebrow="Source Truth Panel" title="Source Truth">
+          {draft ? <SourceTruthPanel draft={draft} /> : <p className="summation-empty-copy">No active day loaded yet.</p>}
+        </ShellPanel>
+
+
+        <ShellPanel className="summation-version-panel" eyebrow="Version Selector" title="Version Selector">
+          <div className="summation-version-list">
+            {!versions.length ? <p className="summation-empty-copy">Summate a day to generate versions.</p> : null}
+            {versions.map((version) => (
+              <button key={version.id} type="button" className={`summation-version-card ${activeVersion?.id === version.id ? 'is-active' : ''}`} onClick={() => setActiveVersionId(version.id)}>
+                <strong>{version.label}</strong>
+                <span>{version.styleLabel}</span>
+                <em>{sketchStatusFor(version)}</em>
+              </button>
+            ))}
           </div>
         </ShellPanel>
 

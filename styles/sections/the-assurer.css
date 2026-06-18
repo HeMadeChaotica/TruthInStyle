@@ -1889,3 +1889,40 @@
 .assurer-workout-mirror-expanded .assurer-signal-tile strong {
   font-size: clamp(11px, 0.78vw, 15px);
 }
+
+.assurer-penny-questions {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(5px, 0.6vw, 10px);
+}
+
+.assurer-penny-question {
+  margin: 0 0 0.35rem;
+  color: var(--app-text-primary);
+  font-size: clamp(8px, 0.66vw, 12px);
+  line-height: 1.25;
+}
+
+.assurer-penny-answer {
+  min-height: clamp(44px, 4.6vw, 72px);
+  resize: vertical;
+}
+
+.assurer-expanded-thoughts {
+  display: grid;
+  gap: 1rem;
+}
+
+.assurer-penny-questions-expanded {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.assurer-penny-questions-expanded .assurer-penny-question {
+  font-size: clamp(14px, 1vw, 18px);
+}
+
+.assurer-penny-questions-expanded .assurer-penny-answer {
+  min-height: clamp(110px, 13vw, 190px);
+}

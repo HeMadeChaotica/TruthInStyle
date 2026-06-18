@@ -26,6 +26,7 @@ import {
   WEATHER_CITY_OPTIONS,
   fetchAssurerWeather,
 } from '../../lib/theAssurer/weatherOptions';
+import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS } from '../../src/services/summationService';
 import '../../styles/sections/the-assurer.css';
 
 const DAILY_WORD_BANK = [
@@ -117,6 +118,7 @@ function buildAssurerDayPayload({
   wordOfDay,
   wordDefinition,
   assuredThoughts,
+  pennyQuestions,
   battleCry,
   thiccTime,
   rememberMe,
@@ -132,6 +134,7 @@ function buildAssurerDayPayload({
     headHummer,
     location,
     assuredThoughts,
+    pennyQuestions,
   };
   const wordOfDayPayload = {
     source: 'THE.ASSURER WORD OF THE DAY',
@@ -163,6 +166,7 @@ function buildAssurerDayPayload({
     headHummer,
     wordOfDay: wordOfDayPayload,
     assuredThoughts,
+    pennyQuestions: normalizePennyQuestions(pennyQuestions),
     nativeFields,
     thiccTime: thiccTime || EMPTY_THICC_TIME_WEEK_MIRROR,
     rememberMe: rememberMe || EMPTY_REMEMBER_ME_MOMENT_MIRROR,
@@ -172,6 +176,32 @@ function buildAssurerDayPayload({
     battleCry: battleCry || null,
     wordOfTheDay: wordOfDayPayload,
   };
+}
+
+
+function normalizePennyQuestions(pennyQuestions) {
+  return (Array.isArray(pennyQuestions) ? pennyQuestions : [])
+    .map((entry) => ({
+      id: String(entry?.id || '').trim(),
+      question: String(entry?.question || entry?.text || '').trim(),
+      answer: typeof entry?.answer === 'string' ? entry.answer : '',
+    }))
+    .filter((entry) => entry.id && entry.question)
+    .slice(0, 2);
+}
+
+function createDailyPennyQuestions() {
+  const bank = [...PENNY_FOR_YOUR_THOUGHTS_QUESTIONS];
+  for (let index = bank.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [bank[index], bank[swapIndex]] = [bank[swapIndex], bank[index]];
+  }
+
+  return bank.slice(0, 2).map((entry) => ({
+    id: entry.id,
+    question: entry.text,
+    answer: '',
+  }));
 }
 
 function getDailyWordDefault(storageDate) {
@@ -500,6 +530,7 @@ export default function TheAssurerSection() {
   const [wordOfDay, setWordOfDay] = useState(defaultDailyWord.word);
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
   const [assuredThoughts, setAssuredThoughts] = useState('');
+  const [pennyQuestions, setPennyQuestions] = useState([]);
   const [storageLoaded, setStorageLoaded] = useState(false);
   const [macroMirror, setMacroMirror] = useState(ASSURER_MACRO_FALLBACK_MIRROR);
   const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
@@ -527,6 +558,8 @@ export default function TheAssurerSection() {
       if (typeof savedDay?.location === 'string') setLocation(savedDay.location);
       if (typeof savedDay?.headHummer === 'string') setHeadHummer(savedDay.headHummer);
       if (typeof savedDay?.assuredThoughts === 'string') setAssuredThoughts(savedDay.assuredThoughts);
+      const savedPennyQuestions = normalizePennyQuestions(savedDay?.pennyQuestions);
+      setPennyQuestions(savedPennyQuestions.length === 2 ? savedPennyQuestions : createDailyPennyQuestions());
 
       const dayWord = savedDay?.wordOfDay && typeof savedDay.wordOfDay === 'object' ? savedDay.wordOfDay : null;
       if (typeof dayWord?.word === 'string') {
@@ -540,6 +573,7 @@ export default function TheAssurerSection() {
         setWordDefinition(savedWord.definition);
       }
     } catch {
+      setPennyQuestions(createDailyPennyQuestions());
       // Keep the blank title and deterministic daily word when local storage is unavailable.
     } finally {
       setStorageLoaded(true);
@@ -679,6 +713,30 @@ export default function TheAssurerSection() {
     };
   });
 
+  const updatePennyAnswer = (questionId, answer) => {
+    setPennyQuestions((currentQuestions) => currentQuestions.map((entry) => (
+      entry.id === questionId ? { ...entry, answer } : entry
+    )));
+  };
+
+  const renderPennyQuestions = (expanded = false) => (
+    <div className={`assurer-penny-questions ${expanded ? 'assurer-penny-questions-expanded' : ''}`.trim()}>
+      {pennyQuestions.map((entry, index) => (
+        <AssurerField id={`assurer-penny-${entry.id}`} label={`PENNY QUESTION ${index + 1}`} key={entry.id}>
+          <p className="assurer-penny-question">{entry.question}</p>
+          <textarea
+            id={`assurer-penny-${entry.id}`}
+            className="assurer-control assurer-penny-answer"
+            value={entry.answer}
+            onChange={(event) => updatePennyAnswer(entry.id, event.target.value)}
+            aria-label={`PENNY ANSWER ${index + 1}`}
+            placeholder="ANSWER WHEN READY"
+          />
+        </AssurerField>
+      ))}
+    </div>
+  );
+
   const openExpandedWidget = (widgetName) => setExpandedWidget(widgetName);
   const closeExpandedWidget = () => setExpandedWidget(null);
 
@@ -795,12 +853,15 @@ export default function TheAssurerSection() {
         );
       case 'thoughts':
         return (
-          <textarea
-            className="assurer-control assurer-lined-writing assurer-expanded-thoughts-textarea"
-            value={assuredThoughts}
-            onChange={(event) => setAssuredThoughts(event.target.value)}
-            aria-label="ASSURED THOUGHTS EXPANDED"
-          />
+          <div className="assurer-expanded-thoughts">
+            <textarea
+              className="assurer-control assurer-lined-writing assurer-expanded-thoughts-textarea"
+              value={assuredThoughts}
+              onChange={(event) => setAssuredThoughts(event.target.value)}
+              aria-label="ASSURED THOUGHTS EXPANDED"
+            />
+            {renderPennyQuestions(true)}
+          </div>
         );
       case 'dailyOrbit':
         return (
@@ -854,6 +915,7 @@ export default function TheAssurerSection() {
     wordOfDay,
     wordDefinition,
     assuredThoughts,
+    pennyQuestions,
     battleCry: dailyBattleCry,
     thiccTime: thiccTimeWeekMirror,
     rememberMe: rememberMeSource,
@@ -876,6 +938,7 @@ export default function TheAssurerSection() {
     wordOfDay,
     wordDefinition,
     assuredThoughts,
+    pennyQuestions,
     dailyBattleCry,
     thiccTimeWeekMirror,
     rememberMeSource,
@@ -1146,6 +1209,7 @@ export default function TheAssurerSection() {
                 onChange={(event) => setAssuredThoughts(event.target.value)}
                 aria-label="ASSURED THOUGHTS"
               />
+              {renderPennyQuestions()}
             </div>
           </article>
         </div>

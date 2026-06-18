@@ -29,8 +29,14 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(16rem, 3fr);
-  gap: clamp(0.85rem, 1.4vw, 1.35rem);
+  grid-template-columns: minmax(20rem, 1fr) minmax(16rem, 0.58fr) minmax(16rem, 0.58fr);
+  grid-template-rows: auto minmax(14rem, 0.76fr) minmax(10rem, 0.48fr) minmax(10rem, 0.44fr);
+  grid-template-areas:
+    "identity version seal"
+    "workspace preview seal"
+    "workspace sketch seal"
+    "workspace sketch seal";
+  gap: clamp(0.75rem, 1.15vw, 1.15rem);
   min-height: 100vh;
   box-sizing: border-box;
   padding: clamp(0.85rem, 1.4vw, 1.35rem) clamp(5rem, 7vw, 6.75rem) clamp(0.85rem, 1.4vw, 1.35rem) clamp(0.85rem, 1.4vw, 1.35rem);
@@ -40,6 +46,29 @@
 .summation-art-preserve {
   min-width: 0;
   min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--summation-border);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, var(--summation-panel), var(--summation-panel-soft));
+  box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.24), inset 0 0 1.4rem rgba(255, 214, 226, 0.045);
+  backdrop-filter: blur(1.5px);
+  padding: clamp(0.9rem, 1.4vw, 1.25rem);
+}
+
+.summation-identity-panel { grid-area: identity; align-self: start; }
+.summation-workspace-panel { grid-area: workspace; }
+.summation-version-panel { grid-area: version; align-self: start; }
+.summation-preview-panel { grid-area: preview; min-height: 10rem; }
+.summation-sketch-panel { grid-area: sketch; min-height: 10rem; }
+.summation-seal-panel { grid-area: seal; align-self: end; max-height: 32rem; }
+
+.summation-panel-header p,
+.summation-detail-pill strong {
+  margin: 0 0 0.35rem;
+  color: #ffbad0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.72rem;
 }
 
 .summation-panel-header h2 {
@@ -143,11 +172,30 @@
   opacity: 0.68;
 }
 
-.summation-tailoring-box p {
-  margin: 0;
-  color: var(--summation-muted);
-  font-size: 0.78rem;
-  line-height: 1.35;
+.summation-empty-state {
+  position: relative;
+  z-index: 1;
+  max-width: 38rem;
+  margin: 10vh 0 0 clamp(1rem, 5vw, 5rem);
+  padding: clamp(1.2rem, 2.6vw, 2.4rem);
+  border: 1px solid var(--summation-border);
+  border-radius: 1.5rem;
+  background: rgba(10, 4, 12, 0.58);
+  backdrop-filter: blur(1.5px);
+}
+
+.summation-empty-state h1 { margin: 0 0 1rem; font-size: clamp(2.4rem, 7vw, 5rem); }
+.summation-empty-state p { line-height: 1.5; color: var(--summation-muted); }
+
+@media (max-width: 1180px) {
+  .summation-stage {
+    grid-template-columns: minmax(19rem, 1fr) minmax(15rem, 0.7fr);
+    grid-template-areas:
+      "identity version"
+      "workspace version"
+      "preview seal"
+      "sketch seal";
+  }
 }
 
 @media (max-width: 980px) {
@@ -156,9 +204,10 @@
   }
 
   .summation-stage {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(62vh, auto) auto;
-    min-height: 100vh;
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-template-areas: "identity" "workspace" "version" "preview" "sketch" "seal";
+    min-height: auto;
     padding-right: 4.75rem;
   }
 
