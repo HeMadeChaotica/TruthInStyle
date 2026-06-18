@@ -5,6 +5,12 @@ import {
   createDayCapsulePayloadFromActiveDay,
   readStoredDayCapsulePayload,
 } from '../../src/services/summationService';
+import {
+  buildDayCapsuleRenderRequest,
+  getDayCapsuleRenderStatus,
+  readPersistedDayCapsuleRender,
+  requestDayCapsuleRender,
+} from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
@@ -99,8 +105,17 @@ function PayloadSourceSnapshot({ payload }) {
 export default function TheSummationSection() {
   const [payload, setPayload] = useState(null);
   const [bootstrapStatus, setBootstrapStatus] = useState('');
+  const [renderRecord, setRenderRecord] = useState(() => readPersistedDayCapsuleRender());
 
-  const loadPayload = useCallback(() => setPayload(readStoredDayCapsulePayload()), []);
+  const loadPayload = useCallback(() => {
+    const storedPayload = readStoredDayCapsulePayload();
+    const storedRender = getDayCapsuleRenderStatus(storedPayload?.payloadId ? `${storedPayload.payloadId}-render` : undefined);
+    const connectedRender = storedPayload && !storedRender?.renderRequest
+      ? requestDayCapsuleRender(buildDayCapsuleRenderRequest(storedPayload))
+      : storedRender;
+    setPayload(storedPayload);
+    setRenderRecord(connectedRender);
+  }, []);
 
   useEffect(() => {
     loadPayload();
@@ -112,6 +127,20 @@ export default function TheSummationSection() {
   const dayIdentity = payload?.dayIdentity || {};
   const title = dayIdentity.titleOfDay || 'No Day Capsule payload loaded';
   const pennyAnswers = useMemo(() => payload?.assuredThoughts?.pennyQuestions || [], [payload]);
+  const renderStatus = renderRecord?.status || 'idle';
+  const renderMessage = useMemo(() => {
+    if (!payload) return 'No payload ready';
+    if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
+    if (renderStatus === 'renderer_not_connected') return 'Renderer not connected yet. Day Capsule payload is ready.';
+    if (renderStatus === 'ready_to_render') return 'Day Capsule render request ready.';
+    if (renderStatus === 'queued') return 'Day Capsule render queued.';
+    if (renderStatus === 'rendering') return 'Rendering Day Capsule…';
+    if (renderStatus === 'rendered') return 'Day Capsule rendered.';
+    if (renderStatus === 'revision_requested') return 'Day Capsule revision requested.';
+    if (renderStatus === 'revised') return 'Day Capsule revised.';
+    if (renderStatus === 'failed') return 'Day Capsule render failed.';
+    return payload.status || 'Day Capsule render request ready.';
+  }, [payload, renderRecord, renderStatus]);
 
   const handleBuildFromActiveDay = async () => {
     setBootstrapStatus('Checking active day…');
@@ -120,8 +149,11 @@ export default function TheSummationSection() {
       setBootstrapStatus(result?.error || 'Choose an active day with Eye of Truth first.');
       return;
     }
+    const renderRequest = buildDayCapsuleRenderRequest(result.payload);
+    const pendingRender = requestDayCapsuleRender(renderRequest);
     setPayload(result.payload);
-    setBootstrapStatus('Day Capsule payload ready');
+    setRenderRecord(pendingRender);
+    setBootstrapStatus('Day Capsule render request ready.');
   };
 
   const handleOpenEye = () => {
@@ -136,7 +168,7 @@ export default function TheSummationSection() {
         <div className="summation-render-zone">
           <div className="summation-render-surface">
             <article className="summation-payload-ready-card">
-              <p className="summation-status-kicker">{payload?.status || 'No payload ready'}</p>
+              <p className="summation-status-kicker">{renderMessage}</p>
               <h1>{title}</h1>
               {payload ? (
                 <>
@@ -146,7 +178,11 @@ export default function TheSummationSection() {
                     <DetailPill label="Day of Week" value={dayIdentity.dayOfWeek} />
                     <DetailPill label="Chaotica" value={dayIdentity.chaoticaDayNumber ? `Day #${dayIdentity.chaoticaDayNumber}` : null} />
                   </div>
-                  <p>No final render image has been generated. This zone is ready for the future Day Capsule render engine.</p>
+                  {renderStatus === 'rendered' && renderRecord?.renderArtifact?.url ? (
+                    <img className="summation-render-artifact" src={renderRecord.renderArtifact.url} alt={`Rendered Day Capsule for ${title}`} />
+                  ) : (
+                    <p>{renderMessage}</p>
+                  )}
                 </>
               ) : (
                 <div className="summation-bootstrap-actions" aria-label="Day Capsule payload actions">
@@ -162,7 +198,8 @@ export default function TheSummationSection() {
 
         <aside className="summation-art-preserve" aria-label="THE.SUMMATION preserved right art rail">
           <ShellPanel className="summation-identity-panel" eyebrow="Payload State" title="Day Capsule">
-            <DetailPill label="Status" value={payload?.status || bootstrapStatus || 'Choose an active day with Eye of Truth first.'} />
+            <DetailPill label="Status" value={renderMessage || bootstrapStatus || 'Choose an active day with Eye of Truth first.'} />
+            <DetailPill label="Render ID" value={renderRecord?.renderId} />
             <DetailPill label="Payload ID" value={payload?.payloadId} />
             <DetailPill label="Updated" value={payload?.updatedAt} />
           </ShellPanel>
