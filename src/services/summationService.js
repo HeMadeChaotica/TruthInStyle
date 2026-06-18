@@ -1593,6 +1593,43 @@ export function markSummationVersionForSeal(versionId) {
   return nextVersions.find((version) => version.id === versionId) || null;
 }
 
+
+const REQUIRED_DAY_IDENTITY_FIELDS = ['titleOfDay', 'displayDate', 'dayOfWeek', 'chaoticaDayNumber'];
+const FULL_DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function listDayIdentityMissingFields(dayIdentity = {}) {
+  const missing = REQUIRED_DAY_IDENTITY_FIELDS.filter((field) => !cleanText(dayIdentity?.[field]));
+  if (dayIdentity?.displayDate && !/^\d{2}\/\d{2}\/\d{4}$/.test(cleanText(dayIdentity.displayDate))) {
+    missing.push('displayDate (MM/DD/YYYY)');
+  }
+  if (dayIdentity?.dayOfWeek && !FULL_DAY_NAMES.includes(cleanText(dayIdentity.dayOfWeek))) {
+    missing.push('dayOfWeek (full name)');
+  }
+  return [...new Set(missing)];
+}
+
+function resolveFinalSealDayIdentity({ completed = null, draft = null, version = null, sketch = null, sourceTruth = null } = {}) {
+  const currentDayCapsule = readStoredDayCapsulePayload();
+  const sourceDate = completed?.dayIdentity?.sourceDate
+    || currentDayCapsule?.dayIdentity?.sourceDate
+    || currentDayCapsule?.sourceDate
+    || sourceTruth?.sourceDate
+    || draft?.sourceDate
+    || version?.sourceDate
+    || sketch?.sourceDate;
+  const activeDay = getStoredSummationActiveDay(sourceDate ? new Date(`${sourceDate}T00:00:00`) : new Date());
+  return resolveDayIdentityClump({
+    ...(sourceDate ? { sourceDate } : {}),
+    ...(sourceTruth || {}),
+    ...(draft?.dayIdentity || {}),
+    ...(version?.dayIdentity || {}),
+    ...(sketch?.dayIdentity || {}),
+    ...(activeDay?.dayIdentity || activeDay || {}),
+    ...(currentDayCapsule?.dayIdentity || {}),
+    ...(completed?.dayIdentity || {}),
+  }, { updatedAt: new Date().toISOString() });
+}
+
 export function listSummationSealMissingFields({ draft, version, sketch } = {}) {
   const sourceTruth = fullSourceTruthFromDraft(draft || version || sketch || {});
   const missing = [];
@@ -1656,7 +1693,7 @@ export function resolveSummationSealPayload({ completed = null, draft = null, ve
     pennyAnswers: normalizedTruth.pennyAnswers || normalizedTruth.wrapAnswers || completed?.pennyForYourThoughts?.answers || [],
   };
   const now = new Date().toISOString();
-  const dayIdentity = resolveDayIdentityClump({ ...normalizedTruth, ...completed?.dayIdentity, ...draft?.dayIdentity, ...version?.dayIdentity, ...sketch?.dayIdentity }, { updatedAt: now });
+  const dayIdentity = resolveFinalSealDayIdentity({ completed, draft, version, sketch, sourceTruth: normalizedTruth });
   return {
     id: `summation-${normalizedTruth.sourceDate}-${sketch?.sketchId}`,
     source: 'THE.SUMMATION',
@@ -1734,14 +1771,23 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
   }
   const sourceTruth = fullSourceTruthFromDraft({ ...draft, sourceTruth: { ...version.sourceTruth, ...sketch.sourceTruth, ...draft.sourceTruth } });
   const now = new Date().toISOString();
+  const dayIdentity = resolveFinalSealDayIdentity({ completed, draft, version, sketch, sourceTruth });
+  const dayIdentityMissingFields = listDayIdentityMissingFields(dayIdentity);
+  if (dayIdentityMissingFields.length) {
+    const blockedFields = dayIdentityMissingFields.map((field) => `dayIdentity.${field}`);
+    if (typeof console !== 'undefined') console.warn('THE.SUMMATION seal blocked: missing Day Identity Clump fields:', blockedFields.join(', '));
+    window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: `Seal blocked: missing Day Identity Clump fields: ${blockedFields.join(', ')}`, missingFields: blockedFields } }));
+    return { sealedRecord: null, missingFields: blockedFields };
+  }
   const sealedRecord = {
-    id: `summation-${sourceTruth.sourceDate}-${sketch.sketchId}`,
+    id: `summation-${dayIdentity.sourceDate}-${sketch.sketchId}`,
     source: 'THE.SUMMATION',
-    sourceDate: sourceTruth.sourceDate,
-    displayDate: sourceTruth.displayDate,
-    dayOfWeek: sourceTruth.dayOfWeek,
-    chaoticaDayNumber: sourceTruth.chaoticaDayNumber,
-    title: sourceTruth.titleOfDay || version.title,
+    sourceDate: dayIdentity.sourceDate,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+    dayIdentity,
+    title: dayIdentity.titleOfDay || version.title,
     mood: sourceTruth.mood,
     era: sourceTruth.era,
     singleness: sourceTruth.singlenessLevel || sourceTruth.singleness,
@@ -1751,9 +1797,9 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
     selectedSketchId: sketch.sketchId,
     sketchArtifact: sketch,
     doodleLayer: sketch.doodleLayer,
-    sourceTruthSnapshot: sourceTruth,
-    fullAssurerDaySnapshot: draft.fullAssurerDaySnapshot || sourceTruth,
-    sourceMetadata: draft.sourceMetadata,
+    sourceTruthSnapshot: { ...sourceTruth, dayIdentity },
+    fullAssurerDaySnapshot: draft.fullAssurerDaySnapshot || { ...sourceTruth, dayIdentity },
+    sourceMetadata: { ...(draft.sourceMetadata || {}), dayIdentity },
     pennyForYourThoughts: draft.pennyForYourThoughts,
     pennyAnswers: draft.pennyAnswers,
     sourceAnswers: draft.sourceAnswers,
