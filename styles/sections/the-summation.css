@@ -25,7 +25,7 @@
   pointer-events: none;
 }
 
-.summation-cleared-shell {
+.summation-stage {
   position: relative;
   z-index: 1;
   display: grid;
@@ -233,4 +233,100 @@
   .summation-tailoring-box {
     width: 100%;
   }
+}
+
+
+.summation-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 70fr) minmax(18rem, 30fr);
+  gap: clamp(0.75rem, 1.15vw, 1.15rem);
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: clamp(0.85rem, 1.4vw, 1.35rem) clamp(5rem, 7vw, 6.75rem) clamp(0.85rem, 1.4vw, 1.35rem) clamp(0.85rem, 1.4vw, 1.35rem);
+}
+
+.summation-panel {
+  border: 1px solid var(--summation-border);
+  border-radius: 1.25rem;
+  background: rgba(35, 13, 27, 0.58);
+  box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(1.5px);
+  padding: clamp(0.9rem, 1.4vw, 1.25rem);
+}
+
+.summation-art-preserve {
+  pointer-events: auto;
+  display: grid;
+  align-content: end;
+  gap: 0.85rem;
+}
+
+.summation-payload-ready-card {
+  display: grid;
+  gap: 1rem;
+  max-width: 54rem;
+}
+
+.summation-payload-ready-card h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 6rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.summation-status-kicker {
+  color: #ffbad0;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.summation-bootstrap-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.summation-bootstrap-actions button {
+  border: 1px solid rgba(255, 226, 235, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 244, 247, 0.16);
+  color: var(--summation-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.7rem 1rem;
+}
+
+.summation-source-truth-list,
+.summation-source-subgrid {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.summation-source-row {
+  display: grid;
+  gap: 0.25rem;
+  border-top: 1px solid rgba(255, 226, 235, 0.18);
+  padding-top: 0.55rem;
+}
+
+.summation-source-row dt,
+.summation-source-subgrid dt {
+  color: #ffbad0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.summation-source-row dd,
+.summation-source-subgrid dd { margin: 0; }
+.summation-source-list { margin: 0; padding-left: 1.1rem; }
+.summation-missing-value { color: rgba(255, 235, 241, 0.58); font-style: italic; }
+.summation-penny-summary { display: grid; gap: 0.5rem; margin-top: 1rem; }
+.summation-penny-summary p { margin: 0; }
+
+@media (max-width: 980px) {
+  .summation-stage { grid-template-columns: 1fr; padding-right: 4.75rem; }
 }

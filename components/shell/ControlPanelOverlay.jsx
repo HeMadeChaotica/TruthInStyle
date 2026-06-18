@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
+import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
 
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
@@ -244,24 +244,13 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   };
 
   const handleSummate = async () => {
-    const activeDay = await resolveSummationActiveDay();
-    if (!activeDay?.sourceDate || !activeDay?.displayDate) {
-      setStatus('Choose an active day with Eye of Truth first.');
+    const result = await createDayCapsulePayloadFromActiveDay();
+    if (!result?.payload) {
+      setStatus(result?.error || 'SUMMATE BLOCKED');
       return;
     }
-    const confirmed = window.confirm(`SUMMATE THE.ASSURER DAY ${activeDay.displayDate} INTO THE.SUMMATION?`);
-    if (!confirmed) {
-      setStatus('SUMMATE CANCELED');
-      return;
-    }
-
-    const draftPayload = createSummationDraftFromAssurerDay(activeDay);
-    if (!draftPayload) {
-      setStatus('SUMMATE BLOCKED');
-      return;
-    }
-    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: activeDay.sourceDate, draft: draftPayload } }));
-    setStatus(`SUMMATED ${activeDay.displayDate}`);
+    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: result.payload.dayIdentity.sourceDate, payload: result.payload } }));
+    setStatus('Day Capsule payload ready');
     onClose?.();
     router.push('/the-summation');
   };
