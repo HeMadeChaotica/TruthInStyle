@@ -1378,9 +1378,9 @@ export function saveDayCapsuleRenderPayload(payload) {
 }
 
 export async function createDayCapsulePayloadFromActiveDay() {
-  if (!hasStoredSummationActiveDay()) return { payload: null, error: 'Choose an active day with Eye of Truth first.' };
+  if (!hasStoredSummationActiveDay()) return { payload: null, error: 'Use the Crystal Wand to prepare a Day Capsule payload first.' };
   const activeDay = await resolveSummationActiveDay();
-  if (!activeDay?.sourceDate || !activeDay?.displayDate) return { payload: null, error: 'Choose an active day with Eye of Truth first.' };
+  if (!activeDay?.sourceDate || !activeDay?.displayDate) return { payload: null, error: 'Use the Crystal Wand to prepare a Day Capsule payload first.' };
   const payload = saveDayCapsuleRenderPayload(buildDayCapsuleRenderPayload(activeDay));
   return { payload, activeDay };
 }

@@ -129,8 +129,9 @@ export default function TheSummationSection() {
   const pennyAnswers = useMemo(() => payload?.assuredThoughts?.pennyQuestions || [], [payload]);
   const renderStatus = renderRecord?.status || 'idle';
   const renderMessage = useMemo(() => {
-    if (!payload) return 'No payload ready';
+    if (!payload) return 'Use the Crystal Wand to prepare a Day Capsule payload first.';
     if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
+    if (renderStatus === 'local_proof_rendered') return 'Local proof render created from the real Day Capsule payload.';
     if (renderStatus === 'renderer_not_connected') return 'Renderer not connected yet. Day Capsule payload is ready.';
     if (renderStatus === 'ready_to_render') return 'Day Capsule render request ready.';
     if (renderStatus === 'queued') return 'Day Capsule render queued.';
@@ -146,7 +147,7 @@ export default function TheSummationSection() {
     setBootstrapStatus('Checking active day…');
     const result = await createDayCapsulePayloadFromActiveDay();
     if (!result?.payload) {
-      setBootstrapStatus(result?.error || 'Choose an active day with Eye of Truth first.');
+      setBootstrapStatus(result?.error || 'Use the Crystal Wand to prepare a Day Capsule payload first.');
       return;
     }
     const renderRequest = buildDayCapsuleRenderRequest(result.payload);
@@ -155,6 +156,9 @@ export default function TheSummationSection() {
     setRenderRecord(pendingRender);
     setBootstrapStatus('Day Capsule render request ready.');
   };
+
+  const previewArtifact = renderRecord?.renderArtifact;
+  const canShowArtifact = Boolean(previewArtifact?.url) && ['rendered', 'local_proof_rendered', 'revised'].includes(renderStatus);
 
   const handleOpenEye = () => {
     window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
@@ -178,15 +182,18 @@ export default function TheSummationSection() {
                     <DetailPill label="Day of Week" value={dayIdentity.dayOfWeek} />
                     <DetailPill label="Chaotica" value={dayIdentity.chaoticaDayNumber ? `Day #${dayIdentity.chaoticaDayNumber}` : null} />
                   </div>
-                  {renderStatus === 'rendered' && renderRecord?.renderArtifact?.url ? (
-                    <img className="summation-render-artifact" src={renderRecord.renderArtifact.url} alt={`Rendered Day Capsule for ${title}`} />
+                  {canShowArtifact ? (
+                    <figure className="summation-render-proof-frame">
+                      <img className="summation-render-artifact" src={previewArtifact.url} alt={`Rendered Day Capsule proof for ${title}`} />
+                      <figcaption>{renderStatus === 'local_proof_rendered' ? 'Local proof render from real payload — renderer API not connected.' : 'Rendered artifact from adapter.'}</figcaption>
+                    </figure>
                   ) : (
                     <p>{renderMessage}</p>
                   )}
                 </>
               ) : (
                 <div className="summation-bootstrap-actions" aria-label="Day Capsule payload actions">
-                  <p>Use Crystal Wand / Summate from the right-side rail when an active Assurer day is ready.</p>
+                  <p>Use the Crystal Wand to prepare a Day Capsule payload first.</p>
                   <button type="button" onClick={handleBuildFromActiveDay}>Build payload from active day</button>
                   <button type="button" onClick={handleOpenEye}>Open Eye of Truth</button>
                   {bootstrapStatus ? <p role="status">{bootstrapStatus}</p> : null}
@@ -198,22 +205,11 @@ export default function TheSummationSection() {
 
         <aside className="summation-art-preserve" aria-label="THE.SUMMATION preserved right art rail">
           <ShellPanel className="summation-identity-panel" eyebrow="Payload State" title="Day Capsule">
-            <DetailPill label="Status" value={renderMessage || bootstrapStatus || 'Choose an active day with Eye of Truth first.'} />
+            <DetailPill label="Status" value={renderMessage || bootstrapStatus || 'Use the Crystal Wand to prepare a Day Capsule payload first.'} />
             <DetailPill label="Render ID" value={renderRecord?.renderId} />
             <DetailPill label="Payload ID" value={payload?.payloadId} />
             <DetailPill label="Updated" value={payload?.updatedAt} />
           </ShellPanel>
-
-          {payload ? (
-            <ShellPanel className="summation-workspace-panel" eyebrow="Payload Source Snapshot" title="Gathered Data">
-              <PayloadSourceSnapshot payload={payload} />
-              <div className="summation-penny-summary">
-                {pennyAnswers.map((entry) => (
-                  <p key={entry.id}><strong>{entry.question || 'Missing / empty'}</strong><br />{entry.answer || <span className="summation-missing-value">Missing / empty</span>}</p>
-                ))}
-              </div>
-            </ShellPanel>
-          ) : null}
         </aside>
       </section>
     </main>
