@@ -1,4 +1,4 @@
-const DAY_CAPSULE_RENDER_RECORD_KEY = 'the_summation_day_capsule_render_record_v1';
+export const DAY_CAPSULE_RENDER_RECORD_KEY = 'the_summation_day_capsule_render_record_v1';
 
 export const DAY_CAPSULE_RENDER_STATUSES = Object.freeze({
   IDLE: 'idle',
@@ -104,6 +104,8 @@ function proofPalette(renderRequest = {}) {
   return palettes[seed % palettes.length];
 }
 
+// Level 2 requirement: local proof is only a payload/pipeline proof. Final production
+// Day Capsules require an external illustrated renderer through a server/API boundary.
 function buildLocalProofArtifact(renderRequest) {
   if (!renderRequest?.dayIdentity) return null;
   const [bg, accent, accentTwo, paper] = proofPalette(renderRequest);
@@ -258,7 +260,7 @@ export function requestLocalProofDayCapsuleRender(renderRequest) {
       status: DAY_CAPSULE_RENDER_STATUSES.LOCAL_PROOF_RENDERED,
       renderRequest,
       renderArtifact: localProofArtifact,
-      message: 'Local proof render created from the real Day Capsule payload.',
+      message: 'Local proof render created from the real Day Capsule payload. External renderer is not configured; this is preview-only, not a final Day Capsule.',
       createdAt: renderRequest?.createdAt || now,
       updatedAt: now,
     });

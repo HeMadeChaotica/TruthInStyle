@@ -16,6 +16,7 @@ import {
 } from '../../lib/theAssurer/rememberMeMomentMirror';
 import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMirror } from '../../lib/theAssurer/thiccTimeWeekMirror';
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
+import { DAY_CAPSULE_RENDER_RECORD_KEY, DAY_CAPSULE_RENDER_STATUSES } from './dayCapsuleRenderService';
 import { receiveSealedSummation } from './hopewoodService';
 
 const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfDay', 'assurer:title'];
@@ -1676,6 +1677,24 @@ export function listSummationSealMissingFields({ draft, version, sketch } = {}) 
   return missing;
 }
 
+
+function getFinalRenderSealBlockFields(dayIdentity = {}) {
+  const renderRecord = readStorageObject(DAY_CAPSULE_RENDER_RECORD_KEY, null);
+  const expectedRenderId = dayIdentity?.sourceDate ? `day-capsule-${dayIdentity.sourceDate}-render` : '';
+  const allowedFinalStatuses = new Set([
+    DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDERED,
+    // Legacy adapter compatibility only. Local proof remains blocked below.
+    DAY_CAPSULE_RENDER_STATUSES.RENDERED,
+    DAY_CAPSULE_RENDER_STATUSES.REVISED,
+  ]);
+  if (!renderRecord?.status) return ['external_rendered final Day Capsule artifact'];
+  if (renderRecord.status === DAY_CAPSULE_RENDER_STATUSES.LOCAL_PROOF_RENDERED) return ['external_rendered final Day Capsule artifact (local proof is preview-only)'];
+  if (!allowedFinalStatuses.has(renderRecord.status)) return [`external_rendered final Day Capsule artifact (current status: ${renderRecord.status})`];
+  if (expectedRenderId && renderRecord.renderId && renderRecord.renderId !== expectedRenderId) return ['matching external render artifact for active Day Capsule'];
+  if (!renderRecord.renderArtifact?.url) return ['external render artifact URL'];
+  return [];
+}
+
 function mergeTruthy(...payloads) {
   return payloads.reduce((merged, payload) => {
     if (!payload || typeof payload !== 'object') return merged;
@@ -1798,6 +1817,12 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
   const now = new Date().toISOString();
   const dayIdentity = resolveFinalSealDayIdentity({ completed, draft, version, sketch, sourceTruth });
   const dayIdentityMissingFields = listDayIdentityMissingFields(dayIdentity);
+  const finalRenderBlockFields = getFinalRenderSealBlockFields(dayIdentity);
+  if (finalRenderBlockFields.length) {
+    if (typeof console !== 'undefined') console.warn('THE.SUMMATION seal blocked: Level 2 external render required:', finalRenderBlockFields.join(', '));
+    window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: `Seal blocked: ${finalRenderBlockFields.join(', ')}`, missingFields: finalRenderBlockFields } }));
+    return { sealedRecord: null, missingFields: finalRenderBlockFields };
+  }
   if (dayIdentityMissingFields.length) {
     const blockedFields = dayIdentityMissingFields.map((field) => `dayIdentity.${field}`);
     if (typeof console !== 'undefined') console.warn('THE.SUMMATION seal blocked: missing Day Identity Clump fields:', blockedFields.join(', '));

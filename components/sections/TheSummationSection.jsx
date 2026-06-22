@@ -142,7 +142,7 @@ export default function TheSummationSection() {
     if (renderStatus === 'ready_to_render') return 'Day Capsule render request ready.';
     if (renderStatus === 'queued') return 'Day Capsule render queued.';
     if (renderStatus === 'rendering') return 'Rendering Day Capsule…';
-    if (renderStatus === 'rendered') return 'Day Capsule rendered.';
+    if (renderStatus === 'rendered') return 'Day Capsule rendered by legacy adapter status.';
     if (renderStatus === 'revision_requested') return 'Day Capsule revision requested.';
     if (renderStatus === 'revised') return 'Day Capsule revised.';
     if (renderStatus === 'failed') return 'Day Capsule render failed.';
