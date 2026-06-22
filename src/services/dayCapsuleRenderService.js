@@ -1,10 +1,15 @@
-const DAY_CAPSULE_RENDER_RECORD_KEY = 'the_summation_day_capsule_render_record_v1';
+export const DAY_CAPSULE_RENDER_RECORD_KEY = 'the_summation_day_capsule_render_record_v1';
 
 export const DAY_CAPSULE_RENDER_STATUSES = Object.freeze({
   IDLE: 'idle',
   READY_TO_RENDER: 'ready_to_render',
   RENDERER_NOT_CONNECTED: 'renderer_not_connected',
   LOCAL_PROOF_RENDERED: 'local_proof_rendered',
+  EXTERNAL_RENDERER_READY: 'external_renderer_ready',
+  EXTERNAL_RENDERING: 'external_rendering',
+  EXTERNAL_RENDERED: 'external_rendered',
+  EXTERNAL_RENDERER_NOT_CONFIGURED: 'external_renderer_not_configured',
+  EXTERNAL_RENDER_FAILED: 'external_render_failed',
   QUEUED: 'queued',
   RENDERING: 'rendering',
   RENDERED: 'rendered',
@@ -99,6 +104,8 @@ function proofPalette(renderRequest = {}) {
   return palettes[seed % palettes.length];
 }
 
+// Level 2 requirement: local proof is only a payload/pipeline proof. Final production
+// Day Capsules require an external illustrated renderer through a server/API boundary.
 function buildLocalProofArtifact(renderRequest) {
   if (!renderRequest?.dayIdentity) return null;
   const [bg, accent, accentTwo, paper] = proofPalette(renderRequest);
@@ -185,6 +192,8 @@ export function buildDayCapsuleRenderRequest(dayCapsulePayload) {
       identityClump: 'identity clump must be app-rendered or preserved deterministically',
       textAccuracy: 'do not rely only on image model spelling for date/title',
       providerBoundary: 'route external image providers through a backend/server/API boundary; do not expose private API keys in frontend code',
+      level2Requirement: 'Crystal Wand payload → render request → real renderer connection → illustrated Day Capsule artifact → preview in THE.SUMMATION → one revision later → final seal to Hopewood later',
+      allowedArtDirection: 'sketchnote boards; illustrated journal spreads; object-led memory pages; sticky-note memory boards; editorial daily capsule layouts',
     },
     revision: {
       revisionNumber: dayCapsulePayload?.revision?.revisionNumber || 0,
@@ -231,17 +240,17 @@ export function requestDayCapsuleRender(renderRequest) {
       status: DAY_CAPSULE_RENDER_STATUSES.LOCAL_PROOF_RENDERED,
       renderRequest,
       renderArtifact: localProofArtifact,
-      message: 'Local proof render created from the real Day Capsule payload.',
+      message: 'Local proof render created from the real Day Capsule payload. External renderer is not configured; this is preview-only, not a final Day Capsule.',
       createdAt: renderRequest?.createdAt || now,
       updatedAt: now,
     });
   }
   return persistDayCapsuleRender({
     renderId: renderRequest?.renderId,
-    status: DAY_CAPSULE_RENDER_STATUSES.RENDERER_NOT_CONNECTED,
+    status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDERER_NOT_CONFIGURED,
     renderRequest,
     renderArtifact: null,
-    message: 'Renderer not connected yet. Day Capsule payload is ready.',
+    message: 'External renderer not configured. Day Capsule payload is ready, but Level 2 final render is blocked.',
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   });

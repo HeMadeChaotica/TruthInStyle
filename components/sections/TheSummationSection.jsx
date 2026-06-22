@@ -131,12 +131,17 @@ export default function TheSummationSection() {
   const renderMessage = useMemo(() => {
     if (!payload) return 'Use the Crystal Wand to prepare a Day Capsule payload first.';
     if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
-    if (renderStatus === 'local_proof_rendered') return 'Local proof render created from the real Day Capsule payload.';
+    if (renderStatus === 'local_proof_rendered') return 'Local proof render preview created from the real Day Capsule payload. External final renderer is not configured.';
+    if (renderStatus === 'external_renderer_ready') return 'External illustrated renderer ready.';
+    if (renderStatus === 'external_rendering') return 'External illustrated Day Capsule rendering…';
+    if (renderStatus === 'external_rendered') return 'External illustrated Day Capsule rendered.';
+    if (renderStatus === 'external_renderer_not_configured') return 'External renderer not configured. Local proof may preview only; final seal is blocked.';
+    if (renderStatus === 'external_render_failed') return 'External illustrated render failed.';
     if (renderStatus === 'renderer_not_connected') return 'Renderer not connected yet. Day Capsule payload is ready.';
     if (renderStatus === 'ready_to_render') return 'Day Capsule render request ready.';
     if (renderStatus === 'queued') return 'Day Capsule render queued.';
     if (renderStatus === 'rendering') return 'Rendering Day Capsule…';
-    if (renderStatus === 'rendered') return 'Day Capsule rendered.';
+    if (renderStatus === 'rendered') return 'Day Capsule rendered by legacy adapter status.';
     if (renderStatus === 'revision_requested') return 'Day Capsule revision requested.';
     if (renderStatus === 'revised') return 'Day Capsule revised.';
     if (renderStatus === 'failed') return 'Day Capsule render failed.';
@@ -158,7 +163,7 @@ export default function TheSummationSection() {
   };
 
   const previewArtifact = renderRecord?.renderArtifact;
-  const canShowArtifact = Boolean(previewArtifact?.url) && ['rendered', 'local_proof_rendered', 'revised'].includes(renderStatus);
+  const canShowArtifact = Boolean(previewArtifact?.url) && ['external_rendered', 'rendered', 'local_proof_rendered', 'revised'].includes(renderStatus);
 
   const handleOpenEye = () => {
     window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
@@ -185,7 +190,7 @@ export default function TheSummationSection() {
                   {canShowArtifact ? (
                     <figure className="summation-render-proof-frame">
                       <img className="summation-render-artifact" src={previewArtifact.url} alt={`Rendered Day Capsule proof for ${title}`} />
-                      <figcaption>{renderStatus === 'local_proof_rendered' ? 'Local proof render from real payload — renderer API not connected.' : 'Rendered artifact from adapter.'}</figcaption>
+                      <figcaption>{renderStatus === 'local_proof_rendered' ? 'Preview-only local proof from real payload — not a production final Day Capsule.' : 'External illustrated render artifact.'}</figcaption>
                     </figure>
                   ) : (
                     <p>{renderMessage}</p>
