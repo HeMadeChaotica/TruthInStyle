@@ -110,8 +110,9 @@ export default function TheSummationSection() {
   const loadPayload = useCallback(() => {
     const storedPayload = readStoredDayCapsulePayload();
     const storedRender = getDayCapsuleRenderStatus(storedPayload?.payloadId ? `${storedPayload.payloadId}-render` : undefined);
+    const renderRequest = storedPayload ? buildDayCapsuleRenderRequest(storedPayload) : null;
     const connectedRender = storedPayload && !storedRender?.renderRequest
-      ? requestDayCapsuleRender(buildDayCapsuleRenderRequest(storedPayload))
+      ? { renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_renderer_ready', renderRequest, message: 'Day Capsule external render request ready.' }
       : storedRender;
     setPayload(storedPayload);
     setRenderRecord(connectedRender);
@@ -132,7 +133,12 @@ export default function TheSummationSection() {
     if (!payload) return 'Use the Crystal Wand to prepare a Day Capsule payload first.';
     if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
     if (renderStatus === 'local_proof_rendered') return 'Local proof render created from the real Day Capsule payload.';
-    if (renderStatus === 'renderer_not_connected') return 'Renderer not connected yet. Day Capsule payload is ready.';
+    if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet.';
+    if (renderStatus === 'external_renderer_ready') return 'Day Capsule external render request ready.';
+    if (renderStatus === 'external_rendering') return 'Rendering Day Capsule…';
+    if (renderStatus === 'external_rendered') return 'Day Capsule rendered by external illustrated renderer.';
+    if (renderStatus === 'external_render_failed') return renderRecord?.error || renderRecord?.message || 'External Day Capsule render failed.';
+    if (renderStatus === 'renderer_not_connected') return 'External renderer is not configured yet.';
     if (renderStatus === 'ready_to_render') return 'Day Capsule render request ready.';
     if (renderStatus === 'queued') return 'Day Capsule render queued.';
     if (renderStatus === 'rendering') return 'Rendering Day Capsule…';
@@ -151,14 +157,18 @@ export default function TheSummationSection() {
       return;
     }
     const renderRequest = buildDayCapsuleRenderRequest(result.payload);
-    const pendingRender = requestDayCapsuleRender(renderRequest);
     setPayload(result.payload);
+    setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_rendering', renderRequest, message: 'Rendering Day Capsule…' });
+    setBootstrapStatus('Rendering Day Capsule…');
+    const pendingRender = await requestDayCapsuleRender(renderRequest);
     setRenderRecord(pendingRender);
-    setBootstrapStatus('Day Capsule render request ready.');
+    setBootstrapStatus(pendingRender?.message || 'Day Capsule external render request complete.');
   };
 
   const previewArtifact = renderRecord?.renderArtifact;
-  const canShowArtifact = Boolean(previewArtifact?.url) && ['rendered', 'local_proof_rendered', 'revised'].includes(renderStatus);
+  const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
+  const canShowArtifact = Boolean(previewUrl) && ['external_rendered', 'local_proof_rendered'].includes(renderStatus);
+  const canRetryExternal = Boolean(payload) && ['external_render_failed', 'external_renderer_not_configured'].includes(renderStatus);
 
   const handleOpenEye = () => {
     window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
@@ -184,11 +194,14 @@ export default function TheSummationSection() {
                   </div>
                   {canShowArtifact ? (
                     <figure className="summation-render-proof-frame">
-                      <img className="summation-render-artifact" src={previewArtifact.url} alt={`Rendered Day Capsule proof for ${title}`} />
-                      <figcaption>{renderStatus === 'local_proof_rendered' ? 'Local proof render from real payload — renderer API not connected.' : 'Rendered artifact from adapter.'}</figcaption>
+                      <img className="summation-render-artifact" src={previewUrl} alt={`Rendered Day Capsule for ${title}`} />
+                      <figcaption>{renderStatus === 'local_proof_rendered' ? 'Development proof only — not the final illustrated Day Capsule.' : 'External illustrated Day Capsule artifact.'}</figcaption>
                     </figure>
                   ) : (
-                    <p>{renderMessage}</p>
+                    <>
+                      <p>{renderMessage}</p>
+                      {canRetryExternal ? <button type="button" onClick={handleBuildFromActiveDay}>Retry external render</button> : null}
+                    </>
                   )}
                 </>
               ) : (
