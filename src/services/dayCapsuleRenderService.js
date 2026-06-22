@@ -1,5 +1,172 @@
 export const DAY_CAPSULE_RENDER_RECORD_KEY = 'the_summation_day_capsule_render_record_v1';
 
+
+export const DAY_CAPSULE_VISUAL_STYLE_MODES = Object.freeze({
+  JOURNAL_SPREAD: 'JOURNAL_SPREAD',
+  SKETCHNOTE_MAP: 'SKETCHNOTE_MAP',
+  STICKY_MEMORY_BOARD: 'STICKY_MEMORY_BOARD',
+  EDITORIAL_CAPSULE: 'EDITORIAL_CAPSULE',
+  OBJECT_LED_MEMORY_MAP: 'OBJECT_LED_MEMORY_MAP',
+});
+
+const STOP_WORDS = new Set('about above after again against all also and any are because been before being between both but can did does doing down each few for from further had has have her here hers him his how into its just more most not now off once only our ours out over own same she should some such than that the their them then there these they this those through too under until very was were what when where which while who why with you your'.split(' '));
+const OBJECT_WORDS = ['coffee', 'tea', 'sandwich', 'salad', 'pizza', 'breakfast', 'lunch', 'dinner', 'snack', 'meal', 'market', 'grocery', 'groceries', 'gym', 'dumbbell', 'barbell', 'shoes', 'outfit', 'flower', 'flowers', 'room', 'desk', 'bed', 'car', 'train', 'book', 'phone', 'song', 'walk', 'workout', 'cardio', 'protein', 'water', 'weather', 'rain', 'sun', 'moon'];
+const PLACE_WORDS = ['home', 'office', 'market', 'store', 'gym', 'park', 'room', 'kitchen', 'street', 'cafe', 'restaurant', 'studio', 'work', 'school'];
+const REFLECTION_WORDS = ['feel', 'felt', 'feeling', 'think', 'thought', 'truth', 'release', 'survive', 'survived', 'choose', 'chose', 'pattern', 'problem', 'solve', 'solved', 'want', 'wanted', 'need', 'needed', 'body', 'mood', 'attention', 'remember'];
+const FRAGMENT_WORDS = ['errand', 'reminder', 'note', 'scrap', 'todo', 'call', 'text', 'appointment', 'buy', 'pick', 'drop', 'clean'];
+
+function flattenText(value) {
+  if (value === null || value === undefined) return [];
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return [String(value)];
+  if (Array.isArray(value)) return value.flatMap(flattenText);
+  if (typeof value === 'object') return Object.values(value).flatMap(flattenText);
+  return [];
+}
+
+function tokenizeVisualText(lines = []) {
+  return lines
+    .join(' ')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, ' ')
+    .split(/\s+/)
+    .map((word) => word.replace(/^['-]+|['-]+$/g, ''))
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word));
+}
+
+function uniqueLimited(values = [], limit = 10) {
+  const seen = new Set();
+  return values
+    .map(cleanText)
+    .filter(Boolean)
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
+}
+
+function valuesFromObjects(items = [], keys = []) {
+  return (Array.isArray(items) ? items : [])
+    .flatMap((item) => keys.map((key) => item?.[key]))
+    .map(cleanText)
+    .filter(Boolean);
+}
+
+function extractRepeatedWords(tokens = []) {
+  const counts = tokens.reduce((map, token) => map.set(token, (map.get(token) || 0) + 1), new Map());
+  return [...counts.entries()]
+    .filter(([, count]) => count > 1)
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word)
+    .slice(0, 8);
+}
+
+export function analyzeDayCapsuleVisualContent(dayCapsulePayload = {}) {
+  const snapshot = dayCapsulePayload.sourceSnapshot || {};
+  const assured = dayCapsulePayload.assuredThoughts || {};
+  const pennyQuestions = Array.isArray(assured.pennyQuestions) ? assured.pennyQuestions : [];
+  const moments = Array.isArray(snapshot.moments) ? snapshot.moments : [];
+  const rememberMeMoments = Array.isArray(snapshot.rememberMeMoments) ? snapshot.rememberMeMoments : [];
+  const mealHighlights = Array.isArray(snapshot.daEaterSignals?.mealHighlights) ? snapshot.daEaterSignals.mealHighlights : [];
+  const thiccFittSignals = Array.isArray(snapshot.thiccFittSignals) ? snapshot.thiccFittSignals : [];
+  const thiccTimeText = flattenText(snapshot.thiccTimeSignals);
+  const otherSignalText = flattenText(snapshot.otherSignals);
+  const explicitLines = [
+    assured.diaryEntry,
+    ...pennyQuestions.flatMap((entry) => [entry?.question, entry?.answer]),
+    snapshot.mood,
+    snapshot.wordOfDay?.word,
+    snapshot.wordOfDay?.definition,
+    snapshot.headHummer,
+    snapshot.era,
+    ...valuesFromObjects(moments, ['type', 'text', 'description', 'detail', 'time']),
+    ...valuesFromObjects(rememberMeMoments, ['type', 'text', 'description', 'detail', 'time', 'place', 'location']),
+    ...thiccFittSignals,
+    ...valuesFromObjects(mealHighlights, ['time', 'label', 'macroText', 'status', 'name', 'type']),
+    ...thiccTimeText,
+    ...otherSignalText,
+  ].map(cleanText).filter(Boolean);
+  const tokens = tokenizeVisualText(explicitLines);
+  const tokenSet = new Set(tokens);
+  const objectHints = uniqueLimited([
+    ...valuesFromObjects(mealHighlights, ['label', 'name', 'type']),
+    ...thiccFittSignals.filter((line) => OBJECT_WORDS.some((word) => String(line).toLowerCase().includes(word))),
+    ...OBJECT_WORDS.filter((word) => tokenSet.has(word)),
+  ], 12);
+  const places = uniqueLimited([
+    ...valuesFromObjects(rememberMeMoments, ['place', 'location', 'type']),
+    ...PLACE_WORDS.filter((word) => tokenSet.has(word)),
+  ], 8);
+  const motifHints = uniqueLimited([
+    snapshot.mood && `mood: ${snapshot.mood}`,
+    snapshot.wordOfDay?.word && `word: ${snapshot.wordOfDay.word}`,
+    snapshot.headHummer && `song/head hummer: ${snapshot.headHummer}`,
+    snapshot.era && `era: ${snapshot.era}`,
+    ...places.map((place) => `place: ${place}`),
+    ...extractRepeatedWords(tokens).map((word) => `repeated word: ${word}`),
+  ], 14);
+  return {
+    eventCount: moments.length + rememberMeMoments.length,
+    pennyCount: pennyQuestions.filter((entry) => cleanText(entry?.answer)).length,
+    mealCount: mealHighlights.length,
+    objectHints,
+    motifHints,
+    places,
+    repeatedWords: extractRepeatedWords(tokens),
+    reflectionScore: tokens.filter((token) => REFLECTION_WORDS.includes(token)).length + pennyQuestions.length * 2,
+    fragmentScore: tokens.filter((token) => FRAGMENT_WORDS.includes(token)).length + Math.max(0, explicitLines.length - 8),
+    hasStrongNarrative: Boolean(cleanText(assured.diaryEntry) || pennyQuestions.some((entry) => cleanText(entry?.answer)?.length > 80)),
+  };
+}
+
+export function selectDayCapsuleVisualStyleMode(dayCapsulePayload = {}) {
+  const analysis = analyzeDayCapsuleVisualContent(dayCapsulePayload);
+  if (analysis.objectHints.length >= 3 || analysis.mealCount >= 2) return DAY_CAPSULE_VISUAL_STYLE_MODES.OBJECT_LED_MEMORY_MAP;
+  if (analysis.eventCount >= 4 && (analysis.places.length || analysis.objectHints.length)) return DAY_CAPSULE_VISUAL_STYLE_MODES.JOURNAL_SPREAD;
+  if (analysis.reflectionScore >= 5) return DAY_CAPSULE_VISUAL_STYLE_MODES.SKETCHNOTE_MAP;
+  if (analysis.fragmentScore >= 6 && analysis.eventCount < 4) return DAY_CAPSULE_VISUAL_STYLE_MODES.STICKY_MEMORY_BOARD;
+  if (analysis.eventCount >= 3) return DAY_CAPSULE_VISUAL_STYLE_MODES.JOURNAL_SPREAD;
+  return DAY_CAPSULE_VISUAL_STYLE_MODES.EDITORIAL_CAPSULE;
+}
+
+export function buildDayCapsuleVisualInstructions(dayCapsulePayload = {}) {
+  const analysis = analyzeDayCapsuleVisualContent(dayCapsulePayload);
+  const styleMode = selectDayCapsuleVisualStyleMode(dayCapsulePayload);
+  const styleLooks = {
+    JOURNAL_SPREAD: 'illustrated notebook spread with hand-drawn objects, short labels, and scattered but readable story fragments',
+    SKETCHNOTE_MAP: 'sketchnote narrative board with keyword clusters, arrows/pathways, callouts, and symbolic doodles',
+    STICKY_MEMORY_BOARD: 'overlapping sticky-note memory board with pinned fragments, varied mini-panels, and playful blocks',
+    EDITORIAL_CAPSULE: 'polished editorial daily capsule page with clean hierarchy, structured title area, art accents, and readable blocks',
+    OBJECT_LED_MEMORY_MAP: 'object-led memory map with illustrated items and labels arranged around the day identity',
+  };
+  return {
+    styleMode,
+    compositionGoal: `Create one full-page illustrated Day Capsule as a single personal memory page: ${styleLooks[styleMode]}.`,
+    visualTone: 'premium but personal; hand-drawn/designed page energy; visual journal, sketchnote, and editorial memory-page sensibility',
+    layoutRules: [
+      'One cohesive full-page illustrated day page, not a dashboard and not a version editor.',
+      'Use readable hierarchy, object-led day storytelling, short callouts, and grouped story fragments.',
+      styleMode === DAY_CAPSULE_VISUAL_STYLE_MODES.EDITORIAL_CAPSULE ? 'Editorial polish is allowed, but keep it personal and non-corporate.' : 'Avoid corporate infographic styling.',
+    ],
+    motifHints: analysis.motifHints,
+    objectHints: analysis.objectHints,
+    textRules: [
+      'Use short readable labels and tiny callouts only; do not render giant paragraphs or raw source dumps.',
+      'Decorative text fragments may be approximate, but must be content-led and must not invent events.',
+      'Do not rely on generated image text for the identity clump. The app will overlay/preserve it.',
+    ],
+    identityClumpRule: 'The app deterministically preserves titleOfDay, displayDate in MM/DD/YYYY, fully spelled dayOfWeek, and chaoticaDayNumber; image generation must leave room and must not be trusted for these values.',
+    colorDirection: 'Derive palette from the real mood/era/day content when present; otherwise use warm paper, ink, accent-marker, and collage tones.',
+    forbiddenBehaviors: [
+      'Do not generate fake day data, fake people, fake places, fake meals, fake workouts, or major events not present in the payload.',
+      'Do not create a generic dashboard, source analysis panel, raw JSON page, API-key exposure, or user-facing motif/theme controls.',
+      'Do not make identity text illegible; do not move sacred glyphs or alter the app frame.',
+    ],
+  };
+}
+
 export const DAY_CAPSULE_RENDER_STATUSES = Object.freeze({
   IDLE: 'idle',
   READY_TO_RENDER: 'ready_to_render',
@@ -198,12 +365,16 @@ export function buildExternalDayCapsuleRenderRequest(dayCapsulePayload) {
       daEaterSignals: dayCapsulePayload?.sourceSnapshot?.daEaterSignals || {},
       otherSignals: dayCapsulePayload?.sourceSnapshot?.otherSignals || {},
     },
+    visualInstructions: buildDayCapsuleVisualInstructions(dayCapsulePayload),
     renderIntent: {
       output: 'create one full-page illustrated Day Capsule',
       contentRule: 'use real day content only',
-      composition: 'visual-journal/sketchnote/editorial composition',
-      artAccents: 'include content-led art accents',
-      eventRule: 'do not invent major day events',
+      composition: 'visual-journal/sketchnote/editorial memory-page composition',
+      artAccents: 'use object-led day storytelling with content-led art accents from visualInstructions.objectHints and visualInstructions.motifHints',
+      textAccuracy: 'Do not rely on generated image text for the identity clump. The app will overlay/preserve it.',
+      hierarchy: 'short labels, readable callouts, premium but personal composition, no raw source dump',
+      eventRule: 'do not invent major day events, people, places, foods, workouts, or reminders',
+      dashboardRule: 'no generic dashboard and no corporate infographic unless visualInstructions.styleMode is EDITORIAL_CAPSULE',
       identityClump: 'preserve identity clump deterministically at app layer',
       providerBoundary: 'external image providers must run only through a backend/server/API boundary',
     },
