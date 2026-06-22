@@ -149,6 +149,21 @@ export default function TheSummationSection() {
     return payload.status || 'Day Capsule render request ready.';
   }, [payload, renderRecord, renderStatus]);
 
+  const handleRequestExternalRender = useCallback(async (sourcePayload = payload) => {
+    if (!sourcePayload) {
+      setBootstrapStatus('Use the Crystal Wand to prepare a Day Capsule payload first.');
+      return null;
+    }
+
+    const renderRequest = buildDayCapsuleRenderRequest(sourcePayload);
+    setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_rendering', renderRequest, message: 'Rendering Day Capsule…' });
+    setBootstrapStatus('Rendering Day Capsule…');
+    const pendingRender = await requestDayCapsuleRender(renderRequest);
+    setRenderRecord(pendingRender);
+    setBootstrapStatus(pendingRender?.message || 'Day Capsule external render request complete.');
+    return pendingRender;
+  }, [payload]);
+
   const handleBuildFromActiveDay = async () => {
     setBootstrapStatus('Checking active day…');
     const result = await createDayCapsulePayloadFromActiveDay();
@@ -156,19 +171,14 @@ export default function TheSummationSection() {
       setBootstrapStatus(result?.error || 'Use the Crystal Wand to prepare a Day Capsule payload first.');
       return;
     }
-    const renderRequest = buildDayCapsuleRenderRequest(result.payload);
     setPayload(result.payload);
-    setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_rendering', renderRequest, message: 'Rendering Day Capsule…' });
-    setBootstrapStatus('Rendering Day Capsule…');
-    const pendingRender = await requestDayCapsuleRender(renderRequest);
-    setRenderRecord(pendingRender);
-    setBootstrapStatus(pendingRender?.message || 'Day Capsule external render request complete.');
+    await handleRequestExternalRender(result.payload);
   };
 
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
   const canShowArtifact = Boolean(previewUrl) && ['external_rendered', 'local_proof_rendered'].includes(renderStatus);
-  const canRetryExternal = Boolean(payload) && ['external_render_failed', 'external_renderer_not_configured'].includes(renderStatus);
+  const canRequestExternal = Boolean(payload) && ['external_renderer_ready', 'external_render_failed', 'external_renderer_not_configured'].includes(renderStatus);
 
   const handleOpenEye = () => {
     window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
@@ -200,7 +210,11 @@ export default function TheSummationSection() {
                   ) : (
                     <>
                       <p>{renderMessage}</p>
-                      {canRetryExternal ? <button type="button" onClick={handleBuildFromActiveDay}>Retry external render</button> : null}
+                      {canRequestExternal ? (
+                        <button type="button" onClick={() => handleRequestExternalRender()}>
+                          {renderStatus === 'external_renderer_ready' ? 'Start external render' : 'Retry external render'}
+                        </button>
+                      ) : null}
                     </>
                   )}
                 </>
