@@ -3,13 +3,13 @@ export const DAY_CAPSULE_RENDER_RECORD_KEY = 'the_summation_day_capsule_render_r
 export const DAY_CAPSULE_RENDER_STATUSES = Object.freeze({
   IDLE: 'idle',
   READY_TO_RENDER: 'ready_to_render',
-  RENDERER_NOT_CONNECTED: 'renderer_not_connected',
   LOCAL_PROOF_RENDERED: 'local_proof_rendered',
+  EXTERNAL_RENDERER_NOT_CONFIGURED: 'external_renderer_not_configured',
   EXTERNAL_RENDERER_READY: 'external_renderer_ready',
   EXTERNAL_RENDERING: 'external_rendering',
   EXTERNAL_RENDERED: 'external_rendered',
-  EXTERNAL_RENDERER_NOT_CONFIGURED: 'external_renderer_not_configured',
   EXTERNAL_RENDER_FAILED: 'external_render_failed',
+  RENDERER_NOT_CONNECTED: 'renderer_not_connected',
   QUEUED: 'queued',
   RENDERING: 'rendering',
   RENDERED: 'rendered',
@@ -140,16 +140,29 @@ function buildLocalProofArtifact(renderRequest) {
 
 function normalizeRenderArtifact(artifact) {
   if (!artifact || typeof artifact !== 'object') return null;
+  const hasArtifactReference = Boolean(
+    cleanText(artifact.artifactUrl || artifact.url || artifact.artifactPath || artifact.previewPath || artifact.markup)
+      || artifact.artifactBlob
+      || artifact.blob
+  );
+  if (!hasArtifactReference) return null;
   return {
-    type: cleanText(artifact.type),
-    url: cleanText(artifact.url),
+    artifactType: cleanText(artifact.artifactType || artifact.type),
+    type: cleanText(artifact.type || artifact.artifactType),
+    artifactUrl: cleanText(artifact.artifactUrl || artifact.url),
+    url: cleanText(artifact.url || artifact.artifactUrl || artifact.artifactPath || artifact.previewPath),
+    artifactPath: cleanText(artifact.artifactPath),
+    artifactBlob: artifact.artifactBlob || artifact.blob || null,
+    thumbnailUrl: cleanText(artifact.thumbnailUrl),
+    previewPath: cleanText(artifact.previewPath),
     data: artifact.data || null,
     markup: cleanText(artifact.markup),
-    metadata: artifact.metadata || {},
+    providerMetadata: artifact.providerMetadata || artifact.metadata || {},
+    metadata: artifact.metadata || artifact.providerMetadata || {},
   };
 }
 
-export function buildDayCapsuleRenderRequest(dayCapsulePayload) {
+export function buildExternalDayCapsuleRenderRequest(dayCapsulePayload) {
   const now = new Date().toISOString();
   const dayIdentity = dayCapsulePayload?.dayIdentity || {};
   const payloadId = cleanText(dayCapsulePayload?.payloadId) || `day-capsule-${cleanText(dayIdentity.sourceDate) || 'unsourced'}`;
@@ -185,15 +198,14 @@ export function buildDayCapsuleRenderRequest(dayCapsulePayload) {
       daEaterSignals: dayCapsulePayload?.sourceSnapshot?.daEaterSignals || {},
       otherSignals: dayCapsulePayload?.sourceSnapshot?.otherSignals || {},
     },
-    renderInstructions: {
-      output: 'full-page Day Capsule',
-      style: 'structured editorial document style',
-      artAccents: 'base visual accents on actual day content only',
-      identityClump: 'identity clump must be app-rendered or preserved deterministically',
-      textAccuracy: 'do not rely only on image model spelling for date/title',
-      providerBoundary: 'route external image providers through a backend/server/API boundary; do not expose private API keys in frontend code',
-      level2Requirement: 'Crystal Wand payload → render request → real renderer connection → illustrated Day Capsule artifact → preview in THE.SUMMATION → one revision later → final seal to Hopewood later',
-      allowedArtDirection: 'sketchnote boards; illustrated journal spreads; object-led memory pages; sticky-note memory boards; editorial daily capsule layouts',
+    renderIntent: {
+      output: 'create one full-page illustrated Day Capsule',
+      contentRule: 'use real day content only',
+      composition: 'visual-journal/sketchnote/editorial composition',
+      artAccents: 'include content-led art accents',
+      eventRule: 'do not invent major day events',
+      identityClump: 'preserve identity clump deterministically at app layer',
+      providerBoundary: 'external image providers must run only through a backend/server/API boundary',
     },
     revision: {
       revisionNumber: dayCapsulePayload?.revision?.revisionNumber || 0,
@@ -204,7 +216,7 @@ export function buildDayCapsuleRenderRequest(dayCapsulePayload) {
   };
 }
 
-export function normalizeDayCapsuleRenderResult(result) {
+export function normalizeExternalDayCapsuleRenderResult(result) {
   const now = new Date().toISOString();
   const renderRequest = result?.renderRequest || result?.request || null;
   const renderId = cleanText(result?.renderId) || cleanText(renderRequest?.renderId) || makeRenderId(renderRequest?.payloadId, renderRequest?.dayIdentity?.sourceDate);
@@ -214,7 +226,15 @@ export function normalizeDayCapsuleRenderResult(result) {
     renderId,
     status,
     renderRequest,
-    renderArtifact: normalizeRenderArtifact(result?.renderArtifact || result?.artifact),
+    payloadId: cleanText(result?.payloadId) || cleanText(renderRequest?.payloadId),
+    artifactType: cleanText(result?.artifactType || result?.renderArtifact?.artifactType || result?.artifact?.artifactType),
+    artifactUrl: cleanText(result?.artifactUrl || result?.renderArtifact?.artifactUrl || result?.artifact?.artifactUrl || result?.renderArtifact?.url || result?.artifact?.url),
+    artifactPath: cleanText(result?.artifactPath || result?.renderArtifact?.artifactPath || result?.artifact?.artifactPath),
+    artifactBlob: result?.artifactBlob || result?.renderArtifact?.artifactBlob || result?.artifact?.artifactBlob || null,
+    thumbnailUrl: cleanText(result?.thumbnailUrl || result?.renderArtifact?.thumbnailUrl || result?.artifact?.thumbnailUrl),
+    previewPath: cleanText(result?.previewPath || result?.renderArtifact?.previewPath || result?.artifact?.previewPath),
+    providerMetadata: result?.providerMetadata || result?.renderArtifact?.providerMetadata || result?.artifact?.providerMetadata || {},
+    renderArtifact: normalizeRenderArtifact(result?.renderArtifact || result?.artifact || (result?.artifactUrl || result?.artifactPath || result?.artifactBlob || result?.previewPath ? result : null)),
     error: result?.error || null,
     message: cleanText(result?.message),
     createdAt: result?.createdAt || renderRequest?.createdAt || now,
@@ -222,20 +242,20 @@ export function normalizeDayCapsuleRenderResult(result) {
   };
 }
 
-export function persistDayCapsuleRender(result) {
-  const normalized = normalizeDayCapsuleRenderResult(result);
+export function persistExternalDayCapsuleRender(result) {
+  const normalized = normalizeExternalDayCapsuleRenderResult(result);
   return writeStorageObject(DAY_CAPSULE_RENDER_RECORD_KEY, normalized);
 }
 
 export function readPersistedDayCapsuleRender() {
-  return normalizeDayCapsuleRenderResult(readStorageObject(DAY_CAPSULE_RENDER_RECORD_KEY, { status: DAY_CAPSULE_RENDER_STATUSES.IDLE }));
+  return normalizeExternalDayCapsuleRenderResult(readStorageObject(DAY_CAPSULE_RENDER_RECORD_KEY, { status: DAY_CAPSULE_RENDER_STATUSES.IDLE }));
 }
 
-export function requestDayCapsuleRender(renderRequest) {
+export function requestLocalProofDayCapsuleRender(renderRequest) {
   const now = new Date().toISOString();
   const localProofArtifact = buildLocalProofArtifact(renderRequest);
   if (localProofArtifact) {
-    return persistDayCapsuleRender({
+    return persistExternalDayCapsuleRender({
       renderId: renderRequest?.renderId,
       status: DAY_CAPSULE_RENDER_STATUSES.LOCAL_PROOF_RENDERED,
       renderRequest,
@@ -245,12 +265,12 @@ export function requestDayCapsuleRender(renderRequest) {
       updatedAt: now,
     });
   }
-  return persistDayCapsuleRender({
+  return persistExternalDayCapsuleRender({
     renderId: renderRequest?.renderId,
     status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDERER_NOT_CONFIGURED,
     renderRequest,
     renderArtifact: null,
-    message: 'External renderer not configured. Day Capsule payload is ready, but Level 2 final render is blocked.',
+    message: 'External renderer is not configured yet.',
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   });
@@ -263,3 +283,48 @@ export function getDayCapsuleRenderStatus(renderId) {
   }
   return stored;
 }
+
+
+export const buildDayCapsuleRenderRequest = buildExternalDayCapsuleRenderRequest;
+export const normalizeDayCapsuleRenderResult = normalizeExternalDayCapsuleRenderResult;
+export const persistDayCapsuleRender = persistExternalDayCapsuleRender;
+
+export async function requestExternalDayCapsuleRender(renderRequest) {
+  const now = new Date().toISOString();
+  const renderingRecord = persistExternalDayCapsuleRender({
+    renderId: renderRequest?.renderId,
+    payloadId: renderRequest?.payloadId,
+    status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDERING,
+    renderRequest,
+    renderArtifact: null,
+    message: 'Rendering Day Capsule…',
+    createdAt: renderRequest?.createdAt || now,
+    updatedAt: now,
+  });
+  try {
+    const response = await fetch('/api/day-capsule-render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ renderRequest }),
+    });
+    const result = await response.json().catch(() => ({}));
+    return persistExternalDayCapsuleRender({ ...result, renderRequest: result?.renderRequest || renderRequest });
+  } catch (error) {
+    return persistExternalDayCapsuleRender({
+      ...renderingRecord,
+      status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDER_FAILED,
+      renderArtifact: null,
+      artifactUrl: null,
+      message: 'External Day Capsule render failed.',
+      error: error?.message || 'External Day Capsule render failed.',
+      updatedAt: new Date().toISOString(),
+    });
+  }
+}
+
+export function requestDayCapsuleRender(renderRequest, { mode = 'external' } = {}) {
+  if (mode === 'local_proof') return requestLocalProofDayCapsuleRender(renderRequest);
+  return requestExternalDayCapsuleRender(renderRequest);
+}
+
+export const getExternalDayCapsuleRenderStatus = getDayCapsuleRenderStatus;
