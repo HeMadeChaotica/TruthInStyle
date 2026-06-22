@@ -14,12 +14,42 @@ const OBJECT_WORDS = ['coffee', 'tea', 'sandwich', 'salad', 'pizza', 'breakfast'
 const PLACE_WORDS = ['home', 'office', 'market', 'store', 'gym', 'park', 'room', 'kitchen', 'street', 'cafe', 'restaurant', 'studio', 'work', 'school'];
 const REFLECTION_WORDS = ['feel', 'felt', 'feeling', 'think', 'thought', 'truth', 'release', 'survive', 'survived', 'choose', 'chose', 'pattern', 'problem', 'solve', 'solved', 'want', 'wanted', 'need', 'needed', 'body', 'mood', 'attention', 'remember'];
 const FRAGMENT_WORDS = ['errand', 'reminder', 'note', 'scrap', 'todo', 'call', 'text', 'appointment', 'buy', 'pick', 'drop', 'clean'];
+const METADATA_ONLY_KEYS = new Set([
+  'sourceAvailability',
+  'availableSourceSignals',
+  'availability',
+  'available',
+  'enabled',
+  'disabled',
+  'configured',
+  'config',
+  'diagnostics',
+  'diagnostic',
+  'debug',
+  'flags',
+  'metadata',
+  'sourceMetadata',
+]);
 
-function flattenText(value) {
+function isBooleanMap(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const entries = Object.entries(value);
+  return entries.length > 0 && entries.every(([, entryValue]) => typeof entryValue === 'boolean');
+}
+
+function flattenText(value, options = {}) {
   if (value === null || value === undefined) return [];
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return [String(value)];
-  if (Array.isArray(value)) return value.flatMap(flattenText);
-  if (typeof value === 'object') return Object.values(value).flatMap(flattenText);
+  if (typeof value === 'boolean') return [];
+  if (typeof value === 'string' || typeof value === 'number') return [String(value)];
+  if (Array.isArray(value)) return value.flatMap((entry) => flattenText(entry, options));
+  if (typeof value === 'object') {
+    if (isBooleanMap(value)) return [];
+    return Object.entries(value).flatMap(([key, entryValue]) => {
+      if (options.skipMetadata && METADATA_ONLY_KEYS.has(key)) return [];
+      if (typeof entryValue === 'boolean' || isBooleanMap(entryValue)) return [];
+      return flattenText(entryValue, options);
+    });
+  }
   return [];
 }
 
@@ -54,6 +84,57 @@ function valuesFromObjects(items = [], keys = []) {
     .filter(Boolean);
 }
 
+function stableContentSignature(value = {}) {
+  if (!value || typeof value !== 'object') return String(cleanText(value) || '').toLowerCase();
+  const id = cleanText(value.id || value.momentId || value.eventId || value.cardId);
+  if (id) return `id:${id.toLowerCase()}`;
+  return [
+    value.date,
+    value.dateKey,
+    value.time,
+    value.timestamp,
+    value.title,
+    value.description,
+    value.text,
+    value.detail,
+    value.type,
+    value.location,
+    value.place,
+  ]
+    .map((entry) => cleanText(entry) || '')
+    .join('|')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function dedupeMoments(...momentFeeds) {
+  const seen = new Set();
+  return momentFeeds
+    .flatMap((feed) => (Array.isArray(feed) ? feed : []))
+    .filter((moment) => {
+      const signature = stableContentSignature(moment);
+      if (!signature || seen.has(signature)) return false;
+      seen.add(signature);
+      return true;
+    });
+}
+
+function populatedPennyQuestions(pennyQuestions = []) {
+  return (Array.isArray(pennyQuestions) ? pennyQuestions : []).filter((entry) => (
+    cleanText(entry?.question)
+      || cleanText(entry?.questionText)
+      || cleanText(entry?.answer)
+  ));
+}
+
+function pennyReflectionScore(pennyQuestions = []) {
+  return populatedPennyQuestions(pennyQuestions).reduce((score, entry) => {
+    if (cleanText(entry?.answer)) return score + 2;
+    return score + 1;
+  }, 0);
+}
+
 function extractRepeatedWords(tokens = []) {
   const counts = tokens.reduce((map, token) => map.set(token, (map.get(token) || 0) + 1), new Map());
   return [...counts.entries()]
@@ -69,10 +150,11 @@ export function analyzeDayCapsuleVisualContent(dayCapsulePayload = {}) {
   const pennyQuestions = Array.isArray(assured.pennyQuestions) ? assured.pennyQuestions : [];
   const moments = Array.isArray(snapshot.moments) ? snapshot.moments : [];
   const rememberMeMoments = Array.isArray(snapshot.rememberMeMoments) ? snapshot.rememberMeMoments : [];
+  const dedupedMoments = dedupeMoments(moments, rememberMeMoments);
   const mealHighlights = Array.isArray(snapshot.daEaterSignals?.mealHighlights) ? snapshot.daEaterSignals.mealHighlights : [];
   const thiccFittSignals = Array.isArray(snapshot.thiccFittSignals) ? snapshot.thiccFittSignals : [];
   const thiccTimeText = flattenText(snapshot.thiccTimeSignals);
-  const otherSignalText = flattenText(snapshot.otherSignals);
+  const otherSignalText = flattenText(snapshot.otherSignals, { skipMetadata: true });
   const explicitLines = [
     assured.diaryEntry,
     ...pennyQuestions.flatMap((entry) => [entry?.question, entry?.answer]),
@@ -81,8 +163,7 @@ export function analyzeDayCapsuleVisualContent(dayCapsulePayload = {}) {
     snapshot.wordOfDay?.definition,
     snapshot.headHummer,
     snapshot.era,
-    ...valuesFromObjects(moments, ['type', 'text', 'description', 'detail', 'time']),
-    ...valuesFromObjects(rememberMeMoments, ['type', 'text', 'description', 'detail', 'time', 'place', 'location']),
+    ...valuesFromObjects(dedupedMoments, ['type', 'text', 'description', 'detail', 'time', 'place', 'location']),
     ...thiccFittSignals,
     ...valuesFromObjects(mealHighlights, ['time', 'label', 'macroText', 'status', 'name', 'type']),
     ...thiccTimeText,
@@ -92,11 +173,14 @@ export function analyzeDayCapsuleVisualContent(dayCapsulePayload = {}) {
   const tokenSet = new Set(tokens);
   const objectHints = uniqueLimited([
     ...valuesFromObjects(mealHighlights, ['label', 'name', 'type']),
-    ...thiccFittSignals.filter((line) => OBJECT_WORDS.some((word) => String(line).toLowerCase().includes(word))),
+    ...thiccFittSignals.filter((line) => {
+      const lineTokens = new Set(tokenizeVisualText([line]));
+      return OBJECT_WORDS.some((word) => lineTokens.has(word));
+    }),
     ...OBJECT_WORDS.filter((word) => tokenSet.has(word)),
   ], 12);
   const places = uniqueLimited([
-    ...valuesFromObjects(rememberMeMoments, ['place', 'location', 'type']),
+    ...valuesFromObjects(rememberMeMoments, ['place', 'location']),
     ...PLACE_WORDS.filter((word) => tokenSet.has(word)),
   ], 8);
   const motifHints = uniqueLimited([
@@ -108,14 +192,14 @@ export function analyzeDayCapsuleVisualContent(dayCapsulePayload = {}) {
     ...extractRepeatedWords(tokens).map((word) => `repeated word: ${word}`),
   ], 14);
   return {
-    eventCount: moments.length + rememberMeMoments.length,
+    eventCount: dedupedMoments.length,
     pennyCount: pennyQuestions.filter((entry) => cleanText(entry?.answer)).length,
     mealCount: mealHighlights.length,
     objectHints,
     motifHints,
     places,
     repeatedWords: extractRepeatedWords(tokens),
-    reflectionScore: tokens.filter((token) => REFLECTION_WORDS.includes(token)).length + pennyQuestions.length * 2,
+    reflectionScore: tokens.filter((token) => REFLECTION_WORDS.includes(token)).length + pennyReflectionScore(pennyQuestions),
     fragmentScore: tokens.filter((token) => FRAGMENT_WORDS.includes(token)).length + Math.max(0, explicitLines.length - 8),
     hasStrongNarrative: Boolean(cleanText(assured.diaryEntry) || pennyQuestions.some((entry) => cleanText(entry?.answer)?.length > 80)),
   };
@@ -127,7 +211,7 @@ export function selectDayCapsuleVisualStyleMode(dayCapsulePayload = {}) {
   if (analysis.eventCount >= 4 && (analysis.places.length || analysis.objectHints.length)) return DAY_CAPSULE_VISUAL_STYLE_MODES.JOURNAL_SPREAD;
   if (analysis.reflectionScore >= 5) return DAY_CAPSULE_VISUAL_STYLE_MODES.SKETCHNOTE_MAP;
   if (analysis.fragmentScore >= 6 && analysis.eventCount < 4) return DAY_CAPSULE_VISUAL_STYLE_MODES.STICKY_MEMORY_BOARD;
-  if (analysis.eventCount >= 3) return DAY_CAPSULE_VISUAL_STYLE_MODES.JOURNAL_SPREAD;
+  if (analysis.eventCount >= 3 && (analysis.places.length || analysis.objectHints.length)) return DAY_CAPSULE_VISUAL_STYLE_MODES.JOURNAL_SPREAD;
   return DAY_CAPSULE_VISUAL_STYLE_MODES.EDITORIAL_CAPSULE;
 }
 
