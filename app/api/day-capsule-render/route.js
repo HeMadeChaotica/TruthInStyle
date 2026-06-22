@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 
 const STATUS = Object.freeze({
@@ -6,6 +7,40 @@ const STATUS = Object.freeze({
   RENDERED: 'external_rendered',
   FAILED: 'external_render_failed',
 });
+
+function safeTokenMatch(received, expected) {
+  const cleanReceived = cleanText(received);
+  const cleanExpected = cleanText(expected);
+  if (!cleanReceived || !cleanExpected) return false;
+
+  const receivedBuffer = Buffer.from(cleanReceived);
+  const expectedBuffer = Buffer.from(cleanExpected);
+  if (receivedBuffer.length !== expectedBuffer.length) return false;
+
+  return timingSafeEqual(receivedBuffer, expectedBuffer);
+}
+
+function readProxyToken(request) {
+  const authorization = cleanText(request.headers.get('authorization'));
+  if (authorization?.toLowerCase().startsWith('bearer ')) {
+    return authorization.slice(7).trim();
+  }
+  return request.headers.get('x-day-capsule-render-token');
+}
+
+function unauthorizedResponse(renderRequest, message = 'Day Capsule render proxy authorization is required.') {
+  return NextResponse.json({
+    renderId: renderRequest?.renderId || null,
+    payloadId: renderRequest?.payloadId || null,
+    status: STATUS.FAILED,
+    message,
+    error: message,
+    renderArtifact: null,
+    renderRequest,
+    createdAt: renderRequest?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }, { status: 401 });
+}
 
 function cleanText(value) {
   if (value === null || value === undefined) return null;
@@ -108,6 +143,14 @@ export async function POST(request) {
 
   const endpoint = cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT);
   if (!endpoint) return missingConfigResponse(renderRequest);
+
+  const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
+  if (!proxyToken) {
+    return unauthorizedResponse(renderRequest, 'Day Capsule render proxy token is not configured.');
+  }
+  if (!safeTokenMatch(readProxyToken(request), proxyToken)) {
+    return unauthorizedResponse(renderRequest);
+  }
 
   const headers = { 'Content-Type': 'application/json' };
   const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
