@@ -47,6 +47,22 @@ function unauthorizedResponse(renderRequest, message = 'Day Capsule render proxy
   }, { status: 401 });
 }
 
+function proxyTokenMissingResponse(renderRequest) {
+  const now = new Date().toISOString();
+  const message = 'Day Capsule render proxy token is not configured.';
+  return NextResponse.json({
+    renderId: renderRequest?.renderId || null,
+    payloadId: renderRequest?.payloadId || null,
+    status: STATUS.FAILED,
+    message,
+    error: 'DAY_CAPSULE_RENDER_PROXY_TOKEN must be configured before forwarding requests to the external renderer.',
+    renderArtifact: null,
+    renderRequest,
+    createdAt: renderRequest?.createdAt || now,
+    updatedAt: now,
+  }, { status: 503 });
+}
+
 function cleanText(value) {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
