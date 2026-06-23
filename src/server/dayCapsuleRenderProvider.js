@@ -27,7 +27,9 @@ function getModel() {
 export function isDayCapsuleProviderConfigured() {
   const provider = getProviderName();
   const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
-  return Boolean(provider && apiKey && provider === 'openai');
+  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase();
+  const storagePath = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH);
+  return Boolean(provider === 'openai' && apiKey && storageMode === 'local' && storagePath);
 }
 
 function safeJson(value) {
