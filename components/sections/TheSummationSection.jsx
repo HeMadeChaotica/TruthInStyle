@@ -177,7 +177,7 @@ export default function TheSummationSection() {
 
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
-  const canShowArtifact = Boolean(previewUrl) && ['external_rendered', 'local_proof_rendered'].includes(renderStatus);
+  const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
   const canRequestExternal = Boolean(payload) && ['external_renderer_ready', 'external_render_failed', 'external_renderer_not_configured'].includes(renderStatus);
 
   const handleOpenEye = () => {

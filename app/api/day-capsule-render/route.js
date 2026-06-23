@@ -1,5 +1,10 @@
 import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
+import {
+  isDayCapsuleProviderConfigured,
+  normalizeProviderArtifact,
+  renderDayCapsuleWithProvider,
+} from '../../../src/server/dayCapsuleRenderProvider';
 
 const STATUS = Object.freeze({
   NOT_CONFIGURED: 'external_renderer_not_configured',
@@ -57,68 +62,48 @@ function missingConfigResponse(renderRequest) {
     message: 'External renderer is not configured yet.',
     renderRequest,
     renderArtifact: null,
-    error: null,
+    error: 'External Day Capsule render provider and endpoint are not configured.',
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   }, { status: 200 });
 }
 
-function normalizeProviderResult(providerResult, renderRequest) {
-  const now = new Date().toISOString();
-  const artifactUrl = cleanText(providerResult?.artifactUrl || providerResult?.url || providerResult?.imageUrl || providerResult?.output?.url);
-  const artifactPath = cleanText(providerResult?.artifactPath || providerResult?.path || providerResult?.output?.path);
-  const artifactBlob = providerResult?.artifactBlob || providerResult?.blob || null;
-  const previewPath = cleanText(providerResult?.previewPath || providerResult?.preview?.path);
-  const thumbnailUrl = cleanText(providerResult?.thumbnailUrl || providerResult?.thumbnail?.url);
-  const hasArtifact = Boolean(artifactUrl || artifactPath || artifactBlob || previewPath);
+async function proxyToExternalEndpoint(endpoint, renderRequest) {
+  const headers = { 'Content-Type': 'application/json' };
+  const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
-  if (!hasArtifact) {
+  const providerResponse = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ renderRequest }),
+  });
+  const providerResult = await providerResponse.json().catch(() => ({}));
+  if (!providerResponse.ok) {
     return {
       renderId: renderRequest.renderId,
       payloadId: renderRequest.payloadId,
       status: STATUS.FAILED,
-      message: 'External renderer did not return an artifact.',
-      error: 'External renderer did not return artifactUrl, artifactPath, artifactBlob, or previewPath.',
+      message: 'External Day Capsule render failed.',
+      error: cleanText(providerResult?.error || providerResult?.message) || `Renderer returned HTTP ${providerResponse.status}.`,
       renderRequest,
       renderArtifact: null,
       providerMetadata: providerResult?.providerMetadata || providerResult?.metadata || {},
-      createdAt: renderRequest.createdAt || now,
-      updatedAt: now,
+      createdAt: renderRequest.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
   }
-
-  return {
-    renderId: cleanText(providerResult?.renderId) || renderRequest.renderId,
-    payloadId: cleanText(providerResult?.payloadId) || renderRequest.payloadId,
-    status: STATUS.RENDERED,
-    artifactType: cleanText(providerResult?.artifactType || providerResult?.type) || 'image',
-    artifactUrl,
-    artifactPath,
-    artifactBlob,
-    thumbnailUrl,
-    previewPath,
-    providerMetadata: providerResult?.providerMetadata || providerResult?.metadata || {},
-    renderRequest,
-    renderArtifact: {
-      artifactType: cleanText(providerResult?.artifactType || providerResult?.type) || 'image',
-      artifactUrl,
-      url: artifactUrl || artifactPath || previewPath,
-      artifactPath,
-      artifactBlob,
-      thumbnailUrl,
-      previewPath,
-      providerMetadata: providerResult?.providerMetadata || providerResult?.metadata || {},
-    },
-    createdAt: renderRequest.createdAt || now,
-    updatedAt: now,
-  };
+  return normalizeProviderArtifact(providerResult, renderRequest);
 }
 
 export async function GET() {
-  const configured = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT));
+  const internalProviderConfigured = isDayCapsuleProviderConfigured();
+  const endpointConfigured = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT));
+  const configured = internalProviderConfigured || endpointConfigured;
   return NextResponse.json({
     status: configured ? STATUS.READY : STATUS.NOT_CONFIGURED,
     message: configured ? 'External renderer is configured.' : 'External renderer is not configured yet.',
+    providerMode: internalProviderConfigured ? 'internal_provider_adapter' : (endpointConfigured ? 'external_endpoint_proxy' : null),
   });
 }
 
@@ -141,40 +126,20 @@ export async function POST(request) {
     }, { status: 400 });
   }
 
+  const internalProviderConfigured = isDayCapsuleProviderConfigured();
   const endpoint = cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT);
-  if (!endpoint) return missingConfigResponse(renderRequest);
+  if (!internalProviderConfigured && !endpoint) return missingConfigResponse(renderRequest);
 
   const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
-  if (proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
+  if (!internalProviderConfigured && proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
     return unauthorizedResponse(renderRequest);
   }
 
-  const headers = { 'Content-Type': 'application/json' };
-  const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
-
   try {
-    const providerResponse = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ renderRequest }),
-    });
-    const providerResult = await providerResponse.json().catch(() => ({}));
-    if (!providerResponse.ok) {
-      return NextResponse.json({
-        renderId: renderRequest.renderId,
-        payloadId: renderRequest.payloadId,
-        status: STATUS.FAILED,
-        message: 'External Day Capsule render failed.',
-        error: cleanText(providerResult?.error || providerResult?.message) || `Renderer returned HTTP ${providerResponse.status}.`,
-        renderRequest,
-        renderArtifact: null,
-        providerMetadata: providerResult?.providerMetadata || providerResult?.metadata || {},
-        createdAt: renderRequest.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }, { status: 200 });
-    }
-    return NextResponse.json(normalizeProviderResult(providerResult, renderRequest));
+    const result = internalProviderConfigured
+      ? await renderDayCapsuleWithProvider(renderRequest)
+      : await proxyToExternalEndpoint(endpoint, renderRequest);
+    return NextResponse.json({ ...result, renderRequest: result?.renderRequest || renderRequest });
   } catch (error) {
     return NextResponse.json({
       renderId: renderRequest.renderId,
