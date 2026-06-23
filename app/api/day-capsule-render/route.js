@@ -131,11 +131,11 @@ export async function POST(request) {
   }
 
   const renderRequest = body?.renderRequest || body;
-  if (!renderRequest?.renderId || !renderRequest?.payloadId || !renderRequest?.dayIdentity) {
+  if (!renderRequest?.renderId || !renderRequest?.payloadId || !renderRequest?.dayIdentity || !renderRequest?.sourceSnapshot) {
     return NextResponse.json({
       status: STATUS.FAILED,
       message: 'Invalid Day Capsule render request.',
-      error: 'renderId, payloadId, and dayIdentity are required.',
+      error: 'renderId, payloadId, dayIdentity, and sourceSnapshot are required.',
       renderArtifact: null,
       renderRequest,
     }, { status: 400 });
@@ -145,10 +145,7 @@ export async function POST(request) {
   if (!endpoint) return missingConfigResponse(renderRequest);
 
   const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
-  if (!proxyToken) {
-    return unauthorizedResponse(renderRequest, 'Day Capsule render proxy token is not configured.');
-  }
-  if (!safeTokenMatch(readProxyToken(request), proxyToken)) {
+  if (proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
     return unauthorizedResponse(renderRequest);
   }
 
