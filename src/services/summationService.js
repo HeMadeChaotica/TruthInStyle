@@ -1687,11 +1687,21 @@ function getFinalRenderSealBlockFields(dayIdentity = {}) {
     DAY_CAPSULE_RENDER_STATUSES.RENDERED,
     DAY_CAPSULE_RENDER_STATUSES.REVISED,
   ]);
+  const artifact = renderRecord?.renderArtifact || {};
+  const hasArtifactReference = Boolean(
+    cleanText(renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath)
+      || cleanText(artifact.url || artifact.artifactUrl || artifact.artifactPath || artifact.previewPath)
+      || renderRecord?.artifactBlob
+      || artifact.artifactBlob
+  );
+  const hasPayloadSnapshot = Boolean(renderRecord?.renderRequest?.payloadId && renderRecord?.renderRequest?.sourceSnapshot);
   if (!renderRecord?.status) return ['external_rendered final Day Capsule artifact'];
   if (renderRecord.status === DAY_CAPSULE_RENDER_STATUSES.LOCAL_PROOF_RENDERED) return ['external_rendered final Day Capsule artifact (local proof is preview-only)'];
   if (!allowedFinalStatuses.has(renderRecord.status)) return [`external_rendered final Day Capsule artifact (current status: ${renderRecord.status})`];
   if (expectedRenderId && renderRecord.renderId && renderRecord.renderId !== expectedRenderId) return ['matching external render artifact for active Day Capsule'];
-  if (!renderRecord.renderArtifact?.url) return ['external render artifact URL'];
+  if (!hasArtifactReference) return ['external render artifact reference'];
+  if (!isPresent(dayIdentity)) return ['dayIdentity'];
+  if (!hasPayloadSnapshot) return ['payload/sourceSnapshot'];
   return [];
 }
 
