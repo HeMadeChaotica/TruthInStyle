@@ -9,7 +9,7 @@ Use one canonical server-only endpoint name:
 Optional server-only variables:
 
 - `DAY_CAPSULE_RENDER_API_KEY` — sent by the backend proxy as `Authorization: Bearer ...` when present.
-- `DAY_CAPSULE_RENDER_PROXY_TOKEN` — optional extra guard for direct proxy calls. When set, callers must send the matching bearer token or `x-day-capsule-render-token`. It is not required for the app UI path because the app posts only to its own backend route.
+- `DAY_CAPSULE_RENDER_PROXY_TOKEN` — required when `DAY_CAPSULE_RENDER_ENDPOINT` is configured. Callers must send the matching bearer token or `x-day-capsule-render-token`; the proxy fails closed before forwarding to the external renderer when this token is missing or mismatched.
 
 Do not use `DAY_CAPULE_RENDER_ENDPOINT`; that spelling is intentionally not supported.
 
@@ -20,6 +20,7 @@ The Next.js route `POST /api/day-capsule-render` owns the external renderer call
 Required status behavior:
 
 - Missing `DAY_CAPSULE_RENDER_ENDPOINT` returns `external_renderer_not_configured`.
+- Missing `DAY_CAPSULE_RENDER_PROXY_TOKEN` with a configured endpoint returns `external_render_failed` without invoking the provider.
 - A configured endpoint allows the proxy to attempt an external render and returns either `external_rendered` or `external_render_failed`.
 - While the frontend request is in flight, the persisted app record uses `external_rendering`.
 - Provider results must include an artifact reference (`artifactUrl`, `artifactPath`, `artifactBlob`, or `previewPath`) or they are normalized to `external_render_failed`.
