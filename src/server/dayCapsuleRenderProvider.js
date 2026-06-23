@@ -24,10 +24,21 @@ function getModel() {
   return cleanText(process.env.DAY_CAPSULE_RENDER_MODEL) || 'gpt-image-1';
 }
 
+function isLocalArtifactStorageConfigured() {
+  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'none';
+  const storagePath = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH);
+  return storageMode === 'local' && Boolean(storagePath);
+}
+
 export function isDayCapsuleProviderConfigured() {
   const provider = getProviderName();
   const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
-  return Boolean(provider && apiKey && provider === 'openai');
+  if (provider !== 'openai' || !apiKey) return false;
+
+  // OpenAI image generations return base64 payloads for GPT image models.
+  // Treat the provider as ready only when the adapter can persist that payload
+  // into a usable artifact path for the app.
+  return isLocalArtifactStorageConfigured();
 }
 
 function safeJson(value) {

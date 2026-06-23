@@ -147,7 +147,7 @@ export async function POST(request) {
   if (!internalProviderConfigured && !endpoint) return missingConfigResponse(renderRequest);
 
   const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
-  if (!internalProviderConfigured && proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
+  if (proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
     return unauthorizedResponse(renderRequest);
   }
 
