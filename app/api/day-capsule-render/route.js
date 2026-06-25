@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import {
+  getDayCapsuleRenderConfigDiagnostic,
   isDayCapsuleProviderConfigured,
   normalizeProviderArtifact,
   renderDayCapsuleWithProvider,
@@ -20,14 +21,16 @@ function cleanText(value) {
 
 function missingConfigResponse(renderRequest) {
   const now = new Date().toISOString();
+  const configDiagnostic = getDayCapsuleRenderConfigDiagnostic();
   return NextResponse.json({
     renderId: renderRequest?.renderId || null,
     payloadId: renderRequest?.payloadId || null,
     status: STATUS.NOT_CONFIGURED,
-    message: 'External renderer is not configured yet.',
+    message: 'External renderer is not configured yet. Missing renderer configuration is listed in configDiagnostic.missingEnv.',
+    configDiagnostic,
     renderRequest,
     renderArtifact: null,
-    error: 'External Day Capsule render provider and endpoint are not configured.',
+    error: `Missing required config: ${configDiagnostic.missingEnv.join(', ') || 'renderer provider or external endpoint'}.`,
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   }, { status: 200 });
@@ -68,10 +71,12 @@ export async function GET() {
   const internalProviderConfigured = isDayCapsuleProviderConfigured();
   const endpointConfigured = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT));
   const configured = internalProviderConfigured || endpointConfigured;
+  const configDiagnostic = getDayCapsuleRenderConfigDiagnostic();
   return NextResponse.json({
     status: configured ? STATUS.READY : STATUS.NOT_CONFIGURED,
-    message: configured ? 'External renderer is configured.' : 'External renderer is not configured yet.',
+    message: configured ? 'External renderer is configured.' : 'External renderer is not configured yet. Missing renderer configuration is listed in configDiagnostic.missingEnv.',
     providerMode: internalProviderConfigured ? 'internal_provider_adapter' : (endpointConfigured ? 'external_endpoint_proxy' : null),
+    configDiagnostic,
   });
 }
 
