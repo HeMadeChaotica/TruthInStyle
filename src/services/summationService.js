@@ -149,9 +149,10 @@ function normalizeDayOfWeek(value, fallbackDate = null) {
 
 function isMissingChaoticaDayNumber(value) {
   if (value === null || value === undefined) return true;
-  if (typeof value === 'number') return !Number.isFinite(value);
+  if (typeof value === 'number') return !Number.isFinite(value) || value === 0;
   if (typeof value === 'string' && value.trim() === '') return true;
-  return !Number.isFinite(Number(typeof value === 'string' ? value.trim() : value));
+  const numeric = Number(typeof value === 'string' ? value.trim() : value);
+  return !Number.isFinite(numeric) || numeric === 0;
 }
 
 export function resolveChaoticaDayNumber(input, sourceDate) {
@@ -1071,7 +1072,7 @@ export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
   const requestedDateKey = cleanText(dateKey);
   const records = readSealedRecords();
   const existing = records.find((record) => cleanText(record?.sourceDate) === requestedDateKey || cleanText(record?.dateKey) === requestedDateKey);
-  if (existing?.chaoticaDayNumber) return Number(existing.chaoticaDayNumber);
+  if (!isMissingChaoticaDayNumber(existing?.chaoticaDayNumber)) return Number(existing.chaoticaDayNumber);
   return records.length + 1;
 }
 

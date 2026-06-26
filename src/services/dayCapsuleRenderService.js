@@ -415,7 +415,16 @@ function normalizeRenderArtifact(artifact) {
 
 export function buildExternalDayCapsuleRenderRequest(dayCapsulePayload) {
   const now = new Date().toISOString();
-  const dayIdentity = dayCapsulePayload?.dayIdentity || {};
+  const rawDayIdentity = dayCapsulePayload?.dayIdentity || {};
+  const sourceDate = cleanText(rawDayIdentity.sourceDate || dayCapsulePayload?.sourceDate);
+  const dayIdentity = {
+    ...rawDayIdentity,
+    titleOfDay: cleanText(rawDayIdentity.titleOfDay || dayCapsulePayload?.titleOfDay || dayCapsulePayload?.title),
+    displayDate: cleanText(rawDayIdentity.displayDate || dayCapsulePayload?.displayDate),
+    dayOfWeek: cleanText(rawDayIdentity.dayOfWeek || dayCapsulePayload?.dayOfWeek),
+    sourceDate,
+    chaoticaDayNumber: rawDayIdentity.chaoticaDayNumber ?? dayCapsulePayload?.chaoticaDayNumber ?? null,
+  };
   const payloadId = cleanText(dayCapsulePayload?.payloadId) || `day-capsule-${cleanText(dayIdentity.sourceDate) || 'unsourced'}`;
 
   return {

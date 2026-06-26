@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   createDayCapsulePayloadFromActiveDay,
   readStoredDayCapsulePayload,
+  resolveDayIdentityClump,
 } from '../../src/services/summationService';
 import {
   buildDayCapsuleRenderRequest,
@@ -82,6 +83,36 @@ function SourceRow({ label, value }) {
   );
 }
 
+
+function yesNo(value) {
+  return value ? 'yes' : 'no';
+}
+
+function RendererConfigDiagnostic({ diagnostic }) {
+  if (!diagnostic) return null;
+  const checks = diagnostic.checks || {};
+  const rows = [
+    ['Provider configured', yesNo(checks.providerConfigured)],
+    ['OpenAI key present', yesNo(checks.openAiKeyPresent)],
+    ['Storage mode', checks.storageMode || 'missing'],
+    ['Supabase URL present', yesNo(checks.supabaseUrlPresent)],
+    ['Supabase service role present', yesNo(checks.supabaseServiceRolePresent)],
+    ['Supabase bucket present', yesNo(checks.supabaseBucketPresent)],
+    ['External endpoint configured', yesNo(checks.externalEndpointConfigured)],
+  ];
+  return (
+    <details className="summation-config-diagnostic" open>
+      <summary>Renderer Configuration</summary>
+      <dl>
+        {rows.map(([label, value]) => <DetailPill key={label} label={label} value={value} />)}
+      </dl>
+      {diagnostic.missingEnv?.length ? (
+        <p className="summation-missing-config">Missing config: {diagnostic.missingEnv.join(', ')}</p>
+      ) : <p className="summation-config-ready">Required Supabase renderer config present.</p>}
+    </details>
+  );
+}
+
 function PayloadSourceSnapshot({ payload }) {
   const snapshot = payload?.sourceSnapshot || {};
   const rows = [
@@ -106,9 +137,12 @@ export default function TheSummationSection() {
   const [payload, setPayload] = useState(null);
   const [bootstrapStatus, setBootstrapStatus] = useState('');
   const [renderRecord, setRenderRecord] = useState(() => readPersistedDayCapsuleRender());
+  const [configDiagnostic, setConfigDiagnostic] = useState(null);
+  const [isRendering, setIsRendering] = useState(false);
 
   const loadPayload = useCallback(() => {
-    const storedPayload = readStoredDayCapsulePayload();
+    const rawPayload = readStoredDayCapsulePayload();
+    const storedPayload = rawPayload ? { ...rawPayload, dayIdentity: resolveDayIdentityClump({ ...(rawPayload.dayIdentity || {}), sourceDate: rawPayload.dayIdentity?.sourceDate || rawPayload.sourceDate }) } : null;
     const storedRender = getDayCapsuleRenderStatus(storedPayload?.payloadId ? `${storedPayload.payloadId}-render` : undefined);
     const renderRequest = storedPayload ? buildDayCapsuleRenderRequest(storedPayload) : null;
     const connectedRender = storedPayload && !storedRender?.renderRequest
@@ -118,12 +152,32 @@ export default function TheSummationSection() {
     setRenderRecord(connectedRender);
   }, []);
 
+  const refreshRendererConfig = useCallback(async () => {
+    try {
+      const response = await fetch('/api/day-capsule-render', { method: 'GET' });
+      const result = await response.json().catch(() => ({}));
+      setConfigDiagnostic(result?.configDiagnostic || null);
+      if (result?.status === 'external_renderer_ready' && payload && (!renderRecord || ['idle', 'external_renderer_not_configured', 'ready_to_render'].includes(renderRecord.status))) {
+        const renderRequest = buildDayCapsuleRenderRequest(payload);
+        setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_renderer_ready', renderRequest, message: 'Day Capsule external render request ready.' });
+      }
+      return result;
+    } catch (error) {
+      setBootstrapStatus(error?.message || 'Renderer configuration check failed.');
+      return null;
+    }
+  }, [payload, renderRecord]);
+
   useEffect(() => {
     loadPayload();
     const onPayload = () => loadPayload();
     window.addEventListener(DRAFT_EVENT_NAME, onPayload);
     return () => window.removeEventListener(DRAFT_EVENT_NAME, onPayload);
   }, [loadPayload]);
+
+  useEffect(() => {
+    refreshRendererConfig();
+  }, [refreshRendererConfig]);
 
   const dayIdentity = payload?.dayIdentity || {};
   const title = dayIdentity.titleOfDay || 'No Day Capsule payload loaded';
@@ -133,7 +187,7 @@ export default function TheSummationSection() {
     if (!payload) return 'Use the Crystal Wand to prepare a Day Capsule payload first.';
     if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
     if (renderStatus === 'local_proof_rendered') return 'Local proof render created from the real Day Capsule payload.';
-    if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet.';
+    if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet. See renderer configuration checklist.';
     if (renderStatus === 'external_renderer_ready') return 'Day Capsule external render request ready.';
     if (renderStatus === 'external_rendering') return 'Rendering Day Capsule…';
     if (renderStatus === 'external_rendered') return 'Day Capsule rendered by external illustrated renderer.';
@@ -156,13 +210,19 @@ export default function TheSummationSection() {
     }
 
     const renderRequest = buildDayCapsuleRenderRequest(sourcePayload);
+    setIsRendering(true);
     setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_rendering', renderRequest, message: 'Rendering Day Capsule…' });
     setBootstrapStatus('Rendering Day Capsule…');
-    const pendingRender = await requestDayCapsuleRender(renderRequest);
-    setRenderRecord(pendingRender);
-    setBootstrapStatus(pendingRender?.message || 'Day Capsule external render request complete.');
-    return pendingRender;
-  }, [payload]);
+    try {
+      const pendingRender = await requestDayCapsuleRender(renderRequest);
+      setRenderRecord(pendingRender);
+      setConfigDiagnostic(pendingRender?.configDiagnostic || configDiagnostic);
+      setBootstrapStatus(pendingRender?.message || pendingRender?.error || 'Day Capsule external render request complete.');
+      return pendingRender;
+    } finally {
+      setIsRendering(false);
+    }
+  }, [payload, configDiagnostic]);
 
   const handleBuildFromActiveDay = async () => {
     setBootstrapStatus('Checking active day…');
@@ -178,7 +238,9 @@ export default function TheSummationSection() {
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
   const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
-  const canRequestExternal = Boolean(payload) && ['external_renderer_ready', 'external_render_failed', 'external_renderer_not_configured'].includes(renderStatus);
+  const actionableStatuses = ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'];
+  const canRequestExternal = Boolean(payload) && actionableStatuses.includes(renderStatus) && !isRendering;
+  const renderButtonReason = !payload ? 'no payload' : isRendering ? 'currently rendering' : !dayIdentity?.sourceDate ? 'missing active day' : (!canRequestExternal && renderStatus === 'external_renderer_not_configured') ? 'missing config' : (!actionableStatuses.includes(renderStatus) ? `status ${renderStatus} is not actionable` : 'ready');
 
   const handleOpenEye = () => {
     window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
@@ -210,11 +272,12 @@ export default function TheSummationSection() {
                   ) : (
                     <>
                       <p>{renderMessage}</p>
-                      {canRequestExternal ? (
-                        <button type="button" onClick={() => handleRequestExternalRender()}>
-                          {renderStatus === 'external_renderer_ready' ? 'Start external render' : 'Retry external render'}
+                      <div className="summation-render-actions">
+                        <button type="button" className="summation-render-button" disabled={!canRequestExternal} onClick={() => handleRequestExternalRender()}>
+                          {renderStatus === 'external_renderer_ready' || renderStatus === 'ready_to_render' ? 'Start external render' : 'Retry external render'}
                         </button>
-                      ) : null}
+                        <p className="summation-button-reason">Button state: {renderButtonReason}</p>
+                      </div>
                     </>
                   )}
                 </>
@@ -236,6 +299,7 @@ export default function TheSummationSection() {
             <DetailPill label="Render ID" value={renderRecord?.renderId} />
             <DetailPill label="Payload ID" value={payload?.payloadId} />
             <DetailPill label="Updated" value={payload?.updatedAt} />
+            <RendererConfigDiagnostic diagnostic={configDiagnostic || renderRecord?.configDiagnostic} />
           </ShellPanel>
         </aside>
       </section>
