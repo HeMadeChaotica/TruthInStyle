@@ -3,6 +3,10 @@ import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
 import { buildDayCapsuleVisualInstructions } from '../services/dayCapsuleRenderService';
+import {
+  isSupabaseArtifactStorageConfigured,
+  uploadDayCapsuleArtifactToSupabase,
+} from './dayCapsuleSupabaseStorage';
 
 const STATUS = Object.freeze({
   NOT_CONFIGURED: 'external_renderer_not_configured',
@@ -94,8 +98,16 @@ function contentTypeToExtension(contentType = '') {
 
 async function storeBase64Artifact(base64Data, renderRequest, contentType = 'image/png') {
   const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'none';
-  if (storageMode !== 'local') {
-    return { error: 'missing_storage_path' };
+  if (storageMode === 'supabase') {
+    try {
+      return await uploadDayCapsuleArtifactToSupabase(base64Data, renderRequest, contentType);
+    } catch (error) {
+      return { error: error?.message || 'supabase_upload_failed' };
+    }
+  }
+
+  if (storageMode !== 'local' || process.env.NODE_ENV === 'production') {
+    return { error: 'missing_supabase_storage' };
   }
 
   const storagePath = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH);
@@ -141,7 +153,7 @@ export async function normalizeProviderArtifact(providerResponse, renderRequest)
     }
   }
 
-  const finalArtifactUrl = artifactUrl;
+  const finalArtifactUrl = artifactUrl || storedArtifact.artifactUrl;
   const finalArtifactPath = artifactPath || storedArtifact.artifactPath;
   const finalArtifactBlob = artifactBlob;
   const hasArtifact = Boolean(finalArtifactUrl || finalArtifactPath || finalArtifactBlob);
@@ -171,8 +183,12 @@ export async function normalizeProviderArtifact(providerResponse, renderRequest)
       model: getModel(),
       responseId: providerResponse?.id || null,
       created: providerResponse?.created || null,
-      storageMode: cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE) || null,
+      storageMode: storedArtifact.storageMode || cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE) || null,
+      bucket: storedArtifact.bucket || null,
+      urlType: storedArtifact.urlType || null,
+      signedUrlExpiresIn: storedArtifact.signedUrlExpiresIn || null,
     },
+    storageMode: storedArtifact.storageMode || cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE) || null,
     renderArtifact: {
       artifactType,
       artifactUrl: finalArtifactUrl,

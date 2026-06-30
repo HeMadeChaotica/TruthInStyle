@@ -1,6 +1,6 @@
-import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import {
+  getDayCapsuleRenderConfigDiagnostic,
   isDayCapsuleProviderConfigured,
   normalizeProviderArtifact,
   renderDayCapsuleWithProvider,
@@ -13,56 +13,6 @@ const STATUS = Object.freeze({
   FAILED: 'external_render_failed',
 });
 
-function safeTokenMatch(received, expected) {
-  const cleanReceived = cleanText(received);
-  const cleanExpected = cleanText(expected);
-  if (!cleanReceived || !cleanExpected) return false;
-
-  const receivedBuffer = Buffer.from(cleanReceived);
-  const expectedBuffer = Buffer.from(cleanExpected);
-  if (receivedBuffer.length !== expectedBuffer.length) return false;
-
-  return timingSafeEqual(receivedBuffer, expectedBuffer);
-}
-
-function readProxyToken(request) {
-  const authorization = cleanText(request.headers.get('authorization'));
-  if (authorization?.toLowerCase().startsWith('bearer ')) {
-    return authorization.slice(7).trim();
-  }
-  return request.headers.get('x-day-capsule-render-token');
-}
-
-function unauthorizedResponse(renderRequest, message = 'Day Capsule render proxy authorization is required.') {
-  return NextResponse.json({
-    renderId: renderRequest?.renderId || null,
-    payloadId: renderRequest?.payloadId || null,
-    status: STATUS.FAILED,
-    message,
-    error: message,
-    renderArtifact: null,
-    renderRequest,
-    createdAt: renderRequest?.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }, { status: 401 });
-}
-
-function proxyTokenMissingResponse(renderRequest) {
-  const now = new Date().toISOString();
-  const message = 'Day Capsule render proxy token is not configured.';
-  return NextResponse.json({
-    renderId: renderRequest?.renderId || null,
-    payloadId: renderRequest?.payloadId || null,
-    status: STATUS.FAILED,
-    message,
-    error: 'DAY_CAPSULE_RENDER_PROXY_TOKEN must be configured before forwarding requests to the external renderer.',
-    renderArtifact: null,
-    renderRequest,
-    createdAt: renderRequest?.createdAt || now,
-    updatedAt: now,
-  }, { status: 503 });
-}
-
 function cleanText(value) {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
@@ -71,14 +21,16 @@ function cleanText(value) {
 
 function missingConfigResponse(renderRequest) {
   const now = new Date().toISOString();
+  const configDiagnostic = getDayCapsuleRenderConfigDiagnostic();
   return NextResponse.json({
     renderId: renderRequest?.renderId || null,
     payloadId: renderRequest?.payloadId || null,
     status: STATUS.NOT_CONFIGURED,
-    message: 'External renderer is not configured yet.',
+    message: 'External renderer is not configured yet. Missing renderer configuration is listed in configDiagnostic.missingEnv.',
+    configDiagnostic,
     renderRequest,
     renderArtifact: null,
-    error: 'External Day Capsule render provider and endpoint are not configured.',
+    error: `Missing required config: ${configDiagnostic.missingEnv.join(', ') || 'renderer provider or external endpoint'}.`,
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   }, { status: 200 });
@@ -86,8 +38,11 @@ function missingConfigResponse(renderRequest) {
 
 async function proxyToExternalEndpoint(endpoint, renderRequest) {
   const headers = { 'Content-Type': 'application/json' };
-  const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
-  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+  const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
+  if (proxyToken) {
+    headers.Authorization = `Bearer ${proxyToken}`;
+    headers['x-day-capsule-render-token'] = proxyToken;
+  }
 
   const providerResponse = await fetch(endpoint, {
     method: 'POST',
@@ -116,10 +71,12 @@ export async function GET() {
   const internalProviderConfigured = isDayCapsuleProviderConfigured();
   const endpointConfigured = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT));
   const configured = internalProviderConfigured || endpointConfigured;
+  const configDiagnostic = getDayCapsuleRenderConfigDiagnostic();
   return NextResponse.json({
     status: configured ? STATUS.READY : STATUS.NOT_CONFIGURED,
-    message: configured ? 'External renderer is configured.' : 'External renderer is not configured yet.',
+    message: configured ? 'External renderer is configured.' : 'External renderer is not configured yet. Missing renderer configuration is listed in configDiagnostic.missingEnv.',
     providerMode: internalProviderConfigured ? 'internal_provider_adapter' : (endpointConfigured ? 'external_endpoint_proxy' : null),
+    configDiagnostic,
   });
 }
 
