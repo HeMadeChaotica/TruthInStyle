@@ -103,6 +103,11 @@ export async function POST(request) {
   const endpoint = cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT);
   if (!internalProviderConfigured && !endpoint) return missingConfigResponse(renderRequest);
 
+  const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
+  if (proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
+    return unauthorizedResponse(renderRequest);
+  }
+
   try {
     const result = internalProviderConfigured
       ? await renderDayCapsuleWithProvider(renderRequest)

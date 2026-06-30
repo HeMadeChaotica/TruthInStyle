@@ -28,55 +28,21 @@ function getModel() {
   return cleanText(process.env.DAY_CAPSULE_RENDER_MODEL) || 'gpt-image-1';
 }
 
-const REQUIRED_SUPABASE_ENV_KEYS = [
-  'DAY_CAPSULE_RENDER_PROVIDER',
-  'DAY_CAPSULE_RENDER_API_KEY',
-  'DAY_CAPSULE_RENDER_MODEL',
-  'DAY_CAPSULE_RENDER_SIZE',
-  'DAY_CAPSULE_RENDER_STORAGE_MODE',
-  'NEXT_PUBLIC_SUPABASE_URL',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'DAY_CAPSULE_SUPABASE_BUCKET',
-];
-
-function envPresent(key) {
-  return Boolean(cleanText(process.env[key]));
-}
-
-export function getDayCapsuleRenderConfigDiagnostic() {
-  const provider = getProviderName();
-  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'missing';
-  const endpointConfigured = envPresent('DAY_CAPSULE_RENDER_ENDPOINT');
-  const checks = {
-    providerConfigured: provider === 'openai',
-    openAiKeyPresent: envPresent('DAY_CAPSULE_RENDER_API_KEY'),
-    storageMode,
-    supabaseUrlPresent: envPresent('NEXT_PUBLIC_SUPABASE_URL'),
-    supabaseServiceRolePresent: envPresent('SUPABASE_SERVICE_ROLE_KEY'),
-    supabaseBucketPresent: envPresent('DAY_CAPSULE_SUPABASE_BUCKET'),
-    externalEndpointConfigured: endpointConfigured,
-  };
-  const missingEnv = REQUIRED_SUPABASE_ENV_KEYS.filter((key) => {
-    if (key === 'DAY_CAPSULE_RENDER_PROVIDER') return provider !== 'openai';
-    if (key === 'DAY_CAPSULE_RENDER_STORAGE_MODE') return storageMode !== 'supabase';
-    return !envPresent(key);
-  });
-  return {
-    checks,
-    missingEnv,
-    requiredProductionEnv: REQUIRED_SUPABASE_ENV_KEYS,
-    configured: isDayCapsuleProviderConfigured() || endpointConfigured,
-  };
+function isLocalArtifactStorageConfigured() {
+  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'none';
+  const storagePath = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH);
+  return storageMode === 'local' && Boolean(storagePath);
 }
 
 export function isDayCapsuleProviderConfigured() {
   const provider = getProviderName();
   const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
-  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase();
   if (provider !== 'openai' || !apiKey) return false;
-  if (storageMode === 'supabase') return isSupabaseArtifactStorageConfigured();
-  if (storageMode === 'local') return Boolean(process.env.NODE_ENV !== 'production' && cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH));
-  return false;
+
+  // OpenAI image generations return base64 payloads for GPT image models.
+  // Treat the provider as ready only when the adapter can persist that payload
+  // into a usable artifact path for the app.
+  return isLocalArtifactStorageConfigured();
 }
 
 function safeJson(value) {
