@@ -28,21 +28,65 @@ function getModel() {
   return cleanText(process.env.DAY_CAPSULE_RENDER_MODEL) || 'gpt-image-1';
 }
 
+function getStorageMode() {
+  return cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'none';
+}
+
 function isLocalArtifactStorageConfigured() {
-  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'none';
+  const storageMode = getStorageMode();
   const storagePath = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH);
-  return storageMode === 'local' && Boolean(storagePath);
+  return storageMode === 'local' && process.env.NODE_ENV !== 'production' && Boolean(storagePath);
+}
+
+function getProviderConfigDiagnostic() {
+  const provider = getProviderName();
+  const storageMode = getStorageMode();
+  const hasApiKey = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY));
+  const hasStoragePath = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_PATH));
+  const hasSupabaseBucket = Boolean(cleanText(process.env.DAY_CAPSULE_SUPABASE_BUCKET));
+  const supabaseConfigured = isSupabaseArtifactStorageConfigured() && hasSupabaseBucket;
+  const checks = {
+    provider: provider === 'openai',
+    apiKey: hasApiKey,
+    storageMode: storageMode === 'supabase' || (storageMode === 'local' && process.env.NODE_ENV !== 'production'),
+    supabaseStorage: storageMode === 'supabase' ? supabaseConfigured : null,
+    localStorage: storageMode === 'local' ? isLocalArtifactStorageConfigured() : null,
+  };
+  const missingEnv = [];
+  if (provider !== 'openai') missingEnv.push('DAY_CAPSULE_RENDER_PROVIDER');
+  if (!hasApiKey) missingEnv.push('DAY_CAPSULE_RENDER_API_KEY');
+  if (storageMode !== 'supabase' && storageMode !== 'local') missingEnv.push('DAY_CAPSULE_RENDER_STORAGE_MODE');
+  if (storageMode === 'supabase' && !cleanText(process.env.NEXT_PUBLIC_SUPABASE_URL)) missingEnv.push('NEXT_PUBLIC_SUPABASE_URL');
+  if (storageMode === 'supabase' && !cleanText(process.env.SUPABASE_SERVICE_ROLE_KEY)) missingEnv.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (storageMode === 'supabase' && !cleanText(process.env.DAY_CAPSULE_SUPABASE_BUCKET)) missingEnv.push('DAY_CAPSULE_SUPABASE_BUCKET');
+  if (storageMode === 'local' && process.env.NODE_ENV === 'production') missingEnv.push('DAY_CAPSULE_RENDER_STORAGE_MODE=supabase');
+  if (storageMode === 'local' && process.env.NODE_ENV !== 'production' && !hasStoragePath) missingEnv.push('DAY_CAPSULE_RENDER_STORAGE_PATH');
+  return { checks, missingEnv, configured: provider === 'openai' && hasApiKey && (storageMode === 'supabase' ? supabaseConfigured : isLocalArtifactStorageConfigured()) };
 }
 
 export function isDayCapsuleProviderConfigured() {
-  const provider = getProviderName();
-  const apiKey = cleanText(process.env.DAY_CAPSULE_RENDER_API_KEY);
-  if (provider !== 'openai' || !apiKey) return false;
+  return getProviderConfigDiagnostic().configured;
+}
 
-  // OpenAI image generations return base64 payloads for GPT image models.
-  // Treat the provider as ready only when the adapter can persist that payload
-  // into a usable artifact path for the app.
-  return isLocalArtifactStorageConfigured();
+export function getDayCapsuleRenderConfigDiagnostic() {
+  const providerDiagnostic = getProviderConfigDiagnostic();
+  const endpointConfigured = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT));
+  return {
+    checks: {
+      ...providerDiagnostic.checks,
+      externalEndpoint: endpointConfigured,
+    },
+    missingEnv: providerDiagnostic.configured || endpointConfigured ? [] : providerDiagnostic.missingEnv,
+    requiredProductionEnv: [
+      'DAY_CAPSULE_RENDER_PROVIDER',
+      'DAY_CAPSULE_RENDER_API_KEY',
+      'DAY_CAPSULE_RENDER_STORAGE_MODE',
+      'NEXT_PUBLIC_SUPABASE_URL',
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'DAY_CAPSULE_SUPABASE_BUCKET',
+    ],
+    configured: providerDiagnostic.configured || endpointConfigured,
+  };
 }
 
 function safeJson(value) {
@@ -97,7 +141,7 @@ function contentTypeToExtension(contentType = '') {
 }
 
 async function storeBase64Artifact(base64Data, renderRequest, contentType = 'image/png') {
-  const storageMode = cleanText(process.env.DAY_CAPSULE_RENDER_STORAGE_MODE)?.toLowerCase() || 'none';
+  const storageMode = getStorageMode();
   if (storageMode === 'supabase') {
     try {
       return await uploadDayCapsuleArtifactToSupabase(base64Data, renderRequest, contentType);
