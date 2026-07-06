@@ -9,11 +9,15 @@ import {
   buildDayCapsuleRenderRequest,
   getDayCapsuleRenderStatus,
   readPersistedDayCapsuleRender,
+  requestDayCapsuleRender,
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-day-capsule-bg.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
+<<<<<<< ours
+<<<<<<< ours
+<<<<<<< HEAD
 <<<<<<< ours
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
@@ -40,6 +44,16 @@ function DetailPill({ label, value }) {
   );
 }
 =======
+>>>>>>> theirs
+=======
+>>>>>>> 288bf624de8a4d113a213d8ae6fbb47f97cc01b7
+=======
+const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
+const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
+>>>>>>> theirs
+=======
+const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
+const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 >>>>>>> theirs
 
 function isPlainObject(value) {
@@ -169,6 +183,22 @@ export default function TheSummationSection() {
   const [payload, setPayload] = useState(null);
   const [renderRecord, setRenderRecord] = useState(() => readPersistedDayCapsuleRender());
 
+  const startRender = useCallback(async (nextPayload) => {
+    if (!nextPayload) return null;
+    const renderRequest = buildDayCapsuleRenderRequest(nextPayload);
+    setRenderRecord({
+      renderId: renderRequest.renderId,
+      payloadId: renderRequest.payloadId,
+      status: 'external_rendering',
+      renderRequest,
+      renderArtifact: null,
+      message: 'Rendering Day Capsule…',
+    });
+    const nextRecord = await requestDayCapsuleRender(renderRequest);
+    setRenderRecord(nextRecord);
+    return nextRecord;
+  }, []);
+
   const loadPayload = useCallback(() => {
     const rawPayload = readStoredDayCapsulePayload();
     const storedPayload = rawPayload ? { ...rawPayload, dayIdentity: resolveDayIdentityClump({ ...(rawPayload.dayIdentity || {}), sourceDate: rawPayload.dayIdentity?.sourceDate || rawPayload.sourceDate }) } : null;
@@ -183,10 +213,23 @@ export default function TheSummationSection() {
 
   useEffect(() => {
     loadPayload();
+    if (window.sessionStorage.getItem(PENDING_SUMMATE_RENDER_KEY) === '1') {
+      window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
+      startRender(readStoredDayCapsulePayload());
+    }
     const onPayload = () => loadPayload();
+    const onRenderRequest = (event) => {
+      window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
+      const nextPayload = event?.detail?.payload || readStoredDayCapsulePayload();
+      startRender(nextPayload);
+    };
     window.addEventListener(DRAFT_EVENT_NAME, onPayload);
-    return () => window.removeEventListener(DRAFT_EVENT_NAME, onPayload);
-  }, [loadPayload]);
+    window.addEventListener(SUMMATE_RENDER_EVENT_NAME, onRenderRequest);
+    return () => {
+      window.removeEventListener(DRAFT_EVENT_NAME, onPayload);
+      window.removeEventListener(SUMMATE_RENDER_EVENT_NAME, onRenderRequest);
+    };
+  }, [loadPayload, startRender]);
 
   const dayIdentity = payload?.dayIdentity || {};
   const renderStatus = renderRecord?.status || 'idle';
@@ -203,6 +246,7 @@ export default function TheSummationSection() {
     return renderRecord?.message || payload.status || 'Day Capsule render request ready.';
   }, [payload, renderRecord, renderStatus]);
 
+<<<<<<< HEAD
 <<<<<<< ours
   const handleRequestExternalRender = useCallback(async (sourcePayload = payload) => {
     if (!sourcePayload) {
@@ -262,10 +306,16 @@ export default function TheSummationSection() {
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
   const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
 >>>>>>> theirs
+=======
+  const previewArtifact = renderRecord?.renderArtifact;
+  const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
+  const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
+>>>>>>> 288bf624de8a4d113a213d8ae6fbb47f97cc01b7
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
       <div className="summation-background-plate" aria-hidden="true" />
+<<<<<<< HEAD
 <<<<<<< ours
       <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule payload shell">
         <div className="summation-render-zone">
@@ -318,6 +368,8 @@ export default function TheSummationSection() {
           </ShellPanel>
         </aside>
 =======
+=======
+>>>>>>> 288bf624de8a4d113a213d8ae6fbb47f97cc01b7
       <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule two-page overlay">
         <DayRecordPage payload={payload} dayIdentity={dayIdentity} />
         <div className="summation-center-protect" aria-hidden="true" />
@@ -329,7 +381,10 @@ export default function TheSummationSection() {
           previewUrl={previewUrl}
           canShowArtifact={canShowArtifact}
         />
+<<<<<<< HEAD
 >>>>>>> theirs
+=======
+>>>>>>> 288bf624de8a4d113a213d8ae6fbb47f97cc01b7
       </section>
     </main>
   );

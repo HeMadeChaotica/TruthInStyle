@@ -29,47 +29,51 @@
   aspect-ratio: 16 / 10;
   max-width: min(100vw, 177.78vh);
   margin: 0 auto;
+  overflow: hidden;
 }
 
 .summation-day-page,
 .summation-page-empty {
   position: absolute;
-  top: 9%;
-  bottom: 18%;
+  top: 8%;
+  bottom: 12%;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   border: 1px solid var(--summation-border);
   border-radius: clamp(0.8rem, 1.4vw, 1.35rem);
-  background: linear-gradient(145deg, rgba(28, 11, 24, 0.18), rgba(42, 18, 33, 0.1));
+  background: linear-gradient(145deg, rgba(28, 11, 24, 0.16), rgba(42, 18, 33, 0.08));
   box-shadow: inset 0 0 0 1px rgba(255, 247, 232, 0.06), 0 1rem 2rem rgba(26, 7, 20, 0.12);
   backdrop-filter: blur(2px);
   box-sizing: border-box;
-  padding: clamp(0.8rem, 1.35vw, 1.35rem);
+  padding: clamp(0.9rem, 1.15vw, 1.35rem);
+  overflow: hidden;
 }
 
 .summation-left-page {
   left: 4%;
-  width: 41%;
+  width: 39%;
 }
 
 .summation-right-page {
-  right: 4%;
-  width: 41%;
+  right: 8%;
+  width: 36%;
 }
 
 .summation-center-protect {
   position: absolute;
-  left: 43%;
+  left: 43.5%;
   top: 13%;
-  width: 14%;
-  height: 80%;
+  width: 12%;
+  height: 78%;
+  z-index: 2;
   pointer-events: none;
 }
 
 .summation-page-header {
   flex: 0 0 auto;
-  margin-bottom: clamp(0.65rem, 1vw, 1rem);
+  margin-bottom: clamp(0.55rem, 0.85vw, 0.9rem);
 }
 
 .summation-page-header p {
@@ -85,14 +89,14 @@
 .summation-page-header h2 {
   margin: 0;
   color: #fff8ed;
-  font-size: clamp(1.45rem, 2.35vw, 2.8rem);
-  line-height: 0.95;
+  font-size: clamp(1.35rem, 1.9vw, 2.35rem);
+  line-height: 1;
   text-transform: uppercase;
   text-wrap: balance;
 }
 
 .summation-page-header h2 {
-  font-size: clamp(1.25rem, 2vw, 2.35rem);
+  font-size: clamp(1.2rem, 1.65vw, 2rem);
 }
 
 .summation-day-meta {
@@ -130,8 +134,11 @@
 .summation-record-stack {
   display: grid;
   gap: clamp(0.55rem, 0.9vw, 0.85rem);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding-right: 0.25rem;
+  overscroll-behavior: contain;
 }
 
 .summation-record-block {
@@ -180,13 +187,16 @@
   display: grid;
   gap: 0.6rem;
   margin: 0;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .summation-render-artifact {
   display: block;
   width: 100%;
-  max-height: 52vh;
+  max-height: min(54vh, 100%);
   object-fit: contain;
   border: 1px solid rgba(255, 229, 184, 0.28);
   border-radius: 1rem;
@@ -204,7 +214,10 @@
   align-content: center;
   justify-items: start;
   gap: 0.7rem;
-  min-height: 45%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .summation-visual-status p,
@@ -228,13 +241,13 @@
 
 .summation-page-empty:first-child {
   left: 4%;
-  width: 41%;
+  width: 39%;
 }
 
 .summation-center-protect + .summation-page-empty,
 .summation-right-page.summation-page-empty {
-  right: 4%;
-  width: 41%;
+  right: 8%;
+  width: 36%;
 }
 
 @media (max-aspect-ratio: 16 / 10) {
