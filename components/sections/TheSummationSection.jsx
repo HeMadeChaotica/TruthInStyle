@@ -15,10 +15,6 @@ import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-day-capsule-bg.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
-<<<<<<< ours
-<<<<<<< ours
-<<<<<<< HEAD
-<<<<<<< ours
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
@@ -43,8 +39,7 @@ function DetailPill({ label, value }) {
     </span>
   );
 }
-=======
->>>>>>> theirs
+
 =======
 >>>>>>> 288bf624de8a4d113a213d8ae6fbb47f97cc01b7
 =======
@@ -55,6 +50,10 @@ const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 >>>>>>> theirs
+=======
+const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
+const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
+>>>>>>> feac162603d0833649d99e51f7a3b3b26054283f
 
 function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
@@ -246,8 +245,6 @@ export default function TheSummationSection() {
     return renderRecord?.message || payload.status || 'Day Capsule render request ready.';
   }, [payload, renderRecord, renderStatus]);
 
-<<<<<<< HEAD
-<<<<<<< ours
   const handleRequestExternalRender = useCallback(async (sourcePayload = payload) => {
     if (!sourcePayload) {
       setBootstrapStatus('Use the Crystal Wand to prepare a Day Capsule payload first.');
@@ -301,11 +298,7 @@ export default function TheSummationSection() {
   const actionableStatuses = ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'];
   const canRequestExternal = Boolean(payload) && actionableStatuses.includes(renderStatus) && !isRendering;
   const renderButtonReason = !payload ? 'no payload' : isRendering ? 'currently rendering' : !dayIdentity?.sourceDate ? 'missing active day' : (!canRequestExternal && renderStatus === 'external_renderer_not_configured') ? 'missing config' : (!actionableStatuses.includes(renderStatus) ? `status ${renderStatus} is not actionable` : 'ready');
-=======
-  const previewArtifact = renderRecord?.renderArtifact;
-  const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
-  const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
->>>>>>> theirs
+
 =======
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
@@ -315,8 +308,6 @@ export default function TheSummationSection() {
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
       <div className="summation-background-plate" aria-hidden="true" />
-<<<<<<< HEAD
-<<<<<<< ours
       <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule payload shell">
         <div className="summation-render-zone">
           <div className="summation-render-surface">
@@ -367,9 +358,7 @@ export default function TheSummationSection() {
             <RendererConfigDiagnostic diagnostic={configDiagnostic || renderRecord?.configDiagnostic} />
           </ShellPanel>
         </aside>
-=======
-=======
->>>>>>> 288bf624de8a4d113a213d8ae6fbb47f97cc01b7
+
       <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule two-page overlay">
         <DayRecordPage payload={payload} dayIdentity={dayIdentity} />
         <div className="summation-center-protect" aria-hidden="true" />
