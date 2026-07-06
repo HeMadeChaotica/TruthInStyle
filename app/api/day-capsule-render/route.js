@@ -19,6 +19,37 @@ function cleanText(value) {
   return text.length ? text : null;
 }
 
+
+function readProxyToken(request) {
+  const auth = cleanText(request.headers.get('authorization')) || '';
+  if (auth.toLowerCase().startsWith('bearer ')) return cleanText(auth.slice(7));
+  return cleanText(request.headers.get('x-day-capsule-render-token'));
+}
+
+function safeTokenMatch(candidate, expected) {
+  if (!candidate || !expected || candidate.length !== expected.length) return false;
+  let mismatch = 0;
+  for (let index = 0; index < expected.length; index += 1) {
+    mismatch |= candidate.charCodeAt(index) ^ expected.charCodeAt(index);
+  }
+  return mismatch === 0;
+}
+
+function unauthorizedResponse(renderRequest) {
+  const now = new Date().toISOString();
+  return NextResponse.json({
+    renderId: renderRequest?.renderId || null,
+    payloadId: renderRequest?.payloadId || null,
+    status: STATUS.FAILED,
+    message: 'Unauthorized Day Capsule render request.',
+    error: 'Invalid Day Capsule render proxy token.',
+    renderRequest,
+    renderArtifact: null,
+    createdAt: renderRequest?.createdAt || now,
+    updatedAt: now,
+  }, { status: 401 });
+}
+
 function missingConfigResponse(renderRequest) {
   const now = new Date().toISOString();
   const configDiagnostic = getDayCapsuleRenderConfigDiagnostic();
