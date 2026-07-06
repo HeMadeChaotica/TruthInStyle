@@ -9,36 +9,11 @@ import {
   buildDayCapsuleRenderRequest,
   getDayCapsuleRenderStatus,
   readPersistedDayCapsuleRender,
-  requestDayCapsuleRender,
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
 const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-day-capsule-bg.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
-const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
-const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
-
-function ShellPanel({ className = '', eyebrow, title, children }) {
-  return (
-    <section className={`summation-panel ${className}`.trim()}>
-      <header className="summation-panel-header">
-        {eyebrow ? <p>{eyebrow}</p> : null}
-        <h2>{title}</h2>
-      </header>
-      {children}
-    </section>
-  );
-}
-
-function DetailPill({ label, value }) {
-  const display = value === null || value === undefined || value === '' ? 'Missing / empty' : value;
-  return (
-    <span className="summation-detail-pill">
-      <strong>{label}</strong>
-      {display}
-    </span>
-  );
-}
 
 function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
@@ -55,14 +30,14 @@ function humanizeKey(key) {
 }
 
 function DisplayValue({ value }) {
-  if (!hasValue(value)) return <span className="summation-missing-value">Missing / empty</span>;
+  if (!hasValue(value)) return null;
   if (Array.isArray(value)) {
-    return <ul className="summation-source-list">{value.map((item, index) => <li key={index}><DisplayValue value={item} /></li>)}</ul>;
+    return <ul className="summation-source-list">{value.filter(hasValue).map((item, index) => <li key={index}><DisplayValue value={item} /></li>)}</ul>;
   }
   if (isPlainObject(value)) {
     return (
       <dl className="summation-source-subgrid">
-        {Object.entries(value).map(([key, entryValue]) => (
+        {Object.entries(value).filter(([, entryValue]) => hasValue(entryValue)).map(([key, entryValue]) => (
           <div key={key}>
             <dt>{humanizeKey(key)}</dt>
             <dd><DisplayValue value={entryValue} /></dd>
@@ -74,50 +49,30 @@ function DisplayValue({ value }) {
   return <span>{String(value)}</span>;
 }
 
-function SourceRow({ label, value }) {
+function SourceBlock({ label, value }) {
+  if (!hasValue(value)) return null;
   return (
-    <div className="summation-source-row">
-      <dt>{label}</dt>
-      <dd><DisplayValue value={value} /></dd>
-    </div>
+    <section className="summation-record-block">
+      <h3>{label}</h3>
+      <DisplayValue value={value} />
+    </section>
   );
 }
 
+function DayRecordPage({ payload, dayIdentity }) {
+  if (!payload) {
+    return (
+      <div className="summation-page-empty" role="status">
+        <p>Day Capsule ready.</p>
+        <span>Use the global Control Panel sacred triggers to prepare the active day.</span>
+      </div>
+    );
+  }
 
-function yesNo(value) {
-  return value ? 'yes' : 'no';
-}
-
-function RendererConfigDiagnostic({ diagnostic }) {
-  if (!diagnostic) return null;
-  const checks = diagnostic.checks || {};
-  const rows = [
-    ['Provider configured', yesNo(checks.providerConfigured)],
-    ['OpenAI key present', yesNo(checks.openAiKeyPresent)],
-    ['Storage mode', checks.storageMode || 'missing'],
-    ['Supabase URL present', yesNo(checks.supabaseUrlPresent)],
-    ['Supabase service role present', yesNo(checks.supabaseServiceRolePresent)],
-    ['Supabase bucket present', yesNo(checks.supabaseBucketPresent)],
-    ['External endpoint configured', yesNo(checks.externalEndpointConfigured)],
-  ];
-  return (
-    <details className="summation-config-diagnostic" open>
-      <summary>Renderer Configuration</summary>
-      <dl>
-        {rows.map(([label, value]) => <DetailPill key={label} label={label} value={value} />)}
-      </dl>
-      {diagnostic.missingEnv?.length ? (
-        <p className="summation-missing-config">Missing config: {diagnostic.missingEnv.join(', ')}</p>
-      ) : <p className="summation-config-ready">Required Supabase renderer config present.</p>}
-    </details>
-  );
-}
-
-function PayloadSourceSnapshot({ payload }) {
-  const snapshot = payload?.sourceSnapshot || {};
-  const rows = [
-    ['Diary entry', payload?.assuredThoughts?.diaryEntry],
-    ['Penny questions', payload?.assuredThoughts?.pennyQuestions],
+  const snapshot = payload.sourceSnapshot || {};
+  const blocks = [
+    ['Native Assurer summary', payload.assuredThoughts?.diaryEntry],
+    ['Penny questions', payload.assuredThoughts?.pennyQuestions],
     ['Mood', snapshot.mood],
     ['Word of the day', snapshot.wordOfDay],
     ['Head hummer', snapshot.headHummer],
@@ -129,16 +84,63 @@ function PayloadSourceSnapshot({ payload }) {
     ['THICC.FITT signals', snapshot.thiccFittSignals],
     ['DA.EATER signals', snapshot.daEaterSignals],
     ['Other signals', snapshot.otherSignals],
-  ];
-  return <dl className="summation-source-truth-list">{rows.map(([label, value]) => <SourceRow key={label} label={label} value={value} />)}</dl>;
+  ].filter(([, value]) => hasValue(value));
+
+  return (
+    <article className="summation-day-page summation-left-page" aria-label="Factual Day Record">
+      <header className="summation-page-header">
+        <p>Factual Day Record</p>
+        {hasValue(dayIdentity.titleOfDay) ? <h1>{dayIdentity.titleOfDay}</h1> : null}
+        <dl className="summation-day-meta">
+          {hasValue(dayIdentity.displayDate) ? <div><dt>Date</dt><dd>{dayIdentity.displayDate}</dd></div> : null}
+          {hasValue(dayIdentity.dayOfWeek) ? <div><dt>Day</dt><dd>{dayIdentity.dayOfWeek}</dd></div> : null}
+          {hasValue(dayIdentity.chaoticaDayNumber) ? <div><dt>Chaotica</dt><dd>Day #{dayIdentity.chaoticaDayNumber}</dd></div> : null}
+        </dl>
+      </header>
+      <div className="summation-record-stack">
+        {blocks.length ? blocks.map(([label, value]) => <SourceBlock key={label} label={label} value={value} />) : (
+          <div className="summation-page-empty"><p>No factual source sections are present yet.</p></div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage, previewUrl, canShowArtifact }) {
+  if (!payload) {
+    return (
+      <div className="summation-page-empty" role="status">
+        <p>Visualization ready.</p>
+        <span>No Day Capsule payload has been prepared yet.</span>
+      </div>
+    );
+  }
+
+  return (
+    <article className="summation-day-page summation-right-page" aria-label="Generated Day Visualization">
+      <header className="summation-page-header">
+        <p>Generated Day Visualization</p>
+        <h2>{renderStatus.replace(/_/g, ' ')}</h2>
+      </header>
+      {canShowArtifact ? (
+        <figure className="summation-artifact-frame">
+          <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
+          <figcaption>{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
+        </figure>
+      ) : (
+        <div className="summation-visual-status" role="status">
+          <p>{renderMessage}</p>
+          {renderRecord?.renderId ? <span>Render ID: {renderRecord.renderId}</span> : null}
+          {renderRecord?.payloadId ? <span>Payload ID: {renderRecord.payloadId}</span> : null}
+        </div>
+      )}
+    </article>
+  );
 }
 
 export default function TheSummationSection() {
   const [payload, setPayload] = useState(null);
-  const [bootstrapStatus, setBootstrapStatus] = useState('');
   const [renderRecord, setRenderRecord] = useState(() => readPersistedDayCapsuleRender());
-  const [configDiagnostic, setConfigDiagnostic] = useState(null);
-  const [isRendering, setIsRendering] = useState(false);
 
   const loadPayload = useCallback(() => {
     const rawPayload = readStoredDayCapsulePayload();
@@ -152,22 +154,6 @@ export default function TheSummationSection() {
     setRenderRecord(connectedRender);
   }, []);
 
-  const refreshRendererConfig = useCallback(async () => {
-    try {
-      const response = await fetch('/api/day-capsule-render', { method: 'GET' });
-      const result = await response.json().catch(() => ({}));
-      setConfigDiagnostic(result?.configDiagnostic || null);
-      if (result?.status === 'external_renderer_ready' && payload && (!renderRecord || ['idle', 'external_renderer_not_configured', 'ready_to_render'].includes(renderRecord.status))) {
-        const renderRequest = buildDayCapsuleRenderRequest(payload);
-        setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_renderer_ready', renderRequest, message: 'Day Capsule external render request ready.' });
-      }
-      return result;
-    } catch (error) {
-      setBootstrapStatus(error?.message || 'Renderer configuration check failed.');
-      return null;
-    }
-  }, [payload, renderRecord]);
-
   useEffect(() => {
     loadPayload();
     const onPayload = () => loadPayload();
@@ -175,141 +161,39 @@ export default function TheSummationSection() {
     return () => window.removeEventListener(DRAFT_EVENT_NAME, onPayload);
   }, [loadPayload]);
 
-  useEffect(() => {
-    refreshRendererConfig();
-  }, [refreshRendererConfig]);
-
   const dayIdentity = payload?.dayIdentity || {};
-  const title = dayIdentity.titleOfDay || 'No Day Capsule payload loaded';
-  const pennyAnswers = useMemo(() => payload?.assuredThoughts?.pennyQuestions || [], [payload]);
   const renderStatus = renderRecord?.status || 'idle';
   const renderMessage = useMemo(() => {
-    if (!payload) return 'Use the Crystal Wand to prepare a Day Capsule payload first.';
+    if (!payload) return 'Use the global Control Panel to prepare a Day Capsule payload first.';
     if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
-    if (renderStatus === 'local_proof_rendered') return 'Local proof render created from the real Day Capsule payload.';
-    if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet. See renderer configuration checklist.';
+    if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet.';
     if (renderStatus === 'external_renderer_ready') return 'Day Capsule external render request ready.';
-    if (renderStatus === 'external_rendering') return 'Rendering Day Capsule…';
+    if (renderStatus === 'external_rendering' || renderStatus === 'rendering') return 'Rendering Day Capsule…';
     if (renderStatus === 'external_rendered') return 'Day Capsule rendered by external illustrated renderer.';
     if (renderStatus === 'external_render_failed') return renderRecord?.error || renderRecord?.message || 'External Day Capsule render failed.';
-    if (renderStatus === 'renderer_not_connected') return 'External renderer is not configured yet.';
-    if (renderStatus === 'ready_to_render') return 'Day Capsule render request ready.';
     if (renderStatus === 'queued') return 'Day Capsule render queued.';
-    if (renderStatus === 'rendering') return 'Rendering Day Capsule…';
-    if (renderStatus === 'rendered') return 'Day Capsule rendered by legacy adapter status.';
-    if (renderStatus === 'revision_requested') return 'Day Capsule revision requested.';
-    if (renderStatus === 'revised') return 'Day Capsule revised.';
     if (renderStatus === 'failed') return 'Day Capsule render failed.';
-    return payload.status || 'Day Capsule render request ready.';
+    return renderRecord?.message || payload.status || 'Day Capsule render request ready.';
   }, [payload, renderRecord, renderStatus]);
-
-  const handleRequestExternalRender = useCallback(async (sourcePayload = payload) => {
-    if (!sourcePayload) {
-      setBootstrapStatus('Use the Crystal Wand to prepare a Day Capsule payload first.');
-      return null;
-    }
-
-    const renderRequest = buildDayCapsuleRenderRequest(sourcePayload);
-    setIsRendering(true);
-    setRenderRecord({ renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_rendering', renderRequest, message: 'Rendering Day Capsule…' });
-    setBootstrapStatus('Rendering Day Capsule…');
-    try {
-      const pendingRender = await requestDayCapsuleRender(renderRequest);
-      setRenderRecord(pendingRender);
-      setConfigDiagnostic(pendingRender?.configDiagnostic || configDiagnostic);
-      setBootstrapStatus(pendingRender?.message || pendingRender?.error || 'Day Capsule external render request complete.');
-      return pendingRender;
-    } finally {
-      setIsRendering(false);
-    }
-  }, [payload, configDiagnostic]);
-
-  useEffect(() => {
-    const runSummateRender = async (event) => {
-      window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
-      const eventPayload = event?.detail?.payload || null;
-      const sourcePayload = eventPayload || readStoredDayCapsulePayload();
-
-      if (!sourcePayload) {
-        setBootstrapStatus('Use the Crystal Wand to prepare a Day Capsule payload first.');
-        return;
-      }
-
-      setPayload(sourcePayload);
-      await handleRequestExternalRender(sourcePayload);
-    };
-
-    window.addEventListener(SUMMATE_RENDER_EVENT_NAME, runSummateRender);
-
-    const hasPendingSummate = window.sessionStorage.getItem(PENDING_SUMMATE_RENDER_KEY) === '1';
-    if (hasPendingSummate) {
-      window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
-      runSummateRender();
-    }
-
-    return () => window.removeEventListener(SUMMATE_RENDER_EVENT_NAME, runSummateRender);
-  }, [handleRequestExternalRender]);
 
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
   const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
-  const actionableStatuses = ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'];
-  const canRequestExternal = Boolean(payload) && actionableStatuses.includes(renderStatus) && !isRendering;
-  const renderButtonReason = !payload ? 'no payload' : isRendering ? 'currently rendering' : !dayIdentity?.sourceDate ? 'missing active day' : (!canRequestExternal && renderStatus === 'external_renderer_not_configured') ? 'missing config' : (!actionableStatuses.includes(renderStatus) ? `status ${renderStatus} is not actionable` : 'ready');
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
       <div className="summation-background-plate" aria-hidden="true" />
-      <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule payload shell">
-        <div className="summation-render-zone">
-          <div className="summation-render-surface">
-            <article className="summation-payload-ready-card">
-              <p className="summation-status-kicker">{renderMessage}</p>
-              <h1>{title}</h1>
-              {payload ? (
-                <>
-                  <div className="summation-day-identity-strip" aria-label="Day Identity Clump">
-                    <DetailPill label="Title of Day" value={dayIdentity.titleOfDay} />
-                    <DetailPill label="Display Date" value={dayIdentity.displayDate} />
-                    <DetailPill label="Day of Week" value={dayIdentity.dayOfWeek} />
-                    <DetailPill label="Chaotica" value={dayIdentity.chaoticaDayNumber ? `Day #${dayIdentity.chaoticaDayNumber}` : null} />
-                  </div>
-                  {canShowArtifact ? (
-                    <figure className="summation-render-proof-frame">
-                      <img className="summation-render-artifact" src={previewUrl} alt={`Rendered Day Capsule for ${title}`} />
-                      <figcaption>{renderStatus === 'local_proof_rendered' ? 'Development proof only — not the final illustrated Day Capsule.' : 'External illustrated Day Capsule artifact.'}</figcaption>
-                    </figure>
-                  ) : (
-                    <>
-                      <p>{renderMessage}</p>
-                      <div className="summation-render-actions">
-                        <button type="button" className="summation-render-button" disabled={!canRequestExternal} onClick={() => handleRequestExternalRender()}>
-                          {renderStatus === 'external_renderer_ready' || renderStatus === 'ready_to_render' ? 'Start external render' : 'Retry external render'}
-                        </button>
-                        <p className="summation-button-reason">Button state: {renderButtonReason}</p>
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="summation-bootstrap-actions" aria-label="Day Capsule payload status">
-                  <p>Use the Eye in the global Control Panel to choose or backfill the active day, then use the Crystal Wand there to Summate.</p>
-                  {bootstrapStatus ? <p role="status">{bootstrapStatus}</p> : null}
-                </div>
-              )}
-            </article>
-          </div>
-        </div>
-
-        <aside className="summation-art-preserve" aria-label="THE.SUMMATION preserved right art rail">
-          <ShellPanel className="summation-identity-panel" eyebrow="Payload State" title="Day Capsule">
-            <DetailPill label="Status" value={renderMessage || bootstrapStatus || 'Use the Crystal Wand to prepare a Day Capsule payload first.'} />
-            <DetailPill label="Render ID" value={renderRecord?.renderId} />
-            <DetailPill label="Payload ID" value={payload?.payloadId} />
-            <DetailPill label="Updated" value={payload?.updatedAt} />
-            <RendererConfigDiagnostic diagnostic={configDiagnostic || renderRecord?.configDiagnostic} />
-          </ShellPanel>
-        </aside>
+      <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule two-page overlay">
+        <DayRecordPage payload={payload} dayIdentity={dayIdentity} />
+        <div className="summation-center-protect" aria-hidden="true" />
+        <VisualizationPage
+          payload={payload}
+          renderRecord={renderRecord}
+          renderStatus={renderStatus}
+          renderMessage={renderMessage}
+          previewUrl={previewUrl}
+          canShowArtifact={canShowArtifact}
+        />
       </section>
     </main>
   );
