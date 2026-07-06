@@ -7,6 +7,8 @@ import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDa
 const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
+const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
+const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
 const RAIL_ITEMS = [
   { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home.png', alt: 'HOME / THE.ASSURER', type: 'route' },
@@ -249,8 +251,11 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
       setStatus(result?.error || 'SUMMATE BLOCKED');
       return;
     }
-    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail: { sourceDate: result.payload.dayIdentity.sourceDate, payload: result.payload } }));
-    setStatus('Day Capsule payload ready');
+    const detail = { sourceDate: result.payload.dayIdentity.sourceDate, payload: result.payload };
+    window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail }));
+    window.sessionStorage.setItem(PENDING_SUMMATE_RENDER_KEY, '1');
+    window.dispatchEvent(new CustomEvent(SUMMATE_RENDER_EVENT_NAME, { detail }));
+    setStatus('Day Capsule render requested');
     onClose?.();
     router.push('/the-summation');
   };

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  createDayCapsulePayloadFromActiveDay,
   readStoredDayCapsulePayload,
   resolveDayIdentityClump,
 } from '../../src/services/summationService';
@@ -14,9 +13,10 @@ import {
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
-const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
+const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-day-capsule-bg.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
-const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
+const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
+const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
 function ShellPanel({ className = '', eyebrow, title, children }) {
   return (
@@ -224,16 +224,31 @@ export default function TheSummationSection() {
     }
   }, [payload, configDiagnostic]);
 
-  const handleBuildFromActiveDay = async () => {
-    setBootstrapStatus('Checking active day…');
-    const result = await createDayCapsulePayloadFromActiveDay();
-    if (!result?.payload) {
-      setBootstrapStatus(result?.error || 'Use the Crystal Wand to prepare a Day Capsule payload first.');
-      return;
+  useEffect(() => {
+    const runSummateRender = async (event) => {
+      window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
+      const eventPayload = event?.detail?.payload || null;
+      const sourcePayload = eventPayload || readStoredDayCapsulePayload();
+
+      if (!sourcePayload) {
+        setBootstrapStatus('Use the Crystal Wand to prepare a Day Capsule payload first.');
+        return;
+      }
+
+      setPayload(sourcePayload);
+      await handleRequestExternalRender(sourcePayload);
+    };
+
+    window.addEventListener(SUMMATE_RENDER_EVENT_NAME, runSummateRender);
+
+    const hasPendingSummate = window.sessionStorage.getItem(PENDING_SUMMATE_RENDER_KEY) === '1';
+    if (hasPendingSummate) {
+      window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
+      runSummateRender();
     }
-    setPayload(result.payload);
-    await handleRequestExternalRender(result.payload);
-  };
+
+    return () => window.removeEventListener(SUMMATE_RENDER_EVENT_NAME, runSummateRender);
+  }, [handleRequestExternalRender]);
 
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
@@ -241,11 +256,6 @@ export default function TheSummationSection() {
   const actionableStatuses = ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'];
   const canRequestExternal = Boolean(payload) && actionableStatuses.includes(renderStatus) && !isRendering;
   const renderButtonReason = !payload ? 'no payload' : isRendering ? 'currently rendering' : !dayIdentity?.sourceDate ? 'missing active day' : (!canRequestExternal && renderStatus === 'external_renderer_not_configured') ? 'missing config' : (!actionableStatuses.includes(renderStatus) ? `status ${renderStatus} is not actionable` : 'ready');
-
-  const handleOpenEye = () => {
-    window.dispatchEvent(new CustomEvent(OPEN_EYE_EVENT_NAME));
-    setBootstrapStatus('Eye of Truth opened from the right-side rail.');
-  };
 
   return (
     <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
@@ -282,10 +292,8 @@ export default function TheSummationSection() {
                   )}
                 </>
               ) : (
-                <div className="summation-bootstrap-actions" aria-label="Day Capsule payload actions">
-                  <p>Use the Crystal Wand to prepare a Day Capsule payload first.</p>
-                  <button type="button" onClick={handleBuildFromActiveDay}>Build payload from active day</button>
-                  <button type="button" onClick={handleOpenEye}>Open Eye of Truth</button>
+                <div className="summation-bootstrap-actions" aria-label="Day Capsule payload status">
+                  <p>Use the Eye in the global Control Panel to choose or backfill the active day, then use the Crystal Wand there to Summate.</p>
                   {bootstrapStatus ? <p role="status">{bootstrapStatus}</p> : null}
                 </div>
               )}
