@@ -12,7 +12,7 @@ import {
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
-const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-bg.png';
+const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-day-capsule-bg.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 
 function isPlainObject(value) {
