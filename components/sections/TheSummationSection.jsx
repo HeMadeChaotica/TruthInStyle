@@ -66,8 +66,8 @@ function DayRecordPage({ payload, dayIdentity }) {
   if (!payload) {
     return (
       <div className="summation-page-empty" role="status">
-        <p>Day Capsule ready.</p>
-        <span>Use the global Control Panel sacred triggers to prepare the active day.</span>
+        <p>No Day Capsule payload prepared.</p>
+        <span>Use the Control Panel Eye to choose an active day, then use the Crystal Wand to request a real Day Capsule.</span>
       </div>
     );
   }
@@ -113,8 +113,8 @@ function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage,
   if (!payload) {
     return (
       <div className="summation-page-empty" role="status">
-        <p>Visualization ready.</p>
-        <span>No Day Capsule payload has been prepared yet.</span>
+        <p>No visualization requested.</p>
+        <span>No Day Capsule payload has been prepared, so no generated visualization exists yet.</span>
       </div>
     );
   }
