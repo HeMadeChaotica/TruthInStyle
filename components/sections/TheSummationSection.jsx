@@ -75,7 +75,7 @@ function SourceBlock({ label, value }) {
 function DayRecordPage({ payload, dayIdentity }) {
   if (!payload) {
     return (
-      <div className="summation-page-empty" role="status">
+      <div className="summation-page-empty summation-left-page" role="status">
         <p>No Day Capsule payload exists yet.</p>
         <span>Use the global Control Panel sacred triggers to prepare the active day.</span>
       </div>
@@ -122,7 +122,7 @@ function DayRecordPage({ payload, dayIdentity }) {
 function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage, previewUrl, canShowArtifact }) {
   if (!payload) {
     return (
-      <div className="summation-page-empty" role="status">
+      <div className="summation-page-empty summation-right-page" role="status">
         <p>No visualization has been requested yet.</p>
         <span>No Day Capsule payload has been prepared yet.</span>
       </div>
@@ -237,8 +237,8 @@ export default function TheSummationSection() {
       data-can-request-external={canRequestExternal ? 'true' : 'false'}
       data-render-button-reason={renderButtonReason}
     >
-      <div className="summation-background-plate" aria-hidden="true" />
       <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule two-page overlay">
+        <div className="summation-background-plate" aria-hidden="true" />
         <DayRecordPage payload={payload} dayIdentity={dayIdentity} />
         <div className="summation-center-protect" aria-hidden="true" />
         <VisualizationPage
