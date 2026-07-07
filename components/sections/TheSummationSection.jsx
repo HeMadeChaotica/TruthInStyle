@@ -34,9 +34,17 @@ function humanizeKey(key) {
 
 function DisplayValue({ value }) {
   if (!hasValue(value)) return null;
+
   if (Array.isArray(value)) {
-    return <ul className="summation-source-list">{value.filter(hasValue).map((item, index) => <li key={index}><DisplayValue value={item} /></li>)}</ul>;
+    return (
+      <ul className="summation-source-list">
+        {value.filter(hasValue).map((item, index) => (
+          <li key={index}><DisplayValue value={item} /></li>
+        ))}
+      </ul>
+    );
   }
+
   if (isPlainObject(value)) {
     return (
       <dl className="summation-source-subgrid">
@@ -49,11 +57,13 @@ function DisplayValue({ value }) {
       </dl>
     );
   }
+
   return <span>{String(value)}</span>;
 }
 
 function SourceBlock({ label, value }) {
   if (!hasValue(value)) return null;
+
   return (
     <section className="summation-record-block">
       <h3>{label}</h3>
@@ -163,7 +173,13 @@ export default function TheSummationSection() {
 
   const loadPayload = useCallback(() => {
     const rawPayload = readStoredDayCapsulePayload();
-    const storedPayload = rawPayload ? { ...rawPayload, dayIdentity: resolveDayIdentityClump({ ...(rawPayload.dayIdentity || {}), sourceDate: rawPayload.dayIdentity?.sourceDate || rawPayload.sourceDate }) } : null;
+    const storedPayload = rawPayload ? {
+      ...rawPayload,
+      dayIdentity: resolveDayIdentityClump({
+        ...(rawPayload.dayIdentity || {}),
+        sourceDate: rawPayload.dayIdentity?.sourceDate || rawPayload.sourceDate,
+      }),
+    } : null;
     const storedRender = getDayCapsuleRenderStatus(storedPayload?.payloadId ? `${storedPayload.payloadId}-render` : undefined);
     const renderRequest = storedPayload ? buildDayCapsuleRenderRequest(storedPayload) : null;
     const connectedRender = storedPayload && !storedRender?.renderRequest
@@ -197,7 +213,7 @@ export default function TheSummationSection() {
   const renderStatus = renderRecord?.status || 'idle';
   const renderMessage = useMemo(() => {
     if (!payload) return 'Use the global Control Panel to prepare a Day Capsule payload first.';
-    if (!renderRecord?.renderRequest) return 'Day Capsule render request ready.';
+    if (!renderRecord?.renderRequest) return 'No generated visualization has been requested yet.';
     if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet.';
     if (renderStatus === 'external_renderer_ready') return 'Day Capsule external render request ready.';
     if (renderStatus === 'external_rendering' || renderStatus === 'rendering') return 'Rendering Day Capsule…';
@@ -205,17 +221,24 @@ export default function TheSummationSection() {
     if (renderStatus === 'external_render_failed') return renderRecord?.error || renderRecord?.message || 'External Day Capsule render failed.';
     if (renderStatus === 'queued') return 'Day Capsule render queued.';
     if (renderStatus === 'failed') return 'Day Capsule render failed.';
-    return renderRecord?.message || payload.status || 'Day Capsule render request ready.';
+    return renderRecord?.message || payload.status || 'No generated visualization has been requested yet.';
   }, [payload, renderRecord, renderStatus]);
 
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
   const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
+  const canRequestExternal = Boolean(payload) && ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'].includes(renderStatus);
+  const renderButtonReason = !payload ? 'no payload' : canRequestExternal ? 'ready' : `status ${renderStatus} is not actionable`;
 
   return (
-    <main className="summation-shell" style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}>
-      <div className="summation-background-plate" aria-hidden="true" />
+    <main
+      className="summation-shell"
+      style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}
+      data-can-request-external={canRequestExternal ? 'true' : 'false'}
+      data-render-button-reason={renderButtonReason}
+    >
       <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule two-page overlay">
+        <div className="summation-background-plate" aria-hidden="true" />
         <DayRecordPage payload={payload} dayIdentity={dayIdentity} />
         <div className="summation-center-protect" aria-hidden="true" />
         <VisualizationPage
