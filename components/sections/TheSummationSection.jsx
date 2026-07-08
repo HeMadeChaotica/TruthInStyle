@@ -22,54 +22,178 @@ function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function isEmptyObject(value) {
+  return isPlainObject(value) && Object.values(value).every((entry) => !hasValue(entry));
+}
+
+function cleanText(value) {
+  if (value === null || value === undefined || typeof value === 'boolean') return '';
+  return String(value).trim();
+}
+
 function hasValue(value) {
-  if (Array.isArray(value)) return value.length > 0 && value.some(hasValue);
-  if (isPlainObject(value)) return Object.values(value).some(hasValue);
-  return value !== null && value !== undefined && String(value).trim().length > 0;
+  if (typeof value === 'boolean') return false;
+  if (Array.isArray(value)) return value.some(hasValue);
+  if (isPlainObject(value)) return !isEmptyObject(value);
+  return cleanText(value).length > 0;
 }
 
-function humanizeKey(key) {
-  return String(key).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').toUpperCase();
+function compactList(values = [], limit = 6) {
+  const seen = new Set();
+  return (Array.isArray(values) ? values : [values])
+    .flatMap((value) => {
+      if (Array.isArray(value)) return value;
+      return [value];
+    })
+    .map(formatSummaryLine)
+    .filter(Boolean)
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, limit);
 }
 
-function DisplayValue({ value }) {
-  if (!hasValue(value)) return null;
+function joinParts(parts = [], separator = ' • ') {
+  return parts.map(cleanText).filter(Boolean).join(separator);
+}
 
-  if (Array.isArray(value)) {
-    return (
-      <ul className="summation-source-list">
-        {value.filter(hasValue).map((item, index) => (
-          <li key={index}><DisplayValue value={item} /></li>
-        ))}
-      </ul>
-    );
-  }
+function pickFirst(...values) {
+  return values.find(hasValue);
+}
 
+function formatWordOfDay(value) {
+  if (!hasValue(value)) return '';
+  if (!isPlainObject(value)) return cleanText(value);
+  return joinParts([value.word, value.definition || value.meaning, value.note], ' — ');
+}
+
+function formatSummaryLine(value) {
+  if (!hasValue(value)) return '';
+  if (typeof value === 'number' || typeof value === 'string') return cleanText(value);
+  if (Array.isArray(value)) return compactList(value, 3).join(' • ');
   if (isPlainObject(value)) {
-    return (
-      <dl className="summation-source-subgrid">
-        {Object.entries(value).filter(([, entryValue]) => hasValue(entryValue)).map(([key, entryValue]) => (
-          <div key={key}>
-            <dt>{humanizeKey(key)}</dt>
-            <dd><DisplayValue value={entryValue} /></dd>
-          </div>
-        ))}
-      </dl>
-    );
+    const title = pickFirst(value.title, value.label, value.name, value.type, value.question, value.text, value.description, value.detail, value.summary, value.macroText, value.status);
+    const details = [
+      pickFirst(value.time, value.date, value.day, value.session, value.meal),
+      pickFirst(value.answer, value.note, value.take, value.result, value.place, value.location),
+    ].map(formatSummaryLine).filter(Boolean);
+    return joinParts([formatSummaryLine(title), ...details]);
   }
-
-  return <span>{String(value)}</span>;
+  return '';
 }
 
-function SourceBlock({ label, value }) {
-  if (!hasValue(value)) return null;
+function buildRows(rows = []) {
+  return rows
+    .map(([label, value]) => ({ label, value: formatSummaryLine(value) }))
+    .filter((row) => hasValue(row.value));
+}
+
+function RecordRows({ rows }) {
+  if (!rows.length) return null;
+  return (
+    <dl className="summation-record-rows">
+      {rows.map(({ label, value }) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function RecordList({ items }) {
+  if (!items.length) return null;
+  return (
+    <ul className="summation-record-list">
+      {items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+    </ul>
+  );
+}
+
+function SourceBlock({ label, rows = [], items = [] }) {
+  if (!rows.length && !items.length) return null;
 
   return (
     <section className="summation-record-block">
       <h3>{label}</h3>
-      <DisplayValue value={value} />
+      <RecordRows rows={rows} />
+      <RecordList items={items} />
     </section>
   );
+}
+
+function buildDayRecordSections(payload, dayIdentity) {
+  const snapshot = payload.sourceSnapshot || {};
+  const otherSignals = snapshot.otherSignals || {};
+  const assured = payload.assuredThoughts || {};
+  const daEater = snapshot.daEaterSignals || {};
+  const thiccFitt = compactList(snapshot.thiccFittSignals, 6);
+  const rememberMoments = compactList(snapshot.rememberMeMoments?.length ? snapshot.rememberMeMoments : snapshot.moments, 6);
+  const pennyItems = compactList((assured.pennyQuestions || []).map((entry) => joinParts([entry?.question, entry?.answer], ' — ')), 2);
+  const diaryItems = compactList([assured.diaryEntry, ...pennyItems], 4);
+
+  return [
+    {
+      label: 'DAY IDENTITY',
+      rows: buildRows([
+        ['Display date', dayIdentity.displayDate],
+        ['Day of week', dayIdentity.dayOfWeek],
+        ['Title of day', dayIdentity.titleOfDay],
+        ['Active/source date', dayIdentity.sourceDate],
+        ['Chaotica day', dayIdentity.chaoticaDayNumber ? `Day #${dayIdentity.chaoticaDayNumber}` : null],
+      ]),
+    },
+    {
+      label: 'ASSURER SIGNALS',
+      rows: buildRows([
+        ['Mood', snapshot.mood],
+        ['Era', snapshot.era],
+        ['Singleness level', snapshot.singlenessLevel],
+        ['Location', otherSignals.location],
+        ['Head hummer', snapshot.headHummer],
+        ['Word of the day', formatWordOfDay(snapshot.wordOfDay)],
+      ]),
+      items: diaryItems,
+    },
+    {
+      label: 'DA.EATER SIGNALS',
+      items: compactList([
+        ...compactList(daEater.macroHighlights, 4).map((item) => `Macro: ${item}`),
+        ...compactList(daEater.mealHighlights, 6).map((item) => `Meal: ${item}`),
+        ...compactList(daEater.treatSignal || daEater.treat || daEater.treats, 2).map((item) => `Treat: ${item}`),
+      ], 8),
+    },
+    {
+      label: 'THICC.FITT SIGNALS',
+      rows: buildRows([
+        ['Battle cry', otherSignals.battleCry],
+        ['Sleep total', snapshot.sleepTotal || otherSignals.sleepTotal],
+      ]),
+      items: compactList([
+        ...thiccFitt,
+        ...compactList(snapshot.workoutSummary || snapshot.exerciseSummary || snapshot.sessionSummary, 3),
+        ...compactList(snapshot.soHowYouDoin || snapshot.soHowYouDoinTake, 2),
+        ...compactList(snapshot.trophySignal || snapshot.mediaSignal || snapshot.trophyMediaSignal, 2),
+      ], 8),
+    },
+    {
+      label: 'REMEMBER.ME SIGNALS',
+      items: compactList(rememberMoments, 8),
+    },
+    {
+      label: 'ITS / THICC.TIME SIGNALS',
+      items: compactList([
+        snapshot.thiccTimeSignals,
+        snapshot.itsSignals,
+        snapshot.totalClients ? `Total clients: ${snapshot.totalClients}` : null,
+      ], 6),
+    },
+  ].map((section) => ({ ...section, rows: section.rows || [], items: section.items || [] }))
+    .filter((section) => section.rows.length || section.items.length);
 }
 
 function DayRecordPage({ payload, dayIdentity }) {
@@ -82,41 +206,63 @@ function DayRecordPage({ payload, dayIdentity }) {
     );
   }
 
-  const snapshot = payload.sourceSnapshot || {};
-  const blocks = [
-    ['Native Assurer summary', payload.assuredThoughts?.diaryEntry],
-    ['Penny questions', payload.assuredThoughts?.pennyQuestions],
-    ['Mood', snapshot.mood],
-    ['Word of the day', snapshot.wordOfDay],
-    ['Head hummer', snapshot.headHummer],
-    ['Era', snapshot.era],
-    ['Singleness level', snapshot.singlenessLevel],
-    ['Moments', snapshot.moments],
-    ['THICC.TIME signals', snapshot.thiccTimeSignals],
-    ['Remember.Me moments', snapshot.rememberMeMoments],
-    ['THICC.FITT signals', snapshot.thiccFittSignals],
-    ['DA.EATER signals', snapshot.daEaterSignals],
-    ['Other signals', snapshot.otherSignals],
-  ].filter(([, value]) => hasValue(value));
+  const sections = buildDayRecordSections(payload, dayIdentity);
 
   return (
     <article className="summation-day-page summation-left-page" aria-label="Factual Day Record">
       <header className="summation-page-header">
         <p>Factual Day Record</p>
         {hasValue(dayIdentity.titleOfDay) ? <h1>{dayIdentity.titleOfDay}</h1> : null}
-        <dl className="summation-day-meta">
-          {hasValue(dayIdentity.displayDate) ? <div><dt>Date</dt><dd>{dayIdentity.displayDate}</dd></div> : null}
-          {hasValue(dayIdentity.dayOfWeek) ? <div><dt>Day</dt><dd>{dayIdentity.dayOfWeek}</dd></div> : null}
-          {hasValue(dayIdentity.chaoticaDayNumber) ? <div><dt>Chaotica</dt><dd>Day #{dayIdentity.chaoticaDayNumber}</dd></div> : null}
-        </dl>
       </header>
       <div className="summation-record-stack">
-        {blocks.length ? blocks.map(([label, value]) => <SourceBlock key={label} label={label} value={value} />) : (
+        {sections.length ? sections.map((section) => <SourceBlock key={section.label} {...section} />) : (
           <div className="summation-page-empty"><p>No factual source sections are present yet.</p></div>
         )}
       </div>
     </article>
   );
+}
+
+
+function providerReason(renderRecord) {
+  return cleanText(renderRecord?.providerReason || renderRecord?.error || renderRecord?.message || renderRecord?.details?.reason || renderRecord?.reason);
+}
+
+function isProviderBlockedStatus(status, renderRecord) {
+  const text = `${status} ${providerReason(renderRecord)}`.toLowerCase();
+  return status === 'external_render_failed' || /billing|limit|quota|provider|config|credential|api key|not configured|insufficient|payment/.test(text);
+}
+
+function getVisualizationCopy(renderStatus, renderRecord, renderMessage) {
+  if (renderStatus === 'external_renderer_not_configured') {
+    return {
+      eyebrow: 'Visualization Status',
+      title: 'Renderer not configured',
+      message: 'The Day Capsule is prepared, but the external renderer cannot run until configuration is completed.',
+    };
+  }
+  if (isProviderBlockedStatus(renderStatus, renderRecord)) {
+    return {
+      eyebrow: 'Visualization Status',
+      title: /limit|quota|billing|payment/i.test(providerReason(renderRecord)) ? 'Provider Limit Reached' : 'Visualization Held',
+      message: 'The Day Capsule is prepared, but external rendering could not complete because the provider returned a billing, limit, or configuration response.',
+    };
+  }
+  return {
+    eyebrow: 'Generated Day Visualization',
+    title: renderStatus.replace(/_/g, ' '),
+    message: renderMessage,
+  };
+}
+
+function renderDetailChips(renderRecord, renderStatus) {
+  return buildRows([
+    ['Render ID', renderRecord?.renderId],
+    ['Payload ID', renderRecord?.payloadId],
+    ['Status', renderStatus],
+    ['Provider reason', providerReason(renderRecord)],
+    ['Missing config', Array.isArray(renderRecord?.missingConfig) ? renderRecord.missingConfig.join(', ') : renderRecord?.missingConfig],
+  ]);
 }
 
 function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage, previewUrl, canShowArtifact }) {
@@ -129,22 +275,32 @@ function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage,
     );
   }
 
+  const copy = getVisualizationCopy(renderStatus, renderRecord, renderMessage);
+  const detailChips = renderDetailChips(renderRecord, renderStatus);
+
   return (
     <article className="summation-day-page summation-right-page" aria-label="Generated Day Visualization">
-      <header className="summation-page-header">
-        <p>Generated Day Visualization</p>
-        <h2>{renderStatus.replace(/_/g, ' ')}</h2>
-      </header>
       {canShowArtifact ? (
-        <figure className="summation-artifact-frame">
-          <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
-          <figcaption>{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
-        </figure>
+        <>
+          <header className="summation-page-header">
+            <p>Generated Day Visualization</p>
+            <h2>External Rendered</h2>
+          </header>
+          <figure className="summation-artifact-frame">
+            <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
+            <figcaption>{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
+          </figure>
+        </>
       ) : (
         <div className="summation-visual-status" role="status">
-          <p>{renderMessage}</p>
-          {renderRecord?.renderId ? <span>Render ID: {renderRecord.renderId}</span> : null}
-          {renderRecord?.payloadId ? <span>Payload ID: {renderRecord.payloadId}</span> : null}
+          <span className="summation-status-eyebrow">{copy.eyebrow}</span>
+          <h2>{copy.title}</h2>
+          <p>{copy.message}</p>
+          {detailChips.length ? (
+            <dl className="summation-status-chips">
+              {detailChips.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+            </dl>
+          ) : null}
         </div>
       )}
     </article>
