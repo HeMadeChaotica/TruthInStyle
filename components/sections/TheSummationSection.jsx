@@ -212,7 +212,8 @@ function DayRecordPage({ payload, dayIdentity }) {
     <article className="summation-day-page summation-left-page" aria-label="Factual Day Record">
       <header className="summation-page-header">
         <p>Factual Day Record</p>
-        {hasValue(dayIdentity.titleOfDay) ? <h1>{dayIdentity.titleOfDay}</h1> : null}
+        {hasValue(dayIdentity.titleOfDay) ? <h1>{dayIdentity.titleOfDay}</h1> : <h1>THE.SUMMATION</h1>}
+        {hasValue(dayIdentity.displayDate) ? <span className="summation-page-date">{dayIdentity.displayDate}</span> : null}
       </header>
       <div className="summation-record-stack">
         {sections.length ? sections.map((section) => <SourceBlock key={section.label} {...section} />) : (
@@ -244,8 +245,10 @@ function getVisualizationCopy(renderStatus, renderRecord, renderMessage) {
   if (isProviderBlockedStatus(renderStatus, renderRecord)) {
     return {
       eyebrow: 'Visualization Status',
-      title: /limit|quota|billing|payment/i.test(providerReason(renderRecord)) ? 'Provider Limit Reached' : 'Visualization Held',
-      message: 'The Day Capsule is prepared, but external rendering could not complete because the provider returned a billing, limit, or configuration response.',
+      title: /limit|quota|billing|payment/i.test(providerReason(renderRecord)) ? 'PROVIDER LIMIT REACHED' : 'Visualization Held',
+      message: /limit|quota|billing|payment/i.test(providerReason(renderRecord))
+        ? 'The Day Capsule is prepared, but the external visualization renderer could not complete because the render provider returned a billing or usage-limit response.'
+        : 'The Day Capsule is prepared, but external rendering could not complete because the provider returned a configuration or credential response.',
     };
   }
   return {
@@ -257,9 +260,9 @@ function getVisualizationCopy(renderStatus, renderRecord, renderMessage) {
 
 function renderDetailChips(renderRecord, renderStatus) {
   return buildRows([
+    ['Status', renderStatus],
     ['Render ID', renderRecord?.renderId],
     ['Payload ID', renderRecord?.payloadId],
-    ['Status', renderStatus],
     ['Provider reason', providerReason(renderRecord)],
     ['Missing config', Array.isArray(renderRecord?.missingConfig) ? renderRecord.missingConfig.join(', ') : renderRecord?.missingConfig],
   ]);
