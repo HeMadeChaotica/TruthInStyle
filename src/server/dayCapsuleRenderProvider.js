@@ -14,6 +14,8 @@ const STATUS = Object.freeze({
   FAILED: 'external_render_failed',
 });
 
+const RETRYABLE_PROVIDER_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
+
 function cleanText(value) {
   if (value === null || value === undefined) return null;
   const text = String(value).trim();
@@ -264,7 +266,14 @@ async function renderWithOpenAI(renderRequest) {
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(cleanText(result?.error?.message || result?.error || result?.message) || `Provider returned HTTP ${response.status}.`);
+    const providerReason = cleanText(result?.error?.message || result?.error || result?.message) || `Provider returned HTTP ${response.status}.`;
+    const error = new Error(providerReason);
+    error.providerStatus = response.status;
+    error.providerReason = providerReason;
+    error.providerCode = cleanText(result?.error?.code || result?.code);
+    error.providerType = cleanText(result?.error?.type || result?.type);
+    error.retryable = RETRYABLE_PROVIDER_STATUSES.has(response.status);
+    throw error;
   }
   return result;
 }
@@ -274,6 +283,11 @@ export async function renderDayCapsuleWithProvider(renderRequest) {
     return {
       status: STATUS.NOT_CONFIGURED,
       error: 'External Day Capsule render provider is not configured.',
+      providerReason: 'External Day Capsule render provider is not configured.',
+      configured: false,
+      configDiagnostic: getDayCapsuleRenderConfigDiagnostic(),
+      missingConfig: getDayCapsuleRenderConfigDiagnostic().missingEnv,
+      retryable: false,
       renderId: renderRequest?.renderId,
       payloadId: renderRequest?.payloadId,
     };
@@ -290,6 +304,12 @@ export async function renderDayCapsuleWithProvider(renderRequest) {
     return {
       status: STATUS.FAILED,
       error: error?.message || 'External Day Capsule render provider failed.',
+      providerReason: error?.providerReason || error?.message || 'External Day Capsule render provider failed.',
+      providerStatus: error?.providerStatus || null,
+      providerCode: error?.providerCode || null,
+      providerType: error?.providerType || null,
+      configured: true,
+      retryable: error?.retryable ?? true,
       renderId: renderRequest?.renderId,
       payloadId: renderRequest?.payloadId,
       dayIdentity: renderRequest?.dayIdentity || null,

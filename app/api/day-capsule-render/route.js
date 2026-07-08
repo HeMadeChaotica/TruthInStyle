@@ -59,6 +59,10 @@ function missingConfigResponse(renderRequest) {
     status: STATUS.NOT_CONFIGURED,
     message: 'External renderer is not configured yet. Missing renderer configuration is listed in configDiagnostic.missingEnv.',
     configDiagnostic,
+    configured: false,
+    missingConfig: configDiagnostic.missingEnv,
+    providerReason: 'External renderer is not configured.',
+    retryable: false,
     renderRequest,
     renderArtifact: null,
     error: `Missing required config: ${configDiagnostic.missingEnv.join(', ') || 'renderer provider or external endpoint'}.`,
@@ -91,6 +95,9 @@ async function proxyToExternalEndpoint(endpoint, renderRequest) {
       renderRequest,
       renderArtifact: null,
       providerMetadata: providerResult?.providerMetadata || providerResult?.metadata || {},
+      providerStatus: providerResponse.status,
+      providerReason: cleanText(providerResult?.providerReason || providerResult?.error || providerResult?.message) || `Renderer returned HTTP ${providerResponse.status}.`,
+      retryable: [408, 409, 425, 429, 500, 502, 503, 504].includes(providerResponse.status),
       createdAt: renderRequest.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -143,6 +150,14 @@ export async function POST(request) {
     const result = internalProviderConfigured
       ? await renderDayCapsuleWithProvider(renderRequest)
       : await proxyToExternalEndpoint(endpoint, renderRequest);
+    console.info('day-capsule-render-result', {
+      renderId: renderRequest.renderId,
+      payloadId: renderRequest.payloadId,
+      status: result?.status || null,
+      providerStatus: result?.providerStatus || null,
+      providerCode: result?.providerCode || null,
+      retryable: result?.retryable ?? null,
+    });
     return NextResponse.json({ ...result, renderRequest: result?.renderRequest || renderRequest });
   } catch (error) {
     return NextResponse.json({
@@ -151,6 +166,9 @@ export async function POST(request) {
       status: STATUS.FAILED,
       message: 'External Day Capsule render failed.',
       error: error.message,
+      providerReason: error.message,
+      configured: true,
+      retryable: true,
       renderRequest,
       renderArtifact: null,
       createdAt: renderRequest.createdAt || new Date().toISOString(),
