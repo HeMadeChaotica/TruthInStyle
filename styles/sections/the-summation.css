@@ -1,7 +1,11 @@
 .summation-shell {
   --summation-scene-ratio: 1586 / 992;
-  --summation-text: rgba(255, 249, 238, 0.98);
-  --summation-muted: rgba(255, 238, 222, 0.88);
+  --summation-heading: #d84f86;
+  --summation-accent: #9b4f65;
+  --summation-text: #5b2438;
+  --summation-muted: #6e2d45;
+  --summation-secondary: #7a3d55;
+  --summation-divider: rgba(154, 83, 90, 0.24);
   position: relative;
   display: grid;
   place-items: center;
@@ -78,8 +82,8 @@
 
 .summation-page-header p {
   margin: 0 0 0.35rem;
-  color: rgba(255, 221, 169, 0.96);
-  font-size: clamp(0.68rem, 0.85vw, 0.82rem);
+  color: var(--summation-accent);
+  font-size: clamp(0.76rem, 0.96vw, 0.94rem);
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -88,15 +92,25 @@
 .summation-page-header h1,
 .summation-page-header h2 {
   margin: 0;
-  color: #fff8ed;
-  font-size: clamp(1.15rem, 1.62vw, 2.05rem);
-  line-height: 1;
+  color: var(--summation-heading);
+  font-size: clamp(1.32rem, 1.82vw, 2.22rem);
+  line-height: 1.05;
   text-transform: uppercase;
   text-wrap: balance;
 }
 
 .summation-page-header h2 {
-  font-size: clamp(1.18rem, 1.65vw, 1.9rem);
+  font-size: clamp(1.32rem, 1.78vw, 2.02rem);
+}
+
+
+.summation-page-date {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--summation-secondary);
+  font-size: clamp(0.88rem, 1vw, 1.05rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .summation-day-meta {
@@ -108,15 +122,15 @@
 
 .summation-day-meta div,
 .summation-status-chips div {
-  border: 1px solid rgba(255, 214, 153, 0.2);
+  border: 1px solid var(--summation-divider);
   border-radius: 999px;
-  background: rgba(255, 247, 232, 0.11);
+  background: rgba(255, 247, 232, 0.16);
   padding: 0.35rem 0.55rem;
 }
 
 .summation-day-meta dt {
   display: inline;
-  color: rgba(255, 214, 153, 0.82);
+  color: var(--summation-accent);
   font-size: 0.66rem;
   font-weight: 900;
   letter-spacing: 0.1em;
@@ -144,7 +158,7 @@
 }
 
 .summation-record-block {
-  border-top: 1px solid rgba(255, 214, 153, 0.2);
+  border-top: 1px solid var(--summation-divider);
   padding-top: clamp(0.5rem, 0.75vw, 0.75rem);
 }
 
@@ -152,8 +166,8 @@
 .summation-record-rows dt,
 .summation-status-chips dt {
   margin: 0 0 0.32rem;
-  color: rgba(255, 221, 169, 0.96);
-  font-size: clamp(0.68rem, 0.82vw, 0.8rem);
+  color: var(--summation-heading);
+  font-size: clamp(0.76rem, 0.92vw, 0.9rem);
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -165,8 +179,8 @@
 .summation-page-empty span,
 .summation-status-chips dd {
   color: var(--summation-muted);
-  font-size: clamp(0.82rem, 0.96vw, 1rem);
-  line-height: 1.34;
+  font-size: clamp(0.96rem, 1.12vw, 1.12rem);
+  line-height: 1.52;
 }
 
 .summation-record-rows {
@@ -184,7 +198,8 @@
 
 .summation-record-rows dt {
   margin-bottom: 0;
-  font-size: clamp(0.6rem, 0.72vw, 0.72rem);
+  color: var(--summation-accent);
+  font-size: clamp(0.68rem, 0.8vw, 0.8rem);
   letter-spacing: 0.08em;
 }
 
@@ -224,7 +239,7 @@
 }
 
 .summation-artifact-frame figcaption {
-  color: rgba(255, 243, 232, 0.68);
+  color: var(--summation-secondary);
   font-size: clamp(0.74rem, 0.9vw, 0.9rem);
   overflow-wrap: anywhere;
 }
@@ -244,9 +259,9 @@
 .summation-visual-status h2,
 .summation-page-empty p {
   margin: 0;
-  color: #fff8ed;
-  font-size: clamp(1.08rem, 1.52vw, 1.65rem);
-  line-height: 1.05;
+  color: var(--summation-heading);
+  font-size: clamp(1.28rem, 1.72vw, 1.92rem);
+  line-height: 1.12;
   text-transform: uppercase;
 }
 
@@ -256,8 +271,8 @@
 }
 
 .summation-status-eyebrow {
-  color: rgba(255, 221, 169, 0.96);
-  font-size: clamp(0.64rem, 0.76vw, 0.8rem);
+  color: var(--summation-accent);
+  font-size: clamp(0.72rem, 0.84vw, 0.88rem);
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -267,7 +282,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   margin: 0.15rem 0 0;
 }
 
@@ -287,7 +302,9 @@
 }
 
 .summation-status-chips dd {
-  font-size: clamp(0.7rem, 0.82vw, 0.86rem);
+  color: var(--summation-secondary);
+  font-size: clamp(0.82rem, 0.94vw, 0.98rem);
+  line-height: 1.38;
 }
 
 .summation-page-empty {
