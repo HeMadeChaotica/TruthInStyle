@@ -1,0 +1,43 @@
+import { NextResponse } from 'next/server';
+import { CHAOTICA_ACCESS_COOKIE } from './src/server/chaoticaSupabaseAuth';
+
+const PROTECTED_PATHS = [
+  '/525600',
+  '/clock-it',
+  '/da-eater',
+  '/hopewood',
+  '/its-getting-thicc',
+  '/remember-me',
+  '/summate',
+  '/the-assurer',
+  '/the-summation',
+  '/the-work',
+  '/thicc-fitt',
+];
+
+export function middleware(request) {
+  const pathname = request.nextUrl.pathname;
+  const isProtected = PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  if (!isProtected) return NextResponse.next();
+
+  const hasSessionCookie = Boolean(request.cookies.get(CHAOTICA_ACCESS_COOKIE)?.value);
+  if (hasSessionCookie) return NextResponse.next();
+
+  return NextResponse.redirect(new URL('/', request.url));
+}
+
+export const config = {
+  matcher: [
+    '/525600/:path*',
+    '/clock-it/:path*',
+    '/da-eater/:path*',
+    '/hopewood/:path*',
+    '/its-getting-thicc/:path*',
+    '/remember-me/:path*',
+    '/summate/:path*',
+    '/the-assurer/:path*',
+    '/the-summation/:path*',
+    '/the-work/:path*',
+    '/thicc-fitt/:path*',
+  ],
+};

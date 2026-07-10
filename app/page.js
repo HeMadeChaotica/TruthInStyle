@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import ChaoticaOpeningGate from '../components/opening/ChaoticaOpeningGate';
 
 export default function HomePage() {
-  redirect('/the-assurer');
+  return <ChaoticaOpeningGate />;
 }

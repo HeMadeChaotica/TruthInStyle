@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import '../styles/sections/universal-frame.css';
+import '../styles/opening/chaotica-opening.css';
 import AppShell from '../components/shell/AppShell';
 
 export const metadata = {

@@ -11,6 +11,7 @@ const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
 const RAIL_ITEMS = [
+  { key: 'entrance', src: '/opening/chaotica-opening-entrance-closed.png', alt: 'EXIT TO ENTRANCE', type: 'route', className: 'tis-entrance-glyph' },
   { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home.png', alt: 'HOME / THE.ASSURER', type: 'route' },
   { key: 'back', src: '/ui/glyphs/control%20panel/glyph-back.png', alt: 'Back', type: 'route' },
   { key: 'its-getting-thicc', src: '/ui/glyphs/control%20panel/glyph-its-getting-thicc.png', alt: 'ITS.GETTING.THICC', type: 'route' },
@@ -137,7 +138,7 @@ function getSealBlockReason(sourceTruth, completed) {
   return '';
 }
 
-export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, onSelect }) {
+export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, onSelect, exitStatus = '', exitWarning = false, onRetryExit, onExitAnyway }) {
   const router = useRouter();
   const initialDate = useMemo(() => new Date(), []);
   const [activeDate, setActiveDate] = useState(initialDate);
@@ -297,12 +298,23 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
         <nav id="tis-control-rail" className="tis-control-rail" aria-label="Right-side global control rail">
           {RAIL_ITEMS.map((item) => (
             <div key={item.key} className="tis-rail-control">
-              <button type="button" className="tis-glyph-button tis-rail-glyph" ref={item.key === 'eye-of-truth' ? eyeButtonRef : null} onClick={() => handleRailItem(item)} aria-label={item.alt} title={item.alt}>
+              <button type="button" className={`tis-glyph-button tis-rail-glyph ${item.className || ''}`} ref={item.key === 'eye-of-truth' ? eyeButtonRef : null} onClick={() => handleRailItem(item)} aria-label={item.alt} title={item.alt}>
                 <img src={item.src} alt="" draggable={false} aria-hidden="true" />
               </button>
             </div>
           ))}
         </nav>
+        {(exitStatus || exitWarning) && isOpen ? (
+          <section className="tis-exit-popover" aria-label="Entrance exit save status">
+            <strong>{exitStatus || 'SAVE WARNING'}</strong>
+            {exitWarning ? (
+              <div className="tis-day-popover-actions">
+                <button type="button" onClick={onRetryExit}>TRY AGAIN</button>
+                <button type="button" onClick={onExitAnyway}>EXIT ANYWAY</button>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         {dayPanelOpen && isOpen ? (
           <section
             className="tis-day-popover"

@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ControlPanelOverlay from './ControlPanelOverlay';
+import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
 
 const ROUTE_BY_KEY = {
+  entrance: '/',
   home: '/the-assurer',
   'its-getting-thicc': '/its-getting-thicc',
   'thicc-fitt': '/thicc-fitt',
@@ -18,9 +20,31 @@ const ROUTE_BY_KEY = {
 
 export default function AppShell({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [exitWarning, setExitWarning] = useState(false);
+  const [exitStatus, setExitStatus] = useState('');
   const router = useRouter();
 
+  const exitToEntrance = async ({ force = false } = {}) => {
+    setExitWarning(false);
+    if (!force) {
+      setExitStatus('SAVING BEFORE EXIT...');
+      const result = await flushAllPendingSaves();
+      if (!result.ok) {
+        setExitStatus('SAVE WARNING');
+        setExitWarning(true);
+        return;
+      }
+    }
+    router.push('/');
+    setIsOpen(false);
+    setExitStatus('');
+  };
+
   const onSelect = (key) => {
+    if (key === 'entrance') {
+      exitToEntrance();
+      return;
+    }
     if (key === 'back') {
       router.back();
       setIsOpen(false);
@@ -41,6 +65,10 @@ export default function AppShell({ children }) {
         onOpen={() => setIsOpen(true)}
         onClose={() => setIsOpen(false)}
         onSelect={onSelect}
+        exitStatus={exitStatus}
+        exitWarning={exitWarning}
+        onRetryExit={() => exitToEntrance()}
+        onExitAnyway={() => exitToEntrance({ force: true })}
       />
     </div>
   );
