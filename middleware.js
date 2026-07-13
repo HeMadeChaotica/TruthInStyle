@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { CHAOTICA_ACCESS_COOKIE } from './src/server/chaoticaSupabaseAuth';
+import { CHAOTICA_ACCESS_COOKIE, CHAOTICA_REFRESH_COOKIE } from './src/server/chaoticaSupabaseAuth';
 
 const PROTECTED_PATHS = [
   '/525600',
@@ -42,6 +42,7 @@ export async function middleware(request) {
 
   const redirect = NextResponse.redirect(new URL('/', request.url));
   redirect.cookies.delete(CHAOTICA_ACCESS_COOKIE);
+  redirect.cookies.delete(CHAOTICA_REFRESH_COOKIE);
   return redirect;
 }
 

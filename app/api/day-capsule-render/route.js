@@ -5,6 +5,7 @@ import {
   normalizeProviderArtifact,
   renderDayCapsuleWithProvider,
 } from '../../../src/server/dayCapsuleRenderProvider';
+import { getChaoticaSession } from '../../../src/server/chaoticaSupabaseAuth';
 
 const STATUS = Object.freeze({
   NOT_CONFIGURED: 'external_renderer_not_configured',
@@ -20,29 +21,14 @@ function cleanText(value) {
 }
 
 
-function readProxyToken(request) {
-  const auth = cleanText(request.headers.get('authorization')) || '';
-  if (auth.toLowerCase().startsWith('bearer ')) return cleanText(auth.slice(7));
-  return cleanText(request.headers.get('x-day-capsule-render-token'));
-}
-
-function safeTokenMatch(candidate, expected) {
-  if (!candidate || !expected || candidate.length !== expected.length) return false;
-  let mismatch = 0;
-  for (let index = 0; index < expected.length; index += 1) {
-    mismatch |= candidate.charCodeAt(index) ^ expected.charCodeAt(index);
-  }
-  return mismatch === 0;
-}
-
-function unauthorizedResponse(renderRequest) {
+function unauthorizedResponse(renderRequest, message = 'Unauthorized Day Capsule render request.', error = 'A verified Supabase gate session is required.') {
   const now = new Date().toISOString();
   return NextResponse.json({
     renderId: renderRequest?.renderId || null,
     payloadId: renderRequest?.payloadId || null,
     status: STATUS.FAILED,
-    message: 'Unauthorized Day Capsule render request.',
-    error: 'Invalid Day Capsule render proxy token.',
+    message,
+    error,
     renderRequest,
     renderArtifact: null,
     createdAt: renderRequest?.createdAt || now,
@@ -106,6 +92,9 @@ async function proxyToExternalEndpoint(endpoint, renderRequest) {
 }
 
 export async function GET() {
+  const session = await getChaoticaSession();
+  if (!session.ok) return unauthorizedResponse(null);
+
   const internalProviderConfigured = isDayCapsuleProviderConfigured();
   const endpointConfigured = Boolean(cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT));
   const configured = internalProviderConfigured || endpointConfigured;
@@ -137,15 +126,15 @@ export async function POST(request) {
     }, { status: 400 });
   }
 
+  const session = await getChaoticaSession();
+  if (!session.ok) return unauthorizedResponse(renderRequest);
+
   const internalProviderConfigured = isDayCapsuleProviderConfigured();
   const endpoint = cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT);
   if (!internalProviderConfigured && !endpoint) return missingConfigResponse(renderRequest);
 
-  const proxyToken = cleanText(process.env.DAY_CAPSULE_RENDER_PROXY_TOKEN);
-  if (proxyToken && !safeTokenMatch(readProxyToken(request), proxyToken)) {
-    return unauthorizedResponse(renderRequest);
-  }
-
+  // DAY_CAPSULE_RENDER_PROXY_TOKEN is server-only and is attached only when proxying
+  // to an external renderer. Browser callers authenticate with the verified gate session.
   try {
     const result = internalProviderConfigured
       ? await renderDayCapsuleWithProvider(renderRequest)

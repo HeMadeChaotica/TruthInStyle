@@ -28,6 +28,23 @@ async function parseJson(response) {
   }
 }
 
+export async function verifySupabaseAccessToken(accessToken) {
+  const config = getSupabaseAuthConfig();
+  if (!config.configured) return { ok: false, configured: false, status: 503 };
+  if (!accessToken) return { ok: false, configured: true, status: 401 };
+
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/user`, {
+    method: 'GET',
+    headers: {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${accessToken}`,
+    },
+    cache: 'no-store',
+  });
+
+  return { ok: response.ok, configured: true, status: response.status };
+}
+
 async function setSessionCookies(session) {
   const cookieStore = await cookies();
   const maxAge = Math.max(60, Number(session?.expires_in || 3600));
@@ -83,6 +100,10 @@ export async function persistOAuthSession(session) {
   if (!session?.access_token) {
     return { ok: false, status: 400, error: 'missing_access_token' };
   }
+  const verified = await verifySupabaseAccessToken(session.access_token);
+  if (!verified.ok) {
+    return { ok: false, status: verified.status || 401, error: 'invalid_access_token' };
+  }
   await setSessionCookies(session);
   return { ok: true };
 }
@@ -95,18 +116,5 @@ export async function getChaoticaSession() {
   const accessToken = cookieStore.get(CHAOTICA_ACCESS_COOKIE)?.value;
   if (!accessToken) return { ok: false, configured: true };
 
-  const response = await fetch(`${config.supabaseUrl}/auth/v1/user`, {
-    method: 'GET',
-    headers: {
-      apikey: config.anonKey,
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return { ok: false, configured: true };
-  }
-
-  return { ok: true, configured: true };
+  return verifySupabaseAccessToken(accessToken);
 }
