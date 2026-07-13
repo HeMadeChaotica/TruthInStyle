@@ -14,11 +14,10 @@ function cleanText(value) {
   return String(value || '').trim();
 }
 
-function getSupabaseAuthConfig() {
+export function getSupabaseAuthConfig() {
   const supabaseUrl = cleanText(process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/+$/, '');
   const anonKey = cleanText(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  const ownerEmail = cleanText(process.env.CHAOTICA_OWNER_EMAIL || process.env.SUPABASE_AUTH_OWNER_EMAIL).toLowerCase();
-  return { supabaseUrl, anonKey, ownerEmail, configured: Boolean(supabaseUrl && anonKey && ownerEmail) };
+  return { supabaseUrl, anonKey, configured: Boolean(supabaseUrl && anonKey) };
 }
 
 async function parseJson(response) {
@@ -29,39 +28,62 @@ async function parseJson(response) {
   }
 }
 
-export async function signInChaoticaOwner(password) {
+async function setSessionCookies(session) {
+  const cookieStore = await cookies();
+  const maxAge = Math.max(60, Number(session?.expires_in || 3600));
+  cookieStore.set(CHAOTICA_ACCESS_COOKIE, session.access_token, { ...SESSION_COOKIE_OPTIONS, maxAge });
+  if (session.refresh_token) {
+    cookieStore.set(CHAOTICA_REFRESH_COOKIE, session.refresh_token, {
+      ...SESSION_COOKIE_OPTIONS,
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  }
+}
+
+export function getGithubOAuthUrl(redirectTo) {
+  const config = getSupabaseAuthConfig();
+  if (!config.configured) return null;
+  const url = new URL(`${config.supabaseUrl}/auth/v1/authorize`);
+  url.searchParams.set('provider', 'github');
+  url.searchParams.set('redirect_to', redirectTo);
+  return url.toString();
+}
+
+export async function exchangeOAuthCodeForSession(code) {
   const config = getSupabaseAuthConfig();
   if (!config.configured) {
     return { ok: false, status: 503, error: 'supabase_auth_not_configured' };
   }
 
-  const response = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=password`, {
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=authorization_code`, {
     method: 'POST',
     headers: {
       apikey: config.anonKey,
       Authorization: `Bearer ${config.anonKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email: config.ownerEmail, password }),
+    body: JSON.stringify({ code }),
     cache: 'no-store',
   });
   const payload = await parseJson(response);
-  const userEmail = cleanText(payload?.user?.email).toLowerCase();
 
-  if (!response.ok || !payload?.access_token || userEmail !== config.ownerEmail) {
-    return { ok: false, status: response.ok ? 403 : response.status, error: 'gate_authorization_failed' };
+  if (!response.ok || !payload?.access_token) {
+    return { ok: false, status: response.status, error: payload?.error || 'oauth_code_exchange_failed' };
   }
 
-  const cookieStore = await cookies();
-  const maxAge = Math.max(60, Number(payload.expires_in || 3600));
-  cookieStore.set(CHAOTICA_ACCESS_COOKIE, payload.access_token, { ...SESSION_COOKIE_OPTIONS, maxAge });
-  if (payload.refresh_token) {
-    cookieStore.set(CHAOTICA_REFRESH_COOKIE, payload.refresh_token, {
-      ...SESSION_COOKIE_OPTIONS,
-      maxAge: 60 * 60 * 24 * 30,
-    });
-  }
+  await setSessionCookies(payload);
+  return { ok: true };
+}
 
+export async function persistOAuthSession(session) {
+  const config = getSupabaseAuthConfig();
+  if (!config.configured) {
+    return { ok: false, status: 503, error: 'supabase_auth_not_configured' };
+  }
+  if (!session?.access_token) {
+    return { ok: false, status: 400, error: 'missing_access_token' };
+  }
+  await setSessionCookies(session);
   return { ok: true };
 }
 
@@ -81,10 +103,8 @@ export async function getChaoticaSession() {
     },
     cache: 'no-store',
   });
-  const payload = await parseJson(response);
-  const userEmail = cleanText(payload?.email).toLowerCase();
 
-  if (!response.ok || userEmail !== config.ownerEmail) {
+  if (!response.ok) {
     return { ok: false, configured: true };
   }
 

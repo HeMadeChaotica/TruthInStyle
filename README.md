@@ -19,7 +19,6 @@ Configure these variables in Vercel before using the production gate or Day Caps
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Gate auth and Supabase artifact storage | Supabase project URL. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Gate auth | Public anon key used by the server auth exchange. |
-| `CHAOTICA_OWNER_EMAIL` | Gate auth | Owner email allowed through the opening gate. `SUPABASE_AUTH_OWNER_EMAIL` is accepted as a fallback. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase artifact storage | Server-only key. Do not expose to browser code. |
 | `DAY_CAPSULE_RENDER_PROVIDER` | Internal render provider | Use `openai` for the built-in provider path. |
 | `DAY_CAPSULE_RENDER_API_KEY` | Internal render provider | Server-only image provider key. |
@@ -38,8 +37,8 @@ After Vercel has the environment variables above:
 1. Redeploy the current branch in Vercel.
 2. Visit the production URL and click the opening truth stone.
 3. Confirm the Supabase authorization plaque appears when no session exists.
-4. Authorize with the owner credential and confirm the oath screen appears.
-5. Type or speak at least three oath phrases and confirm navigation to `/the-assurer`.
+4. Continue with GitHub and confirm the OAuth callback returns to the opening gate.
+5. Click the opening truth stone again if needed, then type or speak at least three oath phrases and confirm navigation to `/the-assurer`.
 6. Open THE.SUMMATION with a prepared Day Capsule payload.
 7. Start or retry the external render.
 8. Confirm `POST /api/day-capsule-render` returns `external_rendered` and includes an artifact URL/path.

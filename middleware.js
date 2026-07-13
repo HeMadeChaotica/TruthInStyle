@@ -15,15 +15,34 @@ const PROTECTED_PATHS = [
   '/thicc-fitt',
 ];
 
-export function middleware(request) {
+export async function middleware(request) {
   const pathname = request.nextUrl.pathname;
   const isProtected = PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   if (!isProtected) return NextResponse.next();
 
-  const hasSessionCookie = Boolean(request.cookies.get(CHAOTICA_ACCESS_COOKIE)?.value);
-  if (hasSessionCookie) return NextResponse.next();
+  const accessToken = request.cookies.get(CHAOTICA_ACCESS_COOKIE)?.value;
+  if (!accessToken) return NextResponse.redirect(new URL('/', request.url));
 
-  return NextResponse.redirect(new URL('/', request.url));
+  const supabaseUrl = String(process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const anonKey = String(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+  if (!supabaseUrl || !anonKey) return NextResponse.redirect(new URL('/', request.url));
+
+  try {
+    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
+    });
+    if (response.ok) return NextResponse.next();
+  } catch {
+    // Treat auth verification failures as unauthenticated.
+  }
+
+  const redirect = NextResponse.redirect(new URL('/', request.url));
+  redirect.cookies.delete(CHAOTICA_ACCESS_COOKIE);
+  return redirect;
 }
 
 export const config = {

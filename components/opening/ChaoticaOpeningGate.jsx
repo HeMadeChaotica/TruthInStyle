@@ -34,6 +34,20 @@ export default function ChaoticaOpeningGate() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('chaotica-auth') !== 'complete') return undefined;
+    let cancelled = false;
+    const verifyReturnedSession = async () => {
+      const response = await fetch('/api/chaotica-auth/session', { cache: 'no-store' });
+      const payload = await response.json().catch(() => ({}));
+      if (!cancelled && payload.authorized) setPhase('oath');
+      if (window.history.replaceState) window.history.replaceState(null, '', '/');
+    };
+    verifyReturnedSession();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     if (phase === 'oath' && matchedCount >= 3) {
       setPhase('opening');
       const timer = window.setTimeout(() => router.push('/the-assurer'), 900);
