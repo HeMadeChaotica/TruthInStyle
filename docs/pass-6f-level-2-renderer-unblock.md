@@ -8,20 +8,20 @@ Use one canonical server-only endpoint name:
 
 Optional server-only variables:
 
-- `DAY_CAPSULE_RENDER_API_KEY` — sent by the backend proxy as `Authorization: Bearer ...` when present.
-- `DAY_CAPSULE_RENDER_PROXY_TOKEN` — required when `DAY_CAPSULE_RENDER_ENDPOINT` is configured. Callers must send the matching bearer token or `x-day-capsule-render-token`; the proxy fails closed before forwarding to the external renderer when this token is missing or mismatched.
+- `DAY_CAPSULE_RENDER_API_KEY` — provider key used only by the server-side internal provider adapter when present.
+- `DAY_CAPSULE_RENDER_PROXY_TOKEN` — optional server-only token attached by `/api/day-capsule-render` when proxying to `DAY_CAPSULE_RENDER_ENDPOINT`. Browser callers must not send or know this token; they must have a verified Supabase gate session.
 
 Do not use `DAY_CAPULE_RENDER_ENDPOINT`; that spelling is intentionally not supported.
 
 ## Backend/API proxy status
 
-The Next.js route `POST /api/day-capsule-render` owns the external renderer call. The browser sends a real Day Capsule `renderRequest` to this route, and the route reads `DAY_CAPSULE_RENDER_ENDPOINT` only on the server. Secrets are not exposed to frontend code.
+The Next.js route `POST /api/day-capsule-render` owns the external renderer call. The browser sends a real Day Capsule `renderRequest` to this route with its verified gate session cookie, and the route reads `DAY_CAPSULE_RENDER_ENDPOINT` and any proxy token only on the server. Secrets are not exposed to frontend code.
 
 Required status behavior:
 
 - Missing `DAY_CAPSULE_RENDER_ENDPOINT` returns `external_renderer_not_configured`.
-- Missing `DAY_CAPSULE_RENDER_PROXY_TOKEN` with a configured endpoint returns `external_render_failed` without invoking the provider.
-- A configured endpoint allows the proxy to attempt an external render and returns either `external_rendered` or `external_render_failed`.
+- A request without a verified Supabase gate session returns `external_render_failed` with HTTP 401 and does not invoke the provider.
+- A configured endpoint allows the server proxy to attempt an external render and returns either `external_rendered` or `external_render_failed`; when `DAY_CAPSULE_RENDER_PROXY_TOKEN` is set, the server attaches it to the external renderer request.
 - While the frontend request is in flight, the persisted app record uses `external_rendering`.
 - Provider results must include an artifact reference (`artifactUrl`, `artifactPath`, `artifactBlob`, or `previewPath`) or they are normalized to `external_render_failed`.
 

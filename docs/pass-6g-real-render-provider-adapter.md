@@ -17,7 +17,7 @@ The app UI posts the Day Capsule render request only. Browser requests must not 
 - `DAY_CAPSULE_RENDER_STORAGE_MODE` — set to `local` when using the internal OpenAI adapter so returned base64 artifacts can be stored to disk.
 - `DAY_CAPSULE_RENDER_STORAGE_PATH` — required for internal OpenAI readiness and local base64 storage, preferably under `public/` when browser preview is needed.
 - `DAY_CAPSULE_RENDER_ENDPOINT` — optional external renderer endpoint fallback/proxy path.
-- `DAY_CAPSULE_RENDER_PROXY_TOKEN` — optional bearer/header guard for render requests; when set, it is enforced before both internal provider renders and external endpoint proxy calls.
+- `DAY_CAPSULE_RENDER_PROXY_TOKEN` — optional server-only token attached by `/api/day-capsule-render` when proxying to `DAY_CAPSULE_RENDER_ENDPOINT`; it is not sent by browser callers and is not used as the browser auth mechanism.
 
 - `DAY_CAPSULE_RENDER_PROVIDER=openai`
 - `DAY_CAPSULE_RENDER_API_KEY=<server-side OpenAI key>` — backend only; never expose to frontend code.

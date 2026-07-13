@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { sanitizeAuthNext } from '../../../src/shared/authNext';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -10,7 +11,7 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const finishAuth = async () => {
-      const next = searchParams.get('next') || '/';
+      const next = sanitizeAuthNext(searchParams.get('next'));
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
@@ -27,7 +28,11 @@ function AuthCallbackContent() {
       const response = await fetch('/api/chaotica-auth/callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, session: accessToken ? { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn } : null }),
+        body: JSON.stringify({
+          code,
+          next,
+          session: accessToken ? { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn } : null,
+        }),
       });
 
       if (!response.ok) {
@@ -36,7 +41,9 @@ function AuthCallbackContent() {
         return;
       }
 
-      router.replace(next === '/' ? '/?chaotica-auth=complete' : next);
+      const result = await response.json().catch(() => ({}));
+      const safeNext = sanitizeAuthNext(result?.next || next);
+      router.replace(safeNext === '/' ? '/?chaotica-auth=complete' : safeNext);
     };
 
     finishAuth();
