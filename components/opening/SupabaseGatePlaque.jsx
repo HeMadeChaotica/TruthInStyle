@@ -1,65 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
 
-export default function SupabaseGatePlaque({ onAuthorized }) {
-  const [credential, setCredential] = useState('');
+export default function SupabaseGatePlaque() {
   const [status, setStatus] = useState('');
-  const [cooldown, setCooldown] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (cooldown <= 0) return undefined;
-    const timer = window.setTimeout(() => setCooldown((value) => Math.max(0, value - 1)), 1000);
-    return () => window.clearTimeout(timer);
-  }, [cooldown]);
-
-  const submit = async (event) => {
-    event.preventDefault();
-    if (submitting || cooldown > 0) return;
+  const continueWithGithub = async () => {
+    if (submitting) return;
     setSubmitting(true);
     setStatus('');
 
     try {
-      const response = await fetch('/api/chaotica-auth/sign-in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: credential }),
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+        },
       });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !payload.authorized) {
-        setStatus('THE GATE DID NOT RECOGNIZE THAT.');
-        setCooldown(8);
-        return;
+      if (error) {
+        setStatus('GITHUB AUTH IS NOT CONFIGURED.');
+        setSubmitting(false);
       }
-      setCredential('');
-      onAuthorized?.();
     } catch {
-      setStatus('THE GATE DID NOT RECOGNIZE THAT.');
-      setCooldown(8);
-    } finally {
+      setStatus('GITHUB AUTH COULD NOT OPEN.');
       setSubmitting(false);
     }
   };
 
   return (
-    <form className="chaotica-auth-plaque" onSubmit={submit} aria-label="Gate authorization plaque">
+    <section className="chaotica-auth-plaque" aria-label="Gate authorization plaque">
       <h2>AUTHORIZE THE GATE</h2>
-      <p>Supabase authorization required.</p>
-      <label>
-        Supabase credential
-        <input
-          type="password"
-          value={credential}
-          onChange={(event) => setCredential(event.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </label>
-      <button type="submit" disabled={submitting || cooldown > 0}>
-        {cooldown > 0 ? `THE GATE IS COOLING. TRY AGAIN IN ${cooldown}s.` : 'OPEN CHAOTICA'}
+      <p>Continue with GitHub to enter Chaotica.</p>
+      <button type="button" onClick={continueWithGithub} disabled={submitting}>
+        {submitting ? 'OPENING GITHUB…' : 'Continue with GitHub'}
       </button>
       {status ? <span role="alert">{status}</span> : null}
-    </form>
+    </section>
   );
 }
