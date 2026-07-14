@@ -99,6 +99,32 @@ function getOAuthFailure(payload, fallback) {
   };
 }
 
+export async function establishSessionFromTokens(accessToken, refreshToken) {
+  const cleanAccessToken = cleanText(accessToken);
+  if (!cleanAccessToken) {
+    await clearChaoticaAuthCookies();
+    return { ok: false, status: 400, error: 'missing_supabase_session_access_token' };
+  }
+
+  const verified = await verifySupabaseAccessToken(cleanAccessToken);
+  if (!verified.ok) {
+    await clearChaoticaAuthCookies();
+    return {
+      ok: false,
+      status: verified.status || 401,
+      error: verified.error || 'hash_session_verification_failed',
+      error_description: verified.error_description || null,
+    };
+  }
+
+  await setSessionCookies({
+    access_token: cleanAccessToken,
+    refresh_token: cleanText(refreshToken),
+    expires_in: 3600,
+  });
+  return { ok: true };
+}
+
 export async function exchangeOAuthCodeForSession(code, redirectTo) {
   const config = getSupabaseAuthConfig();
   if (!config.configured) {
