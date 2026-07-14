@@ -26,9 +26,6 @@ function AuthCallbackContent() {
       const params = new URLSearchParams(queryString);
       const next = sanitizeAuthNext(params.get('next'));
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const expiresIn = hashParams.get('expires_in');
       const code = params.get('code');
       const providerFailure = collectAuthFailure(params, hashParams, 'missing_oauth_code');
 
@@ -37,7 +34,7 @@ function AuthCallbackContent() {
         return;
       }
 
-      if (!code && !accessToken) {
+      if (!code) {
         setStatus(`GITHUB AUTH MISSING CODE — ${providerFailure}`);
         return;
       }
@@ -50,7 +47,6 @@ function AuthCallbackContent() {
           code,
           next,
           redirectTo,
-          session: accessToken ? { access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn } : null,
         }),
       });
 
