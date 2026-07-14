@@ -4,6 +4,14 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { sanitizeAuthNext } from '../../../src/shared/authNext';
 
+function getRawQueryParam(search, key) {
+  const query = String(search || '').replace(/^\?/, '');
+  if (!query) return '';
+  const pair = query.split('&').find((part) => part.split('=')[0] === key);
+  if (!pair) return '';
+  return pair.includes('=') ? pair.slice(pair.indexOf('=') + 1) : '';
+}
+
 function collectAuthFailure(searchParams, hashParams, fallback = 'unknown_auth_failure') {
   const details = [
     ['error', searchParams.get('error') || hashParams.get('error')],
@@ -25,7 +33,11 @@ function AuthCallbackContent() {
     const finishAuth = async () => {
       const params = new URLSearchParams(queryString);
       const next = sanitizeAuthNext(params.get('next'));
-      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+      if (hash) {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      }
       const code = params.get('code');
       const providerFailure = collectAuthFailure(params, hashParams, 'missing_oauth_code');
 
@@ -39,7 +51,8 @@ function AuthCallbackContent() {
         return;
       }
 
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const rawNext = getRawQueryParam(window.location.search, 'next') || '/';
+      const redirectTo = `${window.location.origin}/auth/callback?next=${rawNext}`;
       const response = await fetch('/api/chaotica-auth/callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

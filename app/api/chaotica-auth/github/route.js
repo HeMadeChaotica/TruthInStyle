@@ -4,7 +4,8 @@ import { sanitizeAuthNext } from '../../../../src/shared/authNext';
 
 export async function GET(request) {
   const next = sanitizeAuthNext(request.nextUrl.searchParams.get('next'));
-  const redirectTo = `${request.nextUrl.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  const redirectNext = encodeURIComponent(next).replace(/%2F/gi, '/');
+  const redirectTo = `${request.nextUrl.origin}/auth/callback?next=${redirectNext}`;
   const url = getGithubOAuthUrl(redirectTo);
   if (!url) {
     return NextResponse.json({ error: 'supabase_auth_not_configured' }, { status: 503 });
