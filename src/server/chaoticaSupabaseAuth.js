@@ -66,7 +66,16 @@ export function getGithubOAuthUrl(redirectTo) {
   return url.toString();
 }
 
-export async function exchangeOAuthCodeForSession(code) {
+function getOAuthFailure(payload, fallback) {
+  return {
+    error: payload?.error || fallback,
+    error_code: payload?.error_code || payload?.code || null,
+    error_description: payload?.error_description || payload?.msg || payload?.message || null,
+    message: payload?.message || payload?.msg || null,
+  };
+}
+
+export async function exchangeOAuthCodeForSession(code, redirectTo) {
   const config = getSupabaseAuthConfig();
   if (!config.configured) {
     return { ok: false, status: 503, error: 'supabase_auth_not_configured' };
@@ -79,13 +88,18 @@ export async function exchangeOAuthCodeForSession(code) {
       Authorization: `Bearer ${config.anonKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, ...(redirectTo ? { redirect_to: String(redirectTo) } : {}) }),
     cache: 'no-store',
   });
   const payload = await parseJson(response);
 
   if (!response.ok || !payload?.access_token) {
-    return { ok: false, status: response.status, error: payload?.error || 'oauth_code_exchange_failed' };
+    return { ok: false, status: response.status, ...getOAuthFailure(payload, 'oauth_code_exchange_failed') };
+  }
+
+  const verified = await verifySupabaseAccessToken(payload.access_token);
+  if (!verified.ok) {
+    return { ok: false, status: verified.status || 401, error: 'exchanged_session_verification_failed' };
   }
 
   await setSessionCookies(payload);
