@@ -35,12 +35,24 @@ export default function ChaoticaOpeningGate() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const authFailure = params.get('chaotica-auth-error');
+    if (authFailure) {
+      setPhase('auth');
+      setMessage(authFailure);
+      if (window.history.replaceState) window.history.replaceState(null, '', '/');
+      return undefined;
+    }
+
     if (params.get('chaotica-auth') !== 'complete') return undefined;
     let cancelled = false;
     const verifyReturnedSession = async () => {
       const response = await fetch('/api/chaotica-auth/session', { cache: 'no-store' });
       const payload = await response.json().catch(() => ({}));
       if (!cancelled && payload.authorized) setPhase('oath');
+      if (!cancelled && !payload.authorized) {
+        setPhase('auth');
+        setMessage([payload.error, payload.error_description].filter(Boolean).join(' | ') || 'SESSION WAS NOT VERIFIED.');
+      }
       if (window.history.replaceState) window.history.replaceState(null, '', '/');
     };
     verifyReturnedSession();

@@ -23,6 +23,19 @@ function collectAuthFailure(searchParams, hashParams, fallback = 'unknown_auth_f
   return details.map(([key, value]) => `${key}: ${value}`).join(' | ');
 }
 
+function getSanitizedCallbackShape(location, hashParams) {
+  const params = new URLSearchParams(location.search);
+  const searchKeys = Array.from(params.keys()).sort();
+  const hashKeys = Array.from(hashParams.keys()).filter((key) => !['access_token', 'refresh_token'].includes(key)).sort();
+  const queryShape = searchKeys.length ? `?${searchKeys.map((key) => `${key}=<present>`).join('&')}` : '?<empty>';
+  const hashShape = hashKeys.length ? `#${hashKeys.map((key) => `${key}=<present>`).join('&')}` : '#<empty>';
+  return `${location.origin}${location.pathname}${queryShape}${hashShape}`;
+}
+
+function returnToEntranceWithFailure(router, failure) {
+  router.replace(`/?chaotica-auth-error=${encodeURIComponent(failure)}`);
+}
+
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,19 +48,36 @@ function AuthCallbackContent() {
       const next = sanitizeAuthNext(params.get('next'));
       const hash = window.location.hash;
       const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+      const accessToken = hashParams.get('access_token') || '';
+      const refreshToken = hashParams.get('refresh_token') || '';
+      const callbackShape = getSanitizedCallbackShape(window.location, hashParams);
+
       if (hash) {
         window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
       }
-      const code = params.get('code');
-      const providerFailure = collectAuthFailure(params, hashParams, 'missing_oauth_code');
 
-      if (params.get('error') || params.get('error_code') || params.get('error_description') || hashParams.get('error') || hashParams.get('error_code') || hashParams.get('error_description')) {
-        setStatus(`GITHUB AUTH RETURNED ERROR — ${providerFailure}`);
+      const code = params.get('code') || '';
+      const hasProviderFailure = params.get('error') || params.get('error_code') || params.get('error_description') || hashParams.get('error') || hashParams.get('error_code') || hashParams.get('error_description');
+      const providerFailure = collectAuthFailure(params, hashParams, 'unknown_provider_error');
+
+      if (hasProviderFailure) {
+        await fetch('/api/chaotica-auth/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clearAuth: true }),
+        }).catch(() => {});
+        returnToEntranceWithFailure(router, providerFailure);
         return;
       }
 
-      if (!code) {
-        setStatus(`GITHUB AUTH MISSING CODE — ${providerFailure}`);
+      if (!code && !accessToken) {
+        const failure = `OAuth callback returned without code, tokens, or provider error. Callback URL shape: ${callbackShape}`;
+        await fetch('/api/chaotica-auth/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clearAuth: true }),
+        }).catch(() => {});
+        returnToEntranceWithFailure(router, failure);
         return;
       }
 
@@ -58,6 +88,8 @@ function AuthCallbackContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
+          access_token: accessToken,
+          refresh_token: refreshToken,
           next,
           redirectTo,
         }),
@@ -67,7 +99,7 @@ function AuthCallbackContent() {
       if (!response.ok) {
         const failure = [result?.error, result?.error_code, result?.error_description, result?.message].filter(Boolean).join(' | ');
         const configHint = result?.error === 'redirect_url_not_allowed' || /redirect/i.test(failure) ? ' — SUPABASE REDIRECT URL CONFIG REQUIRED' : '';
-        setStatus(`GITHUB AUTH EXCHANGE FAILED — ${failure || response.statusText || response.status}${configHint}`);
+        returnToEntranceWithFailure(router, `${failure || response.statusText || response.status}${configHint}`);
         return;
       }
 
@@ -75,7 +107,9 @@ function AuthCallbackContent() {
       router.replace(safeNext === '/' ? '/?chaotica-auth=complete' : safeNext);
     };
 
-    finishAuth();
+    finishAuth().catch((error) => {
+      setStatus(`GITHUB AUTH CALLBACK FAILED — ${error?.message || 'unknown_callback_error'}`);
+    });
   }, [router, queryString]);
 
   return <div className="chaotica-opening-status" role="status">{status}</div>;
