@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
-import { exchangeOAuthCodeForSession, persistOAuthSession } from '../../../../src/server/chaoticaSupabaseAuth';
+import { clearChaoticaAuthCookies, exchangeOAuthCodeForSession } from '../../../../src/server/chaoticaSupabaseAuth';
 import { sanitizeAuthNext } from '../../../../src/shared/authNext';
 
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
-  const result = body?.code
-    ? await exchangeOAuthCodeForSession(String(body.code), body?.redirectTo)
-    : await persistOAuthSession(body?.session);
+  const code = typeof body?.code === 'string' ? body.code : '';
+
+  if (!code.trim()) {
+    await clearChaoticaAuthCookies();
+    return NextResponse.json({ error: 'missing_oauth_code' }, { status: 400 });
+  }
+
+  const result = await exchangeOAuthCodeForSession(code, body?.redirectTo);
 
   if (!result.ok) {
     return NextResponse.json({
