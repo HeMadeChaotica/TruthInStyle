@@ -30,7 +30,8 @@ export async function middleware(request) {
 
   const supabaseUrl = String(process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\/+$/, '');
   const anonKey = String(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
-  if (!supabaseUrl || !anonKey) return NextResponse.redirect(new URL('/', request.url));
+  const ownerEmail = String(process.env.CHAOTICA_OWNER_EMAIL || '').trim().toLowerCase();
+  if (!supabaseUrl || !anonKey || !ownerEmail) return NextResponse.redirect(new URL('/', request.url));
 
   try {
     const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
@@ -40,7 +41,10 @@ export async function middleware(request) {
       },
       cache: 'no-store',
     });
-    if (response.ok) return NextResponse.next();
+    if (response.ok) {
+      const user = await response.json().catch(() => ({}));
+      if (String(user?.email || '').trim().toLowerCase() === ownerEmail) return NextResponse.next();
+    }
   } catch {
     // Treat auth verification failures as unauthenticated.
   }
