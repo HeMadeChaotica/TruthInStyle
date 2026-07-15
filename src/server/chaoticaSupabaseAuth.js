@@ -16,10 +16,15 @@ function cleanText(value) {
   return String(value || '').trim();
 }
 
+function normalizeEmail(value) {
+  return cleanText(value).toLowerCase();
+}
+
 export function getSupabaseAuthConfig() {
   const supabaseUrl = cleanText(process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/+$/, '');
   const anonKey = cleanText(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-  return { supabaseUrl, anonKey, configured: Boolean(supabaseUrl && anonKey) };
+  const ownerEmail = normalizeEmail(process.env.CHAOTICA_OWNER_EMAIL);
+  return { supabaseUrl, anonKey, ownerEmail, configured: Boolean(supabaseUrl && anonKey && ownerEmail) };
 }
 
 async function parseJson(response) {
@@ -28,6 +33,19 @@ async function parseJson(response) {
   } catch {
     return null;
   }
+}
+
+function getSupabaseFailure(payload, fallback) {
+  return {
+    error: payload?.error || fallback,
+    error_code: payload?.error_code || payload?.code || null,
+    error_description: payload?.error_description || payload?.msg || payload?.message || null,
+    message: payload?.message || payload?.msg || null,
+  };
+}
+
+function ownerEmailMatches(email, ownerEmail) {
+  return normalizeEmail(email) === ownerEmail;
 }
 
 export async function clearChaoticaAuthCookies() {
@@ -56,14 +74,16 @@ export async function verifySupabaseAccessToken(accessToken) {
     },
     cache: 'no-store',
   });
-  const payload = response.ok ? null : await parseJson(response);
+  const payload = response.ok ? await parseJson(response) : await parseJson(response);
+  const email = normalizeEmail(payload?.email);
+  const ownerMatches = response.ok && ownerEmailMatches(email, config.ownerEmail);
 
   return {
-    ok: response.ok,
+    ok: Boolean(response.ok && ownerMatches),
     configured: true,
-    status: response.status,
-    error: response.ok ? null : 'invalid_supabase_session_access_token',
-    error_description: payload?.msg || payload?.message || payload?.error_description || null,
+    status: response.ok && !ownerMatches ? 403 : response.status,
+    error: response.ok ? (ownerMatches ? null : 'owner_authorization_only') : 'invalid_supabase_session_access_token',
+    error_description: response.ok ? null : payload?.msg || payload?.message || payload?.error_description || null,
   };
 }
 
@@ -81,92 +101,63 @@ async function setSessionCookies(session) {
   cookieStore.delete(LEGACY_CHAOTICA_REFRESH_COOKIE);
 }
 
-export function getGithubOAuthUrl(redirectTo) {
+export async function sendChaoticaEmailOtp(email) {
   const config = getSupabaseAuthConfig();
-  if (!config.configured) return null;
-  const url = new URL(`${config.supabaseUrl}/auth/v1/authorize`);
-  url.searchParams.set('provider', 'github');
-  url.searchParams.set('redirect_to', redirectTo);
-  return url.toString();
-}
-
-function getOAuthFailure(payload, fallback) {
-  return {
-    error: payload?.error || fallback,
-    error_code: payload?.error_code || payload?.code || null,
-    error_description: payload?.error_description || payload?.msg || payload?.message || null,
-    message: payload?.message || payload?.msg || null,
-  };
-}
-
-export async function establishSessionFromTokens(accessToken, refreshToken) {
-  const cleanAccessToken = cleanText(accessToken);
-  if (!cleanAccessToken) {
-    await clearChaoticaAuthCookies();
-    return { ok: false, status: 400, error: 'missing_supabase_session_access_token' };
+  await clearChaoticaAuthCookies();
+  if (!config.configured) return { ok: false, configured: false, status: 503, error: 'supabase_auth_not_configured' };
+  if (!ownerEmailMatches(email, config.ownerEmail)) {
+    return { ok: false, configured: true, status: 403, error: 'owner_authorization_only', message: 'Owner authorization only.' };
   }
 
-  const verified = await verifySupabaseAccessToken(cleanAccessToken);
-  if (!verified.ok) {
-    await clearChaoticaAuthCookies();
-    return {
-      ok: false,
-      status: verified.status || 401,
-      error: verified.error || 'hash_session_verification_failed',
-      error_description: verified.error_description || null,
-    };
-  }
-
-  await setSessionCookies({
-    access_token: cleanAccessToken,
-    refresh_token: cleanText(refreshToken),
-    expires_in: 3600,
-  });
-  return { ok: true };
-}
-
-export async function exchangeOAuthCodeForSession(code, redirectTo) {
-  const config = getSupabaseAuthConfig();
-  if (!config.configured) {
-    await clearChaoticaAuthCookies();
-    return { ok: false, status: 503, error: 'supabase_auth_not_configured' };
-  }
-
-  const cleanCode = cleanText(code);
-  if (!cleanCode) {
-    await clearChaoticaAuthCookies();
-    return { ok: false, status: 400, error: 'missing_oauth_code' };
-  }
-
-  const response = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=authorization_code`, {
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/otp`, {
     method: 'POST',
     headers: {
       apikey: config.anonKey,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ code: cleanCode, ...(redirectTo ? { redirect_to: String(redirectTo) } : {}) }),
+    body: JSON.stringify({ email: normalizeEmail(email), create_user: false }),
     cache: 'no-store',
   });
   const payload = await parseJson(response);
+  if (!response.ok) return { ok: false, configured: true, status: response.status, ...getSupabaseFailure(payload, 'email_otp_send_failed') };
+  return { ok: true, configured: true };
+}
 
+export async function verifyChaoticaEmailOtp(email, token) {
+  const config = getSupabaseAuthConfig();
+  await clearChaoticaAuthCookies();
+  if (!config.configured) return { ok: false, configured: false, status: 503, error: 'supabase_auth_not_configured' };
+  if (!ownerEmailMatches(email, config.ownerEmail)) {
+    return { ok: false, configured: true, status: 403, error: 'owner_authorization_only', message: 'Owner authorization only.' };
+  }
+
+  const response = await fetch(`${config.supabaseUrl}/auth/v1/verify`, {
+    method: 'POST',
+    headers: {
+      apikey: config.anonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email: normalizeEmail(email), token: cleanText(token), type: 'email' }),
+    cache: 'no-store',
+  });
+  const payload = await parseJson(response);
   if (!response.ok || !payload?.access_token) {
-    await clearChaoticaAuthCookies();
-    return { ok: false, status: response.status, ...getOAuthFailure(payload, 'oauth_code_exchange_failed') };
+    return { ok: false, configured: true, status: response.status, ...getSupabaseFailure(payload, 'email_otp_verify_failed') };
   }
 
   const verified = await verifySupabaseAccessToken(payload.access_token);
   if (!verified.ok) {
-    await clearChaoticaAuthCookies();
     return {
       ok: false,
+      configured: true,
       status: verified.status || 401,
-      error: verified.error || 'exchanged_session_verification_failed',
+      error: verified.error || 'verified_session_check_failed',
       error_description: verified.error_description || null,
     };
   }
 
   await setSessionCookies(payload);
-  return { ok: true };
+  return { ok: true, configured: true };
 }
 
 export async function getChaoticaSession() {

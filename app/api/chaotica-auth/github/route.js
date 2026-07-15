@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getGithubOAuthUrl } from '../../../../src/server/chaoticaSupabaseAuth';
-import { sanitizeAuthNext } from '../../../../src/shared/authNext';
+import { clearChaoticaAuthCookies } from '../../../../src/server/chaoticaSupabaseAuth';
 
-export async function GET(request) {
-  const next = sanitizeAuthNext(request.nextUrl.searchParams.get('next'));
-  const redirectNext = encodeURIComponent(next).replace(/%2F/gi, '/');
-  const redirectTo = `${request.nextUrl.origin}/auth/callback?next=${redirectNext}`;
-  const url = getGithubOAuthUrl(redirectTo);
-  if (!url) {
-    return NextResponse.json({ error: 'supabase_auth_not_configured' }, { status: 503 });
-  }
-  return NextResponse.json({ url });
+export async function GET() {
+  await clearChaoticaAuthCookies();
+  return NextResponse.json({ error: 'github_auth_disabled' }, { status: 410 });
 }

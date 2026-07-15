@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and use the opening gate. Protected app routes redirect to `/` unless the Supabase access token cookie verifies against Supabase Auth with the configured project URL and anon key. The cookie's presence alone is not treated as authorization.
+Open `http://localhost:3000` and use the opening gate. Protected app routes redirect to `/` unless the Supabase access token cookie verifies against Supabase Auth with the configured project URL, anon key, and `CHAOTICA_OWNER_EMAIL`. The cookie's presence alone is not treated as authorization.
 
 ## Required cloud environment
 
@@ -18,7 +18,8 @@ Configure these variables in Vercel before using the production gate or Day Caps
 | Variable | Required for | Notes |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Gate auth and Supabase artifact storage | Supabase project URL. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Gate auth | Public anon key used by the server auth exchange and token verification. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Gate auth | Public anon key used by the server email OTP exchange and token verification. |
+| `CHAOTICA_OWNER_EMAIL` | Gate auth | Server-only owner email allowed to request and verify entrance OTP codes. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase artifact storage | Server-only key. Do not expose to browser code. |
 | `DAY_CAPSULE_RENDER_PROVIDER` | Internal render provider | Use `openai` for the built-in provider path. |
 | `DAY_CAPSULE_RENDER_API_KEY` | Internal render provider | Server-only image provider key. |
@@ -37,8 +38,8 @@ After Vercel has the environment variables above:
 1. Redeploy the current branch in Vercel.
 2. Visit the production URL and click the opening truth stone.
 3. Confirm the Supabase authorization plaque appears when no verified session exists.
-4. Continue with GitHub and confirm the OAuth callback returns to the opening gate.
-5. Click the opening truth stone again if needed, then type or speak at least three oath phrases and confirm navigation to `/the-assurer`.
+4. Enter the owner email, send the OTP code, verify the 6-digit code, and confirm the opening gate shows the oath only after session verification.
+5. Type or speak at least three oath phrases and confirm navigation to `/the-assurer`.
 6. Open THE.SUMMATION with a prepared Day Capsule payload.
 7. Start or retry the external render.
 8. Confirm `POST /api/day-capsule-render` returns `external_rendered` and includes an artifact URL/path while the browser request does not include `DAY_CAPSULE_RENDER_PROXY_TOKEN`.
