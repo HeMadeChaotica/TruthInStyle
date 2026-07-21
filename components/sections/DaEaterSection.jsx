@@ -5,6 +5,7 @@ import '../../styles/sections/universal-frame.css';
 import '../../styles/sections/da-eater.css';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 import { calculateDaEaterTotals, deleteCheatFlexEntry, deleteMealEntry, deleteSupplementEntry, getDaEaterDay, saveDaEaterDay, upsertCheatFlexEntry, upsertMealEntry, upsertSupplementEntry } from '../../src/services/daEaterService';
+import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const MEAL_TYPES = ['BREAKFAST','LUNCH','DINNER','SNACK','PRE-WORKOUT','POST-WORKOUT','TREAT','DRINK','WATER','LATE NIGHT','OTHER'];
@@ -77,13 +78,15 @@ export default function DaEaterSection() {
     }
   };
 
-  const handleFileFallback = (slot, event) => {
+  const handleFileFallback = async (slot, event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    updatePhotoSlot(slot, {
-      photoRef: { source: 'browser_file_input', name: file.name, type: file.type, size: file.size, lastModified: file.lastModified },
-      description: day.photoLog?.find((x) => x.slot === slot)?.description || ''
-    });
+    try {
+      const uploaded = await uploadPrivateImage(file, { context: 'da-eater', sourceDate: date });
+      updatePhotoSlot(slot, { photoRef: uploaded.url, mediaPath: uploaded.path, mediaId: uploaded.id, description: day.photoLog?.find((x) => x.slot === slot)?.description || '' });
+    } catch (error) {
+      console.warn('DA.EATER photo upload failed', error);
+    }
   };
 
   const saveMeal = () => {

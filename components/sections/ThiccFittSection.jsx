@@ -6,6 +6,7 @@ import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import { publishThiccFittSessionProof } from '../../src/services/assurerService';
 import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
+import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 
 const STORAGE_KEY = 'thicc_fitt_day';
 const QUOTE_HISTORY_KEY = 'thicc_fitt_quote_history';
@@ -262,16 +263,15 @@ export default function ThiccFittSection() {
 
 
 
-  const handleFileFallback = (slotKey, event) => {
+  const handleFileFallback = async (slotKey, event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    updatePhotoRef(slotKey, {
-      source: 'browser_file_input',
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      lastModified: file.lastModified
-    });
+    try {
+      const uploaded = await uploadPrivateImage(file, { context: 'thicc-fitt', sourceDate: todayKey() });
+      updatePhotoRef(slotKey, uploaded.url);
+    } catch (error) {
+      console.warn('THICC.FITT photo upload failed', error);
+    }
   };
 
   const shelves = [
