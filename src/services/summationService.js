@@ -99,6 +99,11 @@ function safeJsonParse(raw, fallback) {
   }
 }
 
+function readStorageObject(key, fallback = null) {
+  if (!hasStorage()) return fallback;
+  return safeJsonParse(window.localStorage.getItem(key), fallback);
+}
+
 function isPresent(value) {
   if (Array.isArray(value)) return value.some(isPresent);
   if (value && typeof value === 'object') return Object.values(value).some(isPresent);
@@ -1878,6 +1883,80 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
   receiveSealedSummation(sealedRecord);
   writeStorageArray(SUMMATION_VERSIONS_KEY, readStorageArray(SUMMATION_VERSIONS_KEY).map((item) => item.sourceDate === version.sourceDate ? { ...item, sealed: item.id === version.id ? true : item.sealed, selectedForSeal: item.id === version.id, updatedAt: item.id === version.id ? now : item.updatedAt } : item));
   writeStorageArray(SUMMATION_SKETCHES_KEY, readStorageArray(SUMMATION_SKETCHES_KEY).map((item) => item.sourceDate === sketch.sourceDate ? { ...item, sealed: item.sketchId === sketch.sketchId ? true : item.sealed, selectedForSeal: item.sketchId === sketch.sketchId, updatedAt: item.sketchId === sketch.sketchId ? now : item.updatedAt } : item));
+  window.dispatchEvent(new CustomEvent('truthinstyle-summation-sealed', { detail: { sealedRecord, message: `Sealed ${sealedRecord.displayDate}` } }));
+  return { sealedRecord, missingFields: [] };
+}
+
+export function sealCurrentDayCapsuleToHopewood() {
+  if (!hasStorage()) return { sealedRecord: null, missingFields: ['localStorage'] };
+  const payload = readStoredDayCapsulePayload();
+  if (!payload) return { sealedRecord: null, missingFields: ['active Day Capsule payload'] };
+  const renderRecord = readStorageObject(DAY_CAPSULE_RENDER_RECORD_KEY, null);
+  const dayIdentity = resolveDayIdentityClump(payload.dayIdentity || {}, { updatedAt: new Date().toISOString() });
+  const missingFields = [
+    ...listDayIdentityMissingFields(dayIdentity).map((field) => `dayIdentity.${field}`),
+    ...getFinalRenderSealBlockFields(dayIdentity),
+  ];
+  if (renderRecord?.payloadId && renderRecord.payloadId !== payload.payloadId) {
+    missingFields.push('matching external render artifact for active Day Capsule');
+  }
+  if (missingFields.length) {
+    const uniqueMissing = [...new Set(missingFields)];
+    window.dispatchEvent(new CustomEvent('truthinstyle-summation-seal-blocked', { detail: { message: `Seal blocked: ${uniqueMissing.join(', ')}`, missingFields: uniqueMissing } }));
+    return { sealedRecord: null, missingFields: uniqueMissing };
+  }
+
+  const snapshot = payload.sourceSnapshot || renderRecord?.renderRequest?.sourceSnapshot || {};
+  const artifact = renderRecord.renderArtifact || {};
+  const now = new Date().toISOString();
+  const sourceSignals = {
+    thiccTime: snapshot.thiccTimeSignals || null,
+    rememberMe: snapshot.rememberMeMoments || snapshot.moments || [],
+    thiccFitt: snapshot.thiccFittSignals || [],
+    daEater: snapshot.daEaterSignals || {},
+    pennyAnswers: payload.assuredThoughts?.pennyQuestions?.map((entry) => entry?.answer).filter(Boolean) || [],
+  };
+  const sealedRecord = {
+    id: `summation-${dayIdentity.sourceDate}-day-capsule`,
+    source: 'THE.SUMMATION',
+    sourceDate: dayIdentity.sourceDate,
+    displayDate: dayIdentity.displayDate,
+    dayOfWeek: dayIdentity.dayOfWeek,
+    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+    dayIdentity,
+    title: dayIdentity.titleOfDay,
+    mood: snapshot.mood,
+    era: snapshot.era,
+    singleness: snapshot.singlenessLevel,
+    selectedVersionLabel: 'DAY CAPSULE',
+    selectedVersionContent: payload.assuredThoughts?.diaryEntry || '',
+    sourceTruthSnapshot: { ...snapshot, dayIdentity, assuredThoughts: payload.assuredThoughts },
+    fullAssurerDaySnapshot: { ...snapshot, dayIdentity, assuredThoughts: payload.assuredThoughts },
+    sourceSignals,
+    renderId: renderRecord.renderId,
+    payloadId: payload.payloadId,
+    renderArtifact: artifact,
+    artifactUrl: renderRecord.artifactUrl || artifact.url || artifact.artifactUrl || '',
+    artifactPath: renderRecord.artifactPath || artifact.artifactPath || '',
+    future525600: {
+      sourceDate: dayIdentity.sourceDate,
+      displayDate: dayIdentity.displayDate,
+      dayOfWeek: dayIdentity.dayOfWeek,
+      chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+      mood: snapshot.mood,
+      era: snapshot.era,
+      singleness: snapshot.singlenessLevel,
+      title: dayIdentity.titleOfDay,
+      dayIdentity,
+      sourceSignals,
+      sealedAt: now,
+    },
+    sealedAt: now,
+  };
+  const records = readSealedRecords().filter((record) => String(record.sourceDate) !== String(sealedRecord.sourceDate));
+  writeStorageArray(SUMMATION_SEALED_STORAGE_KEY, [...records, sealedRecord]);
+  receiveSealedSummation(sealedRecord);
+  writeStorageObject(COMPLETED_SUMMATION_KEY, { dayIdentity, payload, renderRecord, sealedRecord });
   window.dispatchEvent(new CustomEvent('truthinstyle-summation-sealed', { detail: { sealedRecord, message: `Sealed ${sealedRecord.displayDate}` } }));
   return { sealedRecord, missingFields: [] };
 }

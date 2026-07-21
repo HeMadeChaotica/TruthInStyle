@@ -18,6 +18,18 @@ const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
+function readPendingSummateRender() {
+  const rawPending = window.sessionStorage.getItem(PENDING_SUMMATE_RENDER_KEY);
+  if (!rawPending) return null;
+  if (rawPending === '1') return { payload: readStoredDayCapsulePayload() };
+  try {
+    const pending = JSON.parse(rawPending);
+    return pending && typeof pending === 'object' ? pending : null;
+  } catch {
+    return null;
+  }
+}
+
 function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
@@ -315,7 +327,17 @@ export default function TheSummationSection() {
   const [renderRecord, setRenderRecord] = useState(() => readPersistedDayCapsuleRender());
 
   const startRender = useCallback(async (nextPayload) => {
-    if (!nextPayload) return null;
+    if (!nextPayload) {
+      const missingPayloadRecord = {
+        status: 'external_render_failed',
+        renderArtifact: null,
+        message: 'No active Day Capsule payload was available for this render request.',
+        error: 'Use the Eye of Truth to select an active day, then press the Crystal Wand again.',
+        retryable: true,
+      };
+      setRenderRecord(missingPayloadRecord);
+      return missingPayloadRecord;
+    }
     const renderRequest = buildDayCapsuleRenderRequest(nextPayload);
     setRenderRecord({
       renderId: renderRequest.renderId,
@@ -350,9 +372,10 @@ export default function TheSummationSection() {
 
   useEffect(() => {
     loadPayload();
-    if (window.sessionStorage.getItem(PENDING_SUMMATE_RENDER_KEY) === '1') {
+    const pendingRender = readPendingSummateRender();
+    if (pendingRender) {
       window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
-      startRender(readStoredDayCapsulePayload());
+      startRender(pendingRender.payload || readStoredDayCapsulePayload());
     }
     const onPayload = () => loadPayload();
     const onRenderRequest = (event) => {

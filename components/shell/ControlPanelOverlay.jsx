@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealActiveSummationSelection, setStoredSummationActiveDay } from '../../src/services/summationService';
+import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealCurrentDayCapsuleToHopewood, setStoredSummationActiveDay } from '../../src/services/summationService';
 
-const COMPLETED_SUMMATION_KEY = 'completed_summation_sketch';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
@@ -63,10 +62,6 @@ function countdownToAutoSeal(now) {
   const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
   const seconds = Math.floor((diff % (60 * 1000)) / 1000);
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-}
-
-function safeJsonParse(raw, fallback = null) {
-  try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
 }
 
 function mergeMissingTruth(base = {}, fallback = {}) {
@@ -174,7 +169,13 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
       setActiveDate(storedDate);
       setDraftDateText(displayDate(storedDate));
       setDraftDatePickerValue(localDateKey(storedDate));
+      return;
     }
+    const initial = setStoredSummationActiveDay(new Date());
+    const initialDate = dateFromSourceDate(initial?.sourceDate) || new Date();
+    setActiveDate(initialDate);
+    setDraftDateText(displayDate(initialDate));
+    setDraftDatePickerValue(localDateKey(initialDate));
   }, []);
 
   const updateDayPanelPosition = useCallback(() => {
@@ -247,6 +248,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   };
 
   const handleSummate = async () => {
+    setStoredSummationActiveDay(activeDate);
     const result = await createDayCapsulePayloadFromActiveDay();
     if (!result?.payload) {
       setStatus(result?.error || 'SUMMATE BLOCKED');
@@ -254,7 +256,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     }
     const detail = { sourceDate: result.payload.dayIdentity.sourceDate, payload: result.payload };
     window.dispatchEvent(new CustomEvent(DRAFT_EVENT_NAME, { detail }));
-    window.sessionStorage.setItem(PENDING_SUMMATE_RENDER_KEY, '1');
+    window.sessionStorage.setItem(PENDING_SUMMATE_RENDER_KEY, JSON.stringify(detail));
     window.dispatchEvent(new CustomEvent(SUMMATE_RENDER_EVENT_NAME, { detail }));
     setStatus('Day Capsule render requested');
     onClose?.();
@@ -262,23 +264,27 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   };
 
   const handleSeal = async () => {
-    const completed = safeJsonParse(window.localStorage.getItem(COMPLETED_SUMMATION_KEY), null);
-    const result = sealActiveSummationSelection(completed);
-    setStatus(result?.sealedRecord ? `SEALED ${result.sealedRecord.displayDate || result.sealedRecord.sourceDate}` : `SEAL BLOCKED: ${(result?.missingFields || []).join(', ')}`);
+    setStatus('SEALING DAY CAPSULE...');
+    try {
+      const result = sealCurrentDayCapsuleToHopewood();
+      setStatus(result?.sealedRecord ? `SEALED ${result.sealedRecord.displayDate || result.sealedRecord.sourceDate}` : `SEAL BLOCKED: ${(result?.missingFields || []).join(', ')}`);
+    } catch (error) {
+      setStatus(`SEAL FAILED: ${error?.message || 'UNKNOWN ERROR'}`);
+    }
   };
 
-  const handleRailItem = (item) => {
+  const handleRailItem = async (item) => {
     if (item.key === 'eye-of-truth') {
       if (dayPanelOpen) cancelDayChange();
       else openEyePanel();
       return;
     }
     if (item.key === 'crystal-wand-summate') {
-      handleSummate();
+      await handleSummate();
       return;
     }
     if (item.key === 'so-let-it-be-done') {
-      handleSeal();
+      await handleSeal();
       return;
     }
     onSelect?.(item.key);
@@ -298,7 +304,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
         <nav id="tis-control-rail" className="tis-control-rail" aria-label="Right-side global control rail">
           {RAIL_ITEMS.map((item) => (
             <div key={item.key} className="tis-rail-control">
-              <button type="button" className={`tis-glyph-button tis-rail-glyph ${item.className || ''}`} ref={item.key === 'eye-of-truth' ? eyeButtonRef : null} onClick={() => handleRailItem(item)} aria-label={item.alt} title={item.alt}>
+              <button type="button" className={`tis-glyph-button tis-rail-glyph ${item.className || ''}`} ref={item.key === 'eye-of-truth' ? eyeButtonRef : null} onClick={() => void handleRailItem(item)} aria-label={item.alt} title={item.alt}>
                 <img src={item.src} alt="" draggable={false} aria-hidden="true" />
               </button>
             </div>
@@ -315,6 +321,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
             ) : null}
           </section>
         ) : null}
+        {status && isOpen && !dayPanelOpen ? <div className="tis-control-status" role="status" aria-live="polite">{status}</div> : null}
         {dayPanelOpen && isOpen ? (
           <section
             className="tis-day-popover"
