@@ -266,7 +266,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   const handleSeal = async () => {
     setStatus('SEALING DAY CAPSULE...');
     try {
-      const result = sealCurrentDayCapsuleToHopewood();
+      const result = await sealCurrentDayCapsuleToHopewood();
       setStatus(result?.sealedRecord ? `SEALED ${result.sealedRecord.displayDate || result.sealedRecord.sourceDate}` : `SEAL BLOCKED: ${(result?.missingFields || []).join(', ')}`);
     } catch (error) {
       setStatus(`SEAL FAILED: ${error?.message || 'UNKNOWN ERROR'}`);
