@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ScenePlate, SectionShell } from '../shared/UniversalSectionFrame';
-import { HOPEWOOD_ARCHIVE_UPDATED_EVENT, readHopewoodSummationArchive } from '../../src/services/hopewoodService';
+import { fetchHopewoodSummationArchive, HOPEWOOD_ARCHIVE_UPDATED_EVENT, readHopewoodSummationArchive } from '../../src/services/hopewoodService';
 import { buildAnnual525600Intelligence } from '../../src/services/annual525600Service';
 import '../../styles/sections/525600.css';
 
@@ -18,6 +18,7 @@ export default function Annual525600Section() {
   useEffect(() => {
     const refresh = () => setRecords(readHopewoodSummationArchive());
     refresh();
+    fetchHopewoodSummationArchive().then(setRecords).catch(() => {});
     window.addEventListener(HOPEWOOD_ARCHIVE_UPDATED_EVENT, refresh);
     window.addEventListener('storage', refresh);
     return () => {
