@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
-import { getHopewoodArtifactUrl, getHopewoodRecordDate, HOPEWOOD_ARCHIVE_UPDATED_EVENT, readHopewoodSummationArchive } from '../../src/services/hopewoodService';
+import { fetchHopewoodSummationArchive, getHopewoodArtifactUrl, getHopewoodRecordDate, HOPEWOOD_ARCHIVE_UPDATED_EVENT, readHopewoodSummationArchive } from '../../src/services/hopewoodService';
 import '../../styles/sections/hopewood.css';
 
 const BACKGROUND_URL = '/backgrounds/HOPEWOOD/hopewood-bg.png';
@@ -30,6 +30,10 @@ export default function HopewoodSection() {
       setSelectedDate((current) => current || getHopewoodRecordDate(archive[archive.length - 1]));
     };
     refresh();
+    fetchHopewoodSummationArchive().then((archive) => {
+      setRecords(archive);
+      setSelectedDate((current) => current || getHopewoodRecordDate(archive[archive.length - 1]));
+    }).catch(() => {});
     window.addEventListener(HOPEWOOD_ARCHIVE_UPDATED_EVENT, refresh);
     window.addEventListener('storage', refresh);
     return () => {
