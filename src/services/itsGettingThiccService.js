@@ -225,7 +225,10 @@ export const saveScheduleEntries = (entries) => set(SCHEDULE_KEY, normalizeSched
 const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const sbHeaders = { apikey: sbAnon || '', Authorization: `Bearer ${sbAnon || ''}`, 'Content-Type': 'application/json' };
-const hasSupabase = Boolean(sbUrl && sbAnon);
+// THICC working state is synchronized by the authenticated CloudStateBridge.
+// Legacy direct-browser tables are absent or RLS-blocked in production; treating
+// the public anon configuration as a writable backend breaks client scheduling.
+const hasSupabase = false;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 

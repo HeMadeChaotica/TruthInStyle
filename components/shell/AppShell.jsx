@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ControlPanelOverlay from './ControlPanelOverlay';
+import CloudStateBridge from './CloudStateBridge';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
 
 const ROUTE_BY_KEY = {
@@ -59,6 +60,7 @@ export default function AppShell({ children }) {
 
   return (
     <div style={{ height: '100%' }}>
+      <CloudStateBridge />
       {children}
       <ControlPanelOverlay
         isOpen={isOpen}
