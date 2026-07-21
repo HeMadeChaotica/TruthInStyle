@@ -19,6 +19,10 @@ function readArchive() {
   return Array.isArray(parsed) ? parsed : [];
 }
 
+function writeArchive(records) {
+  if (canUseStorage()) window.localStorage.setItem(HOPEWOOD_SUMMATION_ARCHIVE_KEY, JSON.stringify(sortChronologically(records)));
+}
+
 function sortChronologically(records) {
   return [...records].sort((left, right) => {
     const leftDate = String(left?.sourceDate || left?.date || '');
@@ -66,7 +70,27 @@ export function receiveSealedSummation(sealedSummationRecord) {
   const withoutSameDay = archive.filter((record) => String(record?.sourceDate || '') !== String(nextRecord.sourceDate));
   const nextArchive = sortChronologically([...withoutSameDay, nextRecord]);
 
-  window.localStorage.setItem(HOPEWOOD_SUMMATION_ARCHIVE_KEY, JSON.stringify(nextArchive));
+  writeArchive(nextArchive);
   window.dispatchEvent(new CustomEvent(HOPEWOOD_ARCHIVE_UPDATED_EVENT, { detail: { record: nextRecord, archive: nextArchive } }));
   return nextRecord;
+}
+
+export async function fetchHopewoodSummationArchive() {
+  const response = await fetch('/api/hopewood', { method: 'GET', cache: 'no-store' });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || `HOPEWOOD archive returned HTTP ${response.status}.`);
+  const archive = sortChronologically(Array.isArray(body?.records) ? body.records : []);
+  writeArchive(archive);
+  return archive;
+}
+
+export async function persistSealedSummation(sealedSummationRecord) {
+  const response = await fetch('/api/hopewood', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ record: sealedSummationRecord }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body?.error || `HOPEWOOD seal returned HTTP ${response.status}.`);
+  return receiveSealedSummation(body?.record || sealedSummationRecord);
 }
