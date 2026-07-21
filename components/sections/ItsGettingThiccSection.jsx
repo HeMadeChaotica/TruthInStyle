@@ -9,6 +9,7 @@ import {
   saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, getScheduleClientId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload, toLocalIsoDate, isLocalIsoDateKey, validateScheduleEntry,
   createClientTemplate, createLocalClientId, generatePublicThiccenId, getPublicThiccenId,
 } from '../../src/services/itsGettingThiccService';
+import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 import ChaoticaMonthCalendar from '../shared/ChaoticaMonthCalendar';
 import { normalizeObjectStrings, normalizeUserText } from '../../lib/utils/textCasing';
@@ -179,7 +180,18 @@ export default function ItsGettingThiccSection() {
     setIsNewInfoDraft(false);
     setInfoStatus('THICC.INFO SAVED');
   };
-  const onUpload = (slot) => (e) => { const f = e.target.files?.[0]; if (!f || !infoClient) return; const fr = new FileReader(); fr.onload = () => { const d = upsertMedia(infoClient.id, slot, fr.result); if (slot === 'photo') update('photo', d); else update('celebration', (infoClient.celebration || []).map((t, i) => (i === Number(slot) ? { ...t, media: d } : t))); }; fr.readAsDataURL(f); };
+  const onUpload = (slot) => async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !infoClient) return;
+    try {
+      const uploaded = await uploadPrivateImage(file, { context: 'its-getting-thicc', sourceDate: new Date().toISOString().slice(0, 10) });
+      const durableUrl = upsertMedia(infoClient.id, slot, uploaded.url);
+      if (slot === 'livingThiccPhoto') update('livingThiccPhoto', durableUrl);
+      else update('celebration', (infoClient.celebration || []).map((tile, index) => (index === Number(slot) ? { ...tile, media: durableUrl } : tile)));
+    } catch (error) {
+      setInfoStatus(`IMAGE UPLOAD FAILED: ${error?.message || 'UNKNOWN ERROR'}`);
+    }
+  };
   function Food() { return <><h3>FOOD: THE GOOD, THE BAD & THE “I DESERVE THIS”</h3>{foodPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={infoClient[`food${i + 1}`] || ''} onChange={(e) => update(`food${i + 1}`, e.target.value)} /></label>)}</>; }
   function Movement() { return <><h3>MOVEMENT: THE MEASURE AND THE PRESSURES</h3>{movementPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}{i === 1 && <small>THINK WORK, ERRANDS, SITTING, STANDING, STEPS, STRESS, AND HOW OFTEN YOUR BODY IS ACTUALLY IN MOTION, NOT JUST HOW OFTEN YOU MEANT TO WORK OUT.</small>}<textarea value={infoClient[`move${i + 1}`] || ''} onChange={(e) => update(`move${i + 1}`, e.target.value)} /></label>)}<label>5. SELECT CURRENT OVERALL LEVEL OF ACTIVITY<select value={infoClient.activity || 'SEDENTARY'} onChange={(e) => update('activity', e.target.value)}>{['SEDENTARY', 'LIGHTLY', 'MODERATELY', 'ACTIVE', 'I DO THIS S@$&!', 'I SWEAR I’M ACTIVE BUT MY APPLE WATCH SAYS OTHERWISE'].map((o) => <option key={o}>{o}</option>)}</select></label></>; }
   function Medical() { const keys=['emergencyContact','injuries','surgeries','allergies','medications','limits','painfulMovements','flexibility','hardNos','trainingFears']; return <><h3>MEDICAL ADVISORY</h3>{medicalPrompts.map((p, i) => <label key={p}>{`${i + 1}. ${p}`}<textarea value={infoClient[keys[i]] || ''} onChange={(e) => update(keys[i], e.target.value)} /></label>)}</>; }
