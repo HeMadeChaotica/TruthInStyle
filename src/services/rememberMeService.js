@@ -4,7 +4,10 @@ const STORAGE_KEY = 'remember_me_entries_v1';
 
 const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const hasSupabase = Boolean(sbUrl && sbAnon);
+// Working records are synchronized by the authenticated CloudStateBridge.
+// The legacy direct-browser table is not part of the live schema and RLS correctly
+// blocks anonymous writes, so do not route production saves through the anon key.
+const hasSupabase = false;
 const sbHeaders = {
   apikey: sbAnon || '',
   Authorization: `Bearer ${sbAnon || ''}`,
