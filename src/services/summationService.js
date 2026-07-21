@@ -17,7 +17,7 @@ import {
 import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMirror } from '../../lib/theAssurer/thiccTimeWeekMirror';
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import { DAY_CAPSULE_RENDER_RECORD_KEY, DAY_CAPSULE_RENDER_STATUSES } from './dayCapsuleRenderService';
-import { receiveSealedSummation } from './hopewoodService';
+import { persistSealedSummation, receiveSealedSummation } from './hopewoodService';
 
 const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfDay', 'assurer:title'];
 const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
@@ -1887,7 +1887,7 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
   return { sealedRecord, missingFields: [] };
 }
 
-export function sealCurrentDayCapsuleToHopewood() {
+export async function sealCurrentDayCapsuleToHopewood() {
   if (!hasStorage()) return { sealedRecord: null, missingFields: ['localStorage'] };
   const payload = readStoredDayCapsulePayload();
   if (!payload) return { sealedRecord: null, missingFields: ['active Day Capsule payload'] };
@@ -1955,7 +1955,7 @@ export function sealCurrentDayCapsuleToHopewood() {
   };
   const records = readSealedRecords().filter((record) => String(record.sourceDate) !== String(sealedRecord.sourceDate));
   writeStorageArray(SUMMATION_SEALED_STORAGE_KEY, [...records, sealedRecord]);
-  receiveSealedSummation(sealedRecord);
+  await persistSealedSummation(sealedRecord);
   writeStorageObject(COMPLETED_SUMMATION_KEY, { dayIdentity, payload, renderRecord, sealedRecord });
   window.dispatchEvent(new CustomEvent('truthinstyle-summation-sealed', { detail: { sealedRecord, message: `Sealed ${sealedRecord.displayDate}` } }));
   return { sealedRecord, missingFields: [] };
