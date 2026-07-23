@@ -88,7 +88,13 @@ const set = (k, v) => {
   }
 };
 
-export const resolveClientColor = (key) => THICC_TIME_SPECIAL_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS.find((c) => c.key === key) || CONTROLLED_CLIENT_COLORS[0] || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
+export const resolveClientColor = (key) => {
+  const normalizedKey = String(key || '').trim().toLowerCase();
+  return THICC_TIME_SPECIAL_COLORS.find((color) => color.key === normalizedKey)
+    || CONTROLLED_CLIENT_COLORS.find((color) => color.key === normalizedKey)
+    || CONTROLLED_CLIENT_COLORS[0]
+    || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
+};
 
 const normalizeCelebration = (value) => {
   const safeTiles = Array.from({ length: 10 }, (_, i) => ({
@@ -396,6 +402,26 @@ export function groupScheduleEntriesByDate(rows = []) {
     const normalized = normalizeScheduleEntry(row);
     if (!normalized.entry_date) return acc;
     acc[normalized.entry_date] = [...(acc[normalized.entry_date] || []), normalized];
+    const recurrenceDays = [...new Set((normalized.recurrence_days || []).map((value) => String(value).toLowerCase()))];
+    if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && recurrenceDays.length) {
+      const start = new Date(`${normalized.entry_date}T12:00:00`);
+      for (let offset = 1; offset <= 370; offset += 1) {
+        const candidate = new Date(start);
+        candidate.setDate(start.getDate() + offset);
+        if (!recurrenceDays.includes(WEEKDAY_KEYS[candidate.getDay()])) continue;
+        const dateKey = toLocalIsoDate(candidate);
+        const derived = {
+          ...normalized,
+          entry_date: dateKey,
+          recurrence_type: 'none',
+          recurrence_active: false,
+          derived_recurrence: true,
+          original_entry_id: normalized.id,
+          original_entry_date: normalized.entry_date,
+        };
+        acc[dateKey] = [...(acc[dateKey] || []), derived];
+      }
+    }
     return acc;
   }, {});
 }
@@ -454,7 +480,7 @@ export function buildThiccTimeAssurerPayload(entriesByDate = {}, fromDate = new 
           colorOptionKey: normalized.color_option_key || 'cobalt',
         });
       };
-      const entryDay = new Date(`${normalized.entry_date}T12:00:00`);
+      const entryDay = new Date(`${normalized.entry_date}T00:00:00`);
       if (Number.isNaN(entryDay.getTime())) return;
       if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && recurrenceDays.length) {
         for (let i = 0; i < 7; i += 1) {
@@ -485,6 +511,7 @@ export function validateScheduleEntry(entry = {}) {
     return 'Add a workout label or notes before saving.';
   }
   if (normalized.entry_type === 'client' && !isValidScheduleClientId(normalized.client_id)) return 'Select a logged client for THE.THICCENS.';
+  if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && !normalized.recurrence_days.length) return 'Select at least one repeat day.';
   return '';
 }
 

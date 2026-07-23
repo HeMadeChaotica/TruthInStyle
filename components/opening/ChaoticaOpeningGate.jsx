@@ -5,15 +5,9 @@ import { useRouter } from 'next/navigation';
 import SupabaseGatePlaque from './SupabaseGatePlaque';
 
 const OATH_TEXT = 'Eugene this is your safest place. Tell it all! Tell it true! Tell it so you will remember how you got through';
-const OATH_PHRASES = ['safest place', 'tell it all', 'tell it true', 'remember how you got through'];
 
 function normalize(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function countMatchedPhrases(value) {
-  const normalized = normalize(value);
-  return OATH_PHRASES.filter((phrase) => normalized.includes(phrase)).length;
 }
 
 export default function ChaoticaOpeningGate() {
@@ -26,7 +20,7 @@ export default function ChaoticaOpeningGate() {
   const [speechSupported, setSpeechSupported] = useState(false);
   const [listening, setListening] = useState(false);
 
-  const matchedCount = useMemo(() => countMatchedPhrases(`${typedOath} ${heardOath}`), [typedOath, heardOath]);
+  const typedOathIsExact = useMemo(() => normalize(typedOath) === normalize(OATH_TEXT), [typedOath]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -59,15 +53,6 @@ export default function ChaoticaOpeningGate() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    if (phase === 'oath' && matchedCount >= 3) {
-      setPhase('opening');
-      const timer = window.setTimeout(() => router.push('/the-assurer'), 900);
-      return () => window.clearTimeout(timer);
-    }
-    return undefined;
-  }, [matchedCount, phase, router]);
-
   useEffect(() => () => recognitionRef.current?.stop?.(), []);
 
   const checkSession = async () => {
@@ -96,6 +81,7 @@ export default function ChaoticaOpeningGate() {
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results).map((result) => result[0]?.transcript || '').join(' ');
       setHeardOath(transcript);
+      if (normalize(transcript)) setMessage('THE OATH HAS BEEN HEARD. TYPE THE OATH TO OPEN CHAOTICA.');
     };
     recognition.onend = () => setListening(false);
     recognition.onerror = () => {
@@ -105,6 +91,18 @@ export default function ChaoticaOpeningGate() {
     recognitionRef.current = recognition;
     setListening(true);
     recognition.start();
+  };
+
+  const submitTypedOath = () => {
+    if (!typedOathIsExact) {
+      setMessage('THE TYPED OATH MUST MATCH THE OATH ABOVE.');
+      return;
+    }
+    recognitionRef.current?.stop?.();
+    setListening(false);
+    setMessage('THE OATH HAS BEEN RECEIVED. CHAOTICA IS OPENING.');
+    setPhase('opening');
+    window.setTimeout(() => router.push('/the-assurer'), 900);
   };
 
   return (
@@ -133,7 +131,7 @@ export default function ChaoticaOpeningGate() {
             <button type="button" onClick={startSpeech} disabled={listening}>
               {listening ? 'LISTENING' : speechSupported ? 'SPEAK' : 'SPEECH UNAVAILABLE'}
             </button>
-            <span>{matchedCount}/4</span>
+            <span>{heardOath ? 'OATH HEARD' : 'AWAITING OATH'}</span>
           </div>
           <textarea
             value={typedOath}
@@ -141,6 +139,9 @@ export default function ChaoticaOpeningGate() {
             placeholder="Typed oath fallback"
             rows={3}
           />
+          <button type="button" onClick={submitTypedOath} disabled={!typedOath.trim() || phase === 'opening'}>
+            {phase === 'opening' ? 'OPENING' : 'ENTER CHAOTICA'}
+          </button>
         </section>
       ) : null}
       {message ? <div className="chaotica-opening-status" role="status">{message}</div> : null}

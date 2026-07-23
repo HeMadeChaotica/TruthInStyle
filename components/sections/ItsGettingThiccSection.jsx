@@ -13,6 +13,7 @@ import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
 import ChaoticaMonthCalendar from '../shared/ChaoticaMonthCalendar';
 import { normalizeObjectStrings, normalizeUserText } from '../../lib/utils/textCasing';
+import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
 
 const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const tabs = ['THICC.INFO', 'THICC.PEOPLE', 'THICC.FORMS', 'THICC.TIME', 'THICC.NOMO'];
@@ -155,8 +156,17 @@ export default function ItsGettingThiccSection() {
     }
   }, [activeId, safeClients]);
 
-  const persist = (next, event = 'save') => { setClients(next); saveClients(next); appendLog(event, { activeId }); };
-  const update = (key, value) => { setInfoDraft((prev) => ({ ...(prev || infoClient || createClientTemplate(clients)), [key]: normalizeObjectStrings(value) })); setInfoStatus('UNSAVED CHANGES'); };
+  const persist = async (next, event = 'save') => {
+    setClients(next);
+    saveClients(next);
+    appendLog(event, { activeId });
+    return flushAllPendingSaves();
+  };
+  const update = (key, value) => {
+    const nextValue = key === 'clientColorOptionKey' ? value : normalizeObjectStrings(value);
+    setInfoDraft((prev) => ({ ...(prev || infoClient || createClientTemplate(clients)), [key]: nextValue }));
+    setInfoStatus('UNSAVED CHANGES');
+  };
   const updateArray = (key, i, value) => update(key, (infoClient[key] || []).map((v, idx) => (idx === i ? value : v)));
   const startNewClient = () => {
     const fresh = createClientTemplate(clients);
@@ -167,18 +177,19 @@ export default function ItsGettingThiccSection() {
     setInfoStatus('NEW CLIENT DRAFT READY');
     setActiveTab('THICC.INFO');
   };
-  const saveInfoDraft = () => {
+  const saveInfoDraft = async () => {
     const draft = { ...(infoDraft || infoClient || createClientTemplate(clients)) };
     draft.id = draft.id || createLocalClientId();
     draft.thiccen_id = getPublicThiccenId(draft) || draft.thiccen_id || generatePublicThiccenId(clients);
     const next = (Array.isArray(clients) ? clients : []).some((c) => c.id === draft.id)
       ? clients.map((c) => (c.id === draft.id ? draft : c))
       : [...(Array.isArray(clients) ? clients : []), draft];
-    persist(next, isNewInfoDraft ? 'client:new' : 'client:update');
+    setInfoStatus('SAVING THICC.INFO');
+    const saveResult = await persist(next, isNewInfoDraft ? 'client:new' : 'client:update');
     setActiveId(draft.id);
     setInfoDraft(draft);
     setIsNewInfoDraft(false);
-    setInfoStatus('THICC.INFO SAVED');
+    setInfoStatus(saveResult?.ok ? 'THICC.INFO SAVED TO CLOUD' : 'THICC.INFO SAVED ON THIS DEVICE');
   };
   const onUpload = (slot) => async (event) => {
     const file = event.target.files?.[0];
@@ -255,7 +266,7 @@ export default function ItsGettingThiccSection() {
   const infoShelves = [
     { id: 'A', columns: 3, panels: [
       { id: 'info-actions', token: 'strip', className: 'igtv2-info-actions', content: <><div><h3>THICC.INFO</h3><strong>{publicThiccenId}</strong><small>{isNewInfoDraft ? 'NEW UNSAVED CLIENT' : 'EDITING SAVED CLIENT'}</small></div><div className="info-action-buttons"><button type="button" onClick={startNewClient}>NEW CLIENT</button><button type="button" onClick={saveInfoDraft}>SAVE THICC.INFO</button></div>{infoStatus ? <p>{infoStatus}</p> : null}</> },
-      { id: 'stats', token: 'tall', className:'igtv2-client-core', content: <><h3>THICC.STATS</h3><div className="client-core-grid">{['name','thiccen_id','phone','sex','sexualOrientation','height','age','email','relationshipStatus','clientColorOptionKey','currentWeight','goalWeight','currentBmi','goalBmi'].map((k) => <label key={k}>{k==='thiccen_id'?'THICC ID':k==='relationshipStatus'?'MARRIED / SINGLE':k==='phone'?'PHONE NUMBER':k==='sexualOrientation'?'SEXUAL ORIENTATION':k==='clientColorOptionKey'?'CLIENT COLOR':k.replace(/([A-Z])/g,' $1').toUpperCase()}{k==='thiccen_id'?<input value={publicThiccenId} readOnly aria-readonly="true" />:k==='clientColorOptionKey'?<select value={infoClient.clientColorOptionKey||''} onChange={(e)=>update('clientColorOptionKey',e.target.value)}>{optionRegistry.itsGettingThicc.clientColors.map((o)=><option key={o.key} value={o.key}>{o.label}</option>)}</select>:k==='relationshipStatus'?<select value={infoClient.relationshipStatus||'SINGLE'} onChange={(e)=>update('relationshipStatus',e.target.value)}><option>SINGLE</option><option>MARRIED</option></select>:<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />}</label>)}</div></> },
+      { id: 'stats', token: 'tall', className:'igtv2-client-core', content: <><h3>THICC.STATS</h3><div className="client-core-grid">{['name','thiccen_id','phone','sex','sexualOrientation','height','age','email','relationshipStatus','clientColorOptionKey','currentWeight','goalWeight','currentBmi','goalBmi'].map((k) => <label key={k}>{k==='thiccen_id'?'THICC ID':k==='relationshipStatus'?'MARRIED / SINGLE':k==='phone'?'PHONE NUMBER':k==='sexualOrientation'?'SEXUAL ORIENTATION':k==='clientColorOptionKey'?'CLIENT COLOR':k.replace(/([A-Z])/g,' $1').toUpperCase()}{k==='thiccen_id'?<input value={publicThiccenId} readOnly aria-readonly="true" />:k==='clientColorOptionKey'?<select value={infoClient.clientColorOptionKey||'cobalt'} style={{ borderColor: resolveClientColor(infoClient.clientColorOptionKey).value }} onChange={(e)=>update('clientColorOptionKey',e.target.value)}>{(colorMap.length ? colorMap : optionRegistry.itsGettingThicc.clientColors).map((o)=><option key={o.key} value={o.key}>{o.label}</option>)}</select>:k==='relationshipStatus'?<select value={infoClient.relationshipStatus||'SINGLE'} onChange={(e)=>update('relationshipStatus',e.target.value)}><option>SINGLE</option><option>MARRIED</option></select>:<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />}</label>)}</div></> },
       { id: 'living-thicc', token: 'tall', className:'igtv2-living-thicc', content: <><h3>LIVIN THICC SINCE</h3><label><input type="date" value={infoClient.livingThiccSinceDate||''} onChange={(e)=>update('livingThiccSinceDate',e.target.value)} /></label><label className="upload">{highlightPhoto ? <img src={highlightPhoto} alt="living thicc" /> : 'PHOTO UPLOAD FROM LIBRARY'}<input type="file" accept="image/*" onChange={onUpload('livingThiccPhoto')} /></label></> },
     ] },
     { id: 'B', columns: 1, panels: [{ id: 'food', token: 'tall', content: <Food /> }] },
@@ -353,9 +364,9 @@ export default function ItsGettingThiccSection() {
         schedule_layer: timeDraft.schedule_layer,
         prospect_name: normalizeUserText(timeDraft.prospect_name || ''),
         prospect_contact: normalizeUserText(timeDraft.prospect_contact || ''),
-        recurrence_type: 'none',
-        recurrence_days: [],
-        recurrence_active: false,
+        recurrence_type: timeDraft.recurrence_type === 'weekly' ? 'weekly' : 'none',
+        recurrence_days: timeDraft.recurrence_type === 'weekly' ? [...new Set(timeDraft.recurrence_days || [])] : [],
+        recurrence_active: timeDraft.recurrence_type === 'weekly' && Boolean(timeDraft.recurrence_active),
       };
       if (timeDraft.schedule_layer === 'mista_thicc') {
         payload = { ...payload, entry_type: 'personal', client_id: null, client_name: '', color_option_key: 'mista-thicc-pink' };
@@ -386,6 +397,8 @@ export default function ItsGettingThiccSection() {
       const flattened = Object.values(previousEntries).flat().filter((entry) => entry.id !== savedEntry.id);
       setEntriesByDate(groupScheduleEntriesByDate([...flattened, savedEntry]));
       await loadTimeEntries();
+      const cloudSave = await flushAllPendingSaves();
+      setTimeError(cloudSave?.ok ? '' : 'SCHEDULE SAVED ON THIS DEVICE; CLOUD SYNC IS RETRYING.');
       setSelectedTimeDate(savedEntry.entry_date);
       closeTimeEditor();
     } catch (error) {
@@ -451,10 +464,10 @@ export default function ItsGettingThiccSection() {
           </div>
           <button type="button" onClick={() => openNewEditor(safeSelectedTimeDate)}>ADD ENTRY</button>
           <div className="time-day-entry-list">
-            {selectedDayEntries.map((entry) => <button type="button" key={entry.id} className="time-day-entry" onClick={() => openEditor(resolveEditableEntry(entry))} style={{ borderLeftColor: entryColor(entry) }}>
+            {selectedDayEntries.map((entry) => <button type="button" key={`${entry.id}-${entry.entry_date}`} className="time-day-entry" onClick={() => openEditor(resolveEditableEntry(entry))} style={{ borderLeftColor: entryColor(entry) }}>
               <span style={{ color: entryColor(entry) }}>{entry.start_time || 'NO TIME'}{entry.end_time ? `–${entry.end_time}` : ''}</span>
               <strong>{getChipLabel(entry)}</strong>
-              <small>{[entry.workout_label, entry.location, entry.notes].filter(Boolean).join(' • ') || 'SCHEDULE ENTRY'}</small>
+              <small>{[entry.workout_label, entry.derived_recurrence ? 'WEEKLY' : '', entry.location, entry.notes].filter(Boolean).join(' • ') || 'SCHEDULE ENTRY'}</small>
             </button>)}
           </div>
         </section>
@@ -474,6 +487,8 @@ export default function ItsGettingThiccSection() {
             <label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label>
             <label>LOCATION<input value={timeDraft.location || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, location: e.target.value }))} /></label>
             <label>NOTES<textarea value={timeDraft.notes || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, notes: e.target.value }))} /></label>
+            <label>REPEAT<select value={timeDraft.recurrence_type || 'none'} onChange={(e) => setTimeDraft((prev) => ({ ...prev, recurrence_type: e.target.value, recurrence_active: e.target.value === 'weekly', recurrence_days: e.target.value === 'weekly' && !prev.recurrence_days?.length ? [days[new Date(`${prev.entry_date}T12:00:00`).getDay()].toLowerCase()] : prev.recurrence_days || [] }))}><option value="none">DOES NOT REPEAT</option><option value="weekly">WEEKLY</option></select></label>
+            {timeDraft.recurrence_type === 'weekly' ? <fieldset className="weekday-grid"><legend>REPEAT ON</legend>{days.map((day) => { const key = day.toLowerCase(); const activeDay = timeDraft.recurrence_days?.includes(key); return <button type="button" key={key} className={`weekday-pill ${activeDay ? 'active' : ''}`} onClick={() => setTimeDraft((prev) => ({ ...prev, recurrence_active: true, recurrence_days: activeDay ? (prev.recurrence_days || []).filter((value) => value !== key) : [...(prev.recurrence_days || []), key] }))}>{day}</button>; })}</fieldset> : null}
           </div>
           <div className="form-row time-editor-actions">
             <button type="button" disabled={timeActionStatus === 'saving'} onClick={saveTimeDraft}>SAVE</button>
