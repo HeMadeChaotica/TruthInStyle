@@ -5,9 +5,15 @@ import { useRouter } from 'next/navigation';
 import SupabaseGatePlaque from './SupabaseGatePlaque';
 
 const OATH_TEXT = 'Eugene this is your safest place. Tell it all! Tell it true! Tell it so you will remember how you got through';
+const OATH_PHRASES = ['safest place', 'tell it all', 'tell it true', 'remember how you got through'];
 
 function normalize(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function countMatchedPhrases(value) {
+  const normalized = normalize(value);
+  return OATH_PHRASES.filter((phrase) => normalized.includes(phrase)).length;
 }
 
 export default function ChaoticaOpeningGate() {
@@ -21,6 +27,7 @@ export default function ChaoticaOpeningGate() {
   const [listening, setListening] = useState(false);
 
   const typedOathIsExact = useMemo(() => normalize(typedOath) === normalize(OATH_TEXT), [typedOath]);
+  const spokenOathIsAccepted = useMemo(() => countMatchedPhrases(heardOath) >= 3, [heardOath]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -54,6 +61,16 @@ export default function ChaoticaOpeningGate() {
   }, []);
 
   useEffect(() => () => recognitionRef.current?.stop?.(), []);
+
+  useEffect(() => {
+    if (phase !== 'oath' || !spokenOathIsAccepted) return undefined;
+    recognitionRef.current?.stop?.();
+    setListening(false);
+    setMessage('THE OATH HAS BEEN HEARD AND ACCEPTED. CHAOTICA IS OPENING.');
+    setPhase('opening');
+    const timer = window.setTimeout(() => router.push('/the-assurer'), 900);
+    return () => window.clearTimeout(timer);
+  }, [phase, router, spokenOathIsAccepted]);
 
   const checkSession = async () => {
     setMessage('');
@@ -131,7 +148,7 @@ export default function ChaoticaOpeningGate() {
             <button type="button" onClick={startSpeech} disabled={listening}>
               {listening ? 'LISTENING' : speechSupported ? 'SPEAK' : 'SPEECH UNAVAILABLE'}
             </button>
-            <span>{heardOath ? 'OATH HEARD' : 'AWAITING OATH'}</span>
+            <span>{spokenOathIsAccepted ? 'OATH ACCEPTED' : heardOath ? 'OATH HEARD' : 'AWAITING OATH'}</span>
           </div>
           <textarea
             value={typedOath}
