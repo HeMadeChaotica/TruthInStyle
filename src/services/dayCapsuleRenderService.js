@@ -239,9 +239,10 @@ export function buildDayCapsuleVisualInstructions(dayCapsulePayload = {}) {
     textRules: [
       'Use short readable labels and tiny callouts only; do not render giant paragraphs or raw source dumps.',
       'Decorative text fragments may be approximate, but must be content-led and must not invent events.',
-      'Do not rely on generated image text for the identity clump. The app will overlay/preserve it.',
+      'Reserve a clean top header band and attempt the supplied titleOfDay, displayDate, dayOfWeek, and Chaotica Day number exactly; the app will overlay the same values for guaranteed accuracy.',
+      'Represent every populated source section. Omit only sections with no supplied content.',
     ],
-    identityClumpRule: 'The app deterministically preserves titleOfDay, displayDate in MM/DD/YYYY, fully spelled dayOfWeek, and chaoticaDayNumber; image generation must leave room and must not be trusted for these values.',
+    identityClumpRule: 'Reserve a clean top band, visibly attempt the exact identity values, and leave room for the app to deterministically overlay titleOfDay, displayDate in MM/DD/YYYY, fully spelled dayOfWeek, and chaoticaDayNumber.',
     colorDirection: 'Derive palette from the real mood/era/day content when present; otherwise use warm paper, ink, accent-marker, and collage tones.',
     forbiddenBehaviors: [
       'Do not generate fake day data, fake people, fake places, fake meals, fake workouts, or major events not present in the payload.',
@@ -464,11 +465,11 @@ export function buildExternalDayCapsuleRenderRequest(dayCapsulePayload) {
       contentRule: 'use real day content only',
       composition: 'visual-journal/sketchnote/editorial memory-page composition',
       artAccents: 'use object-led day storytelling with content-led art accents from visualInstructions.objectHints and visualInstructions.motifHints',
-      textAccuracy: 'Do not rely on generated image text for the identity clump. The app will overlay/preserve it.',
+      textAccuracy: 'Attempt the exact identity clump in a clean top band; the app will overlay the same values for guaranteed accuracy.',
       hierarchy: 'short labels, readable callouts, premium but personal composition, no raw source dump',
       eventRule: 'do not invent major day events, people, places, foods, workouts, or reminders',
       dashboardRule: 'no generic dashboard and no corporate infographic unless visualInstructions.styleMode is EDITORIAL_CAPSULE',
-      identityClump: 'preserve identity clump deterministically at app layer',
+      identityClump: 'reserve a clean top header and preserve the identity clump deterministically at app layer',
       providerBoundary: 'external image providers must run only through a backend/server/API boundary',
     },
     revision: {
