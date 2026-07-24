@@ -498,6 +498,7 @@ export function normalizeExternalDayCapsuleRenderResult(result) {
     thumbnailUrl: cleanText(result?.thumbnailUrl || result?.renderArtifact?.thumbnailUrl || result?.artifact?.thumbnailUrl),
     previewPath: cleanText(result?.previewPath || result?.renderArtifact?.previewPath || result?.artifact?.previewPath),
     providerMetadata: result?.providerMetadata || result?.renderArtifact?.providerMetadata || result?.artifact?.providerMetadata || {},
+    providerPrompt: cleanText(result?.providerPrompt),
     providerReason: cleanText(result?.providerReason || result?.reason || result?.details?.reason),
     providerStatus: result?.providerStatus ?? result?.statusCode ?? null,
     providerCode: cleanText(result?.providerCode || result?.code),
@@ -597,6 +598,24 @@ export async function requestExternalDayCapsuleRender(renderRequest) {
 export function requestDayCapsuleRender(renderRequest, { mode = 'external' } = {}) {
   if (mode === 'local_proof') return requestLocalProofDayCapsuleRender(renderRequest);
   return requestExternalDayCapsuleRender(renderRequest);
+}
+
+export async function uploadManualDayCapsuleArtifact(image, renderRequest) {
+  const formData = new FormData();
+  formData.set('image', image);
+  formData.set('renderRequest', JSON.stringify(renderRequest));
+  const response = await fetch('/api/day-capsule-render/manual', {
+    method: 'POST',
+    body: formData,
+  });
+  const result = await response.json().catch(() => ({
+    status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDER_FAILED,
+    message: 'The visualization upload returned an unreadable response.',
+  }));
+  return persistExternalDayCapsuleRender({
+    ...result,
+    renderRequest: result?.renderRequest || renderRequest,
+  });
 }
 
 export const getExternalDayCapsuleRenderStatus = getDayCapsuleRenderStatus;
