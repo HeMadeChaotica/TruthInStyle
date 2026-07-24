@@ -6,9 +6,8 @@ import '../../styles/sections/remember-me.css';
 import { normalizeUserText } from '../../lib/utils/textCasing';
 import MomentFlipCard from '../remember-me/MomentFlipCard';
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
+import { CLOCK_IT_KEYS, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
 
-const EVENT_TYPES = ['SOMETHING NEW DAY','TREAT DAY','REMINDER','JOB INTERVIEW','BIRTHDAY','ANNIVERSARY','MEETING','DEADLINE','EVENT (WORK)','TRAVEL','CALL','DICK APPOINTMENT','SOCIAL NETWORKING','DATE','HEALTH','RENT','PACKAGE DELIVERY','HAIRCUT'];
-const STANDOUT_TYPES = ['WOW', 'WTF', 'PLOT TWIST'];
 const REMEMBER_MOMENT_BACKS = { WOW: '', WTF: '', 'PLOT TWIST': '' };
 const MOMENTS_STORAGE_KEY = 'remember_me_standout_moments_v1';
 
@@ -87,6 +86,8 @@ const getMomentStamp = (moment) => {
 };
 
 export default function RememberMeSection() {
+  const EVENT_TYPES = useClockItOptions(CLOCK_IT_KEYS.rememberEventTypes);
+  const STANDOUT_TYPES = useClockItOptions(CLOCK_IT_KEYS.rememberMomentTypes);
   const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [entriesByDate, setEntriesByDate] = useState({});
