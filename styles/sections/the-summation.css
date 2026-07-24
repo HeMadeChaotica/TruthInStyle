@@ -289,6 +289,45 @@
   background: rgba(255, 247, 232, 0.08);
 }
 
+.summation-artifact-canvas {
+  position: relative;
+  min-height: 0;
+}
+
+.summation-artifact-identity {
+  position: absolute;
+  top: 2.2%;
+  left: 5%;
+  right: 5%;
+  display: grid;
+  justify-items: center;
+  gap: 0.18rem;
+  border: 1px solid rgba(128, 76, 41, 0.34);
+  border-radius: 0.7rem;
+  background: rgba(255, 248, 230, 0.9);
+  box-shadow: 0 0.2rem 0.75rem rgba(70, 31, 31, 0.12);
+  color: #512235;
+  padding: clamp(0.34rem, 0.58vw, 0.58rem) 0.6rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.summation-artifact-identity strong {
+  font-size: clamp(0.82rem, 1.1vw, 1.16rem);
+  letter-spacing: 0.08em;
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.summation-artifact-identity span {
+  color: #7a3d55;
+  font-size: clamp(0.62rem, 0.78vw, 0.8rem);
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  line-height: 1.18;
+  text-transform: uppercase;
+}
+
 .summation-artifact-frame figcaption {
   color: var(--summation-secondary);
   font-size: clamp(0.74rem, 0.9vw, 0.9rem);
