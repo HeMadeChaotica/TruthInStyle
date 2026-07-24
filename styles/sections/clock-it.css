@@ -1,13 +1,31 @@
-.clockit-page{width:min(1366px,100vw);height:min(1024px,100vh);margin:0 auto;background:url('/backgrounds/CLOCK-IT/clock-it-bg-v2.png') left center/cover no-repeat;color: var(--app-text-primary);font-family:Impact,'Arial Narrow',sans-serif;text-transform:uppercase;overflow:auto}
-.clockit-layout{display:grid;grid-template-columns:30% 70%;min-height:100%;padding:10px}
+.clockit-page{width:100vw;min-height:100vh;background:#130b12 url('/backgrounds/CLOCK-IT/clock-it-bg-v2.png') left center/cover fixed no-repeat;color:#fff4f7;font-family:Arial,sans-serif;text-transform:uppercase;overflow:auto}
+.clockit-layout{display:grid;grid-template-columns:minmax(15rem,28%) 1fr;min-height:100vh;padding:clamp(.7rem,1.4vw,1.4rem);box-sizing:border-box}
 .clockit-art{min-height:100%}
-.clockit-controls{display:grid;gap:8px;align-content:start}
-.clockit-row h2{margin:0 0 4px;font-size:19px;letter-spacing:.8px;color: var(--app-text-primary)}
-.clockit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.clockit-panel{background:rgba(20,14,14,.18);backdrop-filter:blur(2px);border:1px solid transparent;border-radius:10px;padding:6px;position:relative}
-.clockit-panel::before{content:'';position:absolute;inset:-1px;border-radius:10px;padding:1px;background:linear-gradient(90deg,#ff6fcf,#ffbf40,#58f8ff,#ff6fcf);background-size:220% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;animation:clockitShimmer 4s linear infinite}
-.clockit-panel h3{margin:0 0 5px;font-size:15px;color: var(--app-text-primary);line-height:1.2}
-.clockit-list{display:grid;gap:4px;max-height:112px;overflow:auto;padding-right:2px}
-.clockit-list label{display:grid;gap:2px;font-size:11px}
-.clockit-list select{height:24px;background:rgba(8,8,8,.32);border:1px solid rgba(255,112,200,.45);color: var(--app-text-primary);border-radius:6px;font-size:10px;padding:0 6px;text-transform:uppercase}
-@keyframes clockitShimmer{0%{background-position:0 0}100%{background-position:220% 0}}
+.clockit-controls{align-self:start;display:grid;gap:.85rem;min-width:0;padding:clamp(.6rem,1.2vw,1.2rem);border:1px solid rgba(255,183,215,.25);border-radius:1.4rem;background:rgba(24,8,22,.76);backdrop-filter:blur(12px);box-shadow:0 1rem 4rem rgba(0,0,0,.28)}
+.clockit-header{display:flex;justify-content:space-between;gap:1rem;align-items:flex-end;border-bottom:1px solid rgba(255,183,215,.22);padding-bottom:.75rem}
+.clockit-header span,.clockit-header p{margin:0;color:#e9a5c4;font-size:.7rem;font-weight:800;letter-spacing:.13em}
+.clockit-header h1{margin:.18rem 0 0;color:#ffd3e5;font:900 clamp(1.35rem,2vw,2.2rem)/1 Impact,'Arial Narrow',sans-serif;letter-spacing:.055em}
+.clockit-section-tabs{display:flex;gap:.45rem;overflow:auto;padding-bottom:.15rem}
+.clockit-section-tabs button,.clockit-field-list button,.clockit-actions button{border:1px solid rgba(255,151,199,.28);border-radius:999px;background:rgba(79,30,59,.65);color:#ffeaf2;cursor:pointer;font-weight:850;text-transform:uppercase}
+.clockit-section-tabs button{flex:0 0 auto;padding:.48rem .72rem;font-size:.69rem}
+.clockit-section-tabs button.active,.clockit-field-list button.active{background:#a83f72;border-color:#ffabd1;color:#fff}
+.clockit-workbench{display:grid;grid-template-columns:minmax(12rem,28%) 1fr;gap:.75rem;min-height:32rem}
+.clockit-field-list{display:grid;align-content:start;gap:.4rem;max-height:68vh;overflow:auto;padding-right:.25rem}
+.clockit-field-list button{display:grid;gap:.12rem;border-radius:.75rem;padding:.62rem;text-align:left}
+.clockit-field-list small{color:#e5aec7;font-size:.6rem;letter-spacing:.08em}
+.clockit-editor-stage{min-width:0}
+.clockit-editor{display:grid;gap:.75rem;border:1px solid rgba(255,173,210,.24);border-radius:1rem;background:rgba(57,20,46,.58);padding:clamp(.8rem,1.4vw,1.25rem)}
+.clockit-editor-heading{display:flex;justify-content:space-between;gap:.75rem;align-items:center}
+.clockit-editor-heading h3{margin:0;color:#ffd1e5;font-size:1.1rem}
+.clockit-editor-heading span,.clockit-editor small{color:#e8a6c5;font-size:.68rem;font-weight:800;letter-spacing:.09em}
+.clockit-editor textarea,.clockit-number-grid input{width:100%;box-sizing:border-box;border:1px solid rgba(255,173,210,.32);border-radius:.75rem;background:rgba(9,5,9,.58);color:#fff7fa;font:700 .82rem/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;padding:.7rem}
+.clockit-number-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem}
+.clockit-number-grid label{display:grid;gap:.28rem;color:#f1b5d0;font-size:.67rem;font-weight:850}
+.clockit-number-grid input:disabled{opacity:.55}
+.clockit-actions{display:flex;gap:.5rem}
+.clockit-actions button{padding:.58rem .8rem}
+.clockit-actions button:first-child{background:#b13e76}
+.clockit-locked-values{display:flex;flex-wrap:wrap;gap:.42rem}
+.clockit-locked-values span{border:1px solid rgba(255,173,210,.25);border-radius:999px;background:rgba(255,255,255,.07);padding:.45rem .62rem;color:#f5bfd7;font-size:.72rem;font-weight:800}
+.clockit-status{margin:0;padding:.55rem;color:#ffd3e6;font-size:.75rem;font-weight:850;text-align:center}
+@media(max-width:900px){.clockit-layout{grid-template-columns:1fr}.clockit-art{display:none}.clockit-workbench{grid-template-columns:1fr}.clockit-field-list{display:flex;max-height:none;overflow:auto}.clockit-field-list button{min-width:10rem}.clockit-number-grid{grid-template-columns:repeat(2,1fr)}}
