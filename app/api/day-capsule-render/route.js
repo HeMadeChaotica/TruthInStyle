@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   getDayCapsuleRenderConfigDiagnostic,
+  buildProviderPrompt,
   isDayCapsuleProviderConfigured,
   normalizeProviderArtifact,
   renderDayCapsuleWithProvider,
@@ -128,6 +129,7 @@ export async function POST(request) {
 
   const session = await getChaoticaSession();
   if (!session.ok) return unauthorizedResponse(renderRequest);
+  const providerPrompt = buildProviderPrompt(renderRequest);
 
   const internalProviderConfigured = isDayCapsuleProviderConfigured();
   const endpoint = cleanText(process.env.DAY_CAPSULE_RENDER_ENDPOINT);
@@ -147,7 +149,11 @@ export async function POST(request) {
       providerCode: result?.providerCode || null,
       retryable: result?.retryable ?? null,
     });
-    return NextResponse.json({ ...result, renderRequest: result?.renderRequest || renderRequest });
+    return NextResponse.json({
+      ...result,
+      providerPrompt,
+      renderRequest: result?.renderRequest || renderRequest,
+    });
   } catch (error) {
     return NextResponse.json({
       renderId: renderRequest.renderId,
@@ -156,6 +162,7 @@ export async function POST(request) {
       message: 'External Day Capsule render failed.',
       error: error.message,
       providerReason: error.message,
+      providerPrompt,
       configured: true,
       retryable: true,
       renderRequest,
