@@ -10,6 +10,7 @@ import {
   getDayCapsuleRenderStatus,
   readPersistedDayCapsuleRender,
   requestDayCapsuleRender,
+  uploadManualDayCapsuleArtifact,
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
@@ -280,7 +281,18 @@ function renderDetailChips(renderRecord, renderStatus) {
   ]);
 }
 
-function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage, previewUrl, canShowArtifact }) {
+function VisualizationPage({
+  payload,
+  renderRecord,
+  renderStatus,
+  renderMessage,
+  previewUrl,
+  canShowArtifact,
+  onOpenChatGPT,
+  onUploadImage,
+  hybridMessage,
+  isUploading,
+}) {
   if (!payload) {
     return (
       <div className="summation-page-empty summation-right-page" role="status">
@@ -316,6 +328,21 @@ function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage,
               {detailChips.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
             </dl>
           ) : null}
+          {renderRecord?.providerPrompt ? (
+            <div className="summation-hybrid-actions" aria-label="Manual visualization fallback">
+              <button type="button" onClick={onOpenChatGPT}>Copy Prompt + Open ChatGPT</button>
+              <label className={isUploading ? 'is-uploading' : ''}>
+                <span>{isUploading ? 'Placing Visualization…' : 'Upload Finished Visualization'}</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={isUploading}
+                  onChange={onUploadImage}
+                />
+              </label>
+              <small>{hybridMessage || 'Generate the copied prompt in ChatGPT, download the image, then upload it here.'}</small>
+            </div>
+          ) : null}
         </div>
       )}
     </article>
@@ -325,6 +352,8 @@ function VisualizationPage({ payload, renderRecord, renderStatus, renderMessage,
 export default function TheSummationSection() {
   const [payload, setPayload] = useState(null);
   const [renderRecord, setRenderRecord] = useState(() => readPersistedDayCapsuleRender());
+  const [hybridMessage, setHybridMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const startRender = useCallback(async (nextPayload) => {
     if (!nextPayload) {
@@ -412,6 +441,42 @@ export default function TheSummationSection() {
   const canRequestExternal = Boolean(payload) && ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'].includes(renderStatus);
   const renderButtonReason = !payload ? 'no payload' : canRequestExternal ? 'ready' : `status ${renderStatus} is not actionable`;
 
+  const openChatGPT = useCallback(async () => {
+    const prompt = renderRecord?.providerPrompt;
+    if (!prompt) return;
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setHybridMessage('Prompt copied. Paste it into the ChatGPT window that just opened.');
+    } catch {
+      setHybridMessage('Your browser blocked copying. Allow clipboard access, then try again.');
+      return;
+    }
+    window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
+  }, [renderRecord?.providerPrompt]);
+
+  const uploadVisualization = useCallback(async (event) => {
+    const image = event.target.files?.[0];
+    event.target.value = '';
+    if (!image) return;
+    if (image.size > 4 * 1024 * 1024) {
+      setHybridMessage('Choose an image smaller than 4 MB.');
+      return;
+    }
+    const renderRequest = renderRecord?.renderRequest || (payload ? buildDayCapsuleRenderRequest(payload) : null);
+    if (!renderRequest) {
+      setHybridMessage('No active Day Capsule is available for this image.');
+      return;
+    }
+    setIsUploading(true);
+    setHybridMessage('Placing the visualization into THE.SUMMATION…');
+    const nextRecord = await uploadManualDayCapsuleArtifact(image, renderRequest);
+    setRenderRecord(nextRecord);
+    setHybridMessage(nextRecord.status === 'external_rendered'
+      ? 'Visualization placed and saved.'
+      : (nextRecord.message || 'The visualization could not be placed.'));
+    setIsUploading(false);
+  }, [payload, renderRecord?.renderRequest]);
+
   return (
     <main
       className="summation-shell"
@@ -430,6 +495,10 @@ export default function TheSummationSection() {
           renderMessage={renderMessage}
           previewUrl={previewUrl}
           canShowArtifact={canShowArtifact}
+          onOpenChatGPT={openChatGPT}
+          onUploadImage={uploadVisualization}
+          hybridMessage={hybridMessage}
+          isUploading={isUploading}
         />
       </section>
     </main>
