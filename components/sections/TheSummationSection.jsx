@@ -14,7 +14,7 @@ import {
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
-const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-day-capsule-bg.png';
+const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-landscape-day-sketch-v2.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
@@ -310,10 +310,6 @@ function VisualizationPage({
     <article className="summation-day-page summation-right-page" aria-label="Generated Day Visualization">
       {canShowArtifact ? (
         <>
-          <header className="summation-page-header">
-            <p>Generated Day Visualization</p>
-            <h2>External Rendered</h2>
-          </header>
           <figure className="summation-artifact-frame">
             <div className="summation-artifact-canvas">
               <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
@@ -327,7 +323,7 @@ function VisualizationPage({
                 </span>
               </header>
             </div>
-            <figcaption>{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
+            <figcaption className="summation-visually-hidden">{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
           </figure>
         </>
       ) : (
@@ -496,10 +492,8 @@ export default function TheSummationSection() {
       data-can-request-external={canRequestExternal ? 'true' : 'false'}
       data-render-button-reason={renderButtonReason}
     >
-      <section className="summation-stage" aria-label="THE.SUMMATION Day Capsule two-page overlay">
+      <section className="summation-stage" aria-label="THE.SUMMATION landscape Day Sketch">
         <div className="summation-background-plate" aria-hidden="true" />
-        <DayRecordPage payload={payload} dayIdentity={dayIdentity} />
-        <div className="summation-center-protect" aria-hidden="true" />
         <VisualizationPage
           payload={payload}
           renderRecord={renderRecord}

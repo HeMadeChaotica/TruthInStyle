@@ -1,53 +1,68 @@
-.hopewood-page { background: #160e16; }
+.hopewood-page { background: #12090d; }
 .hopewood-scene-plate, .hopewood-bg { position: absolute; inset: 0; }
-.hopewood-bg { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.hopewood-bg { width: 100%; height: 100%; object-fit: fill; }
+.hopewood-overlay { position: absolute; inset: 0; background: transparent; }
 
-.hopewood-overlay {
-  display: grid;
-  grid-template-columns: 38.7% 38.7% 18.6%;
-  grid-template-rows: 1fr;
-  gap: 1%;
-  padding: 11.5% 3.6% 8.8% 10.1%;
-  background: transparent;
+.hopewood-facts-panel,
+.hopewood-render-panel,
+.hopewood-lookup { position: absolute; min-width: 0; min-height: 0; box-sizing: border-box; }
+
+.hopewood-facts-panel {
+  left: 5.5%; top: 13.3%; width: 25%; height: 68.7%;
+  color: #f8e4dd; overflow: hidden;
 }
+.hopewood-facts-scroll { height: 100%; overflow: auto; padding: clamp(12px,1.15vw,20px); scrollbar-color: #ad5f67 transparent; }
+.hopewood-facts-scroll > header { padding-bottom: .75rem; border-bottom: 1px solid rgba(196,112,103,.35); }
+.hopewood-facts-scroll > header span { color: #d69a88; font-size: .62rem; font-weight: 900; letter-spacing: .16em; }
+.hopewood-facts-scroll h1 { margin: .28rem 0; color: #fff0e9; font-size: clamp(1.15rem,1.6vw,1.85rem); line-height: 1; }
+.hopewood-facts-scroll > header p { margin: 0; color: #d7b1ae; font-size: .74rem; }
 
-.hopewood-page-panel, .hopewood-catalog { min-width: 0; min-height: 0; }
-.hopewood-page-panel { color: #f7efdd; }
-.hopewood-left-page { overflow: auto; padding: clamp(18px, 2vw, 34px); scrollbar-color: #a95f70 transparent; }
-.hopewood-right-page { display: grid; place-items: center; overflow: hidden; padding: 4%; }
-.hopewood-right-page img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.42); }
+.hopewood-fact-group { --tone:#ba7781; margin-top: .72rem; padding: .62rem .68rem; border-left: 3px solid var(--tone); background: rgba(22,10,16,.28); }
+.hopewood-fact-group.tone-identity { --tone:#cf9870; }
+.hopewood-fact-group.tone-victory { --tone:#d5aa55; }
+.hopewood-fact-group.tone-growth { --tone:#a8a45b; }
+.hopewood-fact-group.tone-intense { --tone:#da5c68; }
+.hopewood-fact-group.tone-critical { --tone:#ff344f; }
+.hopewood-fact-group.tone-memory { --tone:#cf8cad; }
+.hopewood-fact-group.tone-nutrition { --tone:#d0a15f; }
+.hopewood-fact-group.tone-strength { --tone:#c56d50; }
+.hopewood-fact-group.tone-discipline { --tone:#ad816c; }
+.hopewood-fact-group h2 { margin: 0 0 .4rem; color: var(--tone); font-size: .67rem; letter-spacing: .13em; }
+.hopewood-fact-group dl { display: grid; gap: .26rem; margin: 0; }
+.hopewood-fact-group dl div { display: grid; grid-template-columns: minmax(4.3rem,.44fr) 1fr; gap: .42rem; }
+.hopewood-fact-group dt { color: #c99798; font-size: .58rem; font-weight: 900; letter-spacing: .08em; }
+.hopewood-fact-group dd, .hopewood-fact-group li { margin: 0; color: #f5dcd7; font-size: clamp(.72rem,.78vw,.82rem); line-height: 1.38; overflow-wrap: anywhere; }
+.hopewood-fact-group ul { display: grid; gap: .28rem; margin: 0; padding-left: 1rem; }
 
-.hopewood-record header { padding-bottom: .9rem; border-bottom: 1px solid rgba(211,126,135,.38); }
-.hopewood-record header span, .hopewood-record h2 { color: #e0a08f; font-size: clamp(.68rem,.75vw,.82rem); font-weight: 800; letter-spacing: .16em; }
-.hopewood-record h1 { margin: .35rem 0 .3rem; color: #fff0ed; font-size: clamp(1.45rem,2.1vw,2.4rem); line-height: 1; }
-.hopewood-record header p { margin: 0; color: #d8b2bc; font-size: clamp(.78rem,.9vw,.95rem); }
-.hopewood-facts { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem 1rem; margin: 1rem 0; }
-.hopewood-facts div { min-width: 0; }
-.hopewood-facts dt { color: #c98f9c; font-size: .66rem; font-weight: 800; letter-spacing: .12em; }
-.hopewood-facts dd { margin: .15rem 0 0; color: #ffe9e3; overflow-wrap: anywhere; }
-.hopewood-record section { padding: .9rem 0; border-top: 1px solid rgba(211,126,135,.26); }
-.hopewood-record h2 { margin: 0 0 .5rem; }
-.hopewood-record section p { margin: 0; line-height: 1.55; white-space: pre-wrap; }
-.hopewood-sources p { color: #c49ba5; font-size: .72rem; letter-spacing: .08em; }
-.hopewood-empty { align-self: center; color: rgba(238,183,180,.72); font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-align: center; }
+.hopewood-render-panel {
+  left: 43.1%; top: 13.3%; width: 51.3%; height: 68.7%;
+  display: grid; place-items: center; padding: 1.1%;
+}
+.hopewood-render-panel img { width: 100%; height: 100%; object-fit: contain; border-radius: 3px; filter: drop-shadow(0 12px 24px rgba(0,0,0,.35)); }
+.hopewood-empty { place-self: center; color: #cf9b9d; font-size: .68rem; font-weight: 900; letter-spacing: .14em; text-align: center; }
 
-.hopewood-catalog { display: grid; grid-template-rows: auto 1fr; gap: .75rem; padding: clamp(14px,1.25vw,22px); color: #f8e4e1; overflow: hidden; }
-.hopewood-search-controls { display: grid; gap: .55rem; }
-.hopewood-search-controls h2 { margin: 0; color: #e0a08f; font-size: clamp(.85rem,1vw,1.05rem); letter-spacing: .15em; }
+.hopewood-lookup {
+  left: 4%; right: 4%; bottom: 2.2%; height: 12%;
+  display: grid; grid-template-columns: minmax(28rem,.9fr) 1.6fr; gap: .8rem; align-items: center;
+  padding: .55rem 1rem; color: #f7dfdb; overflow: hidden;
+}
+.hopewood-search-controls { display: grid; grid-template-columns: auto 1fr 1.25fr; gap: .55rem; align-items: center; }
+.hopewood-search-controls strong { color: #d89a85; font-size: .67rem; letter-spacing: .14em; white-space: nowrap; }
 .hopewood-search-controls select, .hopewood-search-controls input {
-  width: 100%; min-height: 40px; border: 1px solid rgba(211,126,135,.52); border-radius: 5px; padding: 0 .65rem;
-  background: rgba(24,12,22,.88); color: #ffe9e3; font: inherit; font-size: .72rem; letter-spacing: .06em;
+  min-width: 0; min-height: 34px; border: 1px solid rgba(191,105,99,.52); border-radius: 5px;
+  background: rgba(18,7,13,.85); color: #ffe7df; padding: 0 .55rem; font: inherit; font-size: .66rem;
 }
-.hopewood-search-controls input::placeholder { color: #bd929e; }
-.hopewood-results { min-height: 0; overflow: auto; display: grid; align-content: start; gap: .4rem; scrollbar-color: #a95f70 transparent; }
-.hopewood-results button { display: grid; gap: .16rem; width: 100%; padding: .65rem .7rem; border: 1px solid rgba(211,126,135,.2); border-radius: 5px; background: rgba(22,10,20,.66); color: #f2d9d8; text-align: left; cursor: pointer; }
-.hopewood-results button:hover, .hopewood-results button.is-active { border-color: #d77f84; background: rgba(101,47,66,.58); }
-.hopewood-results strong { overflow: hidden; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
-.hopewood-results span { color: #c59ca7; font-size: .64rem; }
-.hopewood-no-results { padding: 1rem 0; color: #c59ca7; font-size: .68rem; letter-spacing: .12em; text-align: center; }
+.hopewood-results { display: flex; gap: .4rem; min-width: 0; overflow-x: auto; scrollbar-color: #a95f70 transparent; }
+.hopewood-results button { flex: 0 0 9.5rem; display: grid; gap: .12rem; padding: .45rem .55rem; border: 1px solid rgba(190,102,99,.24); border-radius: 5px; background: rgba(18,7,13,.6); color: #f4d9d4; text-align: left; cursor: pointer; }
+.hopewood-results button.is-active { border-color: #d77f72; background: rgba(104,43,53,.7); }
+.hopewood-results strong { overflow: hidden; font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+.hopewood-results span { color: #c89b9c; font-size: .56rem; }
 
 @media (max-width: 900px) {
-  .hopewood-overlay { grid-template-columns: 1fr; grid-template-rows: auto minmax(36vh,1fr) minmax(36vh,1fr); gap: .7rem; padding: 4.5rem .8rem 1rem; overflow: auto; background: rgba(20,9,18,.74); }
-  .hopewood-catalog { grid-row: 1; max-height: 38vh; border: 1px solid rgba(211,126,135,.42); background: rgba(24,12,22,.9); }
-  .hopewood-page-panel { min-height: 36vh; border: 1px solid rgba(211,126,135,.4); background: rgba(37,24,34,.92); }
+  .hopewood-page { overflow: auto; }
+  .hopewood-bg { opacity: .32; }
+  .hopewood-overlay { position: relative; display: grid; gap: .75rem; padding: 4.5rem .75rem 1rem; overflow: auto; }
+  .hopewood-facts-panel, .hopewood-render-panel, .hopewood-lookup { position: relative; inset: auto; width: 100%; height: auto; min-height: 42vh; border: 1px solid rgba(196,112,103,.35); background: rgba(19,8,13,.9); }
+  .hopewood-lookup { min-height: 10rem; grid-template-columns: 1fr; }
+  .hopewood-search-controls { grid-template-columns: 1fr; }
 }

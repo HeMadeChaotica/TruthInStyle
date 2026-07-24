@@ -1,11 +1,11 @@
 .summation-shell {
   --summation-scene-ratio: 1586 / 992;
-  --summation-heading: #d84f86;
-  --summation-accent: #9b4f65;
-  --summation-text: #5b2438;
-  --summation-muted: #6e2d45;
-  --summation-secondary: #7a3d55;
-  --summation-divider: rgba(154, 83, 90, 0.24);
+  --summation-heading: #6b4b16;
+  --summation-accent: #77713c;
+  --summation-text: #302215;
+  --summation-muted: #4f3b24;
+  --summation-secondary: #6e5636;
+  --summation-divider: rgba(119, 93, 45, 0.28);
   position: relative;
   display: grid;
   place-items: center;
@@ -14,7 +14,7 @@
   width: 100vw;
   overflow: hidden;
   color: var(--summation-text);
-  background: #140914;
+  background: #171108;
   isolation: isolate;
 }
 
@@ -56,23 +56,21 @@
 }
 
 .summation-left-page {
-  left: 5.4%;
-  width: 31.8%;
+  display: none;
 }
 
 .summation-right-page {
-  right: 5.5%;
-  width: 31.8%;
+  left: 24.3%;
+  right: auto;
+  top: 8.6%;
+  width: 74.1%;
+  height: 73.8%;
+  border-radius: .7rem;
+  padding: clamp(.55rem,.8vw,.9rem);
 }
 
 .summation-center-protect {
-  position: absolute;
-  left: 39%;
-  top: 12%;
-  width: 22%;
-  height: 76%;
-  z-index: 2;
-  pointer-events: none;
+  display: none;
 }
 
 .summation-page-header {
@@ -275,14 +273,15 @@
   margin: 0;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
 .summation-render-artifact {
   display: block;
   width: 100%;
-  max-height: min(54vh, 100%);
+  height: 100%;
+  max-height: none;
   object-fit: contain;
   border: 1px solid rgba(116, 52, 59, 0.16);
   border-radius: 1rem;
@@ -291,7 +290,18 @@
 
 .summation-artifact-canvas {
   position: relative;
+  height: 100%;
   min-height: 0;
+}
+
+.summation-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .summation-artifact-identity {
