@@ -288,6 +288,7 @@ function VisualizationPage({
   renderMessage,
   previewUrl,
   canShowArtifact,
+  dayIdentity,
   onOpenChatGPT,
   onUploadImage,
   hybridMessage,
@@ -314,7 +315,18 @@ function VisualizationPage({
             <h2>External Rendered</h2>
           </header>
           <figure className="summation-artifact-frame">
-            <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
+            <div className="summation-artifact-canvas">
+              <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
+              <header className="summation-artifact-identity" aria-label="Day identity">
+                <strong>{dayIdentity?.titleOfDay || 'THE.SUMMATION'}</strong>
+                <span>
+                  {[dayIdentity?.displayDate, dayIdentity?.dayOfWeek].filter(Boolean).join(' · ')}
+                  {dayIdentity?.chaoticaDayNumber !== null && dayIdentity?.chaoticaDayNumber !== undefined
+                    ? ` · CHAOTICA DAY #${dayIdentity.chaoticaDayNumber}`
+                    : ''}
+                </span>
+              </header>
+            </div>
             <figcaption>{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
           </figure>
         </>
@@ -495,6 +507,7 @@ export default function TheSummationSection() {
           renderMessage={renderMessage}
           previewUrl={previewUrl}
           canShowArtifact={canShowArtifact}
+          dayIdentity={dayIdentity}
           onOpenChatGPT={openChatGPT}
           onUploadImage={uploadVisualization}
           hybridMessage={hybridMessage}
