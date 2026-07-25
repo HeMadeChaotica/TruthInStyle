@@ -111,12 +111,10 @@ function RegistryEditor({ registryKey, onSaved }) {
 export default function ClockItSection() {
   const [activeSection, setActiveSection] = useState(sections[0]);
   const keys = useMemo(() => Object.keys(CLOCK_IT_REGISTRY).filter((key) => CLOCK_IT_REGISTRY[key].section === activeSection), [activeSection]);
-  const [activeKey, setActiveKey] = useState(() => keys[0] || Object.keys(CLOCK_IT_REGISTRY)[0]);
   const [status, setStatus] = useState('');
 
   const chooseSection = (section) => {
     setActiveSection(section);
-    setActiveKey(Object.keys(CLOCK_IT_REGISTRY).find((key) => CLOCK_IT_REGISTRY[key].section === section));
     setStatus('');
   };
 
@@ -126,21 +124,19 @@ export default function ClockItSection() {
         <aside className="clockit-art" aria-hidden="true" />
         <main className="clockit-controls">
           <header className="clockit-header">
-            <div><span>CHAOTICA CONTROL ARCHIVE</span><h1>DROPDOWN HEADQUARTERS</h1></div>
-            <p>EVERY REUSABLE CHOICE. ONE SOURCE OF TRUTH.</p>
+            <div><span>CHAOTICA CONTROL ARCHIVE</span><h1>{activeSection} DROPDOWNS</h1></div>
+            <label>
+              <span>CHOOSE APP SECTION</span>
+              <select value={activeSection} onChange={(event) => chooseSection(event.target.value)}>
+                {sections.map((section) => <option key={section}>{section}</option>)}
+              </select>
+            </label>
           </header>
-          <nav className="clockit-section-tabs" aria-label="CLOCK.IT sections">
-            {sections.map((section) => <button type="button" key={section} className={section === activeSection ? 'active' : ''} onClick={() => chooseSection(section)}>{section}</button>)}
-          </nav>
-          <div className="clockit-workbench">
-            <aside className="clockit-field-list">
-              {keys.map((key) => <button type="button" key={key} className={key === activeKey ? 'active' : ''} onClick={() => { setActiveKey(key); setStatus(''); }}>{CLOCK_IT_REGISTRY[key].label}<small>{CLOCK_IT_REGISTRY[key].type}</small></button>)}
-            </aside>
-            <section className="clockit-editor-stage">
-              {activeKey ? <RegistryEditor key={activeKey} registryKey={activeKey} onSaved={setStatus} /> : null}
-              {status ? <p className="clockit-status" role="status">{status}</p> : null}
-            </section>
+          <p className="clockit-section-note">Each dropdown is separate. Edit only the field you intend to change.</p>
+          <div className="clockit-section-grid">
+            {keys.map((key) => <RegistryEditor key={key} registryKey={key} onSaved={setStatus} />)}
           </div>
+          {status ? <p className="clockit-status" role="status">{status}</p> : null}
         </main>
       </div>
     </section>
