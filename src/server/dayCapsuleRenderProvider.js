@@ -14,6 +14,7 @@ const STATUS = Object.freeze({
   FAILED: 'external_render_failed',
 });
 
+const DAY_CAPSULE_LANDSCAPE_SIZE = '1536x1024';
 const RETRYABLE_PROVIDER_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
 
 function cleanText(value) {
@@ -104,7 +105,10 @@ export function buildProviderPrompt(renderRequest) {
   });
 
   return [
-    'Create one full-page illustrated Day Capsule artifact from the supplied real Day Capsule payload only.',
+    'Create one wide LANDSCAPE illustrated Day Capsule artifact from the supplied real Day Capsule payload only.',
+    'MANDATORY CANVAS: 3:2 horizontal landscape orientation, 1536 pixels wide by 1024 pixels tall. Width must be greater than height.',
+    'Compose the entire memory page from left to right across the wide canvas. Do not create a portrait page, vertical poster, tall scrapbook, phone layout, or rotate a portrait design into a landscape frame.',
+    'Keep all important content inside landscape-safe margins so the finished artifact can fill THE.SUMMATION and HOPEWOOD landscape render panels without cropping.',
     'Style: visual journal / sketchnote / editorial memory-page. Use object-led accents only when they are supported by actual day content.',
     'Build a readable hierarchy with personal memory-page composition. Do not make a generic dashboard, raw metadata dump, API panel, or corporate report.',
     'Do not invent events, people, places, meals, workouts, reminders, emotions, or objects that are not present in the payload.',
@@ -264,7 +268,7 @@ async function renderWithOpenAI(renderRequest) {
     body: JSON.stringify({
       model,
       prompt,
-      size: cleanText(process.env.DAY_CAPSULE_RENDER_SIZE) || '1024x1536',
+      size: DAY_CAPSULE_LANDSCAPE_SIZE,
       n: 1,
     }),
   });

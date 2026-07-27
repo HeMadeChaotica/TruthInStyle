@@ -1362,7 +1362,10 @@ export function buildDayCapsuleRenderPayload(activeDayPayload) {
     },
     sourceSnapshot,
     renderInstructions: {
-      goal: 'Create one full-page Day Capsule render from the day content.',
+      goal: 'Create one wide 3:2 landscape Day Capsule render from the day content.',
+      requiredOrientation: 'landscape',
+      requiredAspectRatio: '3:2',
+      requiredPixelSize: '1536x1024',
       identityClumpRequired: true,
       styleReference: 'structured editorial page with art accents, similar in spirit to the resume reference',
       textAccuracyRule: 'App must preserve identity clump deterministically.',

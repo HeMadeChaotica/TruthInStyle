@@ -13,7 +13,7 @@ The app UI posts the Day Capsule render request only. Browser requests must not 
 - `DAY_CAPSULE_RENDER_PROVIDER` — currently supports `openai` for the internal backend adapter.
 - `DAY_CAPSULE_RENDER_API_KEY` — provider key, read only inside backend route/provider code.
 - `DAY_CAPSULE_RENDER_MODEL` — provider model; defaults to `gpt-image-1` if unset.
-- `DAY_CAPSULE_RENDER_SIZE` — optional OpenAI image size; defaults to `1024x1536`.
+- Day Capsule output is locked in code to `1536x1024` so THE.SUMMATION and HOPEWOOD always receive a 3:2 landscape artifact.
 - `DAY_CAPSULE_RENDER_STORAGE_MODE` — set to `local` when using the internal OpenAI adapter so returned base64 artifacts can be stored to disk.
 - `DAY_CAPSULE_RENDER_STORAGE_PATH` — required for internal OpenAI readiness and local base64 storage, preferably under `public/` when browser preview is needed.
 - `DAY_CAPSULE_RENDER_ENDPOINT` — optional external renderer endpoint fallback/proxy path.
@@ -22,7 +22,7 @@ The app UI posts the Day Capsule render request only. Browser requests must not 
 - `DAY_CAPSULE_RENDER_PROVIDER=openai`
 - `DAY_CAPSULE_RENDER_API_KEY=<server-side OpenAI key>` — backend only; never expose to frontend code.
 - `DAY_CAPSULE_RENDER_MODEL=gpt-image-1`
-- `DAY_CAPSULE_RENDER_SIZE=1024x1536`
+- output size: `1536x1024` (3:2 landscape, enforced in code)
 - `DAY_CAPSULE_RENDER_STORAGE_MODE=supabase`
 - `NEXT_PUBLIC_SUPABASE_URL=<Supabase project URL>`
 - `SUPABASE_SERVICE_ROLE_KEY=<server-side Supabase service role key>` — backend only; never use a `NEXT_PUBLIC_` prefix.

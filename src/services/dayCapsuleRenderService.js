@@ -227,11 +227,13 @@ export function buildDayCapsuleVisualInstructions(dayCapsulePayload = {}) {
   };
   return {
     styleMode,
-    compositionGoal: `Create one full-page illustrated Day Capsule as a single personal memory page: ${styleLooks[styleMode]}.`,
+    compositionGoal: `Create one wide 3:2 landscape illustrated Day Capsule as a single personal memory spread: ${styleLooks[styleMode]}.`,
     visualTone: 'premium but personal; hand-drawn/designed page energy; visual journal, sketchnote, and editorial memory-page sensibility',
     layoutRules: [
-      'One cohesive full-page illustrated day page, not a dashboard and not a version editor.',
-      'Use readable hierarchy, object-led day storytelling, short callouts, and grouped story fragments.',
+      'Mandatory 3:2 horizontal landscape canvas, 1536 pixels wide by 1024 pixels tall; width must be greater than height.',
+      'One cohesive wide illustrated day spread, not a portrait poster, phone layout, dashboard, or version editor.',
+      'Use a left-to-right readable hierarchy, object-led day storytelling, short callouts, and grouped story fragments across the landscape canvas.',
+      'Keep essential content inside landscape-safe margins so THE.SUMMATION and HOPEWOOD can display the complete artifact without cropping.',
       styleMode === DAY_CAPSULE_VISUAL_STYLE_MODES.EDITORIAL_CAPSULE ? 'Editorial polish is allowed, but keep it personal and non-corporate.' : 'Avoid corporate infographic styling.',
     ],
     motifHints: analysis.motifHints,
