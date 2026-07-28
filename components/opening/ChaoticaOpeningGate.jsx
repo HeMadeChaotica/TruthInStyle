@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SupabaseGatePlaque from './SupabaseGatePlaque';
 
@@ -19,7 +19,10 @@ function countMatchedPhrases(value) {
 export default function ChaoticaOpeningGate() {
   const router = useRouter();
   const recognitionRef = useRef(null);
+  const animationTimerRef = useRef(null);
   const [phase, setPhase] = useState('closed');
+  const [animationRun, setAnimationRun] = useState(0);
+  const [animationComplete, setAnimationComplete] = useState(true);
   const [typedOath, setTypedOath] = useState('');
   const [heardOath, setHeardOath] = useState('');
   const [message, setMessage] = useState('');
@@ -28,6 +31,13 @@ export default function ChaoticaOpeningGate() {
 
   const typedOathIsExact = useMemo(() => normalize(typedOath) === normalize(OATH_TEXT), [typedOath]);
   const spokenOathIsAccepted = useMemo(() => countMatchedPhrases(heardOath) >= 3, [heardOath]);
+
+  const playOpeningAnimation = useCallback(() => {
+    window.clearTimeout(animationTimerRef.current);
+    setAnimationComplete(false);
+    setAnimationRun((run) => run + 1);
+    animationTimerRef.current = window.setTimeout(() => setAnimationComplete(true), 1700);
+  }, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -60,7 +70,10 @@ export default function ChaoticaOpeningGate() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => () => recognitionRef.current?.stop?.(), []);
+  useEffect(() => () => {
+    recognitionRef.current?.stop?.();
+    window.clearTimeout(animationTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'oath' || !spokenOathIsAccepted) return undefined;
@@ -68,16 +81,22 @@ export default function ChaoticaOpeningGate() {
     setListening(false);
     setMessage('THE OATH HAS BEEN HEARD AND ACCEPTED. CHAOTICA IS OPENING.');
     setPhase('opening');
-    const timer = window.setTimeout(() => router.push('/the-assurer'), 900);
+    playOpeningAnimation();
+    const timer = window.setTimeout(() => router.push('/the-assurer'), 1550);
     return () => window.clearTimeout(timer);
-  }, [phase, router, spokenOathIsAccepted]);
+  }, [phase, playOpeningAnimation, router, spokenOathIsAccepted]);
 
   const checkSession = async () => {
-    setMessage('');
-    const response = await fetch('/api/chaotica-auth/session', { cache: 'no-store' });
-    const payload = await response.json().catch(() => ({}));
+    setPhase('awakening');
+    setMessage('MISTA.THICC HAS HEARD YOU. THE GATE IS OPENING.');
+    playOpeningAnimation();
+    const minimumCeremony = new Promise((resolve) => window.setTimeout(resolve, 1250));
+    const response = await fetch('/api/chaotica-auth/session', { cache: 'no-store' }).catch(() => null);
+    await minimumCeremony;
+    const payload = await response?.json().catch(() => ({})) || {};
     if (payload.authorized) {
       setPhase('oath');
+      setMessage('THE GATE IS OPEN. SPEAK THE OATH.');
       return;
     }
     if (payload.configured === false) setMessage('SUPABASE AUTH IS NOT CONFIGURED.');
@@ -98,12 +117,12 @@ export default function ChaoticaOpeningGate() {
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results).map((result) => result[0]?.transcript || '').join(' ');
       setHeardOath(transcript);
-      if (normalize(transcript)) setMessage('THE OATH HAS BEEN HEARD. TYPE THE OATH TO OPEN CHAOTICA.');
+      if (normalize(transcript)) setMessage('THE OATH HAS BEEN HEARD. KEEP SPEAKING.');
     };
     recognition.onend = () => setListening(false);
     recognition.onerror = () => {
       setListening(false);
-      setMessage('TYPE THE OATH TO CONTINUE.');
+      setMessage('SPEECH PAUSED. SPEAK AGAIN OR USE THE TYPED FALLBACK.');
     };
     recognitionRef.current = recognition;
     setListening(true);
@@ -124,21 +143,36 @@ export default function ChaoticaOpeningGate() {
 
   return (
     <main className="chaotica-opening" data-phase={phase}>
-      <img
-        className="chaotica-opening-image chaotica-opening-image-closed"
-        src="/opening/chaotica-opening-entrance-closed.png"
-        alt=""
-        draggable={false}
-        aria-hidden="true"
+      <div className="chaotica-medallion-stage" aria-hidden="true">
+        <img
+          className="chaotica-opening-image chaotica-opening-image-closed"
+          src="/opening/chaotica-opening-entrance-closed.png"
+          alt=""
+          draggable={false}
+        />
+        <img
+          className="chaotica-opening-image chaotica-opening-image-activated"
+          src="/opening/chaotica-opening-entrance-activated.png"
+          alt=""
+          draggable={false}
+        />
+        {!animationComplete && animationRun > 0 ? (
+          <img
+            key={animationRun}
+            className="chaotica-opening-image chaotica-opening-animation"
+            src="/opening/mistathicc-open-sesame.webp"
+            alt=""
+            draggable={false}
+          />
+        ) : null}
+      </div>
+      <button
+        type="button"
+        className="chaotica-truth-stone"
+        onClick={checkSession}
+        aria-label="Release Mista.THICC and open Chaotica"
+        disabled={phase === 'awakening' || phase === 'opening'}
       />
-      <img
-        className="chaotica-opening-image chaotica-opening-image-activated"
-        src="/opening/chaotica-opening-entrance-activated.png"
-        alt=""
-        draggable={false}
-        aria-hidden="true"
-      />
-      <button type="button" className="chaotica-truth-stone" onClick={checkSession} aria-label="Open Chaotica" />
       {phase === 'auth' ? <SupabaseGatePlaque onAuthorized={() => setPhase('oath')} /> : null}
       {phase === 'oath' || phase === 'opening' ? (
         <section className="chaotica-oath" aria-label="Opening oath">
