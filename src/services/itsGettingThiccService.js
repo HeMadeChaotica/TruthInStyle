@@ -1,5 +1,7 @@
 'use client';
 
+import { CLOCK_IT_KEYS, getClockItOptions } from '../../lib/dropdowns/clockItRegistry';
+
 const CLIENTS_KEY = 'thicc_clients';
 const LOGS_KEY = 'thicc_client_logs';
 const MEDIA_KEY = 'media_library';
@@ -46,6 +48,13 @@ export const CONTROLLED_CLIENT_COLORS = [
   ['sage', 'SAGE', '#4d7c0f'], ['ocean', 'OCEAN', '#0369a1'],
 ].map(([key, label, value]) => ({ key, label, value }));
 
+function configuredClientColors() {
+  const configured = getClockItOptions(CLOCK_IT_KEYS.itsClientColors)
+    .filter((entry) => entry && typeof entry === 'object' && entry.key && entry.value)
+    .map(({ key, label, value }) => ({ key, label: label || key, value }));
+  return configured.length ? configured : CONTROLLED_CLIENT_COLORS;
+}
+
 const DEFAULT_FORMS = [
   { id: 'intake', form_key: 'intake', formName: 'INTAKE DOSSIER', formCategory: 'ONBOARDING', active: true },
   { id: 'movement', form_key: 'movement-screen', formName: 'MOVEMENT SCREEN', formCategory: 'ASSESSMENT', active: true },
@@ -90,9 +99,10 @@ const set = (k, v) => {
 
 export const resolveClientColor = (key) => {
   const normalizedKey = String(key || '').trim().toLowerCase();
+  const colors = configuredClientColors();
   return THICC_TIME_SPECIAL_COLORS.find((color) => color.key === normalizedKey)
-    || CONTROLLED_CLIENT_COLORS.find((color) => color.key === normalizedKey)
-    || CONTROLLED_CLIENT_COLORS[0]
+    || colors.find((color) => color.key === normalizedKey)
+    || colors[0]
     || { key: 'cobalt', label: 'COBALT', value: '#3b82f6' };
 };
 
@@ -598,9 +608,12 @@ export async function deleteScheduleEntry(id) {
 }
 
 export async function fetchClientColors() {
-  if (!hasSupabase) return CONTROLLED_CLIENT_COLORS;
+  // CLOCK.IT is the single editor for client-color choices. The locally
+  // synchronized registry is the canonical source when direct browser-table
+  // access is unavailable.
+  if (!hasSupabase) return configuredClientColors();
   const res = await fetch(`${sbUrl}/rest/v1/clockit_option_sets?select=option_key,option_label,option_value&group_key=eq.thicc_client_colors&active=eq.true&order=display_order.asc`, { headers: sbHeaders, cache: 'no-store' });
-  if (!res.ok) return CONTROLLED_CLIENT_COLORS;
+  if (!res.ok) return configuredClientColors();
   const rows = await res.json();
   return rows.map((r) => ({ key: r.option_key, label: r.option_label, value: r.option_value }));
 }

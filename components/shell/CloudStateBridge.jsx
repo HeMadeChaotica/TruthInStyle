@@ -47,7 +47,7 @@ export default function CloudStateBridge() {
     let timer;
 
     const sync = () => {
-      syncRef.current = syncRef.current.then(async () => {
+      const task = syncRef.current.then(async () => {
         if (!active) return;
         const values = collectValues();
         const now = new Date().toISOString();
@@ -60,11 +60,17 @@ export default function CloudStateBridge() {
         });
         if (JSON.stringify(next) === JSON.stringify(stateRef.current)) return;
         const saved = await requestCloudState('POST', next);
-        if (!saved) return;
+        if (!saved) throw new Error('cloud_state_auth_required');
         stateRef.current = saved.state || next;
         window.localStorage.setItem(META_KEY, JSON.stringify(Object.fromEntries(Object.entries(stateRef.current).map(([key, entry]) => [key, entry.updatedAt]))));
-      }).catch((error) => console.warn('TruthInStyle cloud state sync paused.', error));
-      return syncRef.current;
+      });
+      // Keep the chain available for the next background attempt, but return
+      // the real task so an explicit Save can report an honest device-only state.
+      syncRef.current = task.catch((error) => {
+        console.warn('TruthInStyle cloud state sync paused.', error);
+        return null;
+      });
+      return task;
     };
 
     const initialize = async () => {
@@ -102,7 +108,7 @@ export default function CloudStateBridge() {
         return;
       }
       window.sessionStorage.removeItem(reloadKey);
-      timer = window.setInterval(sync, 2500);
+      timer = window.setInterval(() => { sync().catch(() => {}); }, 2500);
     };
 
     initialize().catch((error) => console.warn('TruthInStyle cloud state unavailable; using local state.', error));

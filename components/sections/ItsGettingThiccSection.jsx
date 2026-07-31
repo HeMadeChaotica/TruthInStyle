@@ -5,7 +5,7 @@ import '../../styles/sections/its-getting-thicc.css';
 import '../../styles/sections/universal-frame.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import {
-  appendLog, deleteScheduleEntry, fetchClientColors, fetchFormAssignments, fetchForms, fetchScheduleEntries, groupScheduleEntriesByDate, loadClients, readMedia, resolveClientColor,
+  appendLog, deleteScheduleEntry, fetchFormAssignments, fetchForms, fetchScheduleEntries, groupScheduleEntriesByDate, loadClients, readMedia, resolveClientColor,
   saveClients, upsertFormAssignment, upsertMedia, saveScheduleEntry, getClientDbId, getScheduleClientId, isSupabaseEnabled, ensureClientDbId, normalizeScheduleEntry, buildThiccTimeAssurerPayload, toLocalIsoDate, isLocalIsoDateKey, validateScheduleEntry,
   createClientTemplate, createLocalClientId, generatePublicThiccenId, getPublicThiccenId,
 } from '../../src/services/itsGettingThiccService';
@@ -82,7 +82,7 @@ export default function ItsGettingThiccSection() {
   const heightOptions = useClockItNumericOptions(CLOCK_IT_KEYS.height);
   const ageOptions = useClockItNumericOptions(CLOCK_IT_KEYS.age);
   const [clients, setClients] = useState([]); const [activeId, setActiveId] = useState(''); const [activeTab, setActiveTab] = useState('THICC.INFO');
-  const [forms, setForms] = useState([]); const [assignments, setAssignments] = useState([]); const [colorMap, setColorMap] = useState([]);
+  const [forms, setForms] = useState([]); const [assignments, setAssignments] = useState([]);
   const [formsError, setFormsError] = useState('');
   const [selectedTimeDate, setSelectedTimeDate] = useState(() => getTodayDateKey());
   const [entriesByDate, setEntriesByDate] = useState({});
@@ -145,10 +145,6 @@ export default function ItsGettingThiccSection() {
       setActiveId('');
     }
     loadTimeEntries();
-    fetchClientColors().then((rows) => setColorMap(Array.isArray(rows) ? rows : [])).catch((error) => {
-      logThiccTimeDiagnostic('fetchClientColors', 'color load', error);
-      setColorMap([]);
-    });
     fetchForms().then((rows) => setForms(Array.isArray(rows) ? rows : [])).catch((error) => {
       console.error('ITS.GETTING.THICC forms load failed', { message: error?.message || '', stack: error?.stack || '', error });
       setForms([]);
@@ -200,7 +196,7 @@ export default function ItsGettingThiccSection() {
     setActiveId(draft.id);
     setInfoDraft(draft);
     setIsNewInfoDraft(false);
-    setInfoStatus(saveResult?.ok ? 'THICC.INFO SAVED TO CLOUD' : 'THICC.INFO SAVED ON THIS DEVICE');
+    setInfoStatus(saveResult?.ok ? 'THICC.INFO SAVED TO CLOUD' : 'THICC.INFO SAVED ON THIS DEVICE — SIGN IN TO SYNC');
   };
   const onUpload = (slot) => async (event) => {
     const file = event.target.files?.[0];
@@ -277,7 +273,7 @@ export default function ItsGettingThiccSection() {
   const infoShelves = [
     { id: 'A', columns: 3, panels: [
       { id: 'info-actions', token: 'strip', className: 'igtv2-info-actions', content: <><div><h3>THICC.INFO</h3><strong>{publicThiccenId}</strong><small>{isNewInfoDraft ? 'NEW UNSAVED CLIENT' : 'EDITING SAVED CLIENT'}</small></div><div className="info-action-buttons"><button type="button" onClick={startNewClient}>NEW CLIENT</button><button type="button" onClick={saveInfoDraft}>SAVE THICC.INFO</button></div>{infoStatus ? <p>{infoStatus}</p> : null}</> },
-      { id: 'stats', token: 'tall', className:'igtv2-client-core', content: <><h3>THICC.STATS</h3><div className="client-core-grid">{['name','thiccen_id','phone','sex','sexualOrientation','height','age','email','relationshipStatus','clientColorOptionKey','currentWeight','goalWeight','currentBmi','goalBmi'].map((k) => <label key={k}>{k==='thiccen_id'?'THICC ID':k==='relationshipStatus'?'MARRIED / SINGLE':k==='phone'?'PHONE NUMBER':k==='sexualOrientation'?'SEXUAL ORIENTATION':k==='clientColorOptionKey'?'CLIENT COLOR':k.replace(/([A-Z])/g,' $1').toUpperCase()}{k==='thiccen_id'?<input value={publicThiccenId} readOnly aria-readonly="true" />:k==='clientColorOptionKey'?<select value={infoClient.clientColorOptionKey||'cobalt'} style={{ borderColor: resolveClientColor(infoClient.clientColorOptionKey).value }} onChange={(e)=>update('clientColorOptionKey',e.target.value)}>{(colorMap.length ? colorMap : clockItColors).map((o)=><option key={o.key} value={o.key}>{o.label}</option>)}</select>:k==='relationshipStatus'?<select value={infoClient.relationshipStatus||'SINGLE'} onChange={(e)=>update('relationshipStatus',e.target.value)}>{relationshipOptions.map((o)=><option key={o}>{o}</option>)}</select>:(['sex','sexualOrientation'].includes(k)?<select value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)}><option value="">SELECT</option>{(k==='sex'?sexOptions:orientationOptions).map((o)=><option key={o}>{o}</option>)}</select>:['currentWeight','goalWeight','height','age'].includes(k)?<select value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)}><option value="">SELECT</option>{(k==='height'?heightOptions:k==='age'?ageOptions:weightOptions).map((o)=><option key={o.value} value={o.value}>{o.label}</option>)}</select>:<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />)}</label>)}</div></> },
+      { id: 'stats', token: 'tall', className:'igtv2-client-core', content: <><h3>THICC.STATS</h3><div className="client-core-grid">{['name','thiccen_id','phone','sex','sexualOrientation','height','age','email','relationshipStatus','clientColorOptionKey','currentWeight','goalWeight','currentBmi','goalBmi'].map((k) => <label key={k}>{k==='thiccen_id'?'THICC ID':k==='relationshipStatus'?'MARRIED / SINGLE':k==='phone'?'PHONE NUMBER':k==='sexualOrientation'?'SEXUAL ORIENTATION':k==='clientColorOptionKey'?'CLIENT COLOR':k.replace(/([A-Z])/g,' $1').toUpperCase()}{k==='thiccen_id'?<input value={publicThiccenId} readOnly aria-readonly="true" />:k==='clientColorOptionKey'?<select value={infoClient.clientColorOptionKey||'cobalt'} style={{ borderColor: resolveClientColor(infoClient.clientColorOptionKey).value }} onChange={(e)=>update('clientColorOptionKey',e.target.value)}>{clockItColors.map((o)=><option key={o.key} value={o.key}>{o.label}</option>)}</select>:k==='relationshipStatus'?<select value={infoClient.relationshipStatus||'SINGLE'} onChange={(e)=>update('relationshipStatus',e.target.value)}>{relationshipOptions.map((o)=><option key={o}>{o}</option>)}</select>:(['sex','sexualOrientation'].includes(k)?<select value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)}><option value="">SELECT</option>{(k==='sex'?sexOptions:orientationOptions).map((o)=><option key={o}>{o}</option>)}</select>:['currentWeight','goalWeight','height','age'].includes(k)?<select value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)}><option value="">SELECT</option>{(k==='height'?heightOptions:k==='age'?ageOptions:weightOptions).map((o)=><option key={o.value} value={o.value}>{o.label}</option>)}</select>:<input value={infoClient[k]||''} onChange={(e)=>update(k,e.target.value)} />)}</label>)}</div></> },
       { id: 'living-thicc', token: 'tall', className:'igtv2-living-thicc', content: <><h3>LIVIN THICC SINCE</h3><label><input type="date" value={infoClient.livingThiccSinceDate||''} onChange={(e)=>update('livingThiccSinceDate',e.target.value)} /></label><label className="upload">{highlightPhoto ? <img src={highlightPhoto} alt="living thicc" /> : 'PHOTO UPLOAD FROM LIBRARY'}<input type="file" accept="image/*" onChange={onUpload('livingThiccPhoto')} /></label></> },
     ] },
     { id: 'B', columns: 1, panels: [{ id: 'food', token: 'tall', content: <Food /> }] },
@@ -409,7 +405,7 @@ export default function ItsGettingThiccSection() {
       setEntriesByDate(groupScheduleEntriesByDate([...flattened, savedEntry]));
       await loadTimeEntries();
       const cloudSave = await flushAllPendingSaves();
-      setTimeError(cloudSave?.ok ? '' : 'SCHEDULE SAVED ON THIS DEVICE; CLOUD SYNC IS RETRYING.');
+      setTimeError(cloudSave?.ok ? '' : 'SCHEDULE SAVED ON THIS DEVICE — SIGN IN TO SYNC.');
       setSelectedTimeDate(savedEntry.entry_date);
       closeTimeEditor();
     } catch (error) {
