@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import ControlPanelOverlay from './ControlPanelOverlay';
 import CloudStateBridge from './CloudStateBridge';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
@@ -24,6 +24,8 @@ export default function AppShell({ children }) {
   const [exitWarning, setExitWarning] = useState(false);
   const [exitStatus, setExitStatus] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
+  const isOpening = pathname === '/';
 
   const exitToEntrance = async ({ force = false } = {}) => {
     setExitWarning(false);
@@ -62,16 +64,18 @@ export default function AppShell({ children }) {
     <div style={{ height: '100%' }}>
       <CloudStateBridge />
       {children}
-      <ControlPanelOverlay
-        isOpen={isOpen}
-        onOpen={() => setIsOpen(true)}
-        onClose={() => setIsOpen(false)}
-        onSelect={onSelect}
-        exitStatus={exitStatus}
-        exitWarning={exitWarning}
-        onRetryExit={() => exitToEntrance()}
-        onExitAnyway={() => exitToEntrance({ force: true })}
-      />
+      {!isOpening ? (
+        <ControlPanelOverlay
+          isOpen={isOpen}
+          onOpen={() => setIsOpen(true)}
+          onClose={() => setIsOpen(false)}
+          onSelect={onSelect}
+          exitStatus={exitStatus}
+          exitWarning={exitWarning}
+          onRetryExit={() => exitToEntrance()}
+          onExitAnyway={() => exitToEntrance({ force: true })}
+        />
+      ) : null}
     </div>
   );
 }

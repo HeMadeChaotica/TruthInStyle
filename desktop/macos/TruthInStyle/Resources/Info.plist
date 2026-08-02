@@ -5,17 +5,17 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>TruthInStyle</string>
+  <string>CHAOTICA</string>
   <key>CFBundleExecutable</key>
-  <string>TruthInStyle</string>
+  <string>CHAOTICA</string>
   <key>CFBundleIconFile</key>
-  <string>TruthInStyle</string>
+  <string>CHAOTICA.icns</string>
   <key>CFBundleIdentifier</key>
-  <string>app.truthinstyle.chaotica</string>
+  <string>app.chaotica.desktop</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>TruthInStyle</string>
+  <string>CHAOTICA</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -25,9 +25,9 @@
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
   <key>NSCameraUsageDescription</key>
-  <string>TruthInStyle uses the camera only when you choose to add a photo.</string>
+  <string>CHAOTICA uses the camera only when you choose to add a photo.</string>
   <key>NSMicrophoneUsageDescription</key>
-  <string>TruthInStyle uses the microphone for your spoken opening oath.</string>
+  <string>CHAOTICA uses the microphone for your spoken opening oath.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>

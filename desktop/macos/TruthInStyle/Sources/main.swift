@@ -1,7 +1,7 @@
 import Cocoa
 import WebKit
 
-private let truthInStyleURL = URL(string: "https://www.tellnolies.app/")!
+private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
 @main
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
@@ -28,16 +28,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
       backing: .buffered,
       defer: false
     )
-    window.title = "TruthInStyle"
+    window.title = "CHAOTICA"
     window.titleVisibility = .hidden
     window.titlebarAppearsTransparent = true
+    window.isOpaque = false
+    window.backgroundColor = .clear
     window.minSize = NSSize(width: 1024, height: 720)
     window.center()
     window.contentView = webView
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
 
-    webView.load(URLRequest(url: truthInStyleURL))
+    webView.load(URLRequest(url: chaoticaURL))
   }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -68,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
     let alert = NSAlert()
-    alert.messageText = "TruthInStyle"
+    alert.messageText = "CHAOTICA"
     alert.informativeText = message
     alert.addButton(withTitle: "OK")
     alert.beginSheetModal(for: window) { _ in completionHandler() }
@@ -76,7 +78,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
     let alert = NSAlert()
-    alert.messageText = "TruthInStyle"
+    alert.messageText = "CHAOTICA"
     alert.informativeText = message
     alert.addButton(withTitle: "Continue")
     alert.addButton(withTitle: "Cancel")

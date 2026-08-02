@@ -4,8 +4,8 @@ import '../styles/opening/chaotica-opening.css';
 import AppShell from '../components/shell/AppShell';
 
 export const metadata = {
-  title: 'TruthInStyle',
-  description: 'TruthInStyle',
+  title: 'CHAOTICA',
+  description: 'CHAOTICA',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [

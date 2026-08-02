@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DESKTOP_ROOT="$ROOT/desktop/macos"
-APP_NAME="TruthInStyle"
+APP_NAME="CHAOTICA"
 APP_BUNDLE="$DESKTOP_ROOT/dist/$APP_NAME.app"
 ZIP_PATH="$DESKTOP_ROOT/dist/$APP_NAME-macOS.zip"
 
@@ -16,7 +16,7 @@ swiftc -parse-as-library "$DESKTOP_ROOT/TruthInStyle/Sources/main.swift" \
   -o "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
 cp "$DESKTOP_ROOT/TruthInStyle/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
-cp "$ROOT/public/icons/TruthInStyle.icns" "$APP_BUNDLE/Contents/Resources/TruthInStyle.icns"
+cp "$ROOT/public/icons/TruthInStyle.icns" "$APP_BUNDLE/Contents/Resources/CHAOTICA.icns"
 codesign --force --deep --sign - "$APP_BUNDLE"
 
 (

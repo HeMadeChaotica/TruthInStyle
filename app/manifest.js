@@ -1,8 +1,8 @@
 export default function manifest() {
   return {
-    name: 'TruthInStyle',
-    short_name: 'TruthInStyle',
-    description: 'Enter Chaotica through Mista.THICC.',
+    name: 'CHAOTICA',
+    short_name: 'CHAOTICA',
+    description: 'Enter CHAOTICA through Mista.THICC.',
     start_url: '/',
     display: 'standalone',
     background_color: 'transparent',
