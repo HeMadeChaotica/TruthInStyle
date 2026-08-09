@@ -33,7 +33,8 @@ export default function ChaoticaOpeningGate() {
   const [speechSupported, setSpeechSupported] = useState(false);
   const [listening, setListening] = useState(false);
 
-  const spokenOathIsAccepted = countMatchedPhrases(heardOath) >= 3;
+  const oathPiecesHeard = countMatchedPhrases(heardOath);
+  const spokenOathIsAccepted = oathPiecesHeard >= 3;
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -190,11 +191,16 @@ export default function ChaoticaOpeningGate() {
         <section className="chaotica-oath" aria-label="Opening oath">
           <h1>Speak the Oath</h1>
           <p>{OATH_TEXT}</p>
+          <div className="chaotica-oath-listener" data-listening={listening} aria-live="polite">
+            <span className="chaotica-oath-listener-orb" aria-hidden="true" />
+            <strong>{listening ? 'THE SEAL IS LISTENING' : 'THE SEAL IS READY'}</strong>
+            <span>{oathPiecesHeard}/3 OATH PIECES HEARD</span>
+          </div>
           <div className="chaotica-oath-actions">
             <button type="button" onClick={startSpeech} disabled={listening}>
               {listening ? 'LISTENING' : speechSupported ? 'LISTEN AGAIN' : 'SPEECH UNAVAILABLE'}
             </button>
-            <span>{spokenOathIsAccepted ? 'OATH ACCEPTED' : heardOath ? 'OATH HEARD' : 'AWAITING OATH'}</span>
+            <span>{spokenOathIsAccepted ? 'OATH ACCEPTED' : heardOath ? 'OATH HEARD' : 'SPEAK WHEN READY'}</span>
           </div>
         </section>
       ) : null}

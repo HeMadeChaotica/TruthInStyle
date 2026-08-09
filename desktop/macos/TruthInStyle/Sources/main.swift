@@ -1,21 +1,28 @@
 import Cocoa
 import WebKit
-import Speech
 
 private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
-final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
+private let oathCommands = [
+  "Eugene this is your safest place tell it all tell it true tell it so you will remember how you got through",
+  "Eugene this is your safest place",
+  "tell it all",
+  "tell it true",
+  "tell it so you will remember how you got through",
+]
+
+final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, NSSpeechRecognizerDelegate {
   private var window: NSWindow!
   private var webView: WKWebView!
   private var openingSplashView: NSImageView!
   private var hasRevealedWebContent = false
-  private let audioEngine = AVAudioEngine()
-  private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-  private var recognitionTask: SFSpeechRecognitionTask?
-  private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+  private let oathRecognizer = NSSpeechRecognizer()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
+    oathRecognizer?.delegate = self
+    oathRecognizer?.commands = oathCommands
+    oathRecognizer?.listensInForegroundOnly = true
 
     let configuration = WKWebViewConfiguration()
     configuration.websiteDataStore = .default()
@@ -181,71 +188,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   }
 
   private func startNativeSpeech() {
-    stopNativeSpeech(notify: false)
-    SFSpeechRecognizer.requestAuthorization { [weak self] authorization in
-      DispatchQueue.main.async {
-        guard let self else { return }
-        guard authorization == .authorized else {
-          self.sendSpeechEvent(type: "error", message: "Speech recognition permission is required for the spoken oath.")
-          return
-        }
-        AVCaptureDevice.requestAccess(for: .audio) { granted in
-          DispatchQueue.main.async {
-            guard granted else {
-              self.sendSpeechEvent(type: "error", message: "Microphone permission is required for the spoken oath.")
-              return
-            }
-            self.beginNativeRecognition()
-          }
-        }
-      }
-    }
-  }
-
-  private func beginNativeRecognition() {
-    guard let speechRecognizer, speechRecognizer.isAvailable else {
-      sendSpeechEvent(type: "error", message: "Speech recognition is temporarily unavailable. Listening will retry.")
+    guard let oathRecognizer else {
+      sendSpeechEvent(type: "error", message: "CHAOTICA could not prepare the spoken oath listener.")
       return
     }
-
-    let request = SFSpeechAudioBufferRecognitionRequest()
-    request.shouldReportPartialResults = true
-    recognitionRequest = request
-
-    let inputNode = audioEngine.inputNode
-    inputNode.removeTap(onBus: 0)
-    let format = inputNode.outputFormat(forBus: 0)
-    inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak request] buffer, _ in
-      request?.append(buffer)
-    }
-
-    do {
-      audioEngine.prepare()
-      try audioEngine.start()
-      sendSpeechEvent(type: "listening")
-      recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
-        guard let self else { return }
-        if let transcript = result?.bestTranscription.formattedString, !transcript.isEmpty {
-          self.sendSpeechEvent(type: "result", transcript: transcript)
-        }
-        if error != nil || result?.isFinal == true {
-          self.stopNativeSpeech(notify: true)
-        }
-      }
-    } catch {
-      stopNativeSpeech(notify: false)
-      sendSpeechEvent(type: "error", message: "CHAOTICA could not start the spoken oath listener.")
-    }
+    oathRecognizer.stopListening()
+    oathRecognizer.commands = oathCommands
+    oathRecognizer.startListening()
+    sendSpeechEvent(type: "listening")
   }
 
   private func stopNativeSpeech(notify: Bool) {
-    audioEngine.stop()
-    audioEngine.inputNode.removeTap(onBus: 0)
-    recognitionRequest?.endAudio()
-    recognitionTask?.cancel()
-    recognitionRequest = nil
-    recognitionTask = nil
+    oathRecognizer?.stopListening()
     if notify { sendSpeechEvent(type: "ended") }
+  }
+
+  func speechRecognizer(_ sender: NSSpeechRecognizer, didRecognizeCommand command: String) {
+    sendSpeechEvent(type: "result", transcript: command)
   }
 
   private func sendSpeechEvent(type: String, transcript: String? = nil, message: String? = nil) {

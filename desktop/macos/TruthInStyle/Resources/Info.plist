@@ -19,17 +19,15 @@
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0.4</string>
+  <string>1.0.5</string>
   <key>CFBundleVersion</key>
-  <string>5</string>
+  <string>6</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
   <key>NSCameraUsageDescription</key>
   <string>CHAOTICA uses the camera only when you choose to add a photo.</string>
   <key>NSMicrophoneUsageDescription</key>
   <string>CHAOTICA uses the microphone for your spoken opening oath.</string>
-  <key>NSSpeechRecognitionUsageDescription</key>
-  <string>CHAOTICA listens only for your spoken opening oath to release the gate.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>

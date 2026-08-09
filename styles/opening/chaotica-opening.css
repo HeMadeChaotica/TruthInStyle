@@ -154,6 +154,47 @@ body:has(.chaotica-opening) { background: #10070b; }
 
 .chaotica-oath-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
 
+.chaotica-oath-listener {
+  display: grid;
+  grid-template-columns: 26px auto;
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+  row-gap: 2px;
+  min-height: 42px;
+  color: #f6d79b;
+  font-family: Cinzel, Georgia, serif;
+  letter-spacing: .05em;
+}
+
+.chaotica-oath-listener strong { font-size: .86rem; }
+
+.chaotica-oath-listener > span:last-child {
+  grid-column: 2;
+  color: rgba(255, 210, 171, .88);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1rem;
+}
+
+.chaotica-oath-listener-orb {
+  grid-row: 1 / span 2;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 218, 168, .88);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff0d8 0 12%, #ea6c9b 20%, rgba(141, 16, 58, .92) 45%, rgba(17, 3, 12, .1) 70%);
+  box-shadow: 0 0 0 0 rgba(238, 82, 137, 0), 0 0 18px rgba(244, 113, 158, .3);
+}
+
+.chaotica-oath-listener[data-listening='true'] .chaotica-oath-listener-orb {
+  animation: chaotica-listening-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes chaotica-listening-pulse {
+  0%, 100% { transform: scale(.82); box-shadow: 0 0 0 0 rgba(238, 82, 137, 0), 0 0 12px rgba(244, 113, 158, .25); }
+  50% { transform: scale(1.1); box-shadow: 0 0 0 11px rgba(238, 82, 137, .16), 0 0 30px rgba(255, 169, 196, .86); }
+}
+
 .chaotica-opening-status {
   position: absolute;
   left: 50%;
