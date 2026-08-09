@@ -15,6 +15,7 @@ body:has(.chaotica-opening) { background: #10070b; }
   position: absolute;
   inset: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .chaotica-opening-scene {
@@ -39,8 +40,33 @@ body:has(.chaotica-opening) { background: #10070b; }
 }
 
 .chaotica-opening[data-phase='opening'] .chaotica-opening-scene-opening {
-  transform: scale(1.09);
-  filter: brightness(1.16) saturate(1.08);
+  animation: chaotica-pull-through 1050ms cubic-bezier(.16, .82, .18, 1) both;
+}
+
+.chaotica-opening[data-phase='opening']::before {
+  position: absolute;
+  inset: -12%;
+  z-index: 1;
+  pointer-events: none;
+  content: '';
+  background:
+    radial-gradient(ellipse at 50% 49%, rgba(255, 242, 220, .98) 0 2%, rgba(255, 185, 204, .82) 5%, rgba(189, 43, 92, .4) 15%, transparent 38%),
+    radial-gradient(ellipse at 50% 50%, transparent 18%, rgba(10, 1, 7, .3) 56%, rgba(4, 0, 3, .9) 100%);
+  mix-blend-mode: screen;
+  animation: chaotica-seal-flash 1050ms ease-out both;
+}
+
+@keyframes chaotica-pull-through {
+  0% { opacity: 0; transform: scale(.82); filter: brightness(.58) saturate(.76); }
+  24% { opacity: 1; transform: scale(1.015); filter: brightness(1.45) saturate(1.22); }
+  100% { opacity: 1; transform: scale(1.3); filter: brightness(1.08) saturate(1.08); }
+}
+
+@keyframes chaotica-seal-flash {
+  0% { opacity: 0; transform: scale(.65); }
+  19% { opacity: .88; transform: scale(1); }
+  45% { opacity: .24; transform: scale(1.16); }
+  100% { opacity: 0; transform: scale(1.5); }
 }
 
 .chaotica-auth-plaque {

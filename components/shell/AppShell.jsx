@@ -38,6 +38,7 @@ export default function AppShell({ children }) {
         return;
       }
     }
+    window.sessionStorage.removeItem('chaotica-gate-released-v1');
     router.push('/');
     setIsOpen(false);
     setExitStatus('');

@@ -1,13 +1,18 @@
 import Cocoa
 import WebKit
+import Speech
 
 private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
-final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
   private var window: NSWindow!
   private var webView: WKWebView!
   private var openingSplashView: NSImageView!
   private var hasRevealedWebContent = false
+  private let audioEngine = AVAudioEngine()
+  private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+  private var recognitionTask: SFSpeechRecognitionTask?
+  private var speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -15,6 +20,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     let configuration = WKWebViewConfiguration()
     configuration.websiteDataStore = .default()
     configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+    configuration.userContentController.add(self, name: "chaoticaSpeech")
+    configuration.userContentController.addUserScript(WKUserScript(
+      source: """
+        window.ChaoticaNativeSpeech = Object.freeze({
+          start: () => window.webkit?.messageHandlers?.chaoticaSpeech?.postMessage({ action: 'start' }),
+          stop: () => window.webkit?.messageHandlers?.chaoticaSpeech?.postMessage({ action: 'stop' })
+        });
+      """,
+      injectionTime: .atDocumentStart,
+      forMainFrameOnly: true
+    ))
 
     webView = WKWebView(frame: .zero, configuration: configuration)
     webView.navigationDelegate = self
@@ -62,6 +78,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     true
+  }
+
+  func applicationWillTerminate(_ notification: Notification) {
+    stopNativeSpeech(notify: false)
+  }
+
+  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    guard message.name == "chaoticaSpeech",
+          let body = message.body as? [String: Any],
+          let action = body["action"] as? String else { return }
+
+    if action == "start" {
+      startNativeSpeech()
+    } else if action == "stop" {
+      stopNativeSpeech(notify: false)
+    }
   }
 
   func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -145,6 +177,85 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     panel.allowsMultipleSelection = parameters.allowsMultipleSelection
     panel.beginSheetModal(for: window) { response in
       completionHandler(response == .OK ? panel.urls : nil)
+    }
+  }
+
+  private func startNativeSpeech() {
+    stopNativeSpeech(notify: false)
+    SFSpeechRecognizer.requestAuthorization { [weak self] authorization in
+      DispatchQueue.main.async {
+        guard let self else { return }
+        guard authorization == .authorized else {
+          self.sendSpeechEvent(type: "error", message: "Speech recognition permission is required for the spoken oath.")
+          return
+        }
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+          DispatchQueue.main.async {
+            guard granted else {
+              self.sendSpeechEvent(type: "error", message: "Microphone permission is required for the spoken oath.")
+              return
+            }
+            self.beginNativeRecognition()
+          }
+        }
+      }
+    }
+  }
+
+  private func beginNativeRecognition() {
+    guard let speechRecognizer, speechRecognizer.isAvailable else {
+      sendSpeechEvent(type: "error", message: "Speech recognition is temporarily unavailable. Listening will retry.")
+      return
+    }
+
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.shouldReportPartialResults = true
+    recognitionRequest = request
+
+    let inputNode = audioEngine.inputNode
+    inputNode.removeTap(onBus: 0)
+    let format = inputNode.outputFormat(forBus: 0)
+    inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak request] buffer, _ in
+      request?.append(buffer)
+    }
+
+    do {
+      audioEngine.prepare()
+      try audioEngine.start()
+      sendSpeechEvent(type: "listening")
+      recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
+        guard let self else { return }
+        if let transcript = result?.bestTranscription.formattedString, !transcript.isEmpty {
+          self.sendSpeechEvent(type: "result", transcript: transcript)
+        }
+        if error != nil || result?.isFinal == true {
+          self.stopNativeSpeech(notify: true)
+        }
+      }
+    } catch {
+      stopNativeSpeech(notify: false)
+      sendSpeechEvent(type: "error", message: "CHAOTICA could not start the spoken oath listener.")
+    }
+  }
+
+  private func stopNativeSpeech(notify: Bool) {
+    audioEngine.stop()
+    audioEngine.inputNode.removeTap(onBus: 0)
+    recognitionRequest?.endAudio()
+    recognitionTask?.cancel()
+    recognitionRequest = nil
+    recognitionTask = nil
+    if notify { sendSpeechEvent(type: "ended") }
+  }
+
+  private func sendSpeechEvent(type: String, transcript: String? = nil, message: String? = nil) {
+    var payload: [String: String] = ["type": type]
+    if let transcript { payload["transcript"] = transcript }
+    if let message { payload["message"] = message }
+    guard let data = try? JSONSerialization.data(withJSONObject: payload),
+          let json = String(data: data, encoding: .utf8) else { return }
+    DispatchQueue.main.async { [weak self] in
+      self?.webView?.evaluateJavaScript("window.dispatchEvent(new CustomEvent('chaotica-native-speech', { detail: \(json) }));")
     }
   }
 
