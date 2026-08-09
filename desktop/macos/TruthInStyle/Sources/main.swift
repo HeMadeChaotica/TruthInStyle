@@ -3,10 +3,11 @@ import WebKit
 
 private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
-@main
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
   private var window: NSWindow!
   private var webView: WKWebView!
+  private var openingSplashView: NSImageView!
+  private var hasRevealedWebContent = false
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -20,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     webView.uiDelegate = self
     webView.allowsBackForwardNavigationGestures = true
 
-    let startFrame = NSRect(x: 0, y: 0, width: 1440, height: 960)
+    let startFrame = NSRect(x: 0, y: 0, width: 1440, height: 900)
     window = NSWindow(
       contentRect: startFrame,
       styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -34,7 +35,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     window.backgroundColor = .black
     window.minSize = NSSize(width: 1024, height: 720)
     window.center()
-    window.contentView = webView
+
+    let rootView = NSView(frame: startFrame)
+    rootView.wantsLayer = true
+    window.contentView = rootView
+
+    openingSplashView = NSImageView(frame: rootView.bounds)
+    openingSplashView.image = Bundle.main.url(forResource: "OpeningGate", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    openingSplashView.imageScaling = .scaleAxesIndependently
+    openingSplashView.autoresizingMask = [.width, .height]
+    rootView.addSubview(openingSplashView)
+
+    webView.frame = rootView.bounds
+    webView.autoresizingMask = [.width, .height]
+    webView.isHidden = true
+    rootView.addSubview(webView)
     webView.load(URLRequest(url: chaoticaURL))
 
     DispatchQueue.main.async { [weak self] in
@@ -66,6 +81,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
     webView.reload()
+  }
+
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    revealWebContentWhenOpeningSceneIsReady()
+  }
+
+  private func revealWebContentWhenOpeningSceneIsReady() {
+    guard !hasRevealedWebContent else { return }
+
+    webView.evaluateJavaScript("""
+      (() => {
+        const scene = document.querySelector('.chaotica-opening-scene-email');
+        return Boolean(scene && scene.complete && scene.naturalWidth > 0);
+      })()
+    """) { [weak self] result, _ in
+      guard let self else { return }
+      if (result as? Bool) == true {
+        self.hasRevealedWebContent = true
+        self.webView.isHidden = false
+        NSAnimationContext.runAnimationGroup { context in
+          context.duration = 0.35
+          self.openingSplashView.animator().alphaValue = 0
+        } completionHandler: {
+          self.openingSplashView.removeFromSuperview()
+        }
+        return
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+        self?.revealWebContentWhenOpeningSceneIsReady()
+      }
+    }
   }
 
   func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
@@ -107,3 +153,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     decisionHandler(.grant)
   }
 }
+
+let app = NSApplication.shared
+let appDelegate = AppDelegate()
+app.delegate = appDelegate
+app.setActivationPolicy(.regular)
+app.run()
