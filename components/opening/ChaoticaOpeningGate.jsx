@@ -115,7 +115,7 @@ export default function ChaoticaOpeningGate() {
     setListening(false);
     setMessage('THE OATH HAS BEEN RECEIVED. CHAOTICA IS OPENING.');
     setPhase('opening');
-    window.setTimeout(() => router.push('/the-assurer'), 900);
+    window.setTimeout(() => router.push('/the-assurer'), 1800);
   };
 
   return (
