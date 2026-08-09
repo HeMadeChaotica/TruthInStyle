@@ -19,7 +19,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     webView.navigationDelegate = self
     webView.uiDelegate = self
     webView.allowsBackForwardNavigationGestures = true
-    webView.setValue(false, forKey: "drawsBackground")
 
     let startFrame = NSRect(x: 0, y: 0, width: 1440, height: 960)
     window = NSWindow(
@@ -30,16 +29,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     )
     window.title = "CHAOTICA"
     window.titleVisibility = .hidden
-    window.titlebarAppearsTransparent = true
-    window.isOpaque = false
-    window.backgroundColor = .clear
+    window.titlebarAppearsTransparent = false
+    window.isOpaque = true
+    window.backgroundColor = .black
     window.minSize = NSSize(width: 1024, height: 720)
     window.center()
     window.contentView = webView
-    window.makeKeyAndOrderFront(nil)
-    NSApp.activate(ignoringOtherApps: true)
-
     webView.load(URLRequest(url: chaoticaURL))
+
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      self.window.makeKeyAndOrderFront(nil)
+      self.window.orderFrontRegardless()
+      NSApp.activate(ignoringOtherApps: true)
+    }
   }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -59,6 +62,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     }
 
     decisionHandler(.allow)
+  }
+
+  func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    webView.reload()
   }
 
   func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
