@@ -9,7 +9,7 @@ function authMessage(result, fallback) {
   return [result?.error, result?.error_code, result?.error_description].filter(Boolean).join(' | ') || fallback;
 }
 
-export default function SupabaseGatePlaque({ onAuthorized }) {
+export default function SupabaseGatePlaque({ onCodeSent, onAuthorized }) {
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
   const [codeSent, setCodeSent] = useState(false);
@@ -37,6 +37,7 @@ export default function SupabaseGatePlaque({ onAuthorized }) {
 
     setCodeSent(true);
     setStatus('CODE SENT.');
+    onCodeSent?.();
   };
 
   const verifyCode = async (event) => {
