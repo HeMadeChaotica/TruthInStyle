@@ -124,9 +124,13 @@ export default function ChaoticaOpeningGate() {
     setMessage('THE OATH HAS BEEN HEARD AND ACCEPTED. CHAOTICA IS OPENING.');
     window.sessionStorage.setItem(GATE_RELEASE_KEY, 'true');
     setPhase('opening');
+  }, [phase, router, spokenOathIsAccepted]);
+
+  useEffect(() => {
+    if (phase !== 'opening') return undefined;
     const timer = window.setTimeout(() => router.replace('/the-assurer'), 1050);
     return () => window.clearTimeout(timer);
-  }, [phase, router, spokenOathIsAccepted]);
+  }, [phase, router]);
 
   const startSpeech = () => {
     if (window.ChaoticaNativeSpeech?.start) {
