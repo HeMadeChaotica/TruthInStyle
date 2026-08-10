@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
   private var recognitionID = UUID()
   private var lastLevelSentAt: TimeInterval = 0
+  private var recognitionActive = false
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -183,17 +184,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   }
 
   private func startNativeSpeech() {
-    stopNativeSpeech(notify: false)
+    guard !recognitionActive else { return }
+    recognitionActive = true
+    endRecognitionResources()
     SFSpeechRecognizer.requestAuthorization { [weak self] authorization in
       DispatchQueue.main.async {
         guard let self else { return }
+        guard self.recognitionActive else { return }
         guard authorization == .authorized else {
+          self.recognitionActive = false
           self.sendSpeechEvent(type: "error", message: "Allow CHAOTICA in Privacy & Security > Speech Recognition, then select LISTEN AGAIN.")
           return
         }
         AVCaptureDevice.requestAccess(for: .audio) { granted in
           DispatchQueue.main.async {
+            guard self.recognitionActive else { return }
             guard granted else {
+              self.recognitionActive = false
               self.sendSpeechEvent(type: "error", message: "Allow CHAOTICA in Privacy & Security > Microphone, then select LISTEN AGAIN.")
               return
             }
@@ -206,6 +213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   private func beginNativeRecognition() {
     guard let speechRecognizer, speechRecognizer.isAvailable else {
+      recognitionActive = false
       sendSpeechEvent(type: "error", message: "Apple Speech Recognition is unavailable. Check your internet connection, then select LISTEN AGAIN.")
       return
     }
@@ -218,8 +226,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
     let inputNode = audioEngine.inputNode
     inputNode.removeTap(onBus: 0)
-    let format = inputNode.outputFormat(forBus: 0)
-    inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self, weak request] buffer, _ in
+    let inputFormat = inputNode.inputFormat(forBus: 0)
+    guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+      recognitionActive = false
+      sendSpeechEvent(type: "error", message: "CHAOTICA cannot find an active microphone. Connect or select a microphone, then choose LISTEN AGAIN.")
+      return
+    }
+    inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { [weak self, weak request] buffer, _ in
       request?.append(buffer)
       self?.sendAudioLevel(from: buffer)
     }
@@ -252,13 +265,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   private func stopNativeSpeech(notify: Bool) {
     recognitionID = UUID()
+    recognitionActive = false
+    endRecognitionResources()
+    if notify { sendSpeechEvent(type: "ended") }
+  }
+
+  private func endRecognitionResources() {
     audioEngine.stop()
     audioEngine.inputNode.removeTap(onBus: 0)
     recognitionRequest?.endAudio()
     recognitionTask?.cancel()
     recognitionRequest = nil
     recognitionTask = nil
-    if notify { sendSpeechEvent(type: "ended") }
   }
 
   private func sendAudioLevel(from buffer: AVAudioPCMBuffer) {
