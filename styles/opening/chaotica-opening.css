@@ -176,6 +176,28 @@ body:has(.chaotica-opening) { background: #10070b; }
   font-size: 1rem;
 }
 
+.chaotica-oath-listener i {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+}
+
+.chaotica-oath-listener i b {
+  width: 3px;
+  min-height: 4px;
+  border-radius: 99px;
+  background: #f2a0ba;
+  box-shadow: 0 0 7px rgba(255, 175, 205, .65);
+  transform: scaleY(calc(.3 + var(--chaotica-voice-level, 0)));
+  transition: transform 90ms linear;
+}
+
+.chaotica-oath-listener i b:nth-child(2) { transform: scaleY(calc(.48 + var(--chaotica-voice-level, 0))); }
+.chaotica-oath-listener i b:nth-child(3) { transform: scaleY(calc(.72 + var(--chaotica-voice-level, 0))); }
+.chaotica-oath-listener i b:nth-child(4) { transform: scaleY(calc(.48 + var(--chaotica-voice-level, 0))); }
+
 .chaotica-oath-listener-orb {
   grid-row: 1 / span 2;
   width: 18px;

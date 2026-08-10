@@ -1,28 +1,23 @@
 import Cocoa
 import WebKit
+import Speech
 
 private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
-private let oathCommands = [
-  "Eugene this is your safest place tell it all tell it true tell it so you will remember how you got through",
-  "Eugene this is your safest place",
-  "tell it all",
-  "tell it true",
-  "tell it so you will remember how you got through",
-]
-
-final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler, NSSpeechRecognizerDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
   private var window: NSWindow!
   private var webView: WKWebView!
   private var openingSplashView: NSImageView!
   private var hasRevealedWebContent = false
-  private let oathRecognizer = NSSpeechRecognizer()
+  private let audioEngine = AVAudioEngine()
+  private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+  private var recognitionTask: SFSpeechRecognitionTask?
+  private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+  private var recognitionID = UUID()
+  private var lastLevelSentAt: TimeInterval = 0
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
-    oathRecognizer?.delegate = self
-    oathRecognizer?.commands = oathCommands
-    oathRecognizer?.listensInForegroundOnly = true
 
     let configuration = WKWebViewConfiguration()
     configuration.websiteDataStore = .default()
@@ -188,29 +183,113 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   }
 
   private func startNativeSpeech() {
-    guard let oathRecognizer else {
-      sendSpeechEvent(type: "error", message: "CHAOTICA could not prepare the spoken oath listener.")
+    stopNativeSpeech(notify: false)
+    SFSpeechRecognizer.requestAuthorization { [weak self] authorization in
+      DispatchQueue.main.async {
+        guard let self else { return }
+        guard authorization == .authorized else {
+          self.sendSpeechEvent(type: "error", message: "Allow CHAOTICA in Privacy & Security > Speech Recognition, then select LISTEN AGAIN.")
+          return
+        }
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+          DispatchQueue.main.async {
+            guard granted else {
+              self.sendSpeechEvent(type: "error", message: "Allow CHAOTICA in Privacy & Security > Microphone, then select LISTEN AGAIN.")
+              return
+            }
+            self.beginNativeRecognition()
+          }
+        }
+      }
+    }
+  }
+
+  private func beginNativeRecognition() {
+    guard let speechRecognizer, speechRecognizer.isAvailable else {
+      sendSpeechEvent(type: "error", message: "Apple Speech Recognition is unavailable. Check your internet connection, then select LISTEN AGAIN.")
       return
     }
-    oathRecognizer.stopListening()
-    oathRecognizer.commands = oathCommands
-    oathRecognizer.startListening()
-    sendSpeechEvent(type: "listening")
+
+    let request = SFSpeechAudioBufferRecognitionRequest()
+    request.shouldReportPartialResults = true
+    recognitionRequest = request
+    let currentRecognitionID = UUID()
+    recognitionID = currentRecognitionID
+
+    let inputNode = audioEngine.inputNode
+    inputNode.removeTap(onBus: 0)
+    let format = inputNode.outputFormat(forBus: 0)
+    inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self, weak request] buffer, _ in
+      request?.append(buffer)
+      self?.sendAudioLevel(from: buffer)
+    }
+
+    do {
+      audioEngine.prepare()
+      try audioEngine.start()
+      sendSpeechEvent(type: "listening")
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+        guard let self, self.recognitionID == currentRecognitionID else { return }
+        self.sendSpeechEvent(type: "quiet")
+      }
+      recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
+        guard let self, self.recognitionID == currentRecognitionID else { return }
+        if let transcript = result?.bestTranscription.formattedString, !transcript.isEmpty {
+          self.sendSpeechEvent(type: "result", transcript: transcript)
+        }
+        if let error {
+          self.stopNativeSpeech(notify: false)
+          self.sendSpeechEvent(type: "error", message: self.speechErrorMessage(error))
+        } else if result?.isFinal == true {
+          self.stopNativeSpeech(notify: true)
+        }
+      }
+    } catch {
+      stopNativeSpeech(notify: false)
+      sendSpeechEvent(type: "error", message: "CHAOTICA could not start the microphone. Select LISTEN AGAIN.")
+    }
   }
 
   private func stopNativeSpeech(notify: Bool) {
-    oathRecognizer?.stopListening()
+    recognitionID = UUID()
+    audioEngine.stop()
+    audioEngine.inputNode.removeTap(onBus: 0)
+    recognitionRequest?.endAudio()
+    recognitionTask?.cancel()
+    recognitionRequest = nil
+    recognitionTask = nil
     if notify { sendSpeechEvent(type: "ended") }
   }
 
-  func speechRecognizer(_ sender: NSSpeechRecognizer, didRecognizeCommand command: String) {
-    sendSpeechEvent(type: "result", transcript: command)
+  private func sendAudioLevel(from buffer: AVAudioPCMBuffer) {
+    let now = ProcessInfo.processInfo.systemUptime
+    guard now - lastLevelSentAt > 0.08,
+          let samples = buffer.floatChannelData?.pointee,
+          buffer.frameLength > 0 else { return }
+    lastLevelSentAt = now
+    let count = Int(buffer.frameLength)
+    var energy: Float = 0
+    for index in 0..<count { energy += samples[index] * samples[index] }
+    let rms = sqrt(energy / Float(count))
+    sendSpeechEvent(type: "level", level: min(1, max(0, rms * 16)))
   }
 
-  private func sendSpeechEvent(type: String, transcript: String? = nil, message: String? = nil) {
-    var payload: [String: String] = ["type": type]
+  private func speechErrorMessage(_ error: Error) -> String {
+    let description = (error as NSError).localizedDescription.lowercased()
+    if description.contains("permission") || description.contains("authorization") {
+      return "Allow CHAOTICA in Privacy & Security > Speech Recognition, then select LISTEN AGAIN."
+    }
+    if description.contains("network") || description.contains("internet") {
+      return "Apple Speech Recognition needs an internet connection. Reconnect, then select LISTEN AGAIN."
+    }
+    return "Apple Speech Recognition could not hear the oath. Select LISTEN AGAIN and speak clearly."
+  }
+
+  private func sendSpeechEvent(type: String, transcript: String? = nil, message: String? = nil, level: Float? = nil) {
+    var payload: [String: Any] = ["type": type]
     if let transcript { payload["transcript"] = transcript }
     if let message { payload["message"] = message }
+    if let level { payload["level"] = level }
     guard let data = try? JSONSerialization.data(withJSONObject: payload),
           let json = String(data: data, encoding: .utf8) else { return }
     DispatchQueue.main.async { [weak self] in
