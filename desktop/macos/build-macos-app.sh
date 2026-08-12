@@ -16,7 +16,7 @@ swiftc "$DESKTOP_ROOT/TruthInStyle/Sources/main.swift" \
   -o "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
 cp "$DESKTOP_ROOT/TruthInStyle/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
-cp "$ROOT/public/icons/TruthInStyle.icns" "$APP_BUNDLE/Contents/Resources/CHAOTICA.icns"
+cp "$ROOT/public/icons/CHAOTICA.icns" "$APP_BUNDLE/Contents/Resources/CHAOTICA.icns"
 cp "$ROOT/public/opening/chaotica-gate-email.png" "$APP_BUNDLE/Contents/Resources/OpeningGate.png"
 codesign --force --deep --sign - "$APP_BUNDLE"
 

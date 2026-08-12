@@ -571,9 +571,9 @@ export async function saveScheduleEntry(entry) {
     console.warn('THICC.TIME client entry saved locally because active client has no database UUID.');
     return safeEntry;
   }
-  const supabasePayload = Object.fromEntries(
-    Object.entries(safeEntry).filter(([key]) => !['schedule_layer', 'prospect_name', 'prospect_contact', 'recurrence_type', 'recurrence_days', 'recurrence_active'].includes(key)),
-  );
+  // Keep the full calendar record when the legacy direct-table path is
+  // enabled. CloudStateBridge remains the production sync path.
+  const supabasePayload = { ...safeEntry };
   const hasExistingId = isUuid(supabasePayload.id);
   if (!hasExistingId) delete supabasePayload.id;
   try {
