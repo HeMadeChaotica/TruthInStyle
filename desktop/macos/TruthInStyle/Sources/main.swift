@@ -2,7 +2,11 @@ import Cocoa
 import WebKit
 import Speech
 
-private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
+private let chaoticaBaseURL = URL(string: "https://www.tellnolies.app/")!
+private let chaoticaRoutes: Set<String> = [
+  "the-assurer", "the-summation", "hopewood", "525600", "clock-it",
+  "its-getting-thicc", "thicc-fitt", "da-eater", "remember-me"
+]
 
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
   private var window: NSWindow!
@@ -16,6 +20,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   private var recognitionID = UUID()
   private var lastLevelSentAt: TimeInterval = 0
   private var recognitionActive = false
+
+  private var initialURL: URL {
+    let arguments = ProcessInfo.processInfo.arguments
+    guard let routeIndex = arguments.firstIndex(of: "--route"),
+          arguments.indices.contains(routeIndex + 1) else { return chaoticaBaseURL }
+    return chaoticaURL(for: arguments[routeIndex + 1])
+  }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -69,7 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     webView.autoresizingMask = [.width, .height]
     webView.isHidden = true
     rootView.addSubview(webView)
-    webView.load(URLRequest(url: chaoticaURL))
+    webView.load(URLRequest(url: initialURL))
 
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
@@ -85,6 +96,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func applicationWillTerminate(_ notification: Notification) {
     stopNativeSpeech(notify: false)
+  }
+
+  func application(_ application: NSApplication, open urls: [URL]) {
+    guard let url = urls.first,
+          url.scheme?.lowercased() == "chaotica" else { return }
+    let route = url.host ?? url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+    webView.load(URLRequest(url: chaoticaURL(for: route)))
+    window.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
   }
 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -147,6 +167,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         self?.revealWebContentWhenOpeningSceneIsReady()
       }
     }
+  }
+
+  private func chaoticaURL(for route: String) -> URL {
+    let normalizedRoute = route.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    guard chaoticaRoutes.contains(normalizedRoute) else { return chaoticaBaseURL }
+    return URL(string: "https://www.tellnolies.app/\(normalizedRoute)") ?? chaoticaBaseURL
   }
 
   func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
