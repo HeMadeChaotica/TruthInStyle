@@ -1,7 +1,7 @@
 import Cocoa
 import WebKit
 
-private let openSize = NSSize(width: 560, height: 338)
+private let openSize = NSSize(width: 760, height: 458)
 private let glyphSize = NSSize(width: 110, height: 210)
 private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt"]
 
