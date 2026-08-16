@@ -1,8 +1,8 @@
 import Cocoa
 import WebKit
 
-private let openSize = NSSize(width: 430, height: 260)
-private let glyphSize = NSSize(width: 42, height: 112)
+private let openSize = NSSize(width: 560, height: 338)
+private let glyphSize = NSSize(width: 110, height: 210)
 private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt"]
 
 private struct ShrineSnapshot: Codable {
@@ -16,34 +16,6 @@ private struct ShrineSnapshot: Codable {
 private final class ShrinePanel: NSPanel {
   override var canBecomeKey: Bool { false }
   override var canBecomeMain: Bool { false }
-}
-
-private final class TruthWandView: NSView {
-  override var isOpaque: Bool { false }
-
-  override func draw(_ dirtyRect: NSRect) {
-    guard let context = NSGraphicsContext.current?.cgContext else { return }
-    let bounds = self.bounds.insetBy(dx: 6, dy: 5)
-    context.setShadow(offset: .zero, blur: 11, color: NSColor.systemPink.withAlphaComponent(0.8).cgColor)
-    let body = NSBezierPath(roundedRect: NSRect(x: bounds.midX - 5, y: bounds.minY + 12, width: 10, height: bounds.height - 30), xRadius: 5, yRadius: 5)
-    NSColor(calibratedRed: 0.41, green: 0.04, blue: 0.21, alpha: 0.98).setFill()
-    body.fill()
-    NSColor(calibratedRed: 1.0, green: 0.64, blue: 0.8, alpha: 0.95).setStroke()
-    body.lineWidth = 1.3
-    body.stroke()
-    let crystal = NSBezierPath()
-    crystal.move(to: NSPoint(x: bounds.midX, y: bounds.maxY))
-    crystal.line(to: NSPoint(x: bounds.midX + 12, y: bounds.maxY - 18))
-    crystal.line(to: NSPoint(x: bounds.midX, y: bounds.maxY - 34))
-    crystal.line(to: NSPoint(x: bounds.midX - 12, y: bounds.maxY - 18))
-    crystal.close()
-    NSColor(calibratedRed: 0.96, green: 0.18, blue: 0.53, alpha: 1).setFill()
-    crystal.fill()
-    NSColor(calibratedRed: 1, green: 0.85, blue: 0.92, alpha: 1).setStroke()
-    crystal.lineWidth = 1.1
-    crystal.stroke()
-    context.setShadow(offset: .zero, blur: 0, color: nil)
-  }
 }
 
 final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
@@ -100,7 +72,11 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     glyphPanel.backgroundColor = .clear
     glyphPanel.hasShadow = false
     glyphPanel.hidesOnDeactivate = false
-    glyphPanel.contentView = TruthWandView(frame: NSRect(origin: .zero, size: glyphSize))
+    let wandView = NSImageView(frame: NSRect(origin: .zero, size: glyphSize))
+    wandView.image = Bundle.main.url(forResource: "TruthWand", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    wandView.imageScaling = .scaleProportionallyUpOrDown
+    wandView.imageAlignment = .alignCenter
+    glyphPanel.contentView = wandView
     positionGlyphPanel()
   }
 
@@ -113,7 +89,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   private func positionGlyphPanel() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - 25, y: visible.midY - glyphSize.height / 2))
+    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - 88, y: visible.midY - glyphSize.height / 2))
   }
 
   private func makeStatusMenu() {

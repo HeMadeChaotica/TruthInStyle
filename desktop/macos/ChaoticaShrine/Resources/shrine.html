@@ -12,14 +12,15 @@
     .shrine { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 22px; background: #12030d url("ShrineOpen.png") center / cover no-repeat; box-shadow: 0 20px 46px rgba(0, 0, 0, .56), 0 0 28px rgba(231, 48, 126, .24); }
     .shrine::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 15% 43%, rgba(255, 142, 192, .16), transparent 36%), linear-gradient(90deg, transparent 50%, rgba(4, 0, 4, .08)); mix-blend-mode: screen; }
     .drag-rim { position: absolute; inset: 0 0 auto; height: 18px; z-index: 8; -webkit-app-region: drag; }
-    .grid { position: absolute; z-index: 3; left: 45.2%; right: 2.8%; top: 7.2%; bottom: 7.8%; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: .92fr 1.06fr .92fr; gap: 3.3%; }
-    .signal { min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 5px 7px; border: 0; border-radius: 11px; background: rgba(15, 0, 11, .06); color: inherit; text-align: left; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+    .grid { position: absolute; z-index: 3; left: 44.4%; right: 3.1%; top: 8.8%; bottom: 8.8%; display: grid; grid-template-columns: 1fr; grid-template-rows: .95fr 1.05fr 1.2fr; gap: 5.1%; }
+    .signal { min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: 10px 14px; border: 0; border-radius: 13px; background: rgba(12, 0, 9, .2); color: inherit; text-align: left; cursor: pointer; transition: background .18s ease, transform .18s ease, opacity .32s ease; }
     .signal:hover { background: rgba(255, 114, 178, .12); transform: translateY(-1px); }
     .signal.wide { grid-column: 1 / span 2; }
-    .label { color: #f9a7c8; font-size: clamp(6px, 1.35vw, 9px); font-weight: 800; letter-spacing: .12em; line-height: 1; text-shadow: 0 1px 6px rgba(23, 0, 15, .9); text-transform: uppercase; }
-    .value { display: block; max-width: 100%; margin-top: 3px; overflow: hidden; color: #fff0f5; font-family: Georgia, "Times New Roman", serif; font-size: clamp(10px, 2.15vw, 15px); font-weight: 700; letter-spacing: .01em; line-height: 1.06; text-overflow: ellipsis; text-shadow: 0 1px 8px rgba(20, 0, 12, .96); white-space: nowrap; }
-    .wide .value { font-size: clamp(11px, 2.4vw, 16px); }
-    .empty { color: rgba(255, 221, 234, .56); font-family: "Avenir Next", sans-serif; font-size: clamp(8px, 1.6vw, 11px); font-weight: 600; letter-spacing: .05em; }
+    .label { color: #ffb6d3; font-size: clamp(12px, 2vw, 15px); font-weight: 800; letter-spacing: .13em; line-height: 1; text-shadow: 0 1px 6px rgba(23, 0, 15, .9); text-transform: uppercase; }
+    .value { display: block; max-width: 100%; margin-top: 8px; overflow: hidden; color: #fff5f8; font-family: Georgia, "Times New Roman", serif; font-size: clamp(20px, 3vw, 25px); font-weight: 700; letter-spacing: .01em; line-height: 1.12; text-overflow: ellipsis; text-shadow: 0 1px 8px rgba(20, 0, 12, .96); white-space: nowrap; }
+    .pulse .value { font-size: clamp(18px, 2.6vw, 22px); white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .empty { color: rgba(255, 221, 234, .58); font-family: "Avenir Next", sans-serif; font-size: clamp(17px, 2.2vw, 19px); font-weight: 600; letter-spacing: .05em; }
+    .is-switching { opacity: .22; }
   </style>
 </head>
 <body>
@@ -27,24 +28,54 @@
     <div class="drag-rim"></div>
     <section class="grid" aria-label="Live day signals">
       <button class="signal" data-route="the-assurer"><span class="label">Title of the Day</span><strong class="value" id="title">—</strong></button>
-      <button class="signal" data-route="the-assurer"><span class="label">Mood</span><strong class="value" id="mood">—</strong></button>
-      <button class="signal wide" data-route="the-assurer"><span class="label">Era</span><strong class="value" id="era">—</strong></button>
-      <button class="signal" data-route="da-eater"><span class="label">Macro Progress</span><strong class="value" id="macro">—</strong></button>
-      <button class="signal" data-route="thicc-fitt"><span class="label">Next Commitment</span><strong class="value" id="next">—</strong></button>
+      <button class="signal" data-route="the-assurer"><span class="label">Mood · Era</span><strong class="value" id="mood-era">—</strong></button>
+      <button class="signal pulse" id="pulse" data-route="the-assurer"><span class="label" id="pulse-label">Day Pulse</span><strong class="value" id="pulse-value">—</strong></button>
     </section>
   </main>
   <script>
-    const fields = ["title", "mood", "era", "macro", "next"];
+    let pulseItems = [];
+    let pulseIndex = 0;
+    let rotationTimer = null;
     function clean(value) { return typeof value === "string" && value.trim() ? value.trim() : "—"; }
+    function setText(id, value) {
+      const node = document.getElementById(id);
+      if (!node) return;
+      node.textContent = value;
+      node.classList.toggle("empty", value === "—");
+    }
+    function drawPulse() {
+      const box = document.getElementById("pulse");
+      const item = pulseItems[pulseIndex] || { label: "Day Pulse", value: "—", route: "the-assurer" };
+      box.classList.add("is-switching");
+      window.setTimeout(() => {
+        document.getElementById("pulse-label").textContent = item.label;
+        setText("pulse-value", item.value);
+        box.dataset.route = item.route;
+        box.classList.remove("is-switching");
+      }, 145);
+    }
+    function startRotation() {
+      if (rotationTimer) window.clearInterval(rotationTimer);
+      if (pulseItems.length < 2) return;
+      rotationTimer = window.setInterval(() => {
+        pulseIndex = (pulseIndex + 1) % pulseItems.length;
+        drawPulse();
+      }, 7000);
+    }
     window.ChaoticaShrine = Object.freeze({
       setSnapshot(snapshot = {}) {
-        fields.forEach((field) => {
-          const node = document.getElementById(field);
-          if (!node) return;
-          const value = clean(snapshot[field]);
-          node.textContent = value;
-          node.classList.toggle("empty", value === "—");
-        });
+        setText("title", clean(snapshot.title));
+        const mood = clean(snapshot.mood);
+        const era = clean(snapshot.era);
+        setText("mood-era", mood !== "—" && era !== "—" ? `${mood} · ${era}` : (mood !== "—" ? mood : era));
+        pulseItems = [
+          { label: "Macro Progress", value: clean(snapshot.macro), route: "da-eater" },
+          { label: "Next Commitment", value: clean(snapshot.next), route: "thicc-fitt" }
+        ].filter((item) => item.value !== "—");
+        if (!pulseItems.length) pulseItems = [{ label: "Day Pulse", value: "—", route: "the-assurer" }];
+        pulseIndex = 0;
+        drawPulse();
+        startRotation();
       }
     });
     document.querySelectorAll("[data-route]").forEach((node) => node.addEventListener("click", () => {
