@@ -32,7 +32,7 @@ body:has(.chaotica-opening) { background: #10070b; }
 }
 
 .chaotica-opening[data-phase='email'] .chaotica-opening-scene-email,
-.chaotica-opening[data-phase='code'] .chaotica-opening-scene-code,
+.chaotica-opening[data-phase='password'] .chaotica-opening-scene-password,
 .chaotica-opening[data-phase='oath'] .chaotica-opening-scene-oath,
 .chaotica-opening[data-phase='opening'] .chaotica-opening-scene-opening {
   opacity: 1;

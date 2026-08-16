@@ -2,7 +2,7 @@ import Cocoa
 import WebKit
 
 private let openSize = NSSize(width: 1152, height: 720)
-private let glyphSize = NSSize(width: 132, height: 310)
+private let glyphSize = NSSize(width: 180, height: 540)
 private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt", "its-getting-thicc", "remember-me"]
 
 private struct ShrineMacroBar: Codable {
@@ -42,6 +42,18 @@ private struct ShrineSnapshot: Codable {
 private final class ShrinePanel: NSPanel {
   override var canBecomeKey: Bool { false }
   override var canBecomeMain: Bool { false }
+}
+
+private final class ShrineGlyphView: NSImageView {
+  var onActivate: (() -> Void)?
+
+  override func mouseDown(with event: NSEvent) {
+    onActivate?()
+  }
+
+  override func resetCursorRects() {
+    addCursorRect(bounds, cursor: .pointingHand)
+  }
 }
 
 final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
@@ -98,10 +110,11 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     glyphPanel.backgroundColor = .clear
     glyphPanel.hasShadow = false
     glyphPanel.hidesOnDeactivate = false
-    let wandView = NSImageView(frame: NSRect(origin: .zero, size: glyphSize))
+    let wandView = ShrineGlyphView(frame: NSRect(origin: .zero, size: glyphSize))
     wandView.image = Bundle.main.url(forResource: "HopewoodLifeStaff-v1", withExtension: "png").flatMap(NSImage.init(contentsOf:))
     wandView.imageScaling = .scaleProportionallyUpOrDown
     wandView.imageAlignment = .alignCenter
+    wandView.onActivate = { [weak self] in self?.summonShrine() }
     glyphPanel.contentView = wandView
     positionGlyphPanel()
   }
@@ -115,7 +128,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   private func positionGlyphPanel() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width + 16, y: visible.midY - glyphSize.height / 2))
+    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width + 38, y: visible.minY + 30))
   }
 
   private func makeStatusMenu() {
@@ -185,6 +198,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   }
 
   private func openChaotica(route: String) {
+    retractShrine()
     let hostApp = URL(fileURLWithPath: "/Applications/CHAOTICA.app")
     let deepLink = URL(string: "chaotica://\(route)")!
     if FileManager.default.fileExists(atPath: hostApp.path) {

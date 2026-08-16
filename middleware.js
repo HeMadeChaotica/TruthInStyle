@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import {
-  CHAOTICA_ACCESS_COOKIE,
-  CHAOTICA_REFRESH_COOKIE,
-  LEGACY_CHAOTICA_ACCESS_COOKIE,
-  LEGACY_CHAOTICA_REFRESH_COOKIE,
-} from './src/server/chaoticaSupabaseAuth';
+
+const CHAOTICA_ACCESS_COOKIE = 'chaotica-supabase-session-access';
+const CHAOTICA_REFRESH_COOKIE = 'chaotica-supabase-session-refresh';
+const LEGACY_CHAOTICA_ACCESS_COOKIE = 'chaotica-supabase-access';
+const LEGACY_CHAOTICA_REFRESH_COOKIE = 'chaotica-supabase-refresh';
+const CHAOTICA_PASSWORD_SESSION_COOKIE = 'chaotica-password-gate-session';
 
 const PROTECTED_PATHS = [
   '/525600',
@@ -26,6 +26,43 @@ const SESSION_COOKIE_OPTIONS = {
   secure: process.env.NODE_ENV === 'production',
   path: '/',
 };
+
+function encodeBase64Url(bytes) {
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+async function passwordSessionIsValid(request) {
+  const password = String(process.env.CHAOTICA_GATE_PASSWORD || '');
+  if (!password) return false;
+
+  const raw = request.cookies.get(CHAOTICA_PASSWORD_SESSION_COOKIE)?.value || '';
+  const [expiresAtText, receivedSignature] = raw.split('.', 2);
+  const expiresAt = Number(expiresAtText);
+  if (!Number.isFinite(expiresAt) || expiresAt <= Math.floor(Date.now() / 1000) || !receivedSignature) return false;
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signatureBytes = new Uint8Array(await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(`CHAOTICA_PASSWORD_GATE:${expiresAt}`),
+  ));
+  const expectedSignature = encodeBase64Url(signatureBytes);
+  if (receivedSignature.length !== expectedSignature.length) return false;
+
+  let mismatch = 0;
+  for (let index = 0; index < expectedSignature.length; index += 1) {
+    mismatch |= expectedSignature.charCodeAt(index) ^ receivedSignature.charCodeAt(index);
+  }
+  return mismatch === 0;
+}
 
 async function verifyAccessToken({ accessToken, supabaseUrl, anonKey, ownerEmail }) {
   if (!accessToken) return false;
@@ -69,6 +106,14 @@ export async function middleware(request) {
   const isProtected = PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   if (!isProtected) return NextResponse.next();
 
+  const passwordGateConfigured = Boolean(String(process.env.CHAOTICA_GATE_PASSWORD || ''));
+  if (passwordGateConfigured) {
+    if (await passwordSessionIsValid(request)) return NextResponse.next();
+    const redirect = NextResponse.redirect(new URL('/', request.url));
+    redirect.cookies.delete(CHAOTICA_PASSWORD_SESSION_COOKIE);
+    return redirect;
+  }
+
   const accessToken = request.cookies.get(CHAOTICA_ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(CHAOTICA_REFRESH_COOKIE)?.value;
   if (!accessToken && !refreshToken) return NextResponse.redirect(new URL('/', request.url));
@@ -108,6 +153,7 @@ export async function middleware(request) {
   redirect.cookies.delete(CHAOTICA_REFRESH_COOKIE);
   redirect.cookies.delete(LEGACY_CHAOTICA_ACCESS_COOKIE);
   redirect.cookies.delete(LEGACY_CHAOTICA_REFRESH_COOKIE);
+  redirect.cookies.delete(CHAOTICA_PASSWORD_SESSION_COOKIE);
   return redirect;
 }
 

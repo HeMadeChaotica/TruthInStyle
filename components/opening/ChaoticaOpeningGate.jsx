@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SupabaseGatePlaque from './SupabaseGatePlaque';
+import ChaoticaPasswordPlaque from './ChaoticaPasswordPlaque';
 
 const OATH_TEXT = 'Eugene this is your safest place. Tell it all! Tell it true! Tell it so you will remember how you got through';
 const OATH_PHRASES = ['safest place', 'tell it all', 'tell it true', 'remember how you got through'];
 const GATE_RELEASE_KEY = 'chaotica-gate-released-v1';
 const SCENE_BY_PHASE = {
   email: '/opening/chaotica-gate-email.png',
-  code: '/opening/chaotica-gate-code.png',
+  password: '/opening/chaotica-gate-code.png',
   oath: '/opening/chaotica-gate-oath.png',
   opening: '/opening/chaotica-gate-open.png',
 };
@@ -33,6 +34,7 @@ export default function ChaoticaOpeningGate() {
   const [speechSupported, setSpeechSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [speechLevel, setSpeechLevel] = useState(0);
+  const [passwordGateConfigured, setPasswordGateConfigured] = useState(null);
 
   const oathPiecesHeard = countMatchedPhrases(heardOath);
   const spokenOathIsAccepted = oathPiecesHeard >= 3;
@@ -43,32 +45,23 @@ export default function ChaoticaOpeningGate() {
   }, []);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.get('chaotica-auth') && !params.get('chaotica-auth-error') && window.sessionStorage.getItem(GATE_RELEASE_KEY) === 'true') {
+    if (window.sessionStorage.getItem(GATE_RELEASE_KEY) === 'true') {
       router.replace('/the-assurer');
       return undefined;
     }
-    const authFailure = params.get('chaotica-auth-error');
-    if (authFailure) {
-      setPhase('email');
-      setMessage(authFailure);
-      if (window.history.replaceState) window.history.replaceState(null, '', '/');
-      return undefined;
-    }
-
-    if (params.get('chaotica-auth') !== 'complete') return undefined;
     let cancelled = false;
-    const verifyReturnedSession = async () => {
+    const inspectGate = async () => {
       const response = await fetch('/api/chaotica-auth/session', { cache: 'no-store' });
       const payload = await response.json().catch(() => ({}));
-      if (!cancelled && payload.authorized) setPhase('oath');
-      if (!cancelled && !payload.authorized) {
-        setPhase('email');
-        setMessage([payload.error, payload.error_description].filter(Boolean).join(' | ') || 'SESSION WAS NOT VERIFIED.');
+      if (cancelled) return;
+      setPasswordGateConfigured(Boolean(payload.passwordGateConfigured));
+      if (payload.authorized) {
+        setPhase('oath');
+      } else {
+        setPhase(payload.passwordGateConfigured ? 'password' : 'email');
       }
-      if (window.history.replaceState) window.history.replaceState(null, '', '/');
     };
-    verifyReturnedSession();
+    inspectGate();
     return () => { cancelled = true; };
   }, [router]);
 
@@ -177,11 +170,18 @@ export default function ChaoticaOpeningGate() {
           />
         ))}
       </div>
-      {phase === 'email' || phase === 'code' ? (
+      {phase === 'password' && passwordGateConfigured ? (
+        <ChaoticaPasswordPlaque
+          onAuthorized={() => {
+            setMessage('THE PASSWORD IS TRUE. SPEAK THE OATH.');
+            setPhase('oath');
+          }}
+        />
+      ) : null}
+      {phase === 'email' && passwordGateConfigured === false ? (
         <SupabaseGatePlaque
           onCodeSent={() => {
             setMessage('THE SEAL HAS RECOGNIZED YOU. ENTER THE CODE.');
-            setPhase('code');
           }}
           onAuthorized={() => {
             setMessage('THE CODE IS TRUE. SPEAK THE OATH.');

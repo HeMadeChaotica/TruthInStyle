@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { clearChaoticaPasswordGateCookie, getChaoticaPasswordSession } from './chaoticaPasswordGate';
 
 export const CHAOTICA_ACCESS_COOKIE = 'chaotica-supabase-session-access';
 export const CHAOTICA_REFRESH_COOKIE = 'chaotica-supabase-session-refresh';
@@ -56,6 +57,7 @@ export async function clearChaoticaAuthCookies() {
     LEGACY_CHAOTICA_ACCESS_COOKIE,
     LEGACY_CHAOTICA_REFRESH_COOKIE,
   ].forEach((name) => cookieStore.delete(name));
+  await clearChaoticaPasswordGateCookie();
 }
 
 export async function verifySupabaseAccessToken(accessToken) {
@@ -161,6 +163,9 @@ export async function verifyChaoticaEmailOtp(email, token) {
 }
 
 export async function getChaoticaSession() {
+  const passwordSession = await getChaoticaPasswordSession();
+  if (passwordSession.configured) return passwordSession;
+
   const config = getSupabaseAuthConfig();
   if (!config.configured) return { ok: false, configured: false, error: 'supabase_auth_not_configured' };
 
