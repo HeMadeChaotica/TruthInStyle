@@ -9,7 +9,12 @@ private struct ShrineDaySnapshot: Codable {
   let displayDate: String?
   let dayOfWeek: String?
   let chaoticaDayNumber: Int?
+  let mood: String?
+  let era: String?
+  let location: String?
+  let headHummer: String?
   let macroBars: [ShrineMacroBar]
+  let rememberDays: [ShrineRememberDay]
   let signals: [ShrineSignal]
 }
 
@@ -18,6 +23,12 @@ private struct ShrineMacroBar: Codable {
   let current: Double
   let target: Double
   let unit: String
+}
+
+private struct ShrineRememberDay: Codable {
+  let label: String
+  let dayNumber: Int
+  let types: [String]
 }
 
 private struct ShrineSignal: Codable {
@@ -67,8 +78,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
           const parse = (value) => {
             try { return value ? JSON.parse(value) : null; } catch { return null; }
           };
-          const localDate = () => {
-            const d = new Date();
+          const localDate = (source = new Date()) => {
+            const d = source;
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${d.getFullYear()}-${month}-${day}`;
@@ -89,16 +100,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             const total = (field) => meals.reduce((sum, meal) => sum + Number(meal?.[field] || 0), 0);
             const calories = total('calories') + (Array.isArray(daDay.cheatFlexEntries) ? daDay.cheatFlexEntries.reduce((sum, item) => sum + Number(item?.roughCalories || 0), 0) : 0);
             const targets = { protein: 250, carbs: 120, fats: 75, calories: 4500 };
-            const logged = meals.length > 0 || Number(daDay.waterOz || 0) > 0 || calories > 0;
-            const macroBars = logged ? [
+            const macroBars = [
               { label: 'Protein', current: total('protein'), target: targets.protein, unit: 'g' },
               { label: 'Carbs', current: total('carbs'), target: targets.carbs, unit: 'g' },
               { label: 'Fats', current: total('fats'), target: targets.fats, unit: 'g' },
               { label: 'Calories', current: calories, target: targets.calories, unit: 'cal' }
-            ] : [];
-            const macroSummary = logged
-              ? `P ${total('protein')}/${targets.protein} · C ${total('carbs')}/${targets.carbs} · F ${total('fats')}/${targets.fats} · ${calories}/${targets.calories} CAL`
-              : null;
+            ];
+            const macroSummary = `P ${total('protein')}/${targets.protein} · C ${total('carbs')}/${targets.carbs} · F ${total('fats')}/${targets.fats} · ${calories}/${targets.calories} CAL`;
             const word = object(assurer.wordOfDay || assurer.wordOfTheDay);
             const penny = safeArray(assurer.pennyQuestions).find((entry) => clean(entry?.answer));
             const thiccFitt = object(assurer.thiccFitt);
@@ -112,6 +120,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             const chaoticaDayNumber = Number.isFinite(sealedDayNumber) && sealedDayNumber > 0 ? sealedDayNumber : sealed.length + 1;
             const mood = first(assurer.mood, assurer.nativeFields?.mood);
             const era = first(assurer.era, assurer.nativeFields?.era);
+            const location = first(assurer.location, assurer.nativeFields?.location);
+            const headHummer = first(assurer.headHummer, assurer.nativeFields?.headHummer);
+            const rememberRaw = object(parse(localStorage.getItem('remember_me_standout_moments_v1')));
+            const rememberDays = Array.from({ length: 7 }, (_, index) => {
+              const day = new Date(today);
+              day.setHours(12, 0, 0, 0);
+              day.setDate(day.getDate() - 6 + index);
+              const dateKey = localDate(day);
+              const types = safeArray(rememberRaw[dateKey])
+                .map((entry) => String(entry?.type || entry?.standoutType || '').trim().toUpperCase())
+                .filter((type, typeIndex, all) => ['WOW', 'WTF', 'PLOT TWIST'].includes(type) && all.indexOf(type) === typeIndex);
+              return {
+                label: new Intl.DateTimeFormat('en-US', { weekday: 'narrow' }).format(day),
+                dayNumber: day.getDate(),
+                types
+              };
+            });
             const battleCry = typeof assurer.battleCry === 'string' ? assurer.battleCry : first(assurer.battleCry?.quote, assurer.battleCry?.text, assurer.battleCry?.statement);
             const signals = [
               signal('Macro Progress', macroSummary, 'da-eater', 'macro'),
@@ -121,7 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
               signal('Battle Cry', battleCry, 'the-assurer'),
               signal('THICC.FITT', first(workout.duration && `Workout · ${workout.duration}`, firstExercise && [firstExercise.exercise, firstExercise.sets && `${firstExercise.sets} sets`, firstExercise.reps && `${firstExercise.reps} reps`].filter(Boolean).join(' · '), thiccFitt.notes), 'thicc-fitt'),
               signal('THICC.TIME', first(todaySchedule[0]?.title, todaySchedule[0]?.label, todaySchedule[0]?.entryType, todaySchedule[0]?.person), 'its-getting-thicc'),
-              signal('Mood · Era', [mood, era].filter(Boolean).join(' · '), 'the-assurer')
+              signal('REMEMBER.ME', '7 DAYS · WOW / WTF / PLOT TWIST', 'remember-me', 'remember')
             ];
             send.postMessage({
               action: 'sync',
@@ -130,7 +155,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
                 displayDate: first(assurer.displayDate, formatDate(today)),
                 dayOfWeek: first(assurer.dayOfWeek, dayName(today)),
                 chaoticaDayNumber,
+                mood,
+                era,
+                location,
+                headHummer,
                 macroBars,
+                rememberDays,
                 signals
               }
             });

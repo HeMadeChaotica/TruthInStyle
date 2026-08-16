@@ -8,34 +8,47 @@
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
-    body { color: #fff0f4; font-family: "Avenir Next", "Helvetica Neue", sans-serif; user-select: none; }
-    .shrine { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 28px; background: #18030e url("ShrineOpen.png") center / cover no-repeat; box-shadow: 0 24px 62px rgba(0, 0, 0, .64), 0 0 42px rgba(255, 79, 161, .28); }
-    .shrine::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 38%, rgba(12, 0, 8, .08) 47%, rgba(10, 0, 7, .42) 58%, rgba(10, 0, 7, .78) 100%); }
-    .shrine::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 26% 49%, rgba(255, 141, 197, .13), transparent 31%), linear-gradient(0deg, rgba(0, 0, 0, .13), transparent 27%); mix-blend-mode: screen; }
-    .drag-rim { position: absolute; inset: 0 0 auto; height: 22px; z-index: 8; -webkit-app-region: drag; }
-    .reading-field { position: absolute; z-index: 3; top: 7%; right: 4.5%; bottom: 7%; width: 47%; display: grid; grid-template-rows: auto 1fr; gap: 22px; padding: 6px 0 0 32px; border-left: 1px solid rgba(255, 183, 218, .42); }
+    body { color: #fff3f6; font-family: "Marker Felt Thin", "Marker Felt", "Avenir Next", sans-serif; user-select: none; }
+    .shrine { position: relative; width: 100%; height: 100%; overflow: hidden; border-radius: 31px; background: #16050c url("ShrineOpen.png") center / cover no-repeat; box-shadow: 0 28px 72px rgba(0, 0, 0, .68), 0 0 44px rgba(255, 110, 172, .2); }
+    .shrine::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 40%, rgba(13, 0, 9, .13) 48%, rgba(12, 0, 8, .56) 62%, rgba(7, 0, 5, .87) 100%); }
+    .shrine::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 31% 50%, rgba(255, 166, 203, .10), transparent 29%), linear-gradient(0deg, rgba(0, 0, 0, .21), transparent 29%); mix-blend-mode: screen; }
+    .drag-rim { position: absolute; inset: 0 0 auto; height: 25px; z-index: 8; -webkit-app-region: drag; }
+    .reading-field { position: absolute; z-index: 3; top: 5.2%; right: 4.2%; bottom: 5.4%; width: 49%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 17px; padding-left: 36px; border-left: 1px solid rgba(255, 190, 220, .34); }
     button { font: inherit; }
     .identity, .carousel { min-width: 0; text-align: left; color: inherit; background: transparent; border: 0; cursor: pointer; }
-    .identity { padding: 0 0 21px; border-bottom: 1px solid rgba(255, 183, 218, .42); transition: opacity .2s ease; }
-    .identity:hover, .carousel:hover { opacity: .9; }
-    .eyebrow { display: block; color: #ffc1dc; font-size: 20px; font-weight: 900; letter-spacing: .18em; line-height: 1; text-transform: uppercase; text-shadow: 0 2px 8px rgba(25, 0, 17, .95); }
-    .title { display: block; max-width: 100%; margin-top: 13px; overflow: hidden; color: #fff9fb; font-family: Georgia, "Times New Roman", serif; font-size: 48px; font-weight: 700; letter-spacing: .01em; line-height: 1.04; text-overflow: ellipsis; text-shadow: 0 3px 14px rgba(20, 0, 12, 1); white-space: nowrap; }
-    .identity-meta { display: block; margin-top: 14px; color: #ffe1ed; font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 700; letter-spacing: .02em; line-height: 1.2; text-shadow: 0 2px 10px rgba(20, 0, 12, 1); }
-    .identity-meta span + span::before { content: " • "; color: #ff76b3; }
-    .carousel { position: relative; display: flex; min-height: 0; flex-direction: column; justify-content: space-between; padding: 12px 0 0; transition: opacity .16s ease, transform .16s ease; }
-    .carousel.is-switching { opacity: .13; transform: translateY(5px); }
-    .signal-label { display: block; color: #ffb7d8; font-size: 23px; font-weight: 900; letter-spacing: .16em; line-height: 1.1; text-transform: uppercase; text-shadow: 0 2px 9px rgba(25, 0, 17, .95); }
-    .signal-value { display: block; max-width: 100%; margin-top: 20px; overflow: hidden; color: #ffffff; font-family: Georgia, "Times New Roman", serif; font-size: 35px; font-weight: 700; letter-spacing: .005em; line-height: 1.16; text-shadow: 0 3px 13px rgba(20, 0, 12, 1); }
-    .signal-value.empty { color: rgba(255, 218, 232, .65); font-family: "Avenir Next", sans-serif; font-size: 30px; }
-    .macro-bars { display: none; gap: 15px; margin: 27px 0 auto; padding-right: 8px; }
-    .macro-bars.is-active { display: grid; }
-    .macro-row { display: grid; grid-template-columns: 105px 1fr auto; align-items: center; gap: 13px; color: #ffedf5; font-size: 20px; font-weight: 800; letter-spacing: .04em; }
-    .macro-track { height: 15px; overflow: hidden; border: 1px solid rgba(255, 194, 222, .55); border-radius: 999px; background: rgba(7, 0, 5, .58); box-shadow: inset 0 1px 5px rgba(0, 0, 0, .7); }
+    .identity { padding: 0 0 15px; border-bottom: 1px solid rgba(255, 188, 220, .42); }
+    .identity:hover, .carousel:hover { opacity: .92; }
+    .eyebrow { display: block; color: #ffd1e3; font-size: 20px; font-weight: 400; letter-spacing: .1em; line-height: 1.08; text-shadow: 0 2px 8px rgba(25, 0, 17, .95); }
+    .title { display: block; max-width: 100%; margin-top: 5px; overflow: hidden; color: #fffafd; font-size: 47px; font-weight: 400; letter-spacing: .01em; line-height: 1.06; text-overflow: ellipsis; text-shadow: 0 3px 14px rgba(20, 0, 12, 1); white-space: nowrap; }
+    .identity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin-top: 14px; }
+    .identity-cell { min-width: 0; }
+    .identity-label { display: block; color: #ffb9d7; font-size: 16px; font-weight: 400; letter-spacing: .12em; line-height: 1.08; text-transform: uppercase; }
+    .identity-value { display: block; overflow: hidden; color: #fff2f7; font-size: 23px; font-weight: 400; letter-spacing: .015em; line-height: 1.17; text-overflow: ellipsis; text-shadow: 0 2px 8px rgba(20, 0, 12, .95); white-space: nowrap; }
+    .identity-value.empty { color: rgba(255, 221, 236, .54); }
+    .carousel { position: relative; display: flex; min-height: 0; flex-direction: column; justify-content: space-between; padding: 10px 0 0; transition: opacity .24s ease, transform .24s ease; }
+    .carousel.is-switching { opacity: .10; transform: translateY(7px); }
+    .signal-label { display: block; color: #ffc1dd; font-size: 29px; font-weight: 400; letter-spacing: .08em; line-height: 1.08; text-shadow: 0 2px 9px rgba(25, 0, 17, .95); }
+    .signal-value { display: block; max-width: 98%; margin-top: 14px; overflow: hidden; color: #ffffff; font-size: 35px; font-weight: 400; letter-spacing: .01em; line-height: 1.22; text-shadow: 0 3px 13px rgba(20, 0, 12, 1); }
+    .signal-value.empty { color: rgba(255, 218, 232, .6); font-size: 30px; }
+    .macro-bars, .remember-board { display: none; }
+    .macro-bars.is-active { display: grid; gap: 13px; margin: 19px 2px 0 0; }
+    .macro-row { display: grid; grid-template-columns: 102px 1fr auto; align-items: center; gap: 12px; color: #ffedf5; font-size: 21px; font-weight: 400; letter-spacing: .025em; }
+    .macro-track { height: 17px; overflow: hidden; border: 1px solid rgba(255, 196, 222, .62); border-radius: 999px; background: rgba(7, 0, 5, .7); box-shadow: inset 0 1px 5px rgba(0, 0, 0, .7); }
     .macro-fill { height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, #df3d89, #ff9fc9 72%, #ffe5ef); box-shadow: 0 0 13px rgba(255, 93, 169, .75); }
-    .macro-copy { color: #fff4f8; font-family: Georgia, "Times New Roman", serif; font-size: 19px; font-weight: 700; white-space: nowrap; }
-    .rotation { display: flex; align-items: center; gap: 8px; margin-top: 24px; }
-    .rotation i { width: 10px; height: 10px; border: 1px solid rgba(255, 191, 221, .85); border-radius: 50%; background: transparent; transition: transform .24s ease, background .24s ease; }
-    .rotation i.active { transform: scale(1.4); background: #ff71b3; box-shadow: 0 0 12px #ff71b3; }
+    .macro-copy { color: #fff4f8; font-size: 20px; font-weight: 400; white-space: nowrap; }
+    .remember-board.is-active { display: block; margin: 21px 0 0; }
+    .remember-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; max-width: 98%; }
+    .remember-day { min-height: 80px; padding: 8px 3px; border-top: 1px solid rgba(255, 185, 217, .48); text-align: center; }
+    .remember-name { display: block; color: #ffc2dc; font-size: 18px; letter-spacing: .08em; }
+    .remember-number { display: block; margin-top: 2px; color: #fff4f8; font-size: 26px; }
+    .remember-types { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 4px; }
+    .remember-type { width: 7px; height: 7px; border-radius: 50%; background: #ff77b6; box-shadow: 0 0 7px rgba(255, 95, 173, .85); }
+    .remember-type.wtf { background: #f1bb74; box-shadow: 0 0 7px rgba(241, 187, 116, .75); }
+    .remember-type.plot-twist { background: #aed6c1; box-shadow: 0 0 7px rgba(174, 214, 193, .65); }
+    .remember-legend { margin-top: 11px; color: #ffe5ef; font-size: 18px; letter-spacing: .04em; }
+    .rotation { display: flex; align-items: center; gap: 10px; margin: 18px 0 2px; }
+    .rotation i { width: 11px; height: 11px; border: 1px solid rgba(255, 191, 221, .9); border-radius: 50%; background: transparent; transition: transform .24s ease, background .24s ease; }
+    .rotation i.active { transform: scale(1.42); background: #ff71b3; box-shadow: 0 0 12px #ff71b3; }
   </style>
 </head>
 <body>
@@ -45,22 +58,29 @@
       <button class="identity" data-route="the-assurer">
         <span class="eyebrow">Title of the Day</span>
         <strong class="title" id="title">—</strong>
-        <span class="identity-meta"><span id="date">—</span><span id="chaotica-day">CHAOTICA DAY #—</span></span>
+        <span class="identity-grid">
+          <span class="identity-cell"><span class="identity-label">Date</span><strong class="identity-value" id="date">—</strong></span>
+          <span class="identity-cell"><span class="identity-label">Chaotica Day</span><strong class="identity-value" id="chaotica-day">—</strong></span>
+          <span class="identity-cell"><span class="identity-label">Mood · Era</span><strong class="identity-value" id="mood-era">—</strong></span>
+          <span class="identity-cell"><span class="identity-label">Location</span><strong class="identity-value" id="location">—</strong></span>
+          <span class="identity-cell"><span class="identity-label">Head Hummer</span><strong class="identity-value" id="head-hummer">—</strong></span>
+        </span>
       </button>
       <button class="carousel" id="carousel" data-route="the-assurer">
         <span>
-          <span class="signal-label" id="signal-label">Day Pulse</span>
+          <span class="signal-label" id="signal-label">Macro Progress</span>
           <strong class="signal-value" id="signal-value">—</strong>
           <span class="macro-bars" id="macro-bars" aria-label="Macro progress bars"></span>
+          <span class="remember-board" id="remember-board" aria-label="Remember Me seven day calendar"></span>
         </span>
         <span class="rotation" id="rotation" aria-label="Rotating day signals"></span>
       </button>
     </section>
   </main>
   <script>
-    let signals = [], macroBars = [], signalIndex = 0, rotationTimer = null;
+    let signals = [], macroBars = [], rememberDays = [], signalIndex = 0, rotationTimer = null;
     const clean = (value) => typeof value === "string" && value.trim() ? value.trim() : "—";
-    const clip = (value, limit = 240) => value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
+    const clip = (value, limit = 185) => value.length > limit ? `${value.slice(0, limit - 1).trimEnd()}…` : value;
     function setText(id, value) { const node = document.getElementById(id); const safe = clean(value); node.textContent = safe; node.classList.toggle("empty", safe === "—"); }
     function drawMacros() {
       const box = document.getElementById("macro-bars"); box.innerHTML = "";
@@ -71,26 +91,44 @@
         box.appendChild(row);
       });
     }
+    function drawRemember() {
+      const box = document.getElementById("remember-board"); box.innerHTML = "";
+      const week = document.createElement("span"); week.className = "remember-week";
+      rememberDays.forEach((day) => {
+        const item = document.createElement("span"); item.className = "remember-day";
+        const types = Array.isArray(day?.types) ? day.types : [];
+        const dots = types.map((type) => `<i class="remember-type ${String(type).toLowerCase().replace(/\s+/g, '-')}" title="${type}"></i>`).join("");
+        item.innerHTML = `<span class="remember-name">${clean(day?.label)}</span><span class="remember-number">${Number(day?.dayNumber) || "—"}</span><span class="remember-types">${dots}</span>`;
+        week.appendChild(item);
+      });
+      const legend = document.createElement("span"); legend.className = "remember-legend"; legend.textContent = "WOW · WTF · PLOT TWIST";
+      box.append(week, legend);
+    }
     function drawSignal() {
-      const carousel = document.getElementById("carousel"), item = signals[signalIndex] || { label: "Day Pulse", value: "—", route: "the-assurer", kind: "text" };
+      const carousel = document.getElementById("carousel"), item = signals[signalIndex] || { label: "Macro Progress", value: "—", route: "the-assurer", kind: "macro" };
       carousel.classList.add("is-switching");
       window.setTimeout(() => {
         document.getElementById("signal-label").textContent = item.label || "Day Pulse";
-        setText("signal-value", clip(clean(item.value)));
-        document.getElementById("macro-bars").classList.toggle("is-active", item.kind === "macro" && macroBars.length > 0);
+        setText("signal-value", item.kind === "macro" ? "" : clip(clean(item.value)));
+        document.getElementById("signal-value").style.display = item.kind === "macro" ? "none" : "block";
+        document.getElementById("macro-bars").classList.toggle("is-active", item.kind === "macro");
+        document.getElementById("remember-board").classList.toggle("is-active", item.kind === "remember");
         carousel.dataset.route = item.route || "the-assurer";
         document.querySelectorAll("#rotation i").forEach((dot, index) => dot.classList.toggle("active", index === signalIndex));
         carousel.classList.remove("is-switching");
-      }, 155);
+      }, 170);
     }
-    function beginRotation() { if (rotationTimer) window.clearInterval(rotationTimer); if (signals.length < 2) return; rotationTimer = window.setInterval(() => { signalIndex = (signalIndex + 1) % signals.length; drawSignal(); }, 6000); }
+    function beginRotation() { if (rotationTimer) window.clearInterval(rotationTimer); if (signals.length < 2) return; rotationTimer = window.setInterval(() => { signalIndex = (signalIndex + 1) % signals.length; drawSignal(); }, 6500); }
     function drawDots() { const box = document.getElementById("rotation"); box.innerHTML = ""; signals.forEach((_, index) => { const dot = document.createElement("i"); dot.classList.toggle("active", index === signalIndex); box.appendChild(dot); }); }
     window.ChaoticaShrine = Object.freeze({
       setSnapshot(snapshot = {}) {
         setText("title", snapshot.title); setText("date", snapshot.displayDate || snapshot.dayOfWeek);
-        setText("chaotica-day", Number.isFinite(Number(snapshot.chaoticaDayNumber)) ? `CHAOTICA DAY #${Number(snapshot.chaoticaDayNumber)}` : "CHAOTICA DAY #—");
+        setText("chaotica-day", Number.isFinite(Number(snapshot.chaoticaDayNumber)) ? `#${Number(snapshot.chaoticaDayNumber)}` : "—");
+        setText("mood-era", [snapshot.mood, snapshot.era].filter((value) => typeof value === "string" && value.trim()).join(" · "));
+        setText("location", snapshot.location); setText("head-hummer", snapshot.headHummer);
         macroBars = Array.isArray(snapshot.macroBars) ? snapshot.macroBars : []; drawMacros();
-        signals = Array.isArray(snapshot.signals) && snapshot.signals.length ? snapshot.signals : [{ label: "Day Pulse", value: "—", route: "the-assurer", kind: "text" }];
+        rememberDays = Array.isArray(snapshot.rememberDays) ? snapshot.rememberDays : []; drawRemember();
+        signals = Array.isArray(snapshot.signals) && snapshot.signals.length ? snapshot.signals : [{ label: "Macro Progress", value: "", route: "da-eater", kind: "macro" }];
         signalIndex = 0; drawDots(); drawSignal(); beginRotation();
       }
     });

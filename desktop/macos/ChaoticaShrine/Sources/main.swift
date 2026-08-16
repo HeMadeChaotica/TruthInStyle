@@ -1,8 +1,8 @@
 import Cocoa
 import WebKit
 
-private let openSize = NSSize(width: 1120, height: 640)
-private let glyphSize = NSSize(width: 110, height: 210)
+private let openSize = NSSize(width: 1152, height: 720)
+private let glyphSize = NSSize(width: 132, height: 310)
 private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt", "its-getting-thicc", "remember-me"]
 
 private struct ShrineMacroBar: Codable {
@@ -10,6 +10,12 @@ private struct ShrineMacroBar: Codable {
   var current: Double
   var target: Double
   var unit: String
+}
+
+private struct ShrineRememberDay: Codable {
+  var label: String
+  var dayNumber: Int
+  var types: [String]
 }
 
 private struct ShrineSignal: Codable {
@@ -24,7 +30,12 @@ private struct ShrineSnapshot: Codable {
   var displayDate: String? = nil
   var dayOfWeek: String? = nil
   var chaoticaDayNumber: Int? = nil
+  var mood: String? = nil
+  var era: String? = nil
+  var location: String? = nil
+  var headHummer: String? = nil
   var macroBars: [ShrineMacroBar] = []
+  var rememberDays: [ShrineRememberDay] = []
   var signals: [ShrineSignal] = []
 }
 
@@ -88,7 +99,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     glyphPanel.hasShadow = false
     glyphPanel.hidesOnDeactivate = false
     let wandView = NSImageView(frame: NSRect(origin: .zero, size: glyphSize))
-    wandView.image = Bundle.main.url(forResource: "TruthWand", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    wandView.image = Bundle.main.url(forResource: "HopewoodLifeStaff-v1", withExtension: "png").flatMap(NSImage.init(contentsOf:))
     wandView.imageScaling = .scaleProportionallyUpOrDown
     wandView.imageAlignment = .alignCenter
     glyphPanel.contentView = wandView
@@ -98,13 +109,13 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   private func positionOpenPanel() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    shrinePanel.setFrameOrigin(NSPoint(x: visible.maxX - openSize.width - 18, y: visible.midY - openSize.height / 2))
+    shrinePanel.setFrameOrigin(NSPoint(x: visible.maxX - openSize.width - 24, y: visible.minY + 28))
   }
 
   private func positionGlyphPanel() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - 88, y: visible.midY - glyphSize.height / 2))
+    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width + 16, y: visible.midY - glyphSize.height / 2))
   }
 
   private func makeStatusMenu() {

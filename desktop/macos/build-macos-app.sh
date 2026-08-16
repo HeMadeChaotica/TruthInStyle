@@ -32,8 +32,8 @@ swiftc "$DESKTOP_ROOT/ChaoticaShrine/Sources/main.swift" \
 cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/Info.plist" "$SHRINE_BUNDLE/Contents/Info.plist"
 cp "$ROOT/public/icons/CHAOTICA.icns" "$SHRINE_BUNDLE/Contents/Resources/CHAOTICA.icns"
 cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/shrine.html" "$SHRINE_BUNDLE/Contents/Resources/shrine.html"
-cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/ShrineOpen-v2.png" "$SHRINE_BUNDLE/Contents/Resources/ShrineOpen.png"
-cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/TruthWand.png" "$SHRINE_BUNDLE/Contents/Resources/TruthWand.png"
+cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/ShrineOpen-v3.png" "$SHRINE_BUNDLE/Contents/Resources/ShrineOpen.png"
+cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/HopewoodLifeStaff-v1.png" "$SHRINE_BUNDLE/Contents/Resources/HopewoodLifeStaff-v1.png"
 codesign --force --deep --sign - "$SHRINE_BUNDLE"
 
 (
