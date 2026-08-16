@@ -6,10 +6,25 @@ private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
 private struct ShrineDaySnapshot: Codable {
   let title: String?
-  let mood: String?
-  let era: String?
-  let macro: String?
-  let next: String?
+  let displayDate: String?
+  let dayOfWeek: String?
+  let chaoticaDayNumber: Int?
+  let macroBars: [ShrineMacroBar]
+  let signals: [ShrineSignal]
+}
+
+private struct ShrineMacroBar: Codable {
+  let label: String
+  let current: Double
+  let target: Double
+  let unit: String
+}
+
+private struct ShrineSignal: Codable {
+  let label: String
+  let value: String?
+  let route: String
+  let kind: String?
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
@@ -48,7 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         (() => {
           const send = window.webkit?.messageHandlers?.chaoticaShrineSync;
           if (!send) return;
-          const clean = (value) => typeof value === 'string' && value.trim() ? value.trim().slice(0, 180) : null;
+          const clean = (value) => typeof value === 'string' && value.trim() ? value.trim().slice(0, 300) : null;
           const parse = (value) => {
             try { return value ? JSON.parse(value) : null; } catch { return null; }
           };
@@ -59,8 +74,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             return `${d.getFullYear()}-${month}-${day}`;
           };
           const first = (...values) => values.map(clean).find(Boolean) || null;
+          const safeArray = (value) => Array.isArray(value) ? value : [];
+          const object = (value) => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+          const formatDate = (date) => new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
+          const dayName = (date) => new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date);
+          const signal = (label, value, route, kind = 'text') => ({ label, value: clean(value), route, kind });
           const sync = () => {
             const date = localDate();
+            const today = new Date();
             const assurer = parse(localStorage.getItem(`the_assurer_day:${date}`)) || parse(localStorage.getItem('the_assurer_day')) || {};
             const daDays = parse(localStorage.getItem('truthinstyle_da_eater_days_v1')) || {};
             const daDay = daDays[date] || {};
@@ -69,17 +90,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             const calories = total('calories') + (Array.isArray(daDay.cheatFlexEntries) ? daDay.cheatFlexEntries.reduce((sum, item) => sum + Number(item?.roughCalories || 0), 0) : 0);
             const targets = { protein: 250, carbs: 120, fats: 75, calories: 4500 };
             const logged = meals.length > 0 || Number(daDay.waterOz || 0) > 0 || calories > 0;
-            const macro = logged
+            const macroBars = logged ? [
+              { label: 'Protein', current: total('protein'), target: targets.protein, unit: 'g' },
+              { label: 'Carbs', current: total('carbs'), target: targets.carbs, unit: 'g' },
+              { label: 'Fats', current: total('fats'), target: targets.fats, unit: 'g' },
+              { label: 'Calories', current: calories, target: targets.calories, unit: 'cal' }
+            ] : [];
+            const macroSummary = logged
               ? `P ${total('protein')}/${targets.protein} · C ${total('carbs')}/${targets.carbs} · F ${total('fats')}/${targets.fats} · ${calories}/${targets.calories} CAL`
               : null;
+            const word = object(assurer.wordOfDay || assurer.wordOfTheDay);
+            const penny = safeArray(assurer.pennyQuestions).find((entry) => clean(entry?.answer));
+            const thiccFitt = object(assurer.thiccFitt);
+            const workout = object(thiccFitt.workout);
+            const firstExercise = safeArray(thiccFitt.exerciseRows).find((entry) => clean(entry?.exercise));
+            const thiccTime = object(assurer.thiccTime);
+            const todaySchedule = safeArray(thiccTime.entries).filter((entry) => entry?.date === date);
+            const sealed = safeArray(parse(localStorage.getItem('the_summation_sealed_records_v1')));
+            const sealedToday = sealed.find((record) => record?.sourceDate === date || record?.dateKey === date) || {};
+            const sealedDayNumber = Number(sealedToday?.chaoticaDayNumber);
+            const chaoticaDayNumber = Number.isFinite(sealedDayNumber) && sealedDayNumber > 0 ? sealedDayNumber : sealed.length + 1;
+            const mood = first(assurer.mood, assurer.nativeFields?.mood);
+            const era = first(assurer.era, assurer.nativeFields?.era);
+            const battleCry = typeof assurer.battleCry === 'string' ? assurer.battleCry : first(assurer.battleCry?.quote, assurer.battleCry?.text, assurer.battleCry?.statement);
+            const signals = [
+              signal('Macro Progress', macroSummary, 'da-eater', 'macro'),
+              signal('Penny for Your Thoughts', penny?.answer, 'the-assurer'),
+              signal('Word of the Day', [clean(word.word), clean(word.definition)].filter(Boolean).join(' — '), 'the-assurer'),
+              signal('Assured Thought', assurer.assuredThoughts, 'the-assurer'),
+              signal('Battle Cry', battleCry, 'the-assurer'),
+              signal('THICC.FITT', first(workout.duration && `Workout · ${workout.duration}`, firstExercise && [firstExercise.exercise, firstExercise.sets && `${firstExercise.sets} sets`, firstExercise.reps && `${firstExercise.reps} reps`].filter(Boolean).join(' · '), thiccFitt.notes), 'thicc-fitt'),
+              signal('THICC.TIME', first(todaySchedule[0]?.title, todaySchedule[0]?.label, todaySchedule[0]?.entryType, todaySchedule[0]?.person), 'its-getting-thicc'),
+              signal('Mood · Era', [mood, era].filter(Boolean).join(' · '), 'the-assurer')
+            ];
             send.postMessage({
               action: 'sync',
               snapshot: {
                 title: first(assurer.titleOfDay, assurer.title, localStorage.getItem(`the_assurer_title_of_day:${date}`), localStorage.getItem('the_assurer_title_of_day')),
-                mood: first(assurer.mood, assurer.nativeFields?.mood),
-                era: first(assurer.era, assurer.nativeFields?.era),
-                macro,
-                next: first(assurer.nextCommitment, assurer.nextScheduledItem, assurer.commitment, assurer.nativeFields?.nextCommitment)
+                displayDate: first(assurer.displayDate, formatDate(today)),
+                dayOfWeek: first(assurer.dayOfWeek, dayName(today)),
+                chaoticaDayNumber,
+                macroBars,
+                signals
               }
             });
           };
@@ -198,19 +250,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   }
 
   private func writeShrineSnapshot(_ raw: [String: Any]) {
-    func value(_ key: String) -> String? {
-      guard let text = raw[key] as? String else { return nil }
-      let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-      return trimmed.isEmpty ? nil : String(trimmed.prefix(180))
-    }
-    let snapshot = ShrineDaySnapshot(
-      title: value("title"),
-      mood: value("mood"),
-      era: value("era"),
-      macro: value("macro"),
-      next: value("next")
-    )
     do {
+      let snapshotData = try JSONSerialization.data(withJSONObject: raw)
+      let snapshot = try JSONDecoder().decode(ShrineDaySnapshot.self, from: snapshotData)
       let folder = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("Library/Application Support/CHAOTICA", isDirectory: true)
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

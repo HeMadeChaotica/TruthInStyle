@@ -1,16 +1,31 @@
 import Cocoa
 import WebKit
 
-private let openSize = NSSize(width: 760, height: 458)
+private let openSize = NSSize(width: 1120, height: 640)
 private let glyphSize = NSSize(width: 110, height: 210)
-private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt"]
+private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt", "its-getting-thicc", "remember-me"]
+
+private struct ShrineMacroBar: Codable {
+  var label: String
+  var current: Double
+  var target: Double
+  var unit: String
+}
+
+private struct ShrineSignal: Codable {
+  var label: String
+  var value: String?
+  var route: String
+  var kind: String?
+}
 
 private struct ShrineSnapshot: Codable {
-  var title: String?
-  var mood: String?
-  var era: String?
-  var macro: String?
-  var next: String?
+  var title: String? = nil
+  var displayDate: String? = nil
+  var dayOfWeek: String? = nil
+  var chaoticaDayNumber: Int? = nil
+  var macroBars: [ShrineMacroBar] = []
+  var signals: [ShrineSignal] = []
 }
 
 private final class ShrinePanel: NSPanel {
@@ -103,6 +118,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     menu.addItem(withTitle: "Open The Assurer", action: #selector(openAssurer), keyEquivalent: "")
     menu.addItem(withTitle: "Open DA.EATER", action: #selector(openDaEater), keyEquivalent: "")
     menu.addItem(withTitle: "Open THICC.FITT", action: #selector(openThiccFitt), keyEquivalent: "")
+    menu.addItem(withTitle: "Open ITS.GETTING.THICC", action: #selector(openItsGettingThicc), keyEquivalent: "")
     menu.addItem(NSMenuItem.separator())
     menu.addItem(withTitle: "Quit CHAOTICA Shrine", action: #selector(quit), keyEquivalent: "q")
     menu.items.forEach { $0.target = self }
@@ -149,6 +165,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   @objc private func openAssurer() { openChaotica(route: "the-assurer") }
   @objc private func openDaEater() { openChaotica(route: "da-eater") }
   @objc private func openThiccFitt() { openChaotica(route: "thicc-fitt") }
+  @objc private func openItsGettingThicc() { openChaotica(route: "its-getting-thicc") }
   @objc private func quit() { NSApp.terminate(nil) }
 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
