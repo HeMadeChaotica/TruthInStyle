@@ -4,6 +4,14 @@ import Speech
 
 private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
+private struct ShrineDaySnapshot: Codable {
+  let title: String?
+  let mood: String?
+  let era: String?
+  let macro: String?
+  let next: String?
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
   private var window: NSWindow!
   private var webView: WKWebView!
@@ -24,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     configuration.websiteDataStore = .default()
     configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
     configuration.userContentController.add(self, name: "chaoticaSpeech")
+    configuration.userContentController.add(self, name: "chaoticaShrineSync")
     configuration.userContentController.addUserScript(WKUserScript(
       source: """
         window.ChaoticaNativeSpeech = Object.freeze({
@@ -32,6 +41,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         });
       """,
       injectionTime: .atDocumentStart,
+      forMainFrameOnly: true
+    ))
+    configuration.userContentController.addUserScript(WKUserScript(
+      source: """
+        (() => {
+          const send = window.webkit?.messageHandlers?.chaoticaShrineSync;
+          if (!send) return;
+          const clean = (value) => typeof value === 'string' && value.trim() ? value.trim().slice(0, 180) : null;
+          const parse = (value) => {
+            try { return value ? JSON.parse(value) : null; } catch { return null; }
+          };
+          const localDate = () => {
+            const d = new Date();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${d.getFullYear()}-${month}-${day}`;
+          };
+          const first = (...values) => values.map(clean).find(Boolean) || null;
+          const sync = () => {
+            const date = localDate();
+            const assurer = parse(localStorage.getItem(`the_assurer_day:${date}`)) || parse(localStorage.getItem('the_assurer_day')) || {};
+            const daDays = parse(localStorage.getItem('truthinstyle_da_eater_days_v1')) || {};
+            const daDay = daDays[date] || {};
+            const meals = Array.isArray(daDay.meals) ? daDay.meals : [];
+            const total = (field) => meals.reduce((sum, meal) => sum + Number(meal?.[field] || 0), 0);
+            const calories = total('calories') + (Array.isArray(daDay.cheatFlexEntries) ? daDay.cheatFlexEntries.reduce((sum, item) => sum + Number(item?.roughCalories || 0), 0) : 0);
+            const targets = { protein: 250, carbs: 120, fats: 75, calories: 4500 };
+            const logged = meals.length > 0 || Number(daDay.waterOz || 0) > 0 || calories > 0;
+            const macro = logged
+              ? `P ${total('protein')}/${targets.protein} · C ${total('carbs')}/${targets.carbs} · F ${total('fats')}/${targets.fats} · ${calories}/${targets.calories} CAL`
+              : null;
+            send.postMessage({
+              action: 'sync',
+              snapshot: {
+                title: first(assurer.titleOfDay, assurer.title, localStorage.getItem(`the_assurer_title_of_day:${date}`), localStorage.getItem('the_assurer_title_of_day')),
+                mood: first(assurer.mood, assurer.nativeFields?.mood),
+                era: first(assurer.era, assurer.nativeFields?.era),
+                macro,
+                next: first(assurer.nextCommitment, assurer.nextScheduledItem, assurer.commitment, assurer.nativeFields?.nextCommitment)
+              }
+            });
+          };
+          window.addEventListener('storage', sync);
+          window.addEventListener('focus', sync);
+          document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+          setInterval(sync, 15000);
+          sync();
+        })();
+      """,
+      injectionTime: .atDocumentEnd,
       forMainFrameOnly: true
     ))
 
@@ -88,15 +147,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   }
 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-    guard message.name == "chaoticaSpeech",
-          let body = message.body as? [String: Any],
-          let action = body["action"] as? String else { return }
+    guard let body = message.body as? [String: Any] else { return }
+
+    if message.name == "chaoticaShrineSync",
+       let snapshotBody = body["snapshot"] as? [String: Any] {
+      writeShrineSnapshot(snapshotBody)
+      return
+    }
+
+    guard message.name == "chaoticaSpeech", let action = body["action"] as? String else { return }
 
     if action == "start" {
       startNativeSpeech()
     } else if action == "stop" {
       stopNativeSpeech(notify: false)
     }
+  }
+
+  func application(_ application: NSApplication, open urls: [URL]) {
+    guard let url = urls.first, url.scheme?.lowercased() == "chaotica" else { return }
+    let route = url.host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    guard !route.isEmpty else { return }
+    let destination = URL(string: "https://www.tellnolies.app/\(route)")!
+    webView.load(URLRequest(url: destination))
+    window.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
   }
 
   func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -120,6 +195,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     revealWebContentWhenOpeningSceneIsReady()
+  }
+
+  private func writeShrineSnapshot(_ raw: [String: Any]) {
+    func value(_ key: String) -> String? {
+      guard let text = raw[key] as? String else { return nil }
+      let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+      return trimmed.isEmpty ? nil : String(trimmed.prefix(180))
+    }
+    let snapshot = ShrineDaySnapshot(
+      title: value("title"),
+      mood: value("mood"),
+      era: value("era"),
+      macro: value("macro"),
+      next: value("next")
+    )
+    do {
+      let folder = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/CHAOTICA", isDirectory: true)
+      try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+      let data = try JSONEncoder().encode(snapshot)
+      try data.write(to: folder.appendingPathComponent("shrine-day.json"), options: .atomic)
+    } catch {
+      // Shrine synchronization is optional and must never interrupt CHAOTICA.
+    }
   }
 
   private func revealWebContentWhenOpeningSceneIsReady() {

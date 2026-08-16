@@ -32,5 +32,16 @@
   <string>CHAOTICA transcribes only your spoken opening oath to release the gate.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>CHAOTICA Route</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>chaotica</string>
+      </array>
+    </dict>
+  </array>
 </dict>
 </plist>
