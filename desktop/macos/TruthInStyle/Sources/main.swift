@@ -298,7 +298,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
     webView.evaluateJavaScript("""
       (() => {
-        const scene = document.querySelector('.chaotica-opening-scene-email');
+        const scene = document.querySelector('.chaotica-opening-scene-password');
         return Boolean(scene && scene.complete && scene.naturalWidth > 0);
       })()
     """) { [weak self] result, _ in

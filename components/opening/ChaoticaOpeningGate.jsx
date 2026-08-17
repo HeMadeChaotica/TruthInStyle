@@ -2,17 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import SupabaseGatePlaque from './SupabaseGatePlaque';
 import ChaoticaPasswordPlaque from './ChaoticaPasswordPlaque';
 
 const OATH_TEXT = 'Eugene this is your safest place. Tell it all! Tell it true! Tell it so you will remember how you got through';
 const OATH_PHRASES = ['safest place', 'tell it all', 'tell it true', 'remember how you got through'];
 const GATE_RELEASE_KEY = 'chaotica-gate-released-v1';
 const SCENE_BY_PHASE = {
-  email: '/opening/chaotica-gate-email.png',
-  password: '/opening/chaotica-gate-code.png',
-  oath: '/opening/chaotica-gate-oath.png',
-  opening: '/opening/chaotica-gate-open.png',
+  password: '/opening/chaotica-opening-dormant-v1.png',
+  oath: '/opening/chaotica-opening-awakened-v1.png',
+  opening: '/opening/chaotica-opening-opened-v1.png',
 };
 
 function normalize(value) {
@@ -28,7 +26,7 @@ export default function ChaoticaOpeningGate() {
   const router = useRouter();
   const recognitionRef = useRef(null);
   const restartTimerRef = useRef(null);
-  const [phase, setPhase] = useState('email');
+  const [phase, setPhase] = useState('password');
   const [heardOath, setHeardOath] = useState('');
   const [message, setMessage] = useState('');
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -58,7 +56,7 @@ export default function ChaoticaOpeningGate() {
       if (payload.authorized) {
         setPhase('oath');
       } else {
-        setPhase(payload.passwordGateConfigured ? 'password' : 'email');
+        setPhase('password');
       }
     };
     inspectGate();
@@ -170,21 +168,10 @@ export default function ChaoticaOpeningGate() {
           />
         ))}
       </div>
-      {phase === 'password' && passwordGateConfigured ? (
+      {phase === 'password' && passwordGateConfigured !== null ? (
         <ChaoticaPasswordPlaque
           onAuthorized={() => {
             setMessage('THE PASSWORD IS TRUE. SPEAK THE OATH.');
-            setPhase('oath');
-          }}
-        />
-      ) : null}
-      {phase === 'email' && passwordGateConfigured === false ? (
-        <SupabaseGatePlaque
-          onCodeSent={() => {
-            setMessage('THE SEAL HAS RECOGNIZED YOU. ENTER THE CODE.');
-          }}
-          onAuthorized={() => {
-            setMessage('THE CODE IS TRUE. SPEAK THE OATH.');
             setPhase('oath');
           }}
         />
@@ -196,7 +183,9 @@ export default function ChaoticaOpeningGate() {
           <div className="chaotica-oath-listener" data-listening={listening} style={{ '--chaotica-voice-level': speechLevel }} aria-live="polite">
             <span className="chaotica-oath-listener-orb" aria-hidden="true" />
             <strong>{listening ? 'THE SEAL IS LISTENING' : 'THE SEAL IS READY'}</strong>
-            <span>{oathPiecesHeard}/3 OATH PIECES HEARD</span>
+            <span className="chaotica-oath-crystals" aria-label={`${oathPiecesHeard} oath pieces heard`}>
+              {[0, 1, 2].map((index) => <b key={index} data-heard={index < oathPiecesHeard} />)}
+            </span>
             <i aria-hidden="true"><b /><b /><b /><b /><b /></i>
           </div>
           <div className="chaotica-oath-actions">

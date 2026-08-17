@@ -27,7 +27,7 @@ import {
   WEATHER_CITY_OPTIONS,
   fetchAssurerWeather,
 } from '../../lib/theAssurer/weatherOptions';
-import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS } from '../../src/services/summationService';
+import { getChaoticaDayNumber, PENNY_FOR_YOUR_THOUGHTS_QUESTIONS } from '../../src/services/summationService';
 import '../../styles/sections/the-assurer.css';
 
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
@@ -466,6 +466,7 @@ export default function TheAssurerSection() {
   const rememberMeTimelineDateKey = useMemo(() => getRememberMeDayTimelineDateKey(today), [today]);
   const defaultDailyWord = useMemo(() => getChaoticaDailyWord(storageDate), [storageDate]);
   const storageDayOfWeek = useMemo(() => formatAssurerDayOfWeek(today), [today]);
+  const chaoticaDayNumber = useMemo(() => getChaoticaDayNumber(storageDate), [storageDate]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
   const [titleOfDay, setTitleOfDay] = useState('');
@@ -911,19 +912,40 @@ export default function TheAssurerSection() {
   }, [assurerNativePayload, storageDate, storageLoaded]);
 
   return (
-    <section className="assurer-oracle-shell" aria-label="THE.ASSURER oracle board">
+    <section className="assurer-oracle-shell assurer-arrival-layout" aria-label="THE.ASSURER oracle board">
       <div className="assurer-oracle-stage">
         <img
           className="assurer-scene"
-          src="/backgrounds/THE-ASSURER/the-assurer-bg-v2.PNG"
+          src="/backgrounds/THE-ASSURER/the-assurer-arrival-v1.png"
           alt=""
           aria-hidden="true"
         />
         <div className="assurer-widget-layer">
+          <nav className="assurer-signal-portals" aria-label="OPEN DAY DETAIL">
+            <button type="button" onClick={() => openExpandedWidget('mealLog')}>
+              <span aria-hidden="true">✦</span> DA.EATER
+            </button>
+            <button type="button" onClick={() => openExpandedWidget('thiccFitt')}>
+              <span aria-hidden="true">✦</span> THICC.FITT
+            </button>
+            <button type="button" onClick={() => openExpandedWidget('dayTimeline')}>
+              <span aria-hidden="true">✦</span> THICC.TIME
+            </button>
+            <button type="button" onClick={() => openExpandedWidget('weekStrip')}>
+              <span aria-hidden="true">✦</span> WEEK
+            </button>
+            <button type="button" onClick={() => openExpandedWidget('moments')}>
+              <span aria-hidden="true">✦</span> REMEMBER.ME
+            </button>
+            <button type="button" onClick={() => openExpandedWidget('weather')}>
+              <span aria-hidden="true">✦</span> WEATHER
+            </button>
+          </nav>
           <article className="assurer-widget assurer-title-cluster" data-slot="01">
             <div className="assurer-widget-content assurer-title-content">
+              <span className="assurer-title-kicker">DAY IDENTITY</span>
               <div className="assurer-title-fields">
-                <time dateTime={date}>{date}</time>
+                <time dateTime={date}>{storageDayOfWeek} · {date} · CHAOTICA DAY #{chaoticaDayNumber}</time>
                 <input
                   id="assurer-title-of-day"
                   className="assurer-control assurer-title-input"
