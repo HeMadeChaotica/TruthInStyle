@@ -276,6 +276,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    // The web page contains the same dormant gate as the native splash.  Once
+    // navigation completes, reveal it directly instead of polling a CSS class
+    // or image state that can change between deployments and trap the app on
+    // its static safety frame.
     revealWebContentWhenOpeningSceneIsReady()
   }
 
@@ -295,28 +299,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   private func revealWebContentWhenOpeningSceneIsReady() {
     guard !hasRevealedWebContent else { return }
+    hasRevealedWebContent = true
 
-    webView.evaluateJavaScript("""
-      (() => {
-        const scene = document.querySelector('.chaotica-opening-scene-password');
-        return Boolean(scene && scene.complete && scene.naturalWidth > 0);
-      })()
-    """) { [weak self] result, _ in
-      guard let self else { return }
-      if (result as? Bool) == true {
-        self.hasRevealedWebContent = true
-        self.webView.isHidden = false
-        NSAnimationContext.runAnimationGroup { context in
-          context.duration = 0.35
-          self.openingSplashView.animator().alphaValue = 0
-        } completionHandler: {
-          self.openingSplashView.removeFromSuperview()
-        }
-        return
-      }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-        self?.revealWebContentWhenOpeningSceneIsReady()
-      }
+    webView.alphaValue = 0
+    webView.isHidden = false
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0.35
+      self.webView.animator().alphaValue = 1
+      self.openingSplashView.animator().alphaValue = 0
+    } completionHandler: {
+      self.openingSplashView.removeFromSuperview()
     }
   }
 
