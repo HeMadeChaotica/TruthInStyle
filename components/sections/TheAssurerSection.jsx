@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
+import { getChaoticaDailyWord, isLegacyMadeUpWord } from '../../lib/theAssurer/chaoticaDailyLexicon';
 import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
 import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
@@ -28,49 +29,6 @@ import {
 } from '../../lib/theAssurer/weatherOptions';
 import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS } from '../../src/services/summationService';
 import '../../styles/sections/the-assurer.css';
-
-const DAILY_WORD_BANK = [
-  {
-    word: 'VELVET RUCKUS',
-    definition: 'A SOFT-LOOKING SITUATION THAT IS ABSOLUTELY CAUSING A SCENE.',
-  },
-  {
-    word: 'HONEY STATIC',
-    definition: 'SWEET ENERGY THAT STILL CRACKLES LOUD ENOUGH TO CHANGE THE ROOM.',
-  },
-  {
-    word: 'THUNDER POLITE',
-    definition: 'A CALM LITTLE WARNING WITH A STORM HIDING BEHIND ITS MANNERS.',
-  },
-  {
-    word: 'GLAMOUR TAX',
-    definition: 'THE EXTRA PRICE PAID FOR LOOKING TOO GOOD TO BE IGNORED.',
-  },
-  {
-    word: 'SOFT THREAT',
-    definition: 'GENTLE PRESENCE WITH ENOUGH POWER TO MAKE NONSENSE STEP BACK.',
-  },
-  {
-    word: 'CHROME YEARNING',
-    definition: 'SHINY FUTURE HUNGER THAT REFUSES TO PRETEND IT IS SMALL.',
-  },
-  {
-    word: 'DELULU WEATHER',
-    definition: 'A FORECAST WHERE CONFIDENCE ARRIVES BEFORE THE EVIDENCE DOES.',
-  },
-  {
-    word: 'SAINTED NONSENSE',
-    definition: 'CHAOS SO COMMITTED TO ITS OWN CEREMONY THAT IT BECOMES HOLY.',
-  },
-  {
-    word: 'FERAL GRACE',
-    definition: 'WILD MOVEMENT THAT SOMEHOW LANDS WITH PERFECT ELEGANCE.',
-  },
-  {
-    word: 'BOUJEE DETONATION',
-    definition: 'AN EXPLOSION OF TASTE, DRAMA, AND UNAPOLOGETIC EXPENSE.',
-  },
-];
 
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
@@ -203,12 +161,6 @@ function createDailyPennyQuestions() {
     answer: '',
   }));
 }
-
-function getDailyWordDefault(storageDate) {
-  const seed = storageDate.split('').reduce((total, character) => total + character.charCodeAt(0), 0);
-  return DAILY_WORD_BANK[seed % DAILY_WORD_BANK.length];
-}
-
 
 function AssurerTimelineRows({ entries, limit, expanded = false }) {
   const safeEntries = Array.isArray(entries) ? entries : [];
@@ -512,7 +464,7 @@ export default function TheAssurerSection() {
   const daEaterStorageDate = useMemo(() => getDaEaterStorageDate(today), [today]);
   const rememberMeMomentDateKey = useMemo(() => getRememberMeMomentDateKey(today), [today]);
   const rememberMeTimelineDateKey = useMemo(() => getRememberMeDayTimelineDateKey(today), [today]);
-  const defaultDailyWord = useMemo(() => getDailyWordDefault(storageDate), [storageDate]);
+  const defaultDailyWord = useMemo(() => getChaoticaDailyWord(storageDate), [storageDate]);
   const storageDayOfWeek = useMemo(() => formatAssurerDayOfWeek(today), [today]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
@@ -562,14 +514,14 @@ export default function TheAssurerSection() {
       setPennyQuestions(savedPennyQuestions.length === 2 ? savedPennyQuestions : createDailyPennyQuestions());
 
       const dayWord = savedDay?.wordOfDay && typeof savedDay.wordOfDay === 'object' ? savedDay.wordOfDay : null;
-      if (typeof dayWord?.word === 'string') {
+      if (typeof dayWord?.word === 'string' && !isLegacyMadeUpWord(dayWord.word)) {
         setWordOfDay(dayWord.word);
-      } else if (typeof savedWord?.word === 'string') {
+      } else if (typeof savedWord?.word === 'string' && !isLegacyMadeUpWord(savedWord.word)) {
         setWordOfDay(savedWord.word);
       }
-      if (typeof dayWord?.definition === 'string') {
+      if (typeof dayWord?.definition === 'string' && !isLegacyMadeUpWord(dayWord.word)) {
         setWordDefinition(dayWord.definition);
-      } else if (typeof savedWord?.definition === 'string') {
+      } else if (typeof savedWord?.definition === 'string' && !isLegacyMadeUpWord(savedWord.word)) {
         setWordDefinition(savedWord.definition);
       }
     } catch {

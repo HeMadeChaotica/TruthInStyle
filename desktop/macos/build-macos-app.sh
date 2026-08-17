@@ -33,7 +33,7 @@ cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/Info.plist" "$SHRINE_BUNDLE/Contents/
 cp "$ROOT/public/icons/CHAOTICA.icns" "$SHRINE_BUNDLE/Contents/Resources/CHAOTICA.icns"
 cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/shrine.html" "$SHRINE_BUNDLE/Contents/Resources/shrine.html"
 cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/ShrineOpen-v3.png" "$SHRINE_BUNDLE/Contents/Resources/ShrineOpen.png"
-cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/HopewoodLifeStaff-v1.png" "$SHRINE_BUNDLE/Contents/Resources/HopewoodLifeStaff-v1.png"
+cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/HopewoodLifeStaff-v2.png" "$SHRINE_BUNDLE/Contents/Resources/HopewoodLifeStaff-v2.png"
 codesign --force --deep --sign - "$SHRINE_BUNDLE"
 
 (

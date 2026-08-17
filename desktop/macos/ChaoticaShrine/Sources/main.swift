@@ -2,7 +2,9 @@ import Cocoa
 import WebKit
 
 private let openSize = NSSize(width: 1152, height: 720)
-private let glyphSize = NSSize(width: 180, height: 540)
+// About 2.7 inches tall on the 2019 Retina MacBook Pro: present, ornamental,
+// and crisp without becoming a corner-spanning vertical obstruction.
+private let glyphSize = NSSize(width: 104, height: 312)
 private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt", "its-getting-thicc", "remember-me"]
 
 private struct ShrineMacroBar: Codable {
@@ -57,10 +59,12 @@ private final class ShrineGlyphView: NSImageView {
 }
 
 final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
+  private static let keepExpandedShrineInFrontKey = "CHAOTICA_KEEP_EXPANDED_SHRINE_IN_FRONT"
   private var shrinePanel: ShrinePanel!
   private var glyphPanel: ShrinePanel!
   private var webView: WKWebView!
   private var statusItem: NSStatusItem!
+  private var keepInFrontItem: NSMenuItem!
   private var globalFlagsMonitor: Any?
   private var localFlagsMonitor: Any?
   private var chordLatched = false
@@ -81,8 +85,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
 
   private func makeShrinePanel() {
     shrinePanel = ShrinePanel(contentRect: NSRect(origin: .zero, size: openSize), styleMask: [.borderless, .fullSizeContentView], backing: .buffered, defer: false)
-    shrinePanel.isFloatingPanel = true
-    shrinePanel.level = .floating
+    applyExpandedShrineLevel()
     shrinePanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
     shrinePanel.isOpaque = false
     shrinePanel.backgroundColor = .clear
@@ -111,7 +114,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     glyphPanel.hasShadow = false
     glyphPanel.hidesOnDeactivate = false
     let wandView = ShrineGlyphView(frame: NSRect(origin: .zero, size: glyphSize))
-    wandView.image = Bundle.main.url(forResource: "HopewoodLifeStaff-v1", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    wandView.image = Bundle.main.url(forResource: "HopewoodLifeStaff-v2", withExtension: "png").flatMap(NSImage.init(contentsOf:))
     wandView.imageScaling = .scaleProportionallyUpOrDown
     wandView.imageAlignment = .alignCenter
     wandView.onActivate = { [weak self] in self?.summonShrine() }
@@ -128,7 +131,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   private func positionGlyphPanel() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width + 38, y: visible.minY + 30))
+    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width + 22, y: visible.minY + 24))
   }
 
   private func makeStatusMenu() {
@@ -138,6 +141,8 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     let menu = NSMenu()
     menu.addItem(withTitle: "Summon CHAOTICA Shrine", action: #selector(summonShrine), keyEquivalent: "")
     menu.addItem(withTitle: "Retract CHAOTICA Shrine", action: #selector(retractShrine), keyEquivalent: "")
+    keepInFrontItem = menu.addItem(withTitle: "Keep Expanded Shrine Above Other Apps", action: #selector(toggleKeepExpandedShrineInFront), keyEquivalent: "")
+    keepInFrontItem.state = keepExpandedShrineInFront ? .on : .off
     menu.addItem(NSMenuItem.separator())
     menu.addItem(withTitle: "Open The Assurer", action: #selector(openAssurer), keyEquivalent: "")
     menu.addItem(withTitle: "Open DA.EATER", action: #selector(openDaEater), keyEquivalent: "")
@@ -147,6 +152,16 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     menu.addItem(withTitle: "Quit CHAOTICA Shrine", action: #selector(quit), keyEquivalent: "q")
     menu.items.forEach { $0.target = self }
     statusItem.menu = menu
+  }
+
+  private var keepExpandedShrineInFront: Bool {
+    UserDefaults.standard.bool(forKey: Self.keepExpandedShrineInFrontKey)
+  }
+
+  private func applyExpandedShrineLevel() {
+    let keepInFront = keepExpandedShrineInFront
+    shrinePanel?.isFloatingPanel = keepInFront
+    shrinePanel?.level = keepInFront ? .floating : .normal
   }
 
   private func beginShortcutMonitoring() {
@@ -175,8 +190,13 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
 
   @objc private func summonShrine() {
     positionOpenPanel()
+    applyExpandedShrineLevel()
     glyphPanel.orderOut(nil)
-    shrinePanel.orderFrontRegardless()
+    if keepExpandedShrineInFront {
+      shrinePanel.orderFrontRegardless()
+    } else {
+      shrinePanel.makeKeyAndOrderFront(nil)
+    }
     refreshSnapshot()
   }
 
@@ -184,6 +204,12 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     shrinePanel.orderOut(nil)
     positionGlyphPanel()
     glyphPanel.orderFrontRegardless()
+  }
+
+  @objc private func toggleKeepExpandedShrineInFront() {
+    UserDefaults.standard.set(!keepExpandedShrineInFront, forKey: Self.keepExpandedShrineInFrontKey)
+    applyExpandedShrineLevel()
+    keepInFrontItem.state = keepExpandedShrineInFront ? .on : .off
   }
 
   @objc private func openAssurer() { openChaotica(route: "the-assurer") }
