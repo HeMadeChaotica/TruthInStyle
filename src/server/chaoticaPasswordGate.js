@@ -11,8 +11,14 @@ const COOKIE_OPTIONS = {
   path: '/',
 };
 
+function canonicalizePassword(value) {
+  // Dashboard pastes can pick up a trailing newline or space. Keep the password
+  // case-sensitive and preserve internal characters while ignoring that noise.
+  return String(value || '').normalize('NFC').trim();
+}
+
 function configuredPassword() {
-  return typeof process.env.CHAOTICA_GATE_PASSWORD === 'string' ? process.env.CHAOTICA_GATE_PASSWORD : '';
+  return canonicalizePassword(process.env.CHAOTICA_GATE_PASSWORD);
 }
 
 function digest(value) {
@@ -52,7 +58,7 @@ export async function verifyChaoticaPassword(password) {
     };
   }
 
-  const candidate = typeof password === 'string' ? password : '';
+  const candidate = canonicalizePassword(password);
   if (!matchesPassword(candidate, expected)) {
     return {
       ok: false,

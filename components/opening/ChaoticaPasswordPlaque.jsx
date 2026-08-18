@@ -12,19 +12,24 @@ export default function ChaoticaPasswordPlaque({ onAuthorized }) {
     if (submitting || !password) return;
     setSubmitting(true);
     setStatus('');
-    const response = await fetch('/api/chaotica-auth/password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    const result = await response.json().catch(() => ({}));
-    setSubmitting(false);
-    setPassword('');
-    if (!response.ok || !result?.authorized) {
-      setStatus(result?.message || 'THE SEAL COULD NOT VERIFY THAT PASSWORD.');
-      return;
+    try {
+      const response = await fetch('/api/chaotica-auth/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.authorized) {
+        setStatus(result?.message || 'THE SEAL COULD NOT VERIFY THAT PASSWORD.');
+        return;
+      }
+      setPassword('');
+      onAuthorized?.();
+    } catch {
+      setStatus('THE SEAL COULD NOT REACH CHAOTICA. CHECK YOUR CONNECTION, THEN TRY AGAIN.');
+    } finally {
+      setSubmitting(false);
     }
-    onAuthorized?.();
   };
 
   return (

@@ -27,6 +27,12 @@ const SESSION_COOKIE_OPTIONS = {
   path: '/',
 };
 
+function canonicalizePassword(value) {
+  // Match the server-side password gate: no accidental dashboard-paste
+  // whitespace, while retaining case sensitivity and internal characters.
+  return String(value || '').normalize('NFC').trim();
+}
+
 function encodeBase64Url(bytes) {
   let binary = '';
   bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
@@ -34,7 +40,7 @@ function encodeBase64Url(bytes) {
 }
 
 async function passwordSessionIsValid(request) {
-  const password = String(process.env.CHAOTICA_GATE_PASSWORD || '');
+  const password = canonicalizePassword(process.env.CHAOTICA_GATE_PASSWORD);
   if (!password) return false;
 
   const raw = request.cookies.get(CHAOTICA_PASSWORD_SESSION_COOKIE)?.value || '';
@@ -106,7 +112,7 @@ export async function middleware(request) {
   const isProtected = PROTECTED_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   if (!isProtected) return NextResponse.next();
 
-  const passwordGateConfigured = Boolean(String(process.env.CHAOTICA_GATE_PASSWORD || ''));
+  const passwordGateConfigured = Boolean(canonicalizePassword(process.env.CHAOTICA_GATE_PASSWORD));
   if (passwordGateConfigured) {
     if (await passwordSessionIsValid(request)) return NextResponse.next();
     const redirect = NextResponse.redirect(new URL('/', request.url));
