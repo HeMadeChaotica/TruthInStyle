@@ -27,12 +27,20 @@ import {
   WEATHER_CITY_OPTIONS,
   fetchAssurerWeather,
 } from '../../lib/theAssurer/weatherOptions';
-import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS } from '../../src/services/summationService';
+import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS, getChaoticaDayNumber } from '../../src/services/summationService';
 import '../../styles/sections/the-assurer.css';
 
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
+
+const ASSURER_PHASES = ['morning', 'day', 'evening', 'night'];
+const ASSURER_PHASE_SCENES = {
+  morning: '/backgrounds/THE-ASSURER/the-assurer-morning-scene-v1.png',
+  day: '/backgrounds/THE-ASSURER/the-assurer-day-scene-v1.png',
+  evening: '/backgrounds/THE-ASSURER/the-assurer-evening-scene-v1.png',
+  night: '/backgrounds/THE-ASSURER/the-assurer-night-scene-v1.png',
+};
 
 const MOMENT_BACKS = {
   WOW: '/art/REMEMBER-ME/moment-backs/wow-moment-back.png',
@@ -51,6 +59,15 @@ function formatAssurerDayOfWeek(date) {
   return date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
 }
 
+function getAssurerPhase(date) {
+  const hour = date.getHours();
+
+  if (hour >= 5 && hour < 11) return 'morning';
+  if (hour >= 11 && hour < 17) return 'day';
+  if (hour >= 17 && hour < 22) return 'evening';
+  return 'night';
+}
+
 function safeJsonParse(raw, fallback) {
   try {
     return raw ? JSON.parse(raw) : fallback;
@@ -63,6 +80,7 @@ function buildAssurerDayPayload({
   dateKey,
   displayDate,
   dayOfWeek,
+  chaoticaDayNumber,
   titleOfDay,
   mood,
   era,
@@ -112,6 +130,7 @@ function buildAssurerDayPayload({
     dateKey,
     displayDate,
     dayOfWeek,
+    chaoticaDayNumber,
     titleOfDay,
     mood,
     era,
@@ -466,6 +485,7 @@ export default function TheAssurerSection() {
   const rememberMeTimelineDateKey = useMemo(() => getRememberMeDayTimelineDateKey(today), [today]);
   const defaultDailyWord = useMemo(() => getChaoticaDailyWord(storageDate), [storageDate]);
   const storageDayOfWeek = useMemo(() => formatAssurerDayOfWeek(today), [today]);
+  const chaoticaDayNumber = useMemo(() => getChaoticaDayNumber(storageDate), [storageDate]);
   const dailyBattleCry = useMemo(() => getBattleCryForDate(today), [today]);
 
   const [titleOfDay, setTitleOfDay] = useState('');
@@ -490,6 +510,18 @@ export default function TheAssurerSection() {
   const [rememberMeDayTimeline, setRememberMeDayTimeline] = useState({ ...EMPTY_REMEMBER_ME_DAY_TIMELINE, dateKey: rememberMeTimelineDateKey });
   const [thiccTimeWeekMirror, setThiccTimeWeekMirror] = useState({ ...EMPTY_THICC_TIME_WEEK_MIRROR, weekDays: getThiccTimeWeekDays(today) });
   const [thiccFittWorkoutMirror, setThiccFittWorkoutMirror] = useState(EMPTY_THICC_FITT_WORKOUT_MIRROR);
+  const [assurerPhase, setAssurerPhase] = useState('morning');
+
+  useEffect(() => {
+    const syncAssurerPhase = () => {
+      const requestedPhase = new URLSearchParams(window.location.search).get('phase');
+      setAssurerPhase(ASSURER_PHASES.includes(requestedPhase) ? requestedPhase : getAssurerPhase(new Date()));
+    };
+
+    syncAssurerPhase();
+    const phaseTimer = window.setInterval(syncAssurerPhase, 60_000);
+    return () => window.clearInterval(phaseTimer);
+  }, []);
 
   useEffect(() => {
     try {
@@ -721,7 +753,7 @@ export default function TheAssurerSection() {
     weekStrip: 'THICC.TIME WEEK',
     word: 'WORD OF THE DAY',
     thoughts: 'ASSURED THOUGHTS',
-    dailyOrbit: 'DAILY ORBIT',
+    dailyOrbit: 'ASSURER SIGNALS',
     moments: 'MOMENT FLIP CARDS',
     mealLog: 'MEAL LOG',
     thiccFitt: 'THICC.FITT WORKOUT LOG + TRACKING',
@@ -854,6 +886,7 @@ export default function TheAssurerSection() {
     dateKey: storageDate,
     displayDate: date,
     dayOfWeek: storageDayOfWeek,
+    chaoticaDayNumber,
     titleOfDay,
     mood,
     era,
@@ -877,6 +910,7 @@ export default function TheAssurerSection() {
     storageDate,
     date,
     storageDayOfWeek,
+    chaoticaDayNumber,
     titleOfDay,
     mood,
     era,
@@ -912,10 +946,13 @@ export default function TheAssurerSection() {
 
   return (
     <section className="assurer-oracle-shell" aria-label="THE.ASSURER oracle board">
-      <div className="assurer-oracle-stage">
+      <div
+        className={`assurer-oracle-stage assurer-phase-layout assurer-phase-${assurerPhase}`}
+        data-assurer-phase={assurerPhase}
+      >
         <img
           className="assurer-scene"
-          src="/backgrounds/THE-ASSURER/the-assurer-arrival-v1.png"
+          src={ASSURER_PHASE_SCENES[assurerPhase]}
           alt=""
           aria-hidden="true"
         />
@@ -923,13 +960,18 @@ export default function TheAssurerSection() {
           <article className="assurer-widget assurer-title-cluster" data-slot="01">
             <div className="assurer-widget-content assurer-title-content">
               <div className="assurer-title-fields">
-                <time dateTime={date}>{date}</time>
+                <div className="assurer-title-meta">
+                  <time dateTime={date}>{date}</time>
+                  <span>CHAOTICA THE.ASSURER</span>
+                  <span>CHAOTICA DAY #{chaoticaDayNumber}</span>
+                </div>
                 <input
                   id="assurer-title-of-day"
                   className="assurer-control assurer-title-input"
                   value={titleOfDay}
                   onChange={(event) => setTitleOfDay(event.target.value)}
                   aria-label="TITLE OF THE DAY"
+                  placeholder="TITLE OF THE DAY"
                 />
               </div>
             </div>
@@ -1009,7 +1051,7 @@ export default function TheAssurerSection() {
             </button>
             <div className="assurer-widget-content assurer-meal-content">
               <strong>MEAL LOG</strong>
-              <AssurerMealRows meals={daEaterMeals} limit={4} />
+              <AssurerMealRows meals={daEaterMeals} limit={5} />
             </div>
           </article>
 
@@ -1096,17 +1138,12 @@ export default function TheAssurerSection() {
               ⤢
             </button>
             <div className="assurer-widget-content assurer-daily-content">
+              <strong>ASSURER SIGNALS</strong>
               <AssurerField id="assurer-mood" label="MOOD">
                 <AssurerSelect id="assurer-mood" value={mood} onChange={setMood} options={moodOptions} />
               </AssurerField>
               <AssurerField id="assurer-era" label="ERA">
                 <AssurerSelect id="assurer-era" value={era} onChange={setEra} options={eraOptions} />
-              </AssurerField>
-              <AssurerField id="assurer-singleness" label="SINGLENESS LEVEL">
-                <AssurerSelect id="assurer-singleness" value={singlenessLevel} onChange={setSinglenessLevel} options={singlenessOptions} />
-              </AssurerField>
-              <AssurerField id="assurer-lobito" label="LOBITO CHECK-IN">
-                <AssurerSelect id="assurer-lobito" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
               </AssurerField>
               <AssurerField id="assurer-head-hummer" label="HEAD HUMMER">
                 <input
@@ -1116,6 +1153,12 @@ export default function TheAssurerSection() {
                   onChange={(event) => setHeadHummer(event.target.value)}
                   placeholder="SONG / LOOP"
                 />
+              </AssurerField>
+              <AssurerField id="assurer-lobito" label="LOBITO CHECK-IN">
+                <AssurerSelect id="assurer-lobito" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
+              </AssurerField>
+              <AssurerField id="assurer-singleness" label="SINGLENESS LEVEL">
+                <AssurerSelect id="assurer-singleness" value={singlenessLevel} onChange={setSinglenessLevel} options={singlenessOptions} />
               </AssurerField>
               <AssurerField id="assurer-location" label="LOCATION">
                 <input
