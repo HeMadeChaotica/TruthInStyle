@@ -5,229 +5,401 @@
   min-height: 100dvh;
   overflow: hidden;
   isolation: isolate;
-  background: #10070b;
+  background: #160d0d;
 }
 
 html:has(.chaotica-opening),
-body:has(.chaotica-opening) { background: #10070b; }
+body:has(.chaotica-opening) { background: #160d0d; }
 
-.chaotica-opening-scenes {
+.chaotica-opening-scenes,
+.chaotica-heartgate-master,
+.chaotica-assurer-arrival-scene,
+.chaotica-heartgate-wing,
+.chaotica-heartgate-awakening,
+.chaotica-opening-weave,
+.chaotica-opening-depth {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  overflow: hidden;
 }
 
-.chaotica-opening-scene {
-  position: absolute;
-  inset: 0;
+.chaotica-opening-scenes {
+  pointer-events: none;
+  overflow: hidden;
+  background: #160d0d;
+}
+
+.chaotica-heartgate-master,
+.chaotica-assurer-arrival-scene {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transform: scale(1.025);
-  transition: opacity 720ms ease, transform 1800ms cubic-bezier(.2, .8, .2, 1), filter 720ms ease;
+  object-position: center;
   will-change: opacity, transform, filter;
 }
 
-.chaotica-opening[data-phase='password'] .chaotica-opening-scene-password,
-.chaotica-opening[data-phase='oath'] .chaotica-opening-scene-oath,
-.chaotica-opening[data-phase='opening'] .chaotica-opening-scene-opening {
-  opacity: 1;
-  transform: scale(1);
+.chaotica-assurer-arrival-scene {
+  opacity: 0;
+  transform: scale(1.13);
+  filter: brightness(.54) saturate(.82) blur(10px);
 }
 
-.chaotica-opening[data-phase='opening'] .chaotica-opening-scene-opening {
-  animation: chaotica-pull-through 1050ms cubic-bezier(.16, .82, .18, 1) both;
-}
-
-.chaotica-opening[data-phase='opening']::before {
-  position: absolute;
-  inset: -12%;
+.chaotica-heartgate-master {
   z-index: 1;
-  pointer-events: none;
-  content: '';
-  background:
-    radial-gradient(ellipse at 50% 49%, rgba(255, 242, 220, .98) 0 2%, rgba(255, 185, 204, .82) 5%, rgba(189, 43, 92, .4) 15%, transparent 38%),
-    radial-gradient(ellipse at 50% 50%, transparent 18%, rgba(10, 1, 7, .3) 56%, rgba(4, 0, 3, .9) 100%);
-  mix-blend-mode: screen;
-  animation: chaotica-seal-flash 1050ms ease-out both;
+  transform: scale(1.008);
+  filter: brightness(.68) saturate(.84) blur(12px);
+  transition: filter 1100ms cubic-bezier(.22, .72, .18, 1), transform 1500ms cubic-bezier(.22, .72, .18, 1);
 }
 
-@keyframes chaotica-pull-through {
-  0% { opacity: 0; transform: scale(.82); filter: brightness(.58) saturate(.76); }
-  24% { opacity: 1; transform: scale(1.015); filter: brightness(1.45) saturate(1.22); }
-  100% { opacity: 1; transform: scale(1.3); filter: brightness(1.08) saturate(1.08); }
+.chaotica-opening[data-phase='oath'] .chaotica-heartgate-master {
+  transform: scale(1);
+  filter: brightness(.86) saturate(1.02) blur(0);
 }
 
-@keyframes chaotica-seal-flash {
-  0% { opacity: 0; transform: scale(.65); }
-  19% { opacity: .88; transform: scale(1); }
-  45% { opacity: .24; transform: scale(1.16); }
-  100% { opacity: 0; transform: scale(1.5); }
+.chaotica-heartgate-wing {
+  z-index: 3;
+  display: none;
+  background: url('/opening/chaotica-heartgate-master-v1.png') center / cover no-repeat;
+  will-change: transform, opacity, filter;
 }
 
-.chaotica-auth-plaque {
+.chaotica-heartgate-wing-left {
+  clip-path: polygon(0 0, 49.7% 0, 49.7% 100%, 0 100%);
+  transform-origin: 43% 50%;
+}
+
+.chaotica-heartgate-wing-right {
+  clip-path: polygon(50.3% 0, 100% 0, 100% 100%, 50.3% 100%);
+  transform-origin: 57% 50%;
+}
+
+.chaotica-heartgate-awakening {
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 680ms ease;
+}
+
+.chaotica-opening[data-phase='oath'] .chaotica-heartgate-awakening { opacity: 1; }
+
+.chaotica-crystal-eye,
+.chaotica-heart-crystal {
   position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.chaotica-crystal-eye {
+  top: 26.05%;
+  width: clamp(10px, .95vw, 18px);
+  height: clamp(5px, .42vw, 8px);
+  clip-path: polygon(0 50%, 16% 24%, 50% 0, 84% 24%, 100% 50%, 84% 76%, 50% 100%, 16% 76%);
+  background: radial-gradient(ellipse, #fff 0 12%, #fce6ef 13% 27%, #f36ca8 35%, rgba(244, 89, 160, .18) 61%, transparent 72%);
+  filter: saturate(1.12) drop-shadow(0 0 4px rgba(255, 224, 237, .9)) drop-shadow(0 0 8px rgba(244, 89, 160, .7));
+  animation: chaotica-eye-breathe 1.85s ease-in-out infinite;
+}
+
+.chaotica-crystal-eye-left { left: 47%; }
+.chaotica-crystal-eye-right { left: 51.3%; }
+
+.chaotica-heart-crystal {
   left: 50%;
-  bottom: max(30px, env(safe-area-inset-bottom));
-  z-index: 2;
-  width: min(420px, calc(100vw - 32px));
-  display: grid;
-  gap: 10px;
-  padding: 20px;
-  transform: translateX(-50%);
-  border: 1px solid rgba(247, 204, 135, .7);
-  border-radius: 8px;
-  background: linear-gradient(160deg, rgba(37, 8, 19, .91), rgba(12, 3, 10, .94) 48%, rgba(77, 31, 40, .88));
-  box-shadow: 0 0 38px rgba(120, 12, 42, .72), inset 0 0 24px rgba(251, 215, 153, .16);
-  backdrop-filter: blur(10px);
+  top: 51.2%;
+  width: clamp(22px, 2vw, 40px);
+  aspect-ratio: .72;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1px solid rgba(255, 226, 209, .9);
+  background: linear-gradient(135deg, rgba(255, 248, 232, .98), rgba(255, 147, 182, .94) 38%, rgba(153, 44, 80, .88) 72%, rgba(255, 218, 176, .92));
+  box-shadow: 0 0 12px rgba(255, 244, 222, .92), 0 0 42px rgba(255, 109, 166, .88), 0 0 84px rgba(255, 188, 130, .48);
+  animation: chaotica-heartbeat 1.35s cubic-bezier(.24, .7, .2, 1) infinite;
 }
 
-.chaotica-auth-plaque h2,
-.chaotica-oath h1 {
-  margin: 0;
-  font-family: Cinzel, 'Cinzel Decorative', Georgia, serif !important;
-  color: #f7d99f !important;
-  letter-spacing: 0;
-  text-shadow: 0 0 14px rgba(174, 28, 72, .85);
+.chaotica-opening-weave {
+  z-index: 5;
+  opacity: 0;
+  background:
+    conic-gradient(from 0deg at 50% 50%, transparent 0 8%, rgba(255, 187, 212, .42) 9%, transparent 10% 22%, rgba(255, 219, 154, .32) 23%, transparent 24% 38%, rgba(166, 244, 210, .26) 39%, transparent 40% 58%, rgba(255, 169, 203, .34) 59%, transparent 60% 100%),
+    repeating-radial-gradient(circle at 50% 50%, transparent 0 7%, rgba(255, 179, 208, .12) 7.5%, transparent 8.5% 13%);
+  mix-blend-mode: screen;
+  transform: scale(.24) rotate(-22deg);
 }
 
-.chaotica-auth-plaque p,
-.chaotica-auth-plaque label,
-.chaotica-auth-plaque span,
-.chaotica-oath p,
-.chaotica-oath span {
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
-  color: #f6d79b !important;
-  letter-spacing: 0;
+.chaotica-opening-depth {
+  z-index: 6;
+  opacity: 0;
+  background:
+    radial-gradient(circle at 50% 49%, rgba(255, 250, 231, .95) 0 1%, rgba(255, 178, 206, .75) 3%, rgba(196, 65, 105, .36) 12%, transparent 32%),
+    radial-gradient(ellipse at 50% 50%, transparent 0 18%, rgba(33, 11, 14, .12) 46%, rgba(17, 7, 9, .64) 100%);
+  mix-blend-mode: screen;
 }
 
-.chaotica-auth-plaque input,
-.chaotica-oath textarea {
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: 6px;
-  border: 1px solid rgba(247, 204, 135, .58);
-  border-radius: 6px;
-  background: rgba(12, 3, 10, .72);
-  color: #f6d79b !important;
-  padding: 10px 12px;
+.chaotica-opening[data-phase='opening'] .chaotica-heartgate-master { animation: chaotica-master-release 2900ms cubic-bezier(.18, .78, .16, 1) both; }
+.chaotica-opening[data-phase='opening'] .chaotica-heartgate-wing { display: block; }
+.chaotica-opening[data-phase='opening'] .chaotica-heartgate-wing-left { animation: chaotica-gate-left 2900ms cubic-bezier(.2, .74, .12, 1) both; }
+.chaotica-opening[data-phase='opening'] .chaotica-heartgate-wing-right { animation: chaotica-gate-right 2900ms cubic-bezier(.2, .74, .12, 1) both; }
+.chaotica-opening[data-phase='opening'] .chaotica-heartgate-awakening { opacity: 1; animation: chaotica-awakening-release 2900ms ease-out both; }
+.chaotica-opening[data-phase='opening'] .chaotica-opening-weave { animation: chaotica-weave-pull 2900ms cubic-bezier(.16, .82, .14, 1) both; }
+.chaotica-opening[data-phase='opening'] .chaotica-opening-depth { animation: chaotica-depth-flare 2900ms ease-out both; }
+.chaotica-opening[data-phase='opening'] .chaotica-assurer-arrival-scene { animation: chaotica-arrival 2900ms cubic-bezier(.16, .82, .14, 1) both; }
+
+@keyframes chaotica-eye-breathe {
+  0%, 100% { opacity: .72; transform: scaleX(.76) scaleY(.72); }
+  50% { opacity: 1; transform: scaleX(1.08) scaleY(1.18); }
 }
 
-.chaotica-auth-plaque button,
-.chaotica-oath button {
-  border: 1px solid rgba(247, 204, 135, .76);
-  border-radius: 6px;
-  background: linear-gradient(180deg, rgba(175, 41, 76, .9), rgba(64, 9, 32, .94));
-  color: #f9dfaa !important;
-  cursor: pointer;
+@keyframes chaotica-heartbeat {
+  0%, 100% { opacity: .78; transform: translate(-50%, -50%) rotate(45deg) scale(.86); }
+  48% { opacity: 1; transform: translate(-50%, -50%) rotate(45deg) scale(1.08); }
+  62% { transform: translate(-50%, -50%) rotate(45deg) scale(.96); }
 }
 
-.chaotica-auth-plaque button:disabled,
-.chaotica-oath button:disabled { cursor: wait; opacity: .72; }
+@keyframes chaotica-master-release {
+  0% { opacity: 1; transform: scale(1); filter: brightness(.92) saturate(1.04); }
+  16% { opacity: 1; transform: scale(1.018); filter: brightness(1.22) saturate(1.2); }
+  42% { opacity: .9; transform: scale(1.16); filter: brightness(1.06) saturate(1.15); }
+  68% { opacity: .28; transform: scale(1.42); filter: brightness(1.3) saturate(1.12) blur(1px); }
+  100% { opacity: 0; transform: scale(1.78); filter: brightness(1.18) saturate(1.06) blur(4px); }
+}
 
+@keyframes chaotica-gate-left {
+  0%, 14% { opacity: 1; transform: translateX(0) perspective(1100px) rotateY(0); filter: brightness(1); }
+  56% { opacity: .95; transform: translateX(-12%) perspective(1100px) rotateY(-10deg) scale(1.04); filter: brightness(1.18); }
+  100% { opacity: 0; transform: translateX(-62%) perspective(1100px) rotateY(-28deg) scale(1.12); filter: brightness(.72) blur(3px); }
+}
+
+@keyframes chaotica-gate-right {
+  0%, 14% { opacity: 1; transform: translateX(0) perspective(1100px) rotateY(0); filter: brightness(1); }
+  56% { opacity: .95; transform: translateX(12%) perspective(1100px) rotateY(10deg) scale(1.04); filter: brightness(1.18); }
+  100% { opacity: 0; transform: translateX(62%) perspective(1100px) rotateY(28deg) scale(1.12); filter: brightness(.72) blur(3px); }
+}
+
+@keyframes chaotica-awakening-release {
+  0%, 10% { opacity: 1; filter: brightness(1); }
+  28% { opacity: 1; filter: brightness(2.2); transform: scale(1.06); }
+  62% { opacity: .4; filter: brightness(1.35); transform: scale(1.42); }
+  100% { opacity: 0; filter: brightness(1); transform: scale(1.8); }
+}
+
+@keyframes chaotica-weave-pull {
+  0%, 8% { opacity: 0; transform: scale(.22) rotate(-24deg); }
+  25% { opacity: .72; transform: scale(.72) rotate(-6deg); }
+  58% { opacity: .94; transform: scale(1.48) rotate(12deg); }
+  100% { opacity: 0; transform: scale(4.8) rotate(34deg); }
+}
+
+@keyframes chaotica-depth-flare {
+  0%, 12% { opacity: 0; transform: scale(.6); }
+  30% { opacity: .9; transform: scale(1); }
+  54% { opacity: .38; transform: scale(1.55); }
+  100% { opacity: 0; transform: scale(3.4); }
+}
+
+@keyframes chaotica-arrival {
+  0%, 30% { opacity: 0; transform: scale(1.16); filter: brightness(.54) saturate(.82) blur(10px); }
+  58% { opacity: .48; transform: scale(1.08); filter: brightness(.82) saturate(.92) blur(5px); }
+  78% { opacity: 1; transform: scale(1.025); filter: brightness(1.02) saturate(1.04) blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1) saturate(1); }
+}
+
+.chaotica-auth-plaque,
 .chaotica-oath {
   position: absolute;
   left: 50%;
-  bottom: max(28px, env(safe-area-inset-bottom));
-  z-index: 2;
-  width: min(720px, calc(100vw - 32px));
-  display: grid;
-  gap: 12px;
-  padding: 20px;
+  z-index: 12;
   transform: translateX(-50%);
-  border: 1px solid rgba(247, 204, 135, .45);
-  border-radius: 8px;
-  background: radial-gradient(circle at 50% 100%, rgba(145, 15, 48, .78), rgba(15, 4, 14, .88) 62%);
-  box-shadow: 0 -18px 60px rgba(150, 18, 52, .5);
+  border: 1px solid rgba(255, 218, 181, .72);
+  background: linear-gradient(145deg, rgba(108, 58, 50, .52), rgba(48, 24, 27, .7));
+  box-shadow: 0 18px 56px rgba(26, 8, 11, .34), 0 0 34px rgba(255, 129, 174, .24), inset 0 0 22px rgba(255, 225, 195, .1);
+  backdrop-filter: blur(15px) saturate(122%);
+  -webkit-backdrop-filter: blur(15px) saturate(122%);
+}
+
+.chaotica-auth-plaque {
+  bottom: max(8vh, env(safe-area-inset-bottom));
+  width: min(410px, calc(100vw - 36px));
+  padding: 15px;
+  border-radius: 18px;
+}
+
+.chaotica-auth-plaque form {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.chaotica-auth-keystone {
+  width: 25px;
+  aspect-ratio: 1;
+  justify-self: center;
+  transform: rotate(45deg);
+  border: 1px solid rgba(255, 241, 219, .86);
+  background: linear-gradient(135deg, #fff4dc, #ffabc8 42%, #b43a70 72%, #efc683);
+  box-shadow: 0 0 13px rgba(255, 137, 182, .9), inset 0 0 7px rgba(255, 255, 255, .72);
+  animation: chaotica-keystone-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes chaotica-keystone-pulse {
+  0%, 100% { opacity: .76; transform: rotate(45deg) scale(.86); }
+  50% { opacity: 1; transform: rotate(45deg) scale(1.06); }
+}
+
+.chaotica-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.chaotica-auth-plaque input {
+  min-width: 0;
+  height: 42px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 218, 194, .56);
+  border-radius: 10px;
+  background: rgba(42, 20, 23, .42);
+  color: #fff3e8 !important;
+  padding: 8px 12px;
+  outline: none;
+  font-size: .95rem;
+}
+
+.chaotica-auth-plaque input:focus {
+  border-color: rgba(255, 188, 211, .96);
+  box-shadow: 0 0 0 3px rgba(255, 124, 174, .14), 0 0 20px rgba(255, 128, 172, .22);
+}
+
+.chaotica-auth-plaque button,
+.chaotica-oath-retry {
+  min-height: 42px;
+  border: 1px solid rgba(255, 225, 190, .7);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(206, 74, 117, .86), rgba(104, 40, 65, .9));
+  color: #fff0dd !important;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: inset 0 0 12px rgba(255, 224, 203, .12);
+}
+
+.chaotica-auth-plaque > span[role='alert'] {
+  display: block;
+  margin-top: 10px;
+  color: #fff0df !important;
+  font-size: .8rem;
   text-align: center;
 }
 
-.chaotica-oath p {
-  margin: 0;
-  font-size: clamp(1rem, 2.6vw, 1.45rem);
-  text-shadow: 0 0 13px rgba(164, 24, 62, .75);
+.chaotica-auth-plaque button:disabled,
+.chaotica-oath button:disabled { cursor: wait; opacity: .65; }
+
+.chaotica-oath {
+  bottom: max(6.5vh, env(safe-area-inset-bottom));
+  width: min(920px, calc(100vw - 44px));
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 20px 26px;
+  border-radius: 20px;
+  text-align: center;
 }
 
-.chaotica-oath-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
+.chaotica-oath-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: .25em .38em;
+  color: rgba(255, 226, 211, .52);
+  font-size: clamp(1.04rem, 2vw, 1.62rem);
+  line-height: 1.42;
+}
+
+.chaotica-oath-copy span {
+  color: rgba(255, 226, 211, .48) !important;
+  transition: color 320ms ease, text-shadow 320ms ease, transform 320ms ease;
+}
+
+.chaotica-oath-copy span[data-heard='true'] {
+  color: #fff1dc !important;
+  text-shadow: 0 0 9px rgba(255, 245, 222, .74), 0 0 24px rgba(255, 111, 168, .88);
+  transform: translateY(-1px);
+}
 
 .chaotica-oath-listener {
   display: grid;
-  grid-template-columns: 26px auto;
+  grid-template-columns: 28px auto;
   align-items: center;
   justify-content: center;
-  column-gap: 10px;
-  row-gap: 2px;
+  column-gap: 11px;
+  row-gap: 4px;
   min-height: 42px;
-  color: #f6d79b;
-  font-family: Cinzel, Georgia, serif;
-  letter-spacing: .05em;
 }
-
-.chaotica-oath-listener strong { font-size: .86rem; }
 
 .chaotica-oath-crystals {
   grid-column: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 14px;
   min-height: 18px;
 }
 
 .chaotica-oath-crystals b {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   display: block;
-  transform: rotate(45deg) scale(.68);
-  border: 1px solid rgba(255, 206, 228, .7);
-  background: rgba(245, 168, 207, .15);
-  box-shadow: inset 0 0 7px rgba(255, 214, 236, .2);
-  transition: transform .24s ease, background .24s ease, box-shadow .24s ease;
+  transform: rotate(45deg) scale(.7);
+  border: 1px solid rgba(255, 226, 209, .7);
+  background: rgba(245, 168, 207, .14);
+  transition: transform .28s ease, background .28s ease, box-shadow .28s ease;
 }
 
 .chaotica-oath-crystals b[data-heard='true'] {
   transform: rotate(45deg) scale(1);
-  background: linear-gradient(135deg, #fff2f8, #ff71b3 48%, #9c184e);
-  box-shadow: 0 0 15px rgba(255, 117, 183, .94), inset 0 0 6px white;
+  background: linear-gradient(135deg, #fff3e6, #ff83b8 48%, #9c305e);
+  box-shadow: 0 0 16px rgba(255, 130, 181, .92), inset 0 0 6px white;
 }
 
 .chaotica-oath-listener i {
   grid-column: 2;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 5px;
   height: 18px;
 }
 
 .chaotica-oath-listener i b {
   width: 3px;
-  min-height: 4px;
+  height: 13px;
   border-radius: 99px;
-  background: #f2a0ba;
-  box-shadow: 0 0 7px rgba(255, 175, 205, .65);
+  background: #f4a5be;
+  box-shadow: 0 0 7px rgba(255, 175, 205, .68);
   transform: scaleY(calc(.3 + var(--chaotica-voice-level, 0)));
   transition: transform 90ms linear;
 }
 
-.chaotica-oath-listener i b:nth-child(2) { transform: scaleY(calc(.48 + var(--chaotica-voice-level, 0))); }
-.chaotica-oath-listener i b:nth-child(3) { transform: scaleY(calc(.72 + var(--chaotica-voice-level, 0))); }
-.chaotica-oath-listener i b:nth-child(4) { transform: scaleY(calc(.48 + var(--chaotica-voice-level, 0))); }
+.chaotica-oath-listener i b:nth-child(2),
+.chaotica-oath-listener i b:nth-child(4) { transform: scaleY(calc(.5 + var(--chaotica-voice-level, 0))); }
+.chaotica-oath-listener i b:nth-child(3) { transform: scaleY(calc(.78 + var(--chaotica-voice-level, 0))); }
 
 .chaotica-oath-listener-orb {
   grid-row: 1 / span 2;
-  width: 18px;
-  height: 18px;
-  border: 1px solid rgba(255, 218, 168, .88);
+  width: 19px;
+  height: 19px;
+  border: 1px solid rgba(255, 226, 190, .88);
   border-radius: 50%;
   background: radial-gradient(circle, #fff0d8 0 12%, #ea6c9b 20%, rgba(141, 16, 58, .92) 45%, rgba(17, 3, 12, .1) 70%);
-  box-shadow: 0 0 0 0 rgba(238, 82, 137, 0), 0 0 18px rgba(244, 113, 158, .3);
+  box-shadow: 0 0 18px rgba(244, 113, 158, .34);
 }
 
-.chaotica-oath-listener[data-listening='true'] .chaotica-oath-listener-orb {
-  animation: chaotica-listening-pulse 1.15s ease-in-out infinite;
-}
+.chaotica-oath-listener[data-listening='true'] .chaotica-oath-listener-orb { animation: chaotica-listening-pulse 1.15s ease-in-out infinite; }
+
+.chaotica-oath-retry { min-height: 34px; padding: 5px 11px; font-size: .74rem; }
 
 @keyframes chaotica-listening-pulse {
   0%, 100% { transform: scale(.82); box-shadow: 0 0 0 0 rgba(238, 82, 137, 0), 0 0 12px rgba(244, 113, 158, .25); }
@@ -237,17 +409,36 @@ body:has(.chaotica-opening) { background: #10070b; }
 .chaotica-opening-status {
   position: absolute;
   left: 50%;
-  top: 20px;
-  z-index: 3;
+  top: max(20px, env(safe-area-inset-top));
+  z-index: 14;
   transform: translateX(-50%);
-  padding: 8px 12px;
-  border: 1px solid rgba(247, 204, 135, .62);
-  border-radius: 6px;
-  background: rgba(20, 4, 12, .84);
-  color: #f6d79b !important;
+  max-width: min(720px, calc(100vw - 36px));
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 217, 184, .62);
+  border-radius: 12px;
+  background: rgba(75, 35, 36, .62);
+  color: #fff0df !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
 }
 
 @media (max-width: 720px) {
-  .chaotica-auth-plaque,
-  .chaotica-oath { padding: 14px; }
+  .chaotica-auth-plaque { bottom: max(24px, env(safe-area-inset-bottom)); }
+  .chaotica-auth-plaque form { grid-template-columns: 32px minmax(0, 1fr); }
+  .chaotica-auth-plaque button { grid-column: 1 / -1; }
+  .chaotica-oath { bottom: max(22px, env(safe-area-inset-bottom)); padding: 16px; }
+  .chaotica-oath-copy { font-size: clamp(.94rem, 4.1vw, 1.22rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chaotica-heartgate-master,
+  .chaotica-heartgate-wing,
+  .chaotica-heartgate-awakening,
+  .chaotica-opening-weave,
+  .chaotica-opening-depth,
+  .chaotica-assurer-arrival-scene {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

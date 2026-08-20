@@ -2363,3 +2363,164 @@
     max-height: 100dvh;
   }
 }
+
+/* World-native glass pass: preserve the approved living layout while letting the landscape breathe. */
+.assurer-phase-layout .assurer-widget,
+.assurer-phase-layout .assurer-macro-glass {
+  border-color: rgba(255, 221, 198, 0.72);
+  background:
+    linear-gradient(145deg, rgba(130, 79, 65, 0.38), rgba(75, 42, 40, 0.31) 52%, rgba(114, 60, 67, 0.26));
+  box-shadow:
+    0 9px 24px rgba(42, 21, 18, 0.2),
+    0 0 0 1px rgba(255, 188, 193, 0.08),
+    inset 0 0 20px rgba(255, 226, 196, 0.08);
+  backdrop-filter: blur(11px) saturate(116%) brightness(1.03);
+  -webkit-backdrop-filter: blur(11px) saturate(116%) brightness(1.03);
+  color: #fff1e5;
+  text-shadow: none;
+}
+
+.assurer-phase-layout .assurer-widget *,
+.assurer-phase-layout .assurer-macro-widget *,
+.assurer-phase-layout .assurer-expanded-panel * {
+  text-shadow: none !important;
+}
+
+.assurer-phase-layout .assurer-widget strong,
+.assurer-phase-layout .assurer-field,
+.assurer-phase-layout .assurer-title-meta,
+.assurer-phase-layout .assurer-widget small,
+.assurer-phase-layout .assurer-macro-label,
+.assurer-phase-layout .assurer-macro-value {
+  color: #fff0e2 !important;
+  -webkit-text-fill-color: #fff0e2;
+}
+
+.assurer-phase-layout .assurer-widget strong,
+.assurer-phase-layout .assurer-title-meta {
+  font-weight: 600;
+}
+
+.assurer-phase-layout .assurer-control,
+.assurer-phase-layout .assurer-meal-row,
+.assurer-phase-layout .assurer-timeline-row,
+.assurer-phase-layout .assurer-workout-row,
+.assurer-phase-layout .assurer-week-day {
+  border-color: rgba(255, 221, 201, 0.46);
+  background: rgba(73, 40, 37, 0.34);
+  color: #fff5eb !important;
+  -webkit-text-fill-color: #fff5eb;
+  box-shadow: inset 0 0 12px rgba(255, 225, 202, 0.04);
+}
+
+.assurer-phase-layout .assurer-control:focus,
+.assurer-phase-layout .assurer-control:focus-visible {
+  border-color: rgba(255, 177, 199, 0.94);
+  background: rgba(88, 45, 47, 0.48);
+  box-shadow: 0 0 0 2px rgba(255, 153, 190, 0.14), 0 0 18px rgba(255, 130, 176, 0.18);
+  outline: none;
+}
+
+.assurer-phase-layout .assurer-word-panel {
+  background:
+    linear-gradient(145deg, rgba(217, 164, 136, 0.35), rgba(126, 74, 66, 0.31) 58%, rgba(102, 55, 60, 0.25));
+}
+
+.assurer-phase-layout .assurer-word-content > strong:first-child {
+  color: #ffd1dc !important;
+}
+
+.assurer-phase-layout .assurer-word-panel .assurer-control {
+  background: rgba(255, 224, 199, 0.1);
+  border-color: rgba(255, 220, 195, 0.54);
+}
+
+.assurer-phase-layout .assurer-word-panel input:not(.assurer-definition-input) {
+  color: #fff1df !important;
+  -webkit-text-fill-color: #fff1df;
+  font-size: clamp(11px, 0.76vw, 16px);
+}
+
+.assurer-phase-layout .assurer-macro-track {
+  border-color: rgba(255, 220, 198, 0.46);
+  background: rgba(64, 34, 32, 0.42);
+}
+
+.assurer-phase-layout .assurer-macro-fill {
+  background: linear-gradient(90deg, #e89ab1, #f5bcae 52%, #f5d69c);
+  box-shadow: 0 0 10px rgba(255, 179, 193, 0.44);
+}
+
+.assurer-expanded-backdrop {
+  background: rgba(45, 22, 19, 0.13);
+  backdrop-filter: blur(3px) saturate(108%);
+  -webkit-backdrop-filter: blur(3px) saturate(108%);
+}
+
+.assurer-expanded-panel {
+  border-color: rgba(255, 219, 193, 0.78);
+  background:
+    linear-gradient(145deg, rgba(111, 65, 54, 0.68), rgba(61, 34, 34, 0.62) 56%, rgba(105, 53, 61, 0.56));
+  color: #fff2e6;
+  text-shadow: none;
+  box-shadow:
+    0 26px 70px rgba(34, 16, 15, 0.34),
+    0 0 36px rgba(255, 154, 187, 0.16),
+    inset 0 0 28px rgba(255, 225, 199, 0.08);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+}
+
+.assurer-expanded-panel .assurer-control {
+  border-color: rgba(255, 222, 202, 0.54);
+  background: rgba(68, 37, 35, 0.38);
+  color: #fff4e9 !important;
+  -webkit-text-fill-color: #fff4e9;
+}
+
+/* MacBook readability floor: keep the approved geometry, but stop the live record from whispering. */
+.assurer-phase-layout .assurer-widget,
+.assurer-phase-layout .assurer-macro-glass {
+  background:
+    linear-gradient(145deg, rgba(112, 67, 57, 0.48), rgba(62, 36, 36, 0.42) 52%, rgba(94, 49, 57, 0.36));
+}
+
+.assurer-phase-layout .assurer-widget {
+  font-size: clamp(11px, 0.66vw, 15px);
+  line-height: 1.28;
+}
+
+.assurer-phase-layout .assurer-widget strong,
+.assurer-phase-layout .assurer-title-meta {
+  font-size: clamp(12px, 0.76vw, 17px);
+  line-height: 1.16;
+  letter-spacing: 0.035em;
+}
+
+.assurer-phase-layout .assurer-field,
+.assurer-phase-layout .assurer-macro-label,
+.assurer-phase-layout .assurer-macro-value,
+.assurer-phase-layout .assurer-word-content,
+.assurer-phase-layout .assurer-signal-row {
+  font-size: clamp(10px, 0.6vw, 13px);
+  line-height: 1.25;
+}
+
+.assurer-phase-layout .assurer-week-day,
+.assurer-phase-layout .assurer-timeline-row,
+.assurer-phase-layout .assurer-meal-row,
+.assurer-phase-layout .assurer-workout-row,
+.assurer-phase-layout .assurer-moment-preview,
+.assurer-phase-layout .assurer-widget small {
+  font-size: clamp(8px, 0.48vw, 11px);
+  line-height: 1.22;
+}
+
+.assurer-phase-layout .assurer-word-panel .assurer-control,
+.assurer-phase-layout .assurer-word-panel textarea,
+.assurer-phase-layout .assurer-word-panel input {
+  background: rgba(64, 35, 35, 0.4) !important;
+  border-color: rgba(255, 220, 195, 0.62);
+  color: #fff4e8 !important;
+  -webkit-text-fill-color: #fff4e8;
+}

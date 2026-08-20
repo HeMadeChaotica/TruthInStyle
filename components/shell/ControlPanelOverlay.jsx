@@ -292,7 +292,20 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
 
   return (
     <>
-      <button type="button" className="tis-rail-tab" aria-expanded={isOpen} aria-controls="tis-control-rail" onClick={() => (isOpen ? onClose?.() : onOpen?.())}>☽</button>
+      <button
+        type="button"
+        className="tis-rail-tab"
+        aria-label={isOpen ? 'Close CHAOTICA controls' : 'Open CHAOTICA controls'}
+        aria-expanded={isOpen}
+        aria-controls="tis-control-rail"
+        onClick={() => (isOpen ? onClose?.() : onOpen?.())}
+      >
+        <span className="tis-heartgate-keystone" aria-hidden="true">
+          <span className="tis-heartgate-keystone-cradle" />
+          <span className="tis-heartgate-keystone-core" />
+          <span className="tis-heartgate-keystone-spark" />
+        </span>
+      </button>
       <aside className="tis-control-overlay" aria-hidden={!isOpen} data-open={isOpen}>
         <div
           className="tis-control-scrim"
