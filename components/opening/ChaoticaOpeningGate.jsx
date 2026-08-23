@@ -204,15 +204,7 @@ export default function ChaoticaOpeningGate() {
       <div className="chaotica-opening-scenes" aria-hidden="true">
         <img className="chaotica-assurer-arrival-scene" src={assurerArrivalScene} alt="" draggable={false} />
         <img className="chaotica-heartgate-master" src={HEARTGATE_SCENE} alt="" draggable={false} />
-        <div className="chaotica-heartgate-wing chaotica-heartgate-wing-left" />
-        <div className="chaotica-heartgate-wing chaotica-heartgate-wing-right" />
-        <div className="chaotica-heartgate-awakening">
-          <span className="chaotica-crystal-eye chaotica-crystal-eye-left" />
-          <span className="chaotica-crystal-eye chaotica-crystal-eye-right" />
-          <span className="chaotica-heart-crystal" />
-        </div>
-        <div className="chaotica-opening-weave" />
-        <div className="chaotica-opening-depth" />
+        <div className="chaotica-heartgate-seam" />
       </div>
 
       {phase === 'password' && passwordGateConfigured !== null ? (

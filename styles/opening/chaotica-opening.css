@@ -5,19 +5,16 @@
   min-height: 100dvh;
   overflow: hidden;
   isolation: isolate;
-  background: #160d0d;
+  background: #080709;
 }
 
 html:has(.chaotica-opening),
-body:has(.chaotica-opening) { background: #160d0d; }
+body:has(.chaotica-opening) { background: #080709; }
 
 .chaotica-opening-scenes,
 .chaotica-heartgate-master,
 .chaotica-assurer-arrival-scene,
-.chaotica-heartgate-wing,
-.chaotica-heartgate-awakening,
-.chaotica-opening-weave,
-.chaotica-opening-depth {
+.chaotica-heartgate-seam {
   position: absolute;
   inset: 0;
 }
@@ -25,7 +22,7 @@ body:has(.chaotica-opening) { background: #160d0d; }
 .chaotica-opening-scenes {
   pointer-events: none;
   overflow: hidden;
-  background: #160d0d;
+  background: #080709;
 }
 
 .chaotica-heartgate-master,
@@ -39,165 +36,62 @@ body:has(.chaotica-opening) { background: #160d0d; }
 }
 
 .chaotica-assurer-arrival-scene {
+  z-index: 2;
   opacity: 0;
-  transform: scale(1.13);
-  filter: brightness(.54) saturate(.82) blur(10px);
+  transform: scale(1.1);
+  clip-path: inset(0 50% 0 50%);
+  filter: brightness(.9) saturate(1.04) blur(4px);
 }
 
 .chaotica-heartgate-master {
   z-index: 1;
-  transform: scale(1.008);
-  filter: brightness(.68) saturate(.84) blur(12px);
+  transform: scale(1.004);
+  filter: brightness(.98) saturate(1.16) contrast(1.03) blur(3px);
   transition: filter 1100ms cubic-bezier(.22, .72, .18, 1), transform 1500ms cubic-bezier(.22, .72, .18, 1);
 }
 
 .chaotica-opening[data-phase='oath'] .chaotica-heartgate-master {
   transform: scale(1);
-  filter: brightness(.86) saturate(1.02) blur(0);
+  filter: brightness(1.03) saturate(1.12) contrast(1.02) blur(0);
 }
 
-.chaotica-heartgate-wing {
+.chaotica-heartgate-seam {
   z-index: 3;
-  display: none;
-  background: url('/opening/chaotica-heartgate-master-v1.png') center / cover no-repeat;
-  will-change: transform, opacity, filter;
-}
-
-.chaotica-heartgate-wing-left {
-  clip-path: polygon(0 0, 49.7% 0, 49.7% 100%, 0 100%);
-  transform-origin: 43% 50%;
-}
-
-.chaotica-heartgate-wing-right {
-  clip-path: polygon(50.3% 0, 100% 0, 100% 100%, 50.3% 100%);
-  transform-origin: 57% 50%;
-}
-
-.chaotica-heartgate-awakening {
-  z-index: 4;
   opacity: 0;
-  transition: opacity 680ms ease;
-}
-
-.chaotica-opening[data-phase='oath'] .chaotica-heartgate-awakening { opacity: 1; }
-
-.chaotica-crystal-eye,
-.chaotica-heart-crystal {
-  position: absolute;
-  display: block;
-  pointer-events: none;
-}
-
-.chaotica-crystal-eye {
-  top: 26.05%;
-  width: clamp(10px, .95vw, 18px);
-  height: clamp(5px, .42vw, 8px);
-  clip-path: polygon(0 50%, 16% 24%, 50% 0, 84% 24%, 100% 50%, 84% 76%, 50% 100%, 16% 76%);
-  background: radial-gradient(ellipse, #fff 0 12%, #fce6ef 13% 27%, #f36ca8 35%, rgba(244, 89, 160, .18) 61%, transparent 72%);
-  filter: saturate(1.12) drop-shadow(0 0 4px rgba(255, 224, 237, .9)) drop-shadow(0 0 8px rgba(244, 89, 160, .7));
-  animation: chaotica-eye-breathe 1.85s ease-in-out infinite;
-}
-
-.chaotica-crystal-eye-left { left: 47%; }
-.chaotica-crystal-eye-right { left: 51.3%; }
-
-.chaotica-heart-crystal {
   left: 50%;
-  top: 51.2%;
-  width: clamp(22px, 2vw, 40px);
-  aspect-ratio: .72;
-  transform: translate(-50%, -50%) rotate(45deg);
-  border: 1px solid rgba(255, 226, 209, .9);
-  background: linear-gradient(135deg, rgba(255, 248, 232, .98), rgba(255, 147, 182, .94) 38%, rgba(153, 44, 80, .88) 72%, rgba(255, 218, 176, .92));
-  box-shadow: 0 0 12px rgba(255, 244, 222, .92), 0 0 42px rgba(255, 109, 166, .88), 0 0 84px rgba(255, 188, 130, .48);
-  animation: chaotica-heartbeat 1.35s cubic-bezier(.24, .7, .2, 1) infinite;
-}
-
-.chaotica-opening-weave {
-  z-index: 5;
-  opacity: 0;
-  background:
-    conic-gradient(from 0deg at 50% 50%, transparent 0 8%, rgba(255, 187, 212, .42) 9%, transparent 10% 22%, rgba(255, 219, 154, .32) 23%, transparent 24% 38%, rgba(166, 244, 210, .26) 39%, transparent 40% 58%, rgba(255, 169, 203, .34) 59%, transparent 60% 100%),
-    repeating-radial-gradient(circle at 50% 50%, transparent 0 7%, rgba(255, 179, 208, .12) 7.5%, transparent 8.5% 13%);
-  mix-blend-mode: screen;
-  transform: scale(.24) rotate(-22deg);
-}
-
-.chaotica-opening-depth {
-  z-index: 6;
-  opacity: 0;
-  background:
-    radial-gradient(circle at 50% 49%, rgba(255, 250, 231, .95) 0 1%, rgba(255, 178, 206, .75) 3%, rgba(196, 65, 105, .36) 12%, transparent 32%),
-    radial-gradient(ellipse at 50% 50%, transparent 0 18%, rgba(33, 11, 14, .12) 46%, rgba(17, 7, 9, .64) 100%);
-  mix-blend-mode: screen;
+  top: 7%;
+  bottom: 7%;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, #f8d5a9 12%, #ffd9e7 36%, #f36fa7 58%, #f4c98e 82%, transparent);
+  box-shadow: 0 0 10px rgba(255, 226, 202, .92), 0 0 28px rgba(244, 98, 158, .72);
+  transform: translateX(-50%) scaleY(.06);
+  transform-origin: center;
 }
 
 .chaotica-opening[data-phase='opening'] .chaotica-heartgate-master { animation: chaotica-master-release 2900ms cubic-bezier(.18, .78, .16, 1) both; }
-.chaotica-opening[data-phase='opening'] .chaotica-heartgate-wing { display: block; }
-.chaotica-opening[data-phase='opening'] .chaotica-heartgate-wing-left { animation: chaotica-gate-left 2900ms cubic-bezier(.2, .74, .12, 1) both; }
-.chaotica-opening[data-phase='opening'] .chaotica-heartgate-wing-right { animation: chaotica-gate-right 2900ms cubic-bezier(.2, .74, .12, 1) both; }
-.chaotica-opening[data-phase='opening'] .chaotica-heartgate-awakening { opacity: 1; animation: chaotica-awakening-release 2900ms ease-out both; }
-.chaotica-opening[data-phase='opening'] .chaotica-opening-weave { animation: chaotica-weave-pull 2900ms cubic-bezier(.16, .82, .14, 1) both; }
-.chaotica-opening[data-phase='opening'] .chaotica-opening-depth { animation: chaotica-depth-flare 2900ms ease-out both; }
+.chaotica-opening[data-phase='opening'] .chaotica-heartgate-seam { animation: chaotica-seam-release 2900ms cubic-bezier(.18, .78, .16, 1) both; }
 .chaotica-opening[data-phase='opening'] .chaotica-assurer-arrival-scene { animation: chaotica-arrival 2900ms cubic-bezier(.16, .82, .14, 1) both; }
 
-@keyframes chaotica-eye-breathe {
-  0%, 100% { opacity: .72; transform: scaleX(.76) scaleY(.72); }
-  50% { opacity: 1; transform: scaleX(1.08) scaleY(1.18); }
-}
-
-@keyframes chaotica-heartbeat {
-  0%, 100% { opacity: .78; transform: translate(-50%, -50%) rotate(45deg) scale(.86); }
-  48% { opacity: 1; transform: translate(-50%, -50%) rotate(45deg) scale(1.08); }
-  62% { transform: translate(-50%, -50%) rotate(45deg) scale(.96); }
-}
-
 @keyframes chaotica-master-release {
-  0% { opacity: 1; transform: scale(1); filter: brightness(.92) saturate(1.04); }
-  16% { opacity: 1; transform: scale(1.018); filter: brightness(1.22) saturate(1.2); }
-  42% { opacity: .9; transform: scale(1.16); filter: brightness(1.06) saturate(1.15); }
-  68% { opacity: .28; transform: scale(1.42); filter: brightness(1.3) saturate(1.12) blur(1px); }
-  100% { opacity: 0; transform: scale(1.78); filter: brightness(1.18) saturate(1.06) blur(4px); }
+  0%, 20% { opacity: 1; transform: scale(1); filter: brightness(1) saturate(1.06); }
+  48% { opacity: .96; transform: scale(1.025); filter: brightness(1.08) saturate(1.08); }
+  76% { opacity: .42; transform: scale(1.09); filter: brightness(1.04) saturate(1.06) blur(1px); }
+  100% { opacity: 0; transform: scale(1.16); filter: brightness(1) saturate(1.04) blur(3px); }
 }
 
-@keyframes chaotica-gate-left {
-  0%, 14% { opacity: 1; transform: translateX(0) perspective(1100px) rotateY(0); filter: brightness(1); }
-  56% { opacity: .95; transform: translateX(-12%) perspective(1100px) rotateY(-10deg) scale(1.04); filter: brightness(1.18); }
-  100% { opacity: 0; transform: translateX(-62%) perspective(1100px) rotateY(-28deg) scale(1.12); filter: brightness(.72) blur(3px); }
-}
-
-@keyframes chaotica-gate-right {
-  0%, 14% { opacity: 1; transform: translateX(0) perspective(1100px) rotateY(0); filter: brightness(1); }
-  56% { opacity: .95; transform: translateX(12%) perspective(1100px) rotateY(10deg) scale(1.04); filter: brightness(1.18); }
-  100% { opacity: 0; transform: translateX(62%) perspective(1100px) rotateY(28deg) scale(1.12); filter: brightness(.72) blur(3px); }
-}
-
-@keyframes chaotica-awakening-release {
-  0%, 10% { opacity: 1; filter: brightness(1); }
-  28% { opacity: 1; filter: brightness(2.2); transform: scale(1.06); }
-  62% { opacity: .4; filter: brightness(1.35); transform: scale(1.42); }
-  100% { opacity: 0; filter: brightness(1); transform: scale(1.8); }
-}
-
-@keyframes chaotica-weave-pull {
-  0%, 8% { opacity: 0; transform: scale(.22) rotate(-24deg); }
-  25% { opacity: .72; transform: scale(.72) rotate(-6deg); }
-  58% { opacity: .94; transform: scale(1.48) rotate(12deg); }
-  100% { opacity: 0; transform: scale(4.8) rotate(34deg); }
-}
-
-@keyframes chaotica-depth-flare {
-  0%, 12% { opacity: 0; transform: scale(.6); }
-  30% { opacity: .9; transform: scale(1); }
-  54% { opacity: .38; transform: scale(1.55); }
-  100% { opacity: 0; transform: scale(3.4); }
+@keyframes chaotica-seam-release {
+  0%, 12% { opacity: 0; transform: translateX(-50%) scaleY(.06) scaleX(1); }
+  24% { opacity: 1; transform: translateX(-50%) scaleY(1) scaleX(1); }
+  48% { opacity: 1; transform: translateX(-50%) scaleY(1) scaleX(4); }
+  72% { opacity: .58; transform: translateX(-50%) scaleY(1) scaleX(14); }
+  100% { opacity: 0; transform: translateX(-50%) scaleY(1) scaleX(24); }
 }
 
 @keyframes chaotica-arrival {
-  0%, 30% { opacity: 0; transform: scale(1.16); filter: brightness(.54) saturate(.82) blur(10px); }
-  58% { opacity: .48; transform: scale(1.08); filter: brightness(.82) saturate(.92) blur(5px); }
-  78% { opacity: 1; transform: scale(1.025); filter: brightness(1.02) saturate(1.04) blur(0); }
-  100% { opacity: 1; transform: scale(1); filter: brightness(1) saturate(1); }
+  0%, 20% { opacity: 0; clip-path: inset(0 50% 0 50%); transform: scale(1.1); filter: brightness(.9) saturate(1.04) blur(4px); }
+  38% { opacity: 1; clip-path: inset(0 45% 0 45%); transform: scale(1.08); filter: brightness(.96) saturate(1.06) blur(2px); }
+  68% { opacity: 1; clip-path: inset(0 12% 0 12%); transform: scale(1.035); filter: brightness(1) saturate(1.06) blur(0); }
+  100% { opacity: 1; clip-path: inset(0); transform: scale(1); filter: brightness(1) saturate(1.04) blur(0); }
 }
 
 .chaotica-auth-plaque,
@@ -207,10 +101,10 @@ body:has(.chaotica-opening) { background: #160d0d; }
   z-index: 12;
   transform: translateX(-50%);
   border: 1px solid rgba(255, 218, 181, .72);
-  background: linear-gradient(145deg, rgba(108, 58, 50, .52), rgba(48, 24, 27, .7));
-  box-shadow: 0 18px 56px rgba(26, 8, 11, .34), 0 0 34px rgba(255, 129, 174, .24), inset 0 0 22px rgba(255, 225, 195, .1);
-  backdrop-filter: blur(15px) saturate(122%);
-  -webkit-backdrop-filter: blur(15px) saturate(122%);
+  background: linear-gradient(145deg, rgba(19, 15, 20, .44), rgba(9, 8, 12, .62));
+  box-shadow: 0 18px 56px rgba(5, 4, 7, .38), 0 0 34px rgba(255, 129, 174, .2), inset 0 0 22px rgba(255, 225, 195, .08);
+  backdrop-filter: blur(15px) saturate(108%);
+  -webkit-backdrop-filter: blur(15px) saturate(108%);
 }
 
 .chaotica-auth-plaque {
@@ -261,7 +155,7 @@ body:has(.chaotica-opening) { background: #160d0d; }
   box-sizing: border-box;
   border: 1px solid rgba(255, 218, 194, .56);
   border-radius: 10px;
-  background: rgba(42, 20, 23, .42);
+  background: rgba(10, 9, 13, .42);
   color: #fff3e8 !important;
   padding: 8px 12px;
   outline: none;
@@ -416,7 +310,7 @@ body:has(.chaotica-opening) { background: #160d0d; }
   padding: 9px 14px;
   border: 1px solid rgba(255, 217, 184, .62);
   border-radius: 12px;
-  background: rgba(75, 35, 36, .62);
+  background: rgba(14, 11, 16, .62);
   color: #fff0df !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -433,10 +327,7 @@ body:has(.chaotica-opening) { background: #160d0d; }
 
 @media (prefers-reduced-motion: reduce) {
   .chaotica-heartgate-master,
-  .chaotica-heartgate-wing,
-  .chaotica-heartgate-awakening,
-  .chaotica-opening-weave,
-  .chaotica-opening-depth,
+  .chaotica-heartgate-seam,
   .chaotica-assurer-arrival-scene {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
