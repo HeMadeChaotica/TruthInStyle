@@ -17,6 +17,13 @@ const sbHeaders = {
 const uid = () => Math.random().toString(36).slice(2, 10);
 const localId = () => `local_remember_${Date.now()}_${uid()}`;
 const nowIso = () => new Date().toISOString();
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+const toLocalDateKey = (value) => {
+  const candidate = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(candidate.getTime())) return '';
+  return `${candidate.getFullYear()}-${String(candidate.getMonth() + 1).padStart(2, '0')}-${String(candidate.getDate()).padStart(2, '0')}`;
+};
 
 const get = () => {
   if (typeof window === 'undefined') return [];
@@ -77,6 +84,38 @@ export async function fetchRememberMeEntriesSafe() {
   } catch (error) {
     return { rows: local, error: `REMEMBER.ME sync diagnostic: ${error?.message || 'Unknown load error'}`, source: 'local-fallback' };
   }
+}
+
+export function groupRememberMeEntriesByDate(rows = [], { daysAhead = 370 } = {}) {
+  return (Array.isArray(rows) ? rows : []).reduce((grouped, row) => {
+    const normalized = normalizeRow(row);
+    if (!normalized.date_key) return grouped;
+    grouped[normalized.date_key] = [...(grouped[normalized.date_key] || []), normalized];
+
+    const recurrenceDays = [...new Set((normalized.recurrence_days || []).map((day) => String(day).toLowerCase()))];
+    if (normalized.recurrence_type !== 'weekly' || !normalized.recurrence_active || !recurrenceDays.length) return grouped;
+
+    const start = new Date(`${normalized.date_key}T12:00:00`);
+    if (Number.isNaN(start.getTime())) return grouped;
+    for (let offset = 1; offset <= daysAhead; offset += 1) {
+      const candidate = new Date(start);
+      candidate.setDate(start.getDate() + offset);
+      if (!recurrenceDays.includes(WEEKDAY_KEYS[candidate.getDay()])) continue;
+      const dateKey = toLocalDateKey(candidate);
+      const derived = {
+        ...normalized,
+        date_key: dateKey,
+        date: dateKey,
+        recurrence_type: 'none',
+        recurrence_active: false,
+        derived_recurrence: true,
+        original_entry_id: normalized.id,
+        original_date_key: normalized.date_key,
+      };
+      grouped[dateKey] = [...(grouped[dateKey] || []), derived];
+    }
+    return grouped;
+  }, {});
 }
 
 export function upsertRememberMeLocal(entry) {

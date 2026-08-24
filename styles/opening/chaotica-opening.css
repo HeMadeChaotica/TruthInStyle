@@ -26,8 +26,8 @@ body:has(.chaotica-opening) { background: #10070b; }
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  transform: scale(1.025);
-  transition: opacity 720ms ease, transform 1800ms cubic-bezier(.2, .8, .2, 1), filter 720ms ease;
+  transform: scale(1);
+  transition: none;
   will-change: opacity, transform, filter;
 }
 

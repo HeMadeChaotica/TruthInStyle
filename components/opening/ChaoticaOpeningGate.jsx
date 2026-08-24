@@ -26,6 +26,9 @@ export default function ChaoticaOpeningGate() {
   const router = useRouter();
   const recognitionRef = useRef(null);
   const restartTimerRef = useRef(null);
+  const phaseRef = useRef('password');
+  const acceptedRef = useRef(false);
+  const startSpeechRef = useRef(null);
   const [phase, setPhase] = useState('password');
   const [heardOath, setHeardOath] = useState('');
   const [message, setMessage] = useState('');
@@ -36,6 +39,16 @@ export default function ChaoticaOpeningGate() {
 
   const oathPiecesHeard = countMatchedPhrases(heardOath);
   const spokenOathIsAccepted = oathPiecesHeard >= 3;
+  phaseRef.current = phase;
+  acceptedRef.current = spokenOathIsAccepted;
+
+  function scheduleSpeechRestart(delay = 650) {
+    window.clearTimeout(restartTimerRef.current);
+    if (phaseRef.current !== 'oath' || acceptedRef.current) return;
+    restartTimerRef.current = window.setTimeout(() => {
+      if (phaseRef.current === 'oath' && !acceptedRef.current) startSpeechRef.current?.();
+    }, delay);
+  }
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -83,8 +96,9 @@ export default function ChaoticaOpeningGate() {
         setListening(true);
         setMessage('CHAOTICA IS LISTENING. SPEAK THE OATH.');
       }
-      if (detail.type === 'ended' && phase === 'oath') {
+      if (detail.type === 'ended' && phaseRef.current === 'oath') {
         setListening(false);
+        scheduleSpeechRestart();
       }
       if (detail.type === 'level') setSpeechLevel(Math.max(0, Math.min(1, Number(detail.level) || 0)));
       if (detail.type === 'quiet') setMessage('THE SEAL CANNOT HEAR WORDS YET. SPEAK CLOSER TO THE MACBOOK MICROPHONE.');
@@ -92,11 +106,15 @@ export default function ChaoticaOpeningGate() {
         setListening(false);
         setSpeechLevel(0);
         setMessage(detail.message || 'THE SPOKEN OATH LISTENER COULD NOT START.');
+        const reason = normalize(detail.message);
+        if (!reason.includes('permission') && !reason.includes('denied') && !reason.includes('not authorized')) {
+          scheduleSpeechRestart(900);
+        }
       }
     };
     window.addEventListener('chaotica-native-speech', onNativeSpeech);
     return () => window.removeEventListener('chaotica-native-speech', onNativeSpeech);
-  }, [phase]);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'oath') return undefined;
@@ -123,7 +141,9 @@ export default function ChaoticaOpeningGate() {
     return () => window.clearTimeout(timer);
   }, [phase, router]);
 
-  const startSpeech = () => {
+  function startSpeech() {
+    if (phaseRef.current !== 'oath' || acceptedRef.current) return;
+    window.clearTimeout(restartTimerRef.current);
     if (window.ChaoticaNativeSpeech?.start) {
       setListening(true);
       setMessage('CHAOTICA IS LISTENING. SPEAK THE OATH.');
@@ -145,15 +165,28 @@ export default function ChaoticaOpeningGate() {
       setHeardOath(transcript);
       if (normalize(transcript)) setMessage('THE OATH HAS BEEN HEARD. KEEP SPEAKING.');
     };
-    recognition.onend = () => setListening(false);
-    recognition.onerror = () => {
+    recognition.onend = () => {
       setListening(false);
-      setMessage('SPEECH PAUSED. SELECT LISTEN AGAIN, THEN SPEAK THE OATH.');
+      scheduleSpeechRestart();
+    };
+    recognition.onerror = (event) => {
+      setListening(false);
+      const terminalError = ['not-allowed', 'service-not-allowed'].includes(event?.error);
+      setMessage(terminalError
+        ? 'MICROPHONE ACCESS IS REQUIRED FOR THE SPOKEN OATH.'
+        : 'THE SEAL PAUSED. LISTENING WILL RESUME AUTOMATICALLY.');
+      if (!terminalError) scheduleSpeechRestart(900);
     };
     recognitionRef.current = recognition;
     setListening(true);
-    recognition.start();
-  };
+    try {
+      recognition.start();
+    } catch {
+      setListening(false);
+      scheduleSpeechRestart(900);
+    }
+  }
+  startSpeechRef.current = startSpeech;
 
   return (
     <main className="chaotica-opening" data-phase={phase}>
@@ -189,9 +222,7 @@ export default function ChaoticaOpeningGate() {
             <i aria-hidden="true"><b /><b /><b /><b /><b /></i>
           </div>
           <div className="chaotica-oath-actions">
-            <button type="button" onClick={startSpeech} disabled={listening}>
-              {listening ? 'LISTENING' : speechSupported ? 'LISTEN AGAIN' : 'SPEECH UNAVAILABLE'}
-            </button>
+            {!speechSupported ? <button type="button" disabled>SPEECH UNAVAILABLE</button> : null}
             <span>{spokenOathIsAccepted ? 'OATH ACCEPTED' : heardOath ? 'OATH HEARD' : 'SPEAK WHEN READY'}</span>
           </div>
         </section>

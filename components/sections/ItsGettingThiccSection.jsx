@@ -125,7 +125,8 @@ export default function ItsGettingThiccSection() {
       setTimeLoadStatus('loading');
       const rows = await fetchScheduleEntries();
       const safeRows = Array.isArray(rows) ? rows : [];
-      setEntriesByDate(groupScheduleEntriesByDate(safeRows));
+      const clientRows = safeRows.filter((row) => row.entry_type !== 'personal' && row.schedule_layer !== 'mista_thicc');
+      setEntriesByDate(groupScheduleEntriesByDate(clientRows));
       setTimeLoadStatus('loaded');
     } catch (error) {
       logThiccTimeDiagnostic('loadTimeEntries', 'schedule load', error);
@@ -227,12 +228,13 @@ export default function ItsGettingThiccSection() {
   const formsShelves = [{ id: 'forms', columns: 1, panels: [{ id: 'f1', token: 'medium', content: <><h3>THICC.FORMS</h3>{forms.map((f) => <div key={f.id} className="form-row"><strong>{f.formName}</strong><span>{f.formCategory}</span><button disabled={!canAssignInSupabase} title={!canAssignInSupabase ? 'ASSIGN disabled: active client is missing a database UUID.' : ''} onClick={async () => { try { setFormsError(''); const ensuredClient = isSupabase ? await ensureClientDbId(active) : active; if (isSupabase && ensuredClient.dbId && ensuredClient.dbId !== active.dbId) { const nextClients = clients.map((c) => (c.id === active.id ? ensuredClient : c)); setClients(nextClients); saveClients(nextClients); } const created = await upsertFormAssignment({ client: ensuredClient, client_id: ensuredClient.dbId || ensuredClient.id, formDbId: f.dbId || f.id, form_id: f.id, status: 'assigned', response_json: {}, notes: '', assigned_at: new Date().toISOString() }); setAssignments((prev) => [...prev, created]); } catch (error) { setFormsError(error?.message || 'Unable to assign form.'); } }}>ASSIGN</button></div>)}{formsError ? <p>{formsError}</p> : null}<p>ASSIGNMENTS {assignments.filter((a) => (isSupabase ? a.client_id === activeClientDbId : (a.client_id || a.clientId) === activeClientId)).length}</p></> }] }];
   const resetTimeDraft = () => {
     const now = new Date();
+    const scheduleClientId = getClientScheduleId(active);
     setEditingEntryId('');
     setTimeDraft({
-      entry_type: 'personal',
-      schedule_layer: 'mista_thicc',
-      client_id: null,
-      client_name: '',
+      entry_type: 'client',
+      schedule_layer: 'the_thiccens',
+      client_id: scheduleClientId || '',
+      client_name: active?.name || '',
       prospect_name: '',
       prospect_contact: '',
       entry_date: toLocalIsoDate(now),
@@ -240,7 +242,7 @@ export default function ItsGettingThiccSection() {
       end_time: '10:00',
       workout_label: active?.programSplit?.[now.getDay()] || 'SESSION',
       source_split_day: days[now.getDay()],
-      color_option_key: 'mista-thicc-pink',
+      color_option_key: getClientScheduleColorKey(active?.clientColorOptionKey || 'cobalt'),
       recurrence_type: 'none',
       recurrence_days: [],
       recurrence_active: false,
@@ -317,10 +319,11 @@ export default function ItsGettingThiccSection() {
 
   const openNewEditor = (dateKey) => {
     if (!isLocalIsoDateKey(dateKey)) return;
+    const scheduleClientId = getClientScheduleId(active);
     setSelectedTimeDate(dateKey);
     setEditingEntryId('');
     setEditorOpen(true);
-    setTimeDraft({ entry_type: 'personal', schedule_layer: 'mista_thicc', client_id: null, client_name: '', prospect_name: '', prospect_contact: '', entry_date: dateKey, start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: days[new Date(`${dateKey}T12:00:00`).getDay()], location: '', notes: '', color_option_key: 'mista-thicc-pink', recurrence_type: 'none', recurrence_days: [], recurrence_active: false });
+    setTimeDraft({ entry_type: 'client', schedule_layer: 'the_thiccens', client_id: scheduleClientId || '', client_name: active?.name || '', prospect_name: '', prospect_contact: '', entry_date: dateKey, start_time: '09:00', end_time: '10:00', workout_label: '', source_split_day: days[new Date(`${dateKey}T12:00:00`).getDay()], location: '', notes: '', color_option_key: getClientScheduleColorKey(active?.clientColorOptionKey || 'cobalt'), recurrence_type: 'none', recurrence_days: [], recurrence_active: false });
   };
   const openEditor = (row) => {
     const safeDateKey = isLocalIsoDateKey(row?.entry_date) ? row.entry_date : getTodayDateKey();
@@ -366,38 +369,38 @@ export default function ItsGettingThiccSection() {
         setTimeError('Add a workout label or notes before saving.');
         return;
       }
-      if (timeDraft.schedule_layer === 'the_thiccens' && !hasRealClients) {
+      if (timeDraft.schedule_layer !== 'the_thiccens' || timeDraft.entry_type === 'personal') {
+        setTimeError('Personal workouts now live in REMEMBER.ME. THICC.TIME saves client sessions only.');
+        return;
+      }
+      if (!hasRealClients) {
         setTimeError('Select a logged client for THE.THICCENS.');
         return;
       }
       const base = normalizeSchedulePayload({ currentEntryForm: timeDraft, currentActive: active });
       let payload = {
         ...base,
-        schedule_layer: timeDraft.schedule_layer,
+        schedule_layer: 'the_thiccens',
         prospect_name: normalizeUserText(timeDraft.prospect_name || ''),
         prospect_contact: normalizeUserText(timeDraft.prospect_contact || ''),
         recurrence_type: timeDraft.recurrence_type === 'weekly' ? 'weekly' : 'none',
         recurrence_days: timeDraft.recurrence_type === 'weekly' ? [...new Set(timeDraft.recurrence_days || [])] : [],
         recurrence_active: timeDraft.recurrence_type === 'weekly' && Boolean(timeDraft.recurrence_active),
       };
-      if (timeDraft.schedule_layer === 'mista_thicc') {
-        payload = { ...payload, entry_type: 'personal', client_id: null, client_name: '', color_option_key: 'mista-thicc-pink' };
-      } else {
-        const selectedClient = safeClients.find((client) => getClientScheduleId(client) === timeDraft.client_id) || active;
-        const ensuredClient = isSupabase ? await ensureClientDbId(selectedClient) : selectedClient;
-        const scheduleClientId = getClientScheduleId(ensuredClient);
-        if (!scheduleClientId) {
-          setTimeError('Select a logged client for THE.THICCENS.');
-          return;
-        }
-        payload = {
-          ...payload,
-          entry_type: 'client',
-          client_id: scheduleClientId,
-          client_name: ensuredClient.name || 'THICC CLIENT',
-          color_option_key: getClientScheduleColorKey(ensuredClient.clientColorOptionKey || 'cobalt'),
-        };
+      const selectedClient = safeClients.find((client) => getClientScheduleId(client) === timeDraft.client_id) || active;
+      const ensuredClient = isSupabase ? await ensureClientDbId(selectedClient) : selectedClient;
+      const scheduleClientId = getClientScheduleId(ensuredClient);
+      if (!scheduleClientId) {
+        setTimeError('Select a logged client for THE.THICCENS.');
+        return;
       }
+      payload = {
+        ...payload,
+        entry_type: 'client',
+        client_id: scheduleClientId,
+        client_name: ensuredClient.name || 'THICC CLIENT',
+        color_option_key: getClientScheduleColorKey(ensuredClient.clientColorOptionKey || 'cobalt'),
+      };
       if (editingEntryId) payload.id = editingEntryId;
       payload.updated_at = new Date().toISOString();
       const validationError = validateScheduleEntry(payload);
@@ -492,8 +495,8 @@ export default function ItsGettingThiccSection() {
             {(visibleEntriesByDate[timeDraft.entry_date] || []).map((entry) => <button type="button" key={entry.id} className={editingEntryId === entry.id ? 'active' : ''} onClick={() => openEditor(resolveEditableEntry(entry))}>{getChipLabel(entry)} {entry.start_time ? `• ${entry.start_time}` : ''}</button>)}
           </div>
           <div className="form-grid">
-            <label>ENTRY TYPE<select value={timeDraft.schedule_layer || 'mista_thicc'} onChange={(e) => { const layer = e.target.value; const nextClient = safeClients.find((client) => getClientScheduleId(client) === timeDraft.client_id) || active; setTimeDraft((prev) => ({ ...prev, schedule_layer: layer, entry_type: layer === 'the_thiccens' ? 'client' : 'personal', client_id: layer === 'the_thiccens' ? getClientScheduleId(nextClient) : null, client_name: layer === 'the_thiccens' ? (nextClient?.name || '') : '', color_option_key: layer === 'mista_thicc' ? 'mista-thicc-pink' : getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="mista_thicc">PERSONAL</option><option value="the_thiccens">CLIENT</option></select></label>
-            {timeDraft.schedule_layer === 'the_thiccens' ? <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientScheduleId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => { const scheduleId = getClientScheduleId(client); return <option key={client.id} value={scheduleId || ''} disabled={!scheduleId}>{displayClientName(client)}</option>; })}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'EMPTY CLIENT LIST: PERSONAL ENTRIES STILL SAVE.'}</small></label> : null}
+            <label>ENTRY TYPE<input value="CLIENT" readOnly aria-readonly="true" /><small>PERSONAL WORKOUTS NOW LIVE IN REMEMBER.ME.</small></label>
+            <label>CLIENT<select value={timeDraft.client_id || ''} onChange={(e) => { const nextClient = safeClients.find((client) => getClientScheduleId(client) === e.target.value); setTimeDraft((prev) => ({ ...prev, client_id: e.target.value || '', client_name: nextClient?.name || '', color_option_key: getClientScheduleColorKey(nextClient?.clientColorOptionKey || 'cobalt') })); }}><option value="">{hasRealClients ? 'SELECT CLIENT' : 'NO CLIENTS AVAILABLE'}</option>{safeClients.map((client) => { const scheduleId = getClientScheduleId(client); return <option key={client.id} value={scheduleId || ''} disabled={!scheduleId}>{displayClientName(client)}</option>; })}</select><small>{hasRealClients ? 'CLIENT ENTRIES STAY IN THICC.TIME.' : 'ADD A CLIENT IN THICC.PEOPLE TO ENABLE CLIENT SCHEDULING.'}</small></label>
             <label>START TIME<input type="time" value={timeDraft.start_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, start_time: e.target.value }))} /></label>
             <label>END TIME<input type="time" value={timeDraft.end_time || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, end_time: e.target.value }))} /></label>
             <label>{timeDraft.schedule_layer === 'new_client' ? 'MEETUP LABEL' : 'WORKOUT LABEL'}<input value={timeDraft.workout_label || ''} onChange={(e) => setTimeDraft((prev) => ({ ...prev, workout_label: e.target.value }))} /></label>

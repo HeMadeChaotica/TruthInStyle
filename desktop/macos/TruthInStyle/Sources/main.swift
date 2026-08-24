@@ -50,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   private var recognitionID = UUID()
   private var lastLevelSentAt: TimeInterval = 0
   private var recognitionActive = false
+  private var shrineTerminationObserver: NSObjectProtocol?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -114,10 +115,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             const firstExercise = safeArray(thiccFitt.exerciseRows).find((entry) => clean(entry?.exercise));
             const thiccTime = object(assurer.thiccTime);
             const todaySchedule = safeArray(thiccTime.entries).filter((entry) => entry?.date === date);
-            const sealed = safeArray(parse(localStorage.getItem('the_summation_sealed_records_v1')));
-            const sealedToday = sealed.find((record) => record?.sourceDate === date || record?.dateKey === date) || {};
-            const sealedDayNumber = Number(sealedToday?.chaoticaDayNumber);
-            const chaoticaDayNumber = Number.isFinite(sealedDayNumber) && sealedDayNumber > 0 ? sealedDayNumber : sealed.length + 1;
+            const [year, month, dayOfMonth] = date.split('-').map(Number);
+            const officialDayOne = Date.UTC(2026, 8, 1);
+            const activeDay = Date.UTC(year, month - 1, dayOfMonth);
+            const chaoticaDayNumber = Math.max(0, Math.floor((activeDay - officialDayOne) / 86400000) + 1);
             const mood = first(assurer.mood, assurer.nativeFields?.mood);
             const era = first(assurer.era, assurer.nativeFields?.era);
             const location = first(assurer.location, assurer.nativeFields?.location);
@@ -217,7 +218,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
       self.window.makeKeyAndOrderFront(nil)
       self.window.orderFrontRegardless()
       NSApp.activate(ignoringOtherApps: true)
+      self.ensureShrineCompanionIsRunning()
     }
+
+    shrineTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+      forName: NSWorkspace.didTerminateApplicationNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] note in
+      guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+            app.bundleIdentifier == "com.chaotica.desk-shrine" else { return }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { self?.ensureShrineCompanionIsRunning() }
+    }
+  }
+
+  func applicationDidBecomeActive(_ notification: Notification) {
+    ensureShrineCompanionIsRunning()
   }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -226,6 +242,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func applicationWillTerminate(_ notification: Notification) {
     stopNativeSpeech(notify: false)
+    if let shrineTerminationObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(shrineTerminationObserver)
+    }
+  }
+
+  private func ensureShrineCompanionIsRunning() {
+    let bundleIdentifier = "com.chaotica.desk-shrine"
+    guard NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty else { return }
+    let companion = URL(fileURLWithPath: "/Applications/CHAOTICA Shrine.app")
+    guard FileManager.default.fileExists(atPath: companion.path) else { return }
+    let configuration = NSWorkspace.OpenConfiguration()
+    configuration.activates = false
+    configuration.addsToRecentItems = false
+    NSWorkspace.shared.openApplication(at: companion, configuration: configuration) { _, _ in }
   }
 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

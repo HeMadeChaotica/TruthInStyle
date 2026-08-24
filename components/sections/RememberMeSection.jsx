@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import ChaoticaMonthCalendar, { daysInMonth, safeDateKey } from '../shared/ChaoticaMonthCalendar';
 import '../../styles/sections/remember-me.css';
 import { normalizeUserText } from '../../lib/utils/textCasing';
@@ -10,43 +10,36 @@ import { CLOCK_IT_KEYS, useClockItOptions } from '../../lib/dropdowns/clockItReg
 
 const REMEMBER_MOMENT_BACKS = { WOW: '', WTF: '', 'PLOT TWIST': '' };
 const MOMENTS_STORAGE_KEY = 'remember_me_standout_moments_v1';
+const WEEKDAYS = [
+  ['sun', 'SUN'], ['mon', 'MON'], ['tue', 'TUE'], ['wed', 'WED'],
+  ['thu', 'THU'], ['fri', 'FRI'], ['sat', 'SAT'],
+];
 
-const MONTH_BACKGROUND_BY_INDEX = {
-  0: 'remember-me-01-january-new-year-bg.jpeg',
-  1: 'remember-me-02-february-valentine-bg.png',
-  2: 'remember-me-03-march-steak-and-bj-day-bg.jpeg',
-  3: 'remember-me-04-april-spring-bg.png',
-  4: 'remember-me-05-may-summer-loading-bg.png',
-  5: 'remember-me-06-june-pride-bg.png',
-  6: 'remember-me-07-july-hotter-than-your-ex-bg.png',
-  7: 'remember-me-08-august-peak-thicc-bg.png',
-  8: 'remember-me-09-september-back-to-business-bg.png',
-  9: 'remember-me-10-october-spooky-sexy-bg.png',
-  10: 'remember-me-11-november-feast-bg.jpeg',
-  11: 'remember-me-12-december-mista-thicc-birthday-bg.jpeg'
+const SEASON_BY_MONTH = {
+  0: { key: 'winter', calendarSide: 'right' },
+  1: { key: 'winter', calendarSide: 'right' },
+  2: { key: 'spring', calendarSide: 'left' },
+  3: { key: 'spring', calendarSide: 'left' },
+  4: { key: 'spring', calendarSide: 'left' },
+  5: { key: 'summer', calendarSide: 'right' },
+  6: { key: 'summer', calendarSide: 'right' },
+  7: { key: 'summer', calendarSide: 'right' },
+  8: { key: 'fall', calendarSide: 'left' },
+  9: { key: 'fall', calendarSide: 'left' },
+  10: { key: 'fall', calendarSide: 'left' },
+  11: { key: 'winter', calendarSide: 'right' },
 };
 
-const REMEMBER_MONTH_VISUALS = {
-  0: { key: 'january', bgFit: 'cover', bgPosition: 'center center' },
-  1: { key: 'february', bgFit: 'cover', bgPosition: 'center center' },
-  2: { key: 'march', bgFit: 'cover', bgPosition: 'center center' },
-  3: { key: 'april', bgFit: 'cover', bgPosition: 'center center' },
-  4: { key: 'may', bgFit: 'cover', bgPosition: 'center center' },
-  5: { key: 'june', bgFit: 'cover', bgPosition: 'center center' },
-  6: { key: 'july', bgFit: 'cover', bgPosition: 'center center' },
-  7: { key: 'august', bgFit: 'cover', bgPosition: 'center center' },
-  8: { key: 'september', bgFit: 'cover', bgPosition: 'center center' },
-  9: { key: 'october', bgFit: 'cover', bgPosition: 'center center' },
-  10: { key: 'november', bgFit: 'cover', bgPosition: 'center center' },
-  11: { key: 'december', bgFit: 'cover', bgPosition: 'center center' }
+const BACKGROUND_BY_SEASON = {
+  fall: 'remember-me-season-fall-crystallization.png',
+  spring: 'remember-me-season-spring-crystallization.png',
+  summer: 'remember-me-season-summer-crystallization.png',
+  winter: 'remember-me-season-winter-crystallization.png',
 };
 
-const REMEMBER_CALENDAR_PIN = {
-  calendarRight: '4.8%',
-  calendarBottom: '7.6%',
-  calendarWidth: '38%',
-  calendarMaxWidth: '625px'
-};
+const EMPTY_EVENT = { type: 'SOMETHING NEW DAY', time: '', detail: '', description: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
+const EMPTY_WORKOUT = { start_time: '', end_time: '', workout_label: '', location: '', notes: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
+const EMPTY_MOMENT = { type: 'WOW', time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' };
 
 const readStoredMoments = () => {
   if (typeof window === 'undefined') return {};
@@ -61,128 +54,251 @@ const readStoredMoments = () => {
 
 const formatDisplayDate = (value) => {
   if (!value) return '';
-
-  if (typeof value === 'string' && value.includes('-')) {
-    const [year, month, day] = value.split('-');
-    return `${month}/${day}/${year}`;
-  }
-
-  const next = new Date(value);
-  if (Number.isNaN(next.getTime())) return '';
-
-  const month = String(next.getMonth() + 1).padStart(2, '0');
-  const day = String(next.getDate()).padStart(2, '0');
-  const year = next.getFullYear();
-
-  return `${month}/${day}/${year}`;
+  const [year, month, day] = String(value).split('-');
+  return year && month && day ? `${month}/${day}/${year}` : '';
 };
 
 const getMomentType = (moment) => String(moment?.type || moment?.standoutType || '').trim().toUpperCase();
-
-
 const getMomentStamp = (moment) => {
-  const timestamp = Date.parse(moment?.updated_at || moment?.updatedAt || moment?.created_at || moment?.createdAt || moment?.stampedAt || '');
-  return Number.isNaN(timestamp) ? 0 : timestamp;
+  const stamp = Date.parse(moment?.updated_at || moment?.updatedAt || moment?.created_at || moment?.createdAt || moment?.stampedAt || '');
+  return Number.isNaN(stamp) ? 0 : stamp;
+};
+
+const weekdayForDateKey = (dateKey) => {
+  const candidate = new Date(`${dateKey}T12:00:00`);
+  return Number.isNaN(candidate.getTime()) ? 'mon' : WEEKDAYS[candidate.getDay()][0];
+};
+
+function RecurrenceControl({ draft, setDraft, selectedDateKey }) {
+  return (
+    <fieldset className="remember-recurrence">
+      <legend>REPEAT</legend>
+      <select
+        value={draft.recurrence_type || 'none'}
+        onChange={(event) => {
+          const weekly = event.target.value === 'weekly';
+          setDraft((current) => ({
+            ...current,
+            recurrence_type: weekly ? 'weekly' : 'none',
+            recurrence_active: weekly,
+            recurrence_days: weekly && !current.recurrence_days?.length
+              ? [weekdayForDateKey(selectedDateKey)]
+              : (current.recurrence_days || []),
+          }));
+        }}
+      >
+        <option value="none">DOES NOT REPEAT</option>
+        <option value="weekly">REPEATS WEEKLY</option>
+      </select>
+      {draft.recurrence_type === 'weekly' ? (
+        <div className="remember-weekday-picker">
+          {WEEKDAYS.map(([value, label]) => (
+            <label key={value}>
+              <input
+                type="checkbox"
+                checked={(draft.recurrence_days || []).includes(value)}
+                onChange={() => setDraft((current) => ({
+                  ...current,
+                  recurrence_days: (current.recurrence_days || []).includes(value)
+                    ? current.recurrence_days.filter((day) => day !== value)
+                    : [...(current.recurrence_days || []), value],
+                }))}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+    </fieldset>
+  );
+}
+
+const colorForEntry = (entry) => {
+  if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ff4fa8,#a6246d)';
+  const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
+  if (type === 'PAYDAY') return 'linear-gradient(135deg,#f6d36a,#ad7428)';
+  if (type.includes('WORK') || type.includes('JOB') || type === 'MEETING') return 'linear-gradient(135deg,#d99866,#7e472c)';
+  if (type.includes('BIRTHDAY') || type.includes('ANNIVERSARY') || type === 'DATE') return 'linear-gradient(135deg,#ff9fc9,#b43779)';
+  if (type.includes('TRAVEL')) return 'linear-gradient(135deg,#e7d65a,#9b792b)';
+  return 'linear-gradient(135deg,#e68caf,#8f3f62)';
 };
 
 export default function RememberMeSection() {
-  const EVENT_TYPES = useClockItOptions(CLOCK_IT_KEYS.rememberEventTypes);
-  const STANDOUT_TYPES = useClockItOptions(CLOCK_IT_KEYS.rememberMomentTypes);
+  const configuredEventTypes = useClockItOptions(CLOCK_IT_KEYS.rememberEventTypes);
+  const configuredStandoutTypes = useClockItOptions(CLOCK_IT_KEYS.rememberMomentTypes);
+  const eventTypes = [...new Set([...(configuredEventTypes.length ? configuredEventTypes : ['SOMETHING NEW DAY', 'REMINDER']), 'PAYDAY'])];
+  const standoutTypes = configuredStandoutTypes.length ? configuredStandoutTypes : ['WOW', 'WTF', 'PLOT TWIST'];
   const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const [rememberRows, setRememberRows] = useState([]);
+  const [workoutRows, setWorkoutRows] = useState([]);
   const [entriesByDate, setEntriesByDate] = useState({});
   const [momentByDate, setMomentByDate] = useState({});
-  const [isClientReady, setIsClientReady] = useState(false);
-  const [error, setError] = useState('');
   const [postcardOpen, setPostcardOpen] = useState(false);
   const [editorMode, setEditorMode] = useState('EVENT');
-  const [entryDraft, setEntryDraft] = useState({ type: EVENT_TYPES[0], time: '', detail: '', description: '' });
-  const [momentDraft, setMomentDraft] = useState({ type: STANDOUT_TYPES[0], time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' });
+  const [entryDraft, setEntryDraft] = useState(EMPTY_EVENT);
+  const [workoutDraft, setWorkoutDraft] = useState(EMPTY_WORKOUT);
+  const [momentDraft, setMomentDraft] = useState(EMPTY_MOMENT);
   const [flippedMomentType, setFlippedMomentType] = useState('');
-  const selectedDateKey = useMemo(() => safeDateKey(viewDate.getFullYear(), viewDate.getMonth(), selectedDay), [viewDate, selectedDay]);
-  const currentEntries = selectedDateKey ? (entriesByDate[selectedDateKey] || []) : [];
-  const currentMoments = isClientReady && selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
-  const momentCards = STANDOUT_TYPES.map((type) => ({
+  const [error, setError] = useState('');
+
+  const selectedDateKey = useMemo(
+    () => safeDateKey(viewDate.getFullYear(), viewDate.getMonth(), selectedDay),
+    [viewDate, selectedDay],
+  );
+  const currentMoments = selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
+  const season = SEASON_BY_MONTH[viewDate.getMonth()] || SEASON_BY_MONTH[0];
+  const backgroundName = BACKGROUND_BY_SEASON[season.key];
+  const momentCards = standoutTypes.map((type) => ({
     type,
     moment: currentMoments
       .filter((moment) => getMomentType(moment) === type)
       .sort((left, right) => getMomentStamp(right) - getMomentStamp(left))[0] || null,
   }));
-  const monthIndex = viewDate.getMonth();
-  const visual = REMEMBER_MONTH_VISUALS[monthIndex] || REMEMBER_MONTH_VISUALS[0];
 
-  useEffect(() => {
-    setIsClientReady(true);
-    setMomentByDate(readStoredMoments());
-  }, []);
-
-  useEffect(() => {
-    setFlippedMomentType('');
-  }, [selectedDateKey]);
-
-  useEffect(() => {
-    (async () => {
-      const mod = await import('../../src/services/rememberMeService');
-      const result = await mod.fetchRememberMeEntriesSafe();
-      const grouped = (result.rows || []).reduce((acc, row) => {
-        if (!row.date_key) return acc;
-        const next = { id: row.id, type: row.entry_type, time: row.time_value || '', detail: row.detail || '', description: row.description || '' };
-        acc[row.date_key] = [...(acc[row.date_key] || []), next];
-        return acc;
-      }, {});
-      setEntriesByDate(grouped);
-    })();
-  }, []);
-
-  const saveEntry = async () => {
-    setError('');
-    if (!selectedDateKey) { setError('Invalid date.'); return; }
-    const id = entryDraft.id || crypto.randomUUID();
-    const payload = { ...entryDraft, id, detail: normalizeUserText(entryDraft.detail), description: normalizeUserText(entryDraft.description), date_key: selectedDateKey };
-    const snapshot = entriesByDate;
-    const dayEntries = entriesByDate[selectedDateKey] || [];
-    const nextDayEntries = entryDraft.id ? dayEntries.map((entry) => (entry.id === entryDraft.id ? payload : entry)) : [...dayEntries, payload];
-    setEntriesByDate({ ...entriesByDate, [selectedDateKey]: nextDayEntries });
+  const loadUnifiedEntries = useCallback(async () => {
     try {
-      const mod = await import('../../src/services/rememberMeService');
-      await mod.upsertRememberMeEntry({ id: payload.id, date_key: selectedDateKey, entry_type: payload.type, time_value: payload.time, detail: payload.detail, description: payload.description });
+      const [rememberService, scheduleService] = await Promise.all([
+        import('../../src/services/rememberMeService'),
+        import('../../src/services/itsGettingThiccService'),
+      ]);
+      const [rememberResult, scheduleResult] = await Promise.all([
+        rememberService.fetchRememberMeEntriesSafe(),
+        scheduleService.fetchScheduleEntries(),
+      ]);
+      const nextRememberRows = rememberResult.rows || [];
+      const nextWorkoutRows = (scheduleResult || []).filter((row) => row.entry_type === 'personal' || row.schedule_layer === 'mista_thicc');
+      const groupedRemember = rememberService.groupRememberMeEntriesByDate(nextRememberRows);
+      const groupedWorkouts = scheduleService.groupScheduleEntriesByDate(nextWorkoutRows);
+      const dateKeys = new Set([...Object.keys(groupedRemember), ...Object.keys(groupedWorkouts)]);
+      const merged = {};
+      dateKeys.forEach((dateKey) => {
+        const events = (groupedRemember[dateKey] || []).map((row) => ({ ...row, _source: 'remember' }));
+        const workouts = (groupedWorkouts[dateKey] || []).map((row) => ({ ...row, type: 'PERSONAL WORKOUT', time: row.start_time, detail: row.workout_label, _source: 'personal-workout' }));
+        merged[dateKey] = [...events, ...workouts].sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+      });
+      setRememberRows(nextRememberRows);
+      setWorkoutRows(nextWorkoutRows);
+      setEntriesByDate(merged);
+      if (rememberResult.error) setError(rememberResult.error);
+    } catch (loadError) {
+      console.error('REMEMBER.ME unified calendar load failed', loadError);
+      setError('The unified calendar could not load.');
+    }
+  }, []);
+
+  useEffect(() => {
+    setMomentByDate(readStoredMoments());
+    loadUnifiedEntries();
+  }, [loadUnifiedEntries]);
+
+  useEffect(() => setFlippedMomentType(''), [selectedDateKey]);
+
+  const openNew = (dateKey, day) => {
+    setSelectedDay(day);
+    setEntryDraft({ ...EMPTY_EVENT, type: eventTypes[0] || EMPTY_EVENT.type });
+    setWorkoutDraft(EMPTY_WORKOUT);
+    setMomentDraft({ ...EMPTY_MOMENT, type: standoutTypes[0] || EMPTY_MOMENT.type });
+    setEditorMode('EVENT');
+    setError('');
+    setPostcardOpen(Boolean(dateKey));
+  };
+
+  const editCalendarEntry = (entry, dateKey) => {
+    setSelectedDay(Number(dateKey?.slice(-2)) || selectedDay);
+    setError('');
+    if (entry._source === 'personal-workout') {
+      const originalId = entry.original_entry_id || entry.id;
+      const original = workoutRows.find((row) => row.id === originalId) || entry;
+      setWorkoutDraft({ ...EMPTY_WORKOUT, ...original });
+      setEditorMode('WORKOUT');
+    } else {
+      const originalId = entry.original_entry_id || entry.id;
+      const original = rememberRows.find((row) => row.id === originalId) || entry;
+      setEntryDraft({
+        ...EMPTY_EVENT,
+        ...original,
+        type: original.type || original.entry_type,
+        time: original.time || original.time_value,
+      });
+      setEditorMode('EVENT');
+    }
+    setPostcardOpen(true);
+  };
+
+  const saveEvent = async () => {
+    if (!selectedDateKey) return setError('Select a valid date.');
+    setError('Saving event...');
+    try {
+      const service = await import('../../src/services/rememberMeService');
+      await service.upsertRememberMeEntry({
+        id: entryDraft.id,
+        date_key: entryDraft.date_key || selectedDateKey,
+        entry_type: entryDraft.type,
+        time_value: entryDraft.time,
+        detail: normalizeUserText(entryDraft.detail),
+        description: normalizeUserText(entryDraft.description),
+        recurrence_type: entryDraft.recurrence_type || 'none',
+        recurrence_days: entryDraft.recurrence_days || [],
+        recurrence_active: Boolean(entryDraft.recurrence_active),
+      });
+      await loadUnifiedEntries();
       setPostcardOpen(false);
-      setEntryDraft({ type: EVENT_TYPES[0], time: '', detail: '', description: '' });
-    } catch (backendError) {
-      console.error('REMEMBER.ME event save failed', backendError);
-      setEntriesByDate(snapshot);
-      setError('Save failed. Try again.');
+    } catch (saveError) {
+      setError(saveError?.message || 'Event save failed.');
     }
   };
 
-  const deleteEntry = async () => {
-    if (!selectedDateKey || !entryDraft.id) return;
-    const deletingId = entryDraft.id;
-    const snapshot = entriesByDate;
-    setError('');
-    setEntriesByDate((previous) => {
-      const dayEntries = previous[selectedDateKey] || [];
-      return { ...previous, [selectedDateKey]: dayEntries.filter((entry) => entry.id !== deletingId) };
-    });
+  const saveWorkout = async () => {
+    if (!selectedDateKey) return setError('Select a valid date.');
+    setError('Saving personal workout...');
     try {
-      const mod = await import('../../src/services/rememberMeService');
-      await mod.deleteRememberMeEntry(deletingId);
-      setEntryDraft({ type: EVENT_TYPES[0], time: '', detail: '', description: '' });
+      const service = await import('../../src/services/itsGettingThiccService');
+      await service.saveScheduleEntry({
+        ...workoutDraft,
+        entry_type: 'personal',
+        schedule_layer: 'mista_thicc',
+        client_id: null,
+        client_name: '',
+        entry_date: workoutDraft.entry_date || selectedDateKey,
+        color_option_key: 'mista-thicc-pink',
+        workout_label: normalizeUserText(workoutDraft.workout_label),
+        location: normalizeUserText(workoutDraft.location),
+        notes: normalizeUserText(workoutDraft.notes),
+        recurrence_type: workoutDraft.recurrence_type || 'none',
+        recurrence_days: workoutDraft.recurrence_days || [],
+        recurrence_active: Boolean(workoutDraft.recurrence_active),
+      });
+      await loadUnifiedEntries();
       setPostcardOpen(false);
-    } catch (backendError) {
-      console.error('REMEMBER.ME event delete failed', backendError);
-      setEntriesByDate(snapshot);
-      setError('Delete failed. Try again.');
+    } catch (saveError) {
+      setError(saveError?.message || 'Workout save failed.');
+    }
+  };
+
+  const deleteActive = async () => {
+    try {
+      if (editorMode === 'EVENT' && entryDraft.id) {
+        const service = await import('../../src/services/rememberMeService');
+        await service.deleteRememberMeEntry(entryDraft.id);
+      } else if (editorMode === 'WORKOUT' && workoutDraft.id) {
+        const service = await import('../../src/services/itsGettingThiccService');
+        await service.deleteScheduleEntry(workoutDraft.id);
+      } else return;
+      await loadUnifiedEntries();
+      setPostcardOpen(false);
+    } catch (deleteError) {
+      setError(deleteError?.message || 'Delete failed.');
     }
   };
 
   const stampMoment = () => {
-    setError('');
-    if (!selectedDateKey) { setError('Invalid date.'); return; }
-    const durableRef = momentDraft.persistedMediaRef && !momentDraft.persistedMediaRef.startsWith('blob:') ? momentDraft.persistedMediaRef : '';
-    const isUpdate = Boolean(momentDraft.id);
-    const existingCreatedAt = momentDraft.created_at || momentDraft.createdAt;
+    if (!selectedDateKey) return setError('Select a valid date.');
+    const stored = readStoredMoments();
+    const dayList = Array.isArray(stored[selectedDateKey]) ? stored[selectedDateKey] : [];
+    if (!momentDraft.id && dayList.length >= 3) return setError('Max 3 standouts per day.');
     const now = new Date().toISOString();
+    const durableRef = momentDraft.persistedMediaRef && !momentDraft.persistedMediaRef.startsWith('blob:') ? momentDraft.persistedMediaRef : '';
     const nextMoment = {
       ...momentDraft,
       id: momentDraft.id || crypto.randomUUID(),
@@ -197,50 +313,23 @@ export default function RememberMeSection() {
       mediaRef: durableRef,
       photoRef: durableRef,
       persistedMediaRef: durableRef,
-      created_at: existingCreatedAt || now,
-      createdAt: existingCreatedAt || now,
+      created_at: momentDraft.created_at || now,
       updated_at: now,
-      updatedAt: now,
     };
-
-    let blockedByMax = false;
-    setMomentByDate((previous) => {
-      const stored = readStoredMoments();
-      const merged = { ...stored, ...previous };
-      const dayList = Array.isArray(merged[selectedDateKey]) ? merged[selectedDateKey] : [];
-      if (!isUpdate && dayList.length >= 3) {
-        blockedByMax = true;
-        return previous;
-      }
-      const nextDayList = isUpdate ? dayList.map((moment) => (moment.id === momentDraft.id ? nextMoment : moment)) : [...dayList, nextMoment];
-      const nextState = { ...merged, [selectedDateKey]: nextDayList };
-      localStorage.setItem(MOMENTS_STORAGE_KEY, JSON.stringify(nextState));
-      return nextState;
-    });
-
-    if (blockedByMax) {
-      setError('Max 3 Standouts per day.');
-      return;
-    }
-
-    setPostcardOpen(false);
+    const nextDayList = momentDraft.id ? dayList.map((moment) => moment.id === momentDraft.id ? nextMoment : moment) : [...dayList, nextMoment];
+    const nextState = { ...stored, [selectedDateKey]: nextDayList };
+    localStorage.setItem(MOMENTS_STORAGE_KEY, JSON.stringify(nextState));
+    setMomentByDate(nextState);
     setFlippedMomentType(nextMoment.type);
-    setMomentDraft({ type: STANDOUT_TYPES[0], time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' });
+    setPostcardOpen(false);
   };
 
   const deleteMoment = () => {
     if (!selectedDateKey || !momentDraft.id) return;
-    const deletingId = momentDraft.id;
-    setError('');
-    setMomentByDate((previous) => {
-      const stored = readStoredMoments();
-      const merged = { ...stored, ...previous };
-      const dayList = Array.isArray(merged[selectedDateKey]) ? merged[selectedDateKey] : [];
-      const nextState = { ...merged, [selectedDateKey]: dayList.filter((moment) => moment.id !== deletingId) };
-      localStorage.setItem(MOMENTS_STORAGE_KEY, JSON.stringify(nextState));
-      return nextState;
-    });
-    setMomentDraft({ type: STANDOUT_TYPES[0], time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' });
+    const stored = readStoredMoments();
+    const nextState = { ...stored, [selectedDateKey]: (stored[selectedDateKey] || []).filter((moment) => moment.id !== momentDraft.id) };
+    localStorage.setItem(MOMENTS_STORAGE_KEY, JSON.stringify(nextState));
+    setMomentByDate(nextState);
     setPostcardOpen(false);
   };
 
@@ -262,37 +351,28 @@ export default function RememberMeSection() {
   };
 
   return (
-    <section className="remember-page">
-      <div
-        className="remember-scene-frame"
-        style={{
-          '--rm-bg-fit': visual.bgFit,
-          '--rm-bg-position': visual.bgPosition,
-          '--rm-calendar-right': REMEMBER_CALENDAR_PIN.calendarRight,
-          '--rm-calendar-bottom': REMEMBER_CALENDAR_PIN.calendarBottom,
-          '--rm-calendar-width': REMEMBER_CALENDAR_PIN.calendarWidth,
-          '--rm-calendar-max-width': REMEMBER_CALENDAR_PIN.calendarMaxWidth
-        }}
-      >
-        <img
-          className="remember-bg-img"
-          src={`/backgrounds/REMEMBER-ME/${MONTH_BACKGROUND_BY_INDEX[monthIndex]}`}
-          alt=""
-          aria-hidden="true"
-          onError={() => console.warn('REMEMBER.ME background missing', `/backgrounds/REMEMBER-ME/${MONTH_BACKGROUND_BY_INDEX[monthIndex]}`)}
-        />
+    <section className={`remember-page remember-season-${season.key}`}>
+      <div className="remember-scene-frame">
+        <img className="remember-bg-img" src={`/backgrounds/REMEMBER-ME/${backgroundName}`} alt="" aria-hidden="true" />
         <div className="remember-overlay" aria-hidden="true" />
-        <div className="remember-content">
-        <main className="remember-main">
-          <section className="remember-calendar-panel">
+        <main className={`remember-main remember-calendar-${season.calendarSide}`}>
+          <section className="remember-calendar-panel" aria-label="Unified REMEMBER.ME calendar">
             <ChaoticaMonthCalendar
               viewDate={viewDate}
               selectedDateKey={selectedDateKey}
               entriesByDate={entriesByDate}
-              onMonthChange={(next, nextDateKey) => { setViewDate(next); setSelectedDay(Number(nextDateKey?.slice(-2)) || Math.min(selectedDay, daysInMonth(next.getFullYear(), next.getMonth()))); }}
-              onSelectDate={(dateKey, day) => { setSelectedDay(day); setPostcardOpen(true); }}
-              getEntryLabel={(entry) => `${entry.type}${entry.time ? ` • ${entry.time}` : ''}`}
-              maxEntriesPerDay={2}
+              onMonthChange={(next, nextDateKey) => {
+                setViewDate(next);
+                setSelectedDay(Number(nextDateKey?.slice(-2)) || Math.min(selectedDay, daysInMonth(next.getFullYear(), next.getMonth())));
+              }}
+              onSelectDate={openNew}
+              onEntryClick={editCalendarEntry}
+              getEntryLabel={(entry) => entry._source === 'personal-workout'
+                ? `WORKOUT${entry.time ? ` • ${entry.time}` : ''}`
+                : `${entry.type || entry.entry_type}${entry.time ? ` • ${entry.time}` : ''}`}
+              getEntryColor={colorForEntry}
+              getEntryTextColor={() => '#fff7f0'}
+              maxEntriesPerDay={3}
             />
           </section>
           <section className="remember-standout-postcards" aria-label="REMEMBER.ME moment flip cards">
@@ -302,16 +382,59 @@ export default function RememberMeSection() {
                 type={card.type}
                 moment={card.moment}
                 isFlipped={flippedMomentType === card.type}
-                onToggle={() => setFlippedMomentType((current) => (current === card.type ? '' : card.type))}
+                onToggle={() => setFlippedMomentType((current) => current === card.type ? '' : card.type)}
               />
             ))}
           </section>
         </main>
-        </div>
       </div>
 
-      {postcardOpen ? <><div className="remember-popout-scrim" onClick={() => setPostcardOpen(false)} /><section className="remember-postcard-popout"><header><h3>{formatDisplayDate(selectedDateKey)}</h3><button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></header><div className="remember-type-switch"><button type="button" className={editorMode === 'EVENT' ? 'active' : ''} onClick={() => setEditorMode('EVENT')}>EVENT</button><button type="button" className={editorMode === 'STANDOUT' ? 'active' : ''} onClick={() => setEditorMode('STANDOUT')}>STANDOUT</button></div><div className="remember-form">{editorMode === 'EVENT' ? <><div className="remember-existing-items">{currentEntries.map((entry) => <button key={entry.id} type="button" className={entryDraft.id === entry.id ? 'active' : ''} onClick={() => setEntryDraft({ ...entry })}>{entry.type} {entry.time ? `• ${entry.time}` : ''}</button>)}</div><label>EVENT TYPE<select value={entryDraft.type} onChange={(e)=>setEntryDraft((d)=>({...d,type:e.target.value}))}>{EVENT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select></label><label>TIME<input type="time" value={entryDraft.time} onChange={(e)=>setEntryDraft((d)=>({...d,time:e.target.value}))} /></label><label>LOCATION<input type="text" value={entryDraft.detail} onChange={(e)=>setEntryDraft((d)=>({...d,detail:normalizeUserText(e.target.value)}))} /></label><label>DESCRIPTION<textarea value={entryDraft.description} onChange={(e)=>setEntryDraft((d)=>({...d,description:normalizeUserText(e.target.value)}))} /></label><div className="remember-actions"><button type="button" onClick={saveEntry}>SAVE</button>{entryDraft.id ? <button type="button" onClick={deleteEntry}>DELETE</button> : null}<button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></div></> : <><div className="remember-existing-items">{currentMoments.map((moment) => <button key={moment.id} type="button" className={momentDraft.id === moment.id ? 'active' : ''} onClick={() => setMomentDraft({ ...moment, mediaRef: moment.mediaRef || '', persistedMediaRef: moment.persistedMediaRef || moment.photoRef || '' })}>{moment.type || moment.standoutType} {moment.time ? `• ${moment.time}` : ''}</button>)}</div><label>WOW / WTF / PLOT TWIST<select value={momentDraft.type} onChange={(e)=>setMomentDraft((d)=>({...d,type:e.target.value}))}>{STANDOUT_TYPES.map((type)=><option key={type} value={type}>{type}</option>)}</select></label><label>TIME<input type="time" value={momentDraft.time} onChange={(e)=>setMomentDraft((d)=>({...d,time:e.target.value}))} /></label><label>LOCATION<input type="text" value={momentDraft.detail} onChange={(e)=>setMomentDraft((d)=>({...d,detail:normalizeUserText(e.target.value)}))} /></label><label>DESCRIPTION<textarea value={momentDraft.description} onChange={(e)=>setMomentDraft((d)=>({...d,description:normalizeUserText(e.target.value)}))} /></label><label>PHOTO / IMAGE<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={uploadMomentImage} /></label>{momentDraft.mediaRef ? <div className="remember-moment-photo-preview"><img src={momentDraft.mediaRef} alt="preview" /></div> : null}<div className="remember-actions"><button type="button" onClick={stampMoment}>STAMP IT</button>{momentDraft.id ? <button type="button" onClick={deleteMoment}>DELETE</button> : null}<button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></div></>}{error ? <p className="time-error">{error}</p> : null}</div></section></> : null}
-
+      {postcardOpen ? (
+        <>
+          <div className="remember-popout-scrim" onClick={() => setPostcardOpen(false)} />
+          <section className="remember-postcard-popout">
+            <header><h3>{formatDisplayDate(selectedDateKey)}</h3><button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></header>
+            <div className="remember-type-switch">
+              {['EVENT', 'WORKOUT', 'STANDOUT'].map((mode) => <button key={mode} type="button" className={editorMode === mode ? 'active' : ''} onClick={() => setEditorMode(mode)}>{mode}</button>)}
+            </div>
+            <div className="remember-form">
+              {editorMode === 'EVENT' ? (
+                <>
+                  <label>EVENT TYPE<select value={entryDraft.type} onChange={(event) => setEntryDraft((draft) => ({ ...draft, type: event.target.value }))}>{eventTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
+                  <label>TIME<input type="time" value={entryDraft.time || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, time: event.target.value }))} /></label>
+                  <label>LOCATION<input value={entryDraft.detail || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, detail: event.target.value }))} /></label>
+                  <label>DESCRIPTION<textarea value={entryDraft.description || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
+                  <RecurrenceControl draft={entryDraft} setDraft={setEntryDraft} selectedDateKey={selectedDateKey} />
+                  <div className="remember-actions"><button type="button" onClick={saveEvent}>SAVE EVENT</button>{entryDraft.id ? <button type="button" onClick={deleteActive}>DELETE</button> : null}</div>
+                </>
+              ) : null}
+              {editorMode === 'WORKOUT' ? (
+                <>
+                  <label>WORKOUT / SESSION<input value={workoutDraft.workout_label || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, workout_label: event.target.value }))} /></label>
+                  <div className="remember-time-pair"><label>START<input type="time" value={workoutDraft.start_time || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, start_time: event.target.value }))} /></label><label>END<input type="time" value={workoutDraft.end_time || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, end_time: event.target.value }))} /></label></div>
+                  <label>LOCATION<input value={workoutDraft.location || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, location: event.target.value }))} /></label>
+                  <label>NOTES<textarea value={workoutDraft.notes || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, notes: event.target.value }))} /></label>
+                  <RecurrenceControl draft={workoutDraft} setDraft={setWorkoutDraft} selectedDateKey={selectedDateKey} />
+                  <div className="remember-actions"><button type="button" onClick={saveWorkout}>SAVE WORKOUT</button>{workoutDraft.id ? <button type="button" onClick={deleteActive}>DELETE</button> : null}</div>
+                </>
+              ) : null}
+              {editorMode === 'STANDOUT' ? (
+                <>
+                  <div className="remember-existing-items">{currentMoments.map((moment) => <button key={moment.id} type="button" className={momentDraft.id === moment.id ? 'active' : ''} onClick={() => setMomentDraft({ ...EMPTY_MOMENT, ...moment, type: moment.type || moment.standoutType, mediaRef: moment.mediaRef || '', persistedMediaRef: moment.persistedMediaRef || moment.photoRef || '' })}>{moment.type || moment.standoutType}</button>)}</div>
+                  <label>WOW / WTF / PLOT TWIST<select value={momentDraft.type} onChange={(event) => setMomentDraft((draft) => ({ ...draft, type: event.target.value }))}>{standoutTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
+                  <label>TIME<input type="time" value={momentDraft.time || ''} onChange={(event) => setMomentDraft((draft) => ({ ...draft, time: event.target.value }))} /></label>
+                  <label>LOCATION<input value={momentDraft.detail || ''} onChange={(event) => setMomentDraft((draft) => ({ ...draft, detail: event.target.value }))} /></label>
+                  <label>DESCRIPTION<textarea value={momentDraft.description || ''} onChange={(event) => setMomentDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
+                  <label>PHOTO / IMAGE<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={uploadMomentImage} /></label>
+                  {momentDraft.mediaRef ? <div className="remember-moment-photo-preview"><img src={momentDraft.mediaRef} alt="Selected standout" /></div> : null}
+                  <div className="remember-actions"><button type="button" onClick={stampMoment}>STAMP IT</button>{momentDraft.id ? <button type="button" onClick={deleteMoment}>DELETE</button> : null}</div>
+                </>
+              ) : null}
+              {error ? <p className="time-error">{error}</p> : null}
+            </div>
+          </section>
+        </>
+      ) : null}
     </section>
   );
 }

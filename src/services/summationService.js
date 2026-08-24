@@ -1075,10 +1075,11 @@ function readSealedRecords() {
 
 export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
   const requestedDateKey = cleanText(dateKey);
-  const records = readSealedRecords();
-  const existing = records.find((record) => cleanText(record?.sourceDate) === requestedDateKey || cleanText(record?.dateKey) === requestedDateKey);
-  if (!isMissingChaoticaDayNumber(existing?.chaoticaDayNumber)) return Number(existing.chaoticaDayNumber);
-  return records.length + 1;
+  const match = requestedDateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return 0;
+  const requestedUtc = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const officialDayOneUtc = Date.UTC(2026, 8, 1);
+  return Math.max(0, Math.floor((requestedUtc - officialDayOneUtc) / 86400000) + 1);
 }
 
 export function generateSummationVariations(dayPayload = null, pennyForYourThoughts = createEmptyPennyForYourThoughts()) {

@@ -67,6 +67,7 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   private var keepInFrontItem: NSMenuItem!
   private var globalFlagsMonitor: Any?
   private var localFlagsMonitor: Any?
+  private var screenParametersObserver: NSObjectProtocol?
   private var chordLatched = false
 
   func applicationDidFinishLaunching(_ notification: Notification) {
@@ -75,12 +76,22 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
     makeGlyphPanel()
     makeStatusMenu()
     beginShortcutMonitoring()
+    installLoginLaunchAgent()
+    screenParametersObserver = NotificationCenter.default.addObserver(
+      forName: NSApplication.didChangeScreenParametersNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      guard let self else { return }
+      self.shrinePanel.isVisible ? self.positionOpenPanel() : self.positionGlyphPanel()
+    }
     retractShrine()
   }
 
   func applicationWillTerminate(_ notification: Notification) {
     if let globalFlagsMonitor { NSEvent.removeMonitor(globalFlagsMonitor) }
     if let localFlagsMonitor { NSEvent.removeMonitor(localFlagsMonitor) }
+    if let screenParametersObserver { NotificationCenter.default.removeObserver(screenParametersObserver) }
   }
 
   private func makeShrinePanel() {
@@ -131,7 +142,32 @@ final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHand
   private func positionGlyphPanel() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width + 22, y: visible.minY + 24))
+    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width - 10, y: visible.minY + 18))
+  }
+
+  private func installLoginLaunchAgent() {
+    let installedBundlePath = "/Applications/CHAOTICA Shrine.app"
+    guard Bundle.main.bundleURL.path == installedBundlePath,
+          let executablePath = Bundle.main.executablePath else { return }
+    let launchAgents = FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent("Library/LaunchAgents", isDirectory: true)
+    let launchAgent = launchAgents.appendingPathComponent("com.chaotica.desk-shrine.plist")
+    let payload: [String: Any] = [
+      "Label": "com.chaotica.desk-shrine",
+      "ProgramArguments": [executablePath],
+      "RunAtLoad": true,
+      "KeepAlive": ["SuccessfulExit": false],
+      "ProcessType": "Interactive",
+      "LimitLoadToSessionType": "Aqua"
+    ]
+    do {
+      try FileManager.default.createDirectory(at: launchAgents, withIntermediateDirectories: true)
+      let data = try PropertyListSerialization.data(fromPropertyList: payload, format: .xml, options: 0)
+      try data.write(to: launchAgent, options: .atomic)
+    } catch {
+      // The main CHAOTICA app also relaunches the Shrine, so this optional
+      // login helper must never prevent the companion from opening.
+    }
   }
 
   private func makeStatusMenu() {
