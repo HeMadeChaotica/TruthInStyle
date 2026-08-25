@@ -292,7 +292,9 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
 
   return (
     <>
-      <button type="button" className="tis-rail-tab" aria-expanded={isOpen} aria-controls="tis-control-rail" onClick={() => (isOpen ? onClose?.() : onOpen?.())}>☽</button>
+      <button type="button" className="tis-rail-tab" aria-expanded={isOpen} aria-controls="tis-control-rail" aria-label={isOpen ? 'Close Control Panel' : 'Open Control Panel'} onClick={() => (isOpen ? onClose?.() : onOpen?.())}>
+        <span className="tis-rail-tab-gem" aria-hidden="true" />
+      </button>
       <aside className="tis-control-overlay" aria-hidden={!isOpen} data-open={isOpen}>
         <div
           className="tis-control-scrim"
