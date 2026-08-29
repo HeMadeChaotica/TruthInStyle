@@ -11,12 +11,11 @@ import {
 } from '../../src/services/hopewoodService';
 import {
   cleanAnalyticsText,
-  dayCapsuleFactGroups,
   normalizeDayCapsuleRecord,
 } from '../../src/services/dayCapsuleAnalytics';
 import '../../styles/sections/hopewood.css';
 
-const BACKGROUND_URL = '/backgrounds/HOPEWOOD/hopewood-archive-landscape-v4.png';
+const BACKGROUND_URL = '/backgrounds/HOPEWOOD/hopewood-archive-crystallization-v5.png';
 const LOOKUP_MODES = [
   ['date', 'DATE'],
   ['mood', 'MOOD'],
@@ -41,16 +40,6 @@ function fieldValue(record, mode) {
 
 function searchableText(record) {
   return JSON.stringify(record).toLocaleLowerCase();
-}
-
-function FactGroup({ group }) {
-  return (
-    <section className={`hopewood-fact-group tone-${group.tone || 'steady'}`}>
-      <h2>{group.title}</h2>
-      {group.rows?.length ? <dl>{group.rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{cleanAnalyticsText(value)}</dd></div>)}</dl> : null}
-      {group.items?.length ? <ul>{group.items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul> : null}
-    </section>
-  );
 }
 
 export default function HopewoodSection() {
@@ -91,7 +80,6 @@ export default function HopewoodSection() {
 
   const selected = records.find((record) => getHopewoodRecordDate(record) === selectedDate) || matches[0] || records.at(-1) || null;
   const day = selected ? normalizeDayCapsuleRecord(selected) : null;
-  const groups = selected ? dayCapsuleFactGroups(selected) : [];
   const artifactUrl = getHopewoodArtifactUrl(selected);
 
   const chooseMode = (event) => {
@@ -103,29 +91,29 @@ export default function HopewoodSection() {
     <SectionShell className="hopewood-page" aria-label="Hopewood Day Capsule archive">
       <ScenePlate className="hopewood-scene-plate"><img className="hopewood-bg" src={BACKGROUND_URL} alt="" aria-hidden="true" /></ScenePlate>
       <SectionOverlay className="hopewood-overlay">
-        <article className="hopewood-facts-panel" aria-label="Factual Day Capsule">
-          {!day ? <div className="hopewood-empty">NO SEALED DAYS</div> : (
-            <div className="hopewood-facts-scroll">
-              <header><span>SEALED DAY CAPSULE</span><h1>{day.title}</h1><p>{[day.displayDate, day.dayOfWeek].filter(Boolean).join(' · ')}</p></header>
-              {groups.map((group) => <FactGroup key={group.title} group={group} />)}
-            </div>
-          )}
-        </article>
-
         <section className="hopewood-render-panel" aria-label="Completed Summation render">
-          {artifactUrl ? <img src={artifactUrl} alt={`Completed Day Sketch for ${day?.displayDate || ''}`} /> : <div className="hopewood-empty">NO LANDSCAPE RENDER SEALED</div>}
+          {artifactUrl ? (
+            <figure>
+              <img src={artifactUrl} alt={`Completed Day Sketch for ${day?.displayDate || ''}`} />
+              <figcaption><strong>{day?.title || 'UNTITLED DAY'}</strong><span>{[day?.displayDate, day?.dayOfWeek].filter(Boolean).join(' · ')}</span></figcaption>
+            </figure>
+          ) : (
+            <div className="hopewood-render-empty"><span>SEALED DAY VISUALIZATION</span><strong>{day?.title || 'NO SEALED DAY SELECTED'}</strong><p>{day ? 'This Day Capsule has facts, but no completed landscape visualization is sealed yet.' : 'Choose a sealed day from the archive.'}</p></div>
+          )}
         </section>
 
         <aside className="hopewood-lookup" aria-label="Find a Day Capsule">
+          <header className="hopewood-lookup-heading"><span>HOPEWOOD ARCHIVE</span><h1>Find a sealed day</h1><p>Search only what CHAOTICA has actually saved.</p></header>
           <div className="hopewood-search-controls">
-            <strong>FIND A DAY</strong>
-            <select aria-label="Search Hopewood by" value={lookupMode} onChange={chooseMode}>
+            <label htmlFor="hopewood-search-mode">LOOK UP BY</label>
+            <select id="hopewood-search-mode" aria-label="Search Hopewood by" value={lookupMode} onChange={chooseMode}>
               {LOOKUP_MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
             {lookupMode === 'phrase'
               ? <input type="search" value={lookupValue} onChange={(event) => setLookupValue(event.target.value)} placeholder="TYPE A WORD OR PHRASE" aria-label="Keyword or phrase" />
               : <select value={lookupValue} onChange={(event) => setLookupValue(event.target.value)} aria-label={`${lookupMode} value`}><option value="">ALL</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select>}
           </div>
+          {day ? <section className="hopewood-selected-day" aria-label="Selected day"><span>SELECTED DAY</span><strong>{day.title || 'UNTITLED DAY'}</strong><p>{[day.displayDate, day.dayOfWeek].filter(Boolean).join(' · ')}</p>{[day.mood, day.era].filter(Boolean).length ? <small>{[day.mood, day.era].filter(Boolean).join(' · ')}</small> : null}</section> : null}
           <div className="hopewood-results" aria-live="polite">
             {matches.length ? matches.slice(0, 20).map((record) => {
               const date = getHopewoodRecordDate(record);

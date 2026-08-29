@@ -11,10 +11,10 @@ const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
 const RAIL_ITEMS = [
   { key: 'entrance', src: '/opening/chaotica-opening-entrance-closed.png', alt: 'EXIT TO ENTRANCE', type: 'route', className: 'tis-entrance-glyph' },
-  { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home.png', alt: 'HOME / THE.ASSURER', type: 'route' },
-  { key: 'back', src: '/ui/glyphs/control%20panel/glyph-back.png', alt: 'Back', type: 'route' },
-  { key: 'its-getting-thicc', src: '/ui/glyphs/control%20panel/glyph-its-getting-thicc.png', alt: 'ITS.GETTING.THICC', type: 'route' },
-  { key: 'thicc-fitt', src: '/ui/glyphs/control%20panel/glyph-thicc-fitt.png', alt: 'THICC.FITT', type: 'route' },
+  { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home-crystallization-v2.png', alt: 'HOME / THE.ASSURER', type: 'route' },
+  { key: 'back', src: '/ui/glyphs/control%20panel/glyph-back-crystallization-v3.png', alt: 'Back', type: 'route' },
+  { key: 'its-getting-thicc', src: '/ui/glyphs/control%20panel/glyph-its-getting-thicc-crystallization-v2.png', alt: 'ITS.GETTING.THICC', type: 'route' },
+  { key: 'thicc-fitt', src: '/ui/glyphs/control%20panel/glyph-thicc-fitt-crystallization-v2.png', alt: 'THICC.FITT', type: 'route' },
   { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater.png', alt: 'DA.EATER', type: 'route' },
   { key: 'remember-me', src: '/ui/glyphs/control%20panel/glyph-remember-me.png', alt: 'REMEMBER.ME', type: 'route' },
   { key: 'hopewood', src: '/ui/glyphs/control%20panel/glyph-hopewood.png', alt: 'HOPEWOOD', type: 'route' },

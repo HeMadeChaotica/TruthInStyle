@@ -2363,3 +2363,187 @@
     max-height: 100dvh;
   }
 }
+
+/* 2026-08-26 legibility lock
+   The scene remains the visual surface. Panels are warm, clear local glass—not
+   black cards—and dense information receives its contrast at the text/row level. */
+.assurer-phase-layout {
+  --assurer-readable-ink: #4b202d;
+  --assurer-readable-ink-soft: #6b3142;
+  --assurer-readable-paper: rgba(255, 241, 226, 0.82);
+  --assurer-readable-paper-soft: rgba(255, 236, 220, 0.62);
+}
+
+.assurer-phase-layout .assurer-widget,
+.assurer-phase-layout .assurer-macro-widget {
+  color: var(--assurer-readable-ink) !important;
+  background: linear-gradient(145deg, rgba(255, 239, 224, 0.24), rgba(246, 196, 194, 0.12)) !important;
+  border-color: rgba(255, 221, 205, 0.76) !important;
+  box-shadow: 0 8px 22px rgba(66, 27, 30, 0.14) !important;
+  text-shadow: none !important;
+  backdrop-filter: blur(7px) saturate(108%) brightness(1.04) !important;
+  -webkit-backdrop-filter: blur(7px) saturate(108%) brightness(1.04) !important;
+}
+
+.assurer-phase-layout .assurer-macro-glass {
+  background: linear-gradient(145deg, rgba(255, 239, 224, 0.24), rgba(246, 196, 194, 0.12)) !important;
+  backdrop-filter: blur(7px) saturate(108%) brightness(1.04) !important;
+  -webkit-backdrop-filter: blur(7px) saturate(108%) brightness(1.04) !important;
+}
+
+.assurer-phase-layout .assurer-widget *,
+.assurer-phase-layout .assurer-macro-widget * {
+  text-shadow: none !important;
+}
+
+.assurer-phase-layout .assurer-widget-content > strong:first-child,
+.assurer-phase-layout .assurer-macro-title,
+.assurer-phase-layout .assurer-meal-content > strong,
+.assurer-phase-layout .assurer-workout-content > strong,
+.assurer-phase-layout .assurer-timeline-content > strong,
+.assurer-phase-layout .assurer-week-content > strong {
+  display: table;
+  width: fit-content;
+  max-width: calc(100% - 2.25rem);
+  margin-bottom: clamp(4px, 0.34vw, 8px);
+  padding: 0.2em 0.48em;
+  border-radius: 0.45rem;
+  background: var(--assurer-readable-paper);
+  color: var(--assurer-readable-ink) !important;
+  -webkit-text-fill-color: var(--assurer-readable-ink) !important;
+  font-size: clamp(15px, 0.82vw, 22px) !important;
+  line-height: 1.05 !important;
+}
+
+.assurer-phase-layout .assurer-title-meta,
+.assurer-phase-layout .assurer-title-input,
+.assurer-phase-layout .assurer-control,
+.assurer-phase-layout .assurer-definition-input,
+.assurer-phase-layout .assurer-thoughts-textarea,
+.assurer-phase-layout .assurer-battle-cry-quote,
+.assurer-phase-layout .assurer-battle-cry-attribution,
+.assurer-phase-layout .assurer-macro-label,
+.assurer-phase-layout .assurer-macro-percent,
+.assurer-phase-layout .assurer-workout-summary span,
+.assurer-phase-layout .assurer-workout-summary strong,
+.assurer-phase-layout .assurer-workout-row strong,
+.assurer-phase-layout .assurer-workout-row small,
+.assurer-phase-layout .assurer-workout-footer span,
+.assurer-phase-layout .assurer-workout-footer p,
+.assurer-phase-layout .assurer-workout-empty,
+.assurer-phase-layout .assurer-timeline-row,
+.assurer-phase-layout .assurer-timeline-empty,
+.assurer-phase-layout .assurer-week-empty,
+.assurer-phase-layout .assurer-week-day-empty,
+.assurer-phase-layout .assurer-week-day-label,
+.assurer-phase-layout .assurer-week-day-count,
+.assurer-phase-layout .assurer-moment-type,
+.assurer-phase-layout .assurer-moment-time,
+.assurer-phase-layout .assurer-moment-preview,
+.assurer-phase-layout .assurer-moment-empty,
+.assurer-phase-layout .assurer-meal-row,
+.assurer-phase-layout .assurer-meal-time,
+.assurer-phase-layout .assurer-meal-name,
+.assurer-phase-layout .assurer-meal-macros {
+  color: var(--assurer-readable-ink) !important;
+  -webkit-text-fill-color: var(--assurer-readable-ink) !important;
+}
+
+.assurer-phase-layout .assurer-title-meta,
+.assurer-phase-layout .assurer-title-input {
+  background: var(--assurer-readable-paper-soft) !important;
+  border-radius: 0.45rem !important;
+  padding: 0.2em 0.5em !important;
+}
+
+.assurer-phase-layout .assurer-title-meta {
+  font-size: clamp(16px, 0.88vw, 23px) !important;
+}
+
+.assurer-phase-layout .assurer-title-input {
+  font-size: clamp(17px, 0.96vw, 26px) !important;
+}
+
+.assurer-phase-layout .assurer-control,
+.assurer-phase-layout .assurer-definition-input,
+.assurer-phase-layout .assurer-thoughts-textarea {
+  background: rgba(255, 243, 230, 0.76) !important;
+  border: 1px solid rgba(116, 58, 65, 0.34) !important;
+  font-size: clamp(13px, 0.69vw, 18px) !important;
+}
+
+.assurer-phase-layout .assurer-daily-content .assurer-field > span,
+.assurer-phase-layout .assurer-weather-content,
+.assurer-phase-layout .assurer-word-content,
+.assurer-phase-layout .assurer-battle-cry-content {
+  color: var(--assurer-readable-ink) !important;
+  -webkit-text-fill-color: var(--assurer-readable-ink) !important;
+  font-size: clamp(13px, 0.68vw, 18px) !important;
+}
+
+.assurer-phase-layout .assurer-macro-compact-row,
+.assurer-phase-layout .assurer-workout-summary,
+.assurer-phase-layout .assurer-workout-row,
+.assurer-phase-layout .assurer-timeline-row,
+.assurer-phase-layout .assurer-week-day,
+.assurer-phase-layout .assurer-moment-card,
+.assurer-phase-layout .assurer-meal-row,
+.assurer-phase-layout .assurer-workout-empty,
+.assurer-phase-layout .assurer-timeline-empty,
+.assurer-phase-layout .assurer-week-empty {
+  background: rgba(255, 240, 224, 0.62) !important;
+  border-color: rgba(108, 50, 62, 0.25) !important;
+}
+
+.assurer-phase-layout .assurer-macro-label,
+.assurer-phase-layout .assurer-macro-percent,
+.assurer-phase-layout .assurer-workout-summary span,
+.assurer-phase-layout .assurer-workout-summary strong,
+.assurer-phase-layout .assurer-workout-row strong,
+.assurer-phase-layout .assurer-workout-row small,
+.assurer-phase-layout .assurer-timeline-row,
+.assurer-phase-layout .assurer-week-day-label,
+.assurer-phase-layout .assurer-week-day-count,
+.assurer-phase-layout .assurer-moment-type,
+.assurer-phase-layout .assurer-moment-time,
+.assurer-phase-layout .assurer-moment-preview,
+.assurer-phase-layout .assurer-meal-row {
+  font-size: clamp(11px, 0.6vw, 16px) !important;
+}
+
+.assurer-phase-layout .assurer-battle-cry-quote {
+  font-size: clamp(15px, 0.86vw, 23px) !important;
+  line-height: 1.22 !important;
+}
+
+.assurer-expanded-backdrop {
+  background: rgba(51, 22, 29, 0.18) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+}
+
+.assurer-expanded-panel {
+  color: var(--assurer-readable-ink) !important;
+  background: linear-gradient(145deg, rgba(255, 242, 228, 0.94), rgba(244, 200, 198, 0.9)) !important;
+  border-color: rgba(255, 220, 202, 0.9) !important;
+  box-shadow: 0 24px 70px rgba(55, 20, 28, 0.3) !important;
+}
+
+.assurer-expanded-panel,
+.assurer-expanded-panel * {
+  color: var(--assurer-readable-ink) !important;
+  -webkit-text-fill-color: var(--assurer-readable-ink) !important;
+  text-shadow: none !important;
+}
+
+.assurer-expanded-title {
+  font-size: clamp(24px, 2vw, 42px) !important;
+}
+
+.assurer-expanded-close,
+.assurer-widget-expand {
+  background: rgba(255, 242, 228, 0.86) !important;
+  border-color: rgba(92, 38, 51, 0.42) !important;
+  color: var(--assurer-readable-ink) !important;
+  -webkit-text-fill-color: var(--assurer-readable-ink) !important;
+}

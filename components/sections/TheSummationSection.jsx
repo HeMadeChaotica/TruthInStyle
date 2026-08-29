@@ -14,7 +14,6 @@ import {
 } from '../../src/services/dayCapsuleRenderService';
 import '../../styles/sections/the-summation.css';
 
-const BACKGROUND_URL = '/backgrounds/THE-SUMMATION/the-summation-landscape-day-sketch-v2.png';
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
@@ -488,12 +487,11 @@ export default function TheSummationSection() {
   return (
     <main
       className="summation-shell"
-      style={{ '--summation-bg': `url(${BACKGROUND_URL})` }}
       data-can-request-external={canRequestExternal ? 'true' : 'false'}
       data-render-button-reason={renderButtonReason}
     >
       <section className="summation-stage" aria-label="THE.SUMMATION landscape Day Sketch">
-        <div className="summation-background-plate" aria-hidden="true" />
+        <div className="summation-stage-aura" aria-hidden="true" />
         <VisualizationPage
           payload={payload}
           renderRecord={renderRecord}
