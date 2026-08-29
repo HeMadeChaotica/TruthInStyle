@@ -293,7 +293,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   return (
     <>
       <button type="button" className="tis-rail-tab" aria-expanded={isOpen} aria-controls="tis-control-rail" aria-label={isOpen ? 'Close Control Panel' : 'Open Control Panel'} onClick={() => (isOpen ? onClose?.() : onOpen?.())}>
-        <span className="tis-rail-tab-gem" aria-hidden="true" />
+        <img className="tis-rail-tab-latch" src="/ui/glyphs/control%20panel/glyph-control-panel-heartgate-latch-v1.png" alt="" draggable={false} aria-hidden="true" />
       </button>
       <aside className="tis-control-overlay" aria-hidden={!isOpen} data-open={isOpen}>
         <div
