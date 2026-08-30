@@ -18,7 +18,7 @@ const RAIL_ITEMS = [
   { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater-crystallization-v2.png', alt: 'DA.EATER', type: 'route' },
   { key: 'remember-me', src: '/ui/glyphs/control%20panel/glyph-remember-me-crystallization-v2.png', alt: 'REMEMBER.ME', type: 'route' },
   { key: 'hopewood', src: '/ui/glyphs/control%20panel/glyph-hopewood-crystallization-v2.png', alt: 'HOPEWOOD', type: 'route' },
-  { key: '525600', src: '/ui/glyphs/control%20panel/glyph-525600.png', alt: '525600', type: 'route' },
+  { key: '525600', src: '/ui/glyphs/control%20panel/glyph-525600-crystallization-v2.png', alt: '525600', type: 'route' },
   { key: 'the-summation', src: '/ui/glyphs/control%20panel/glyph-the-summation.png', alt: 'THE.SUMMATION', type: 'route' },
   { key: 'clock-it', src: '/ui/glyphs/control%20panel/glyph-clock-it.png', alt: 'CLOCK.IT', type: 'route' },
   { key: 'eye-of-truth', src: '/ui/glyphs/triggers/glyph-eye-of-truth.png', alt: 'Eye of Truth', type: 'sacred' },
