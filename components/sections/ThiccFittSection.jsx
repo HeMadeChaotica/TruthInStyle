@@ -307,5 +307,5 @@ export default function ThiccFittSection() {
     { id: 'I', columns: 1, className: 'tf30-shelf-f', panels: [{ id: 'arena-rules', token: 'strip', content: <><h2>ARENA RULES</h2><div className="tf30-footer"><span>MIN 75 MIN</span><span>MAX 120 MIN</span><span>CORE 15 MIN</span><span>CARDIO 60 MIN / 3X WEEK</span><span>POSE DAILY. STAGE COMMAND</span><span>PROGRESS REMINDER</span></div></> }] }
   ];
 
-  return <SectionShell className="tf30-shell thicc-fitt-page"><ScenePlate><div className="tf30-bg" /><div className="tf30-overlay" /></ScenePlate><SectionOverlay><ArtLane className="tf30-left" /><ContentScroller className="tf30-content"><BlueprintStack shelves={shelves} /></ContentScroller></SectionOverlay></SectionShell>;
+  return <SectionShell className="tf30-shell thicc-fitt-page"><ScenePlate><div className="tf30-bg" /><div className="tf30-overlay" /></ScenePlate><SectionOverlay><ArtLane className="tf30-left" /><ContentScroller className="tf30-content"><header className="tf30-district-banner"><div><h1>THICC.FITT</h1><span>CHAOTICA TRAINING DISTRICT</span></div><p>EVERY STATION REMAINS · SELECT ONE TO EXPAND · THE WORLD STAYS VISIBLE</p></header><BlueprintStack shelves={shelves} /></ContentScroller></SectionOverlay></SectionShell>;
 }

@@ -35,9 +35,7 @@ export default function ChaoticaPasswordPlaque({ onAuthorized }) {
   return (
     <section className="chaotica-auth-plaque" aria-label="CHAOTICA password gate">
       <form onSubmit={unlock}>
-        <h2>UNLOCK THE SEAL</h2>
-        <p>Enter your CHAOTICA password. Then the seal will listen for your oath.</p>
-        <label htmlFor="chaotica-password">CHAOTICA password</label>
+        <label className="chaotica-visually-hidden" htmlFor="chaotica-password">CHAOTICA PASSWORD</label>
         <input
           id="chaotica-password"
           type="password"
@@ -45,9 +43,12 @@ export default function ChaoticaPasswordPlaque({ onAuthorized }) {
           onChange={(event) => setPassword(event.target.value)}
           autoComplete="current-password"
           autoFocus
+          placeholder="PASSWORD"
           required
         />
-        <button type="submit" disabled={submitting || !password}>{submitting ? 'VERIFYING…' : 'UNLOCK THE SEAL'}</button>
+        <button className="chaotica-auth-seal" type="submit" disabled={submitting || !password} aria-label={submitting ? 'VERIFYING PASSWORD' : 'UNLOCK CHAOTICA'}>
+          <span aria-hidden="true">◆</span>
+        </button>
       </form>
       {status ? <span role="alert">{status}</span> : null}
     </section>

@@ -47,3 +47,26 @@
   .annual525600-verdict { grid-column: auto; }
   .annual525600-verdict dl { grid-template-columns: 1fr 1fr; }
 }
+
+/* Crystallization operations citadel: the annual record arches around its Chief of Operations. */
+.annual525600-page{--app-text-primary:#8b4d61;background:#d9c4bd}
+.annual525600-shell{padding:clamp(12px,1.25vw,20px) clamp(66px,5.8vw,98px) 1rem 1rem;color:#884b60;overflow:auto}
+.annual525600-header{align-items:flex-start;padding:0;margin-bottom:.55rem;border:0;background:transparent;box-shadow:none;text-shadow:none}
+.annual525600-header>div:first-child,.annual525600-controls{padding:.65rem .8rem;border:1px solid rgba(153,80,102,.42);border-radius:18px;background:rgba(255,242,239,.8);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.58),0 10px 24px rgba(77,45,51,.15)}
+.annual525600-header>div:first-child{width:min(32vw,390px)}
+.annual525600-controls{max-width:43vw;flex-wrap:wrap;justify-content:flex-end}
+.annual525600-header > div > span,.annual525600-header h1,.annual525600-header p,.annual525600-controls label{color:#874a5f}
+.annual525600-controls button,.annual525600-controls select{border-color:rgba(153,80,102,.4);background:rgba(255,250,247,.84);color:#82465b}
+.annual525600-controls button.active{border-color:#9f5b72;background:rgba(235,205,203,.9)}
+.annual525600-review-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,28%) minmax(0,1fr);grid-template-rows:repeat(3,auto) auto;gap:.65rem;align-items:start}
+.annual525600-card{border-color:rgba(153,80,102,.42);background:rgba(255,242,239,.74);backdrop-filter:blur(13px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.55),0 10px 22px rgba(77,45,51,.14);color:#85495e}
+.annual525600-card:nth-child(1){grid-column:1;grid-row:1}.annual525600-card:nth-child(2){grid-column:1;grid-row:2}.annual525600-card:nth-child(3){grid-column:1;grid-row:3}.annual525600-card:nth-child(4){grid-column:3;grid-row:1}.annual525600-card:nth-child(5){grid-column:3;grid-row:2}.annual525600-card:nth-child(6){grid-column:3;grid-row:3}
+.annual525600-card h2,.annual525600-card h3,.annual525600-ranked > div,.annual525600-ranked strong,.annual525600-callouts strong,.annual525600-big-number strong,.annual525600-callouts span,.annual525600-big-number span,.annual525600-trend span,.annual525600-trend small,.annual525600-verdict dt,.annual525600-verdict dd,.annual525600-verdict blockquote{color:#85495e;text-shadow:none}
+.annual525600-card > header{border-color:rgba(153,80,102,.2)}
+.annual525600-ranked > div{border-color:rgba(153,80,102,.16)}
+.annual525600-trend{border-color:rgba(153,80,102,.22);background:rgba(255,252,250,.46)}
+.annual525600-verdict{grid-column:1/-1!important;grid-row:4!important;background:rgba(255,242,239,.8);border-color:rgba(153,80,102,.5)}
+.annual525600-verdict dl div{border-left-color:#a56077}
+.annual525600-empty{position:absolute;left:24%;right:24%;bottom:1rem;min-height:0;margin:0;padding:1rem;border-color:rgba(153,80,102,.42);background:rgba(255,242,239,.78);color:#85495e;backdrop-filter:blur(13px)}
+@media(max-width:1100px){.annual525600-review-grid{grid-template-columns:1fr 1fr}.annual525600-card:nth-child(n){grid-column:auto;grid-row:auto}.annual525600-verdict{grid-column:1/-1!important;grid-row:auto!important}}
+@media(max-width:760px){.annual525600-shell{padding:72px 4.4rem 1rem .7rem}.annual525600-header{align-items:flex-start;flex-direction:column}.annual525600-review-grid{grid-template-columns:1fr}.annual525600-verdict{grid-column:1!important}.annual525600-verdict dl{grid-template-columns:1fr 1fr}.annual525600-empty{position:static;margin:45vh 0 0}}

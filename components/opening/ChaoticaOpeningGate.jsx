@@ -137,7 +137,7 @@ export default function ChaoticaOpeningGate() {
 
   useEffect(() => {
     if (phase !== 'opening') return undefined;
-    const timer = window.setTimeout(() => router.replace('/the-assurer'), 1050);
+    const timer = window.setTimeout(() => router.replace('/the-assurer'), 1450);
     return () => window.clearTimeout(timer);
   }, [phase, router]);
 
@@ -211,20 +211,16 @@ export default function ChaoticaOpeningGate() {
       ) : null}
       {phase === 'oath' ? (
         <section className="chaotica-oath" aria-label="Opening oath">
-          <h1>Speak the Oath</h1>
           <p>{OATH_TEXT}</p>
           <div className="chaotica-oath-listener" data-listening={listening} style={{ '--chaotica-voice-level': speechLevel }} aria-live="polite">
             <span className="chaotica-oath-listener-orb" aria-hidden="true" />
-            <strong>{listening ? 'THE SEAL IS LISTENING' : 'THE SEAL IS READY'}</strong>
+            <strong>{listening ? 'LISTENING' : 'READY'}</strong>
             <span className="chaotica-oath-crystals" aria-label={`${oathPiecesHeard} oath pieces heard`}>
               {[0, 1, 2].map((index) => <b key={index} data-heard={index < oathPiecesHeard} />)}
             </span>
             <i aria-hidden="true"><b /><b /><b /><b /><b /></i>
           </div>
-          <div className="chaotica-oath-actions">
-            {!speechSupported ? <button type="button" disabled>SPEECH UNAVAILABLE</button> : null}
-            <span>{spokenOathIsAccepted ? 'OATH ACCEPTED' : heardOath ? 'OATH HEARD' : 'SPEAK WHEN READY'}</span>
-          </div>
+          {!speechSupported ? <span className="chaotica-visually-hidden">SPOKEN OATH IS UNAVAILABLE IN THIS BROWSER.</span> : null}
         </section>
       ) : null}
       {message ? <div className="chaotica-opening-status" role="status">{message}</div> : null}

@@ -81,3 +81,47 @@
 
 .remember-existing-items{display:flex;flex-wrap:wrap;gap:6px}
 .remember-existing-items button.active{box-shadow:0 0 0 2px rgba(255,128,201,.95)}
+
+/* Crystallization calendar lock: the seasonal world remains visible while the
+   full calendar side reads as native blush crystal glass, never a purple wall. */
+.remember-page{
+  --remember-ink:#96566c;
+  --remember-ink-soft:#ae7788;
+  --remember-glass:linear-gradient(145deg,rgba(255,245,240,.72),rgba(242,207,211,.58));
+}
+.remember-main{top:1.5%;bottom:1.5%;width:49%;gap:clamp(7px,.55vw,12px)}
+.remember-main.remember-calendar-left{left:1.2%}
+.remember-main.remember-calendar-right{right:1.2%}
+.remember-calendar-panel,.remember-standout-postcards{
+  background:var(--remember-glass)!important;
+  border-color:rgba(255,226,220,.84)!important;
+  box-shadow:0 14px 34px rgba(86,43,55,.16),inset 0 0 26px rgba(255,247,243,.24)!important;
+  backdrop-filter:blur(15px) saturate(112%)!important;
+  -webkit-backdrop-filter:blur(15px) saturate(112%)!important;
+}
+.remember-page .remember-main,.remember-page .remember-main *{color:var(--remember-ink)!important;-webkit-text-fill-color:var(--remember-ink)!important;text-shadow:none!important}
+.remember-month-row button,.remember-day,.remember-postcard-popout button{
+  background:rgba(255,248,244,.62)!important;
+  border-color:rgba(163,91,111,.34)!important;
+}
+.remember-day{background:rgba(255,248,244,.54)!important}
+.remember-chip-observance{background:rgba(247,207,190,.86)!important}
+.remember-chip-entry{background:rgba(234,185,198,.82)!important}
+.remember-chip-moment{background:rgba(220,173,187,.82)!important}
+.moment-card-face,.remember-moment-face{
+  background:linear-gradient(145deg,rgba(255,248,244,.84),rgba(239,199,205,.76))!important;
+  border-color:rgba(170,94,115,.34)!important;
+  box-shadow:0 9px 22px rgba(84,40,52,.14),inset 0 0 18px rgba(255,250,247,.28)!important;
+}
+.remember-postcard-popout{
+  background:linear-gradient(145deg,rgba(255,246,242,.94),rgba(239,201,210,.9))!important;
+  border-color:rgba(168,89,116,.52)!important;
+  box-shadow:0 18px 52px rgba(72,31,46,.3)!important;
+  backdrop-filter:blur(16px)!important;
+}
+.remember-postcard-popout,.remember-postcard-popout *{color:var(--remember-ink)!important;-webkit-text-fill-color:var(--remember-ink)!important;text-shadow:none!important}
+.remember-postcard-popout input,.remember-postcard-popout select,.remember-postcard-popout textarea{
+  background:rgba(255,250,247,.74)!important;
+  border-color:rgba(165,88,115,.4)!important;
+}
+.remember-actions{background:rgba(246,218,222,.86)!important}

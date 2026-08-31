@@ -6,7 +6,7 @@ import { fetchHopewoodSummationArchive, HOPEWOOD_ARCHIVE_UPDATED_EVENT, readHope
 import { buildAnnual525600Intelligence } from '../../src/services/annual525600Service';
 import '../../styles/sections/525600.css';
 
-const BACKGROUND_URL = '/backgrounds/525600/525600-bg.png';
+const BACKGROUND_URL = '/backgrounds/525600/525600-crystallization-operations-citadel-v2.png';
 const WINDOWS = [['week', '7 DAYS'], ['6m', '6 MONTHS'], ['12m', '12 MONTHS'], ['year', 'YEAR']];
 
 function RankedList({ title, items = [] }) {
