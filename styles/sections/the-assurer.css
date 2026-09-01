@@ -2356,6 +2356,16 @@
 .assurer-phase-night .assurer-meal-log { left: 75%; top: 56%; width: 23.5%; height: 18%; }
 .assurer-phase-night .assurer-assured-thoughts { left: 75%; top: 75.5%; width: 23.5%; height: 22.5%; }
 
+/* HEAD HUMMER is its own manually selected Spotify station. */
+.assurer-head-hummer-content{display:grid!important;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto 1fr;gap:.45rem .6rem;align-items:center!important}
+.assurer-head-hummer-content>strong{grid-column:1/-1}
+.assurer-head-hummer-content img{width:clamp(44px,3.8vw,72px);height:clamp(44px,3.8vw,72px);border-radius:8px;object-fit:contain;background:#fff}
+.assurer-head-hummer-copy{display:grid;gap:.15rem;min-width:0}.assurer-head-hummer-copy b,.assurer-head-hummer-copy small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.assurer-head-hummer-empty{grid-column:1/-1;font-size:.68rem;font-weight:750}
+.assurer-phase-morning .assurer-head-hummer{left:35%;top:63%;width:15%;height:9%}
+.assurer-phase-day .assurer-head-hummer{left:15.5%;top:42.5%;width:15%;height:12%}
+.assurer-phase-evening .assurer-head-hummer{left:30.5%;top:52.5%;width:20%;height:10%}
+.assurer-phase-night .assurer-head-hummer{left:28%;top:54%;width:15%;height:14%}
+
 @media (max-aspect-ratio: 4 / 3) {
   .assurer-phase-layout {
     width: 100vw;

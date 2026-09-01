@@ -70,3 +70,24 @@
 .annual525600-empty{position:absolute;left:24%;right:24%;bottom:1rem;min-height:0;margin:0;padding:1rem;border-color:rgba(153,80,102,.42);background:rgba(255,242,239,.78);color:#85495e;backdrop-filter:blur(13px)}
 @media(max-width:1100px){.annual525600-review-grid{grid-template-columns:1fr 1fr}.annual525600-card:nth-child(n){grid-column:auto;grid-row:auto}.annual525600-verdict{grid-column:1/-1!important;grid-row:auto!important}}
 @media(max-width:760px){.annual525600-shell{padding:72px 4.4rem 1rem .7rem}.annual525600-header{align-items:flex-start;flex-direction:column}.annual525600-review-grid{grid-template-columns:1fr}.annual525600-verdict{grid-column:1!important}.annual525600-verdict dl{grid-template-columns:1fr 1fr}.annual525600-empty{position:static;margin:45vh 0 0}}
+
+/* Approved seven-station annual court. One range selection drives every expandable tile. */
+.annual525600-window-tabs{position:absolute;left:23%;right:23%;top:2%;z-index:7;display:grid;grid-template-columns:repeat(5,1fr);gap:.35rem;padding:.45rem;border:1px solid rgba(159,82,105,.44);border-radius:18px;background:rgba(255,242,238,.78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.58),0 10px 24px rgba(77,45,51,.14);backdrop-filter:blur(12px)}
+.annual525600-window-tabs button{min-height:42px;border:1px solid rgba(153,80,102,.28);border-radius:12px;background:rgba(255,250,247,.58);color:#8b4d61;font-size:clamp(.62rem,.75vw,.84rem);font-weight:800;letter-spacing:.06em}
+.annual525600-window-tabs button.active{border-color:#9f5b72;background:rgba(229,188,194,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.66)}
+.annual525600-capsule-count{position:absolute;left:40%;right:40%;top:9%;z-index:6;margin:0;color:#8b4d61;font-size:.65rem;font-weight:850;letter-spacing:.08em;text-align:center;text-shadow:0 1px 8px rgba(255,255,255,.9)}
+.annual525600-floating-deck .crystal-summary-tile--emotional-weather{left:4%;top:16%;width:25%}
+.annual525600-floating-deck .crystal-summary-tile--words-carried{left:4%;top:40%;width:25%}
+.annual525600-floating-deck .crystal-summary-tile--plot-memory{left:4%;top:64%;width:25%}
+.annual525600-floating-deck .crystal-summary-tile--food-macros{right:5.5%;top:16%;width:27%}
+.annual525600-floating-deck .crystal-summary-tile--strength-body{right:5.5%;top:40%;width:27%}
+.annual525600-floating-deck .crystal-summary-tile--discipline-time{right:5.5%;top:64%;width:27%}
+.annual525600-floating-deck .crystal-summary-tile--years-verdict{left:35%;bottom:3%;width:30%}
+.annual525600-floating-deck .crystal-detail-body{font-family:Impact,'Arial Narrow',sans-serif}
+.annual525600-floating-deck .annual525600-ranked>div,.annual525600-floating-deck .annual525600-trend,.annual525600-floating-deck .annual525600-callouts{background:rgba(255,250,247,.5)}
+.annual525600-verdict-list{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem;margin:0}
+.annual525600-verdict-list>div{padding:.7rem;border-left:2px solid #a56077;background:rgba(255,250,247,.52)}
+.annual525600-verdict-list dt{color:#85495e;font-size:.65rem;font-weight:850}.annual525600-verdict-list dd{margin:.3rem 0 0;color:#85495e;font-size:.92rem}
+.annual525600-floating-deck blockquote{margin:1rem 0 0;color:#85495e;font-size:1rem;font-style:italic;text-align:center}
+@media(max-width:1100px) and (min-width:901px){.annual525600-window-tabs{left:18%;right:18%}.annual525600-floating-deck .crystal-summary-tile{transform:scale(.9);transform-origin:center}}
+@media(max-width:900px){.annual525600-window-tabs{position:fixed;left:.7rem;right:4.7rem;top:.7rem;z-index:15;overflow-x:auto}.annual525600-window-tabs button{min-width:92px}.annual525600-capsule-count{display:none}.annual525600-floating-deck{padding-top:78px}.annual525600-verdict-list{grid-template-columns:1fr 1fr}}

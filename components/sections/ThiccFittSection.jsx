@@ -1,16 +1,20 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import '../../styles/sections/thicc-fitt.css';
 import '../../styles/sections/universal-frame.css';
 import { optionRegistry } from '../../lib/dropdowns/optionRegistry';
 import { CLOCK_IT_KEYS, useClockItNumericOptions, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
 import { publishThiccFittSessionProof } from '../../src/services/assurerService';
 import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
-import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
+import { ScenePlate, SectionShell } from '../shared/UniversalSectionFrame';
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
+import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
+import SpotifyTrackPicker from '../shared/SpotifyTrackPicker';
 
 const STORAGE_KEY = 'thicc_fitt_day';
 const QUOTE_HISTORY_KEY = 'thicc_fitt_quote_history';
+const TWERK_SAUCE_STORAGE_KEY = 'truthinstyle_thicc_fitt_twerk_sauce_v1';
 const EXERCISE_COUNT = 6;
 const createExerciseRow = () => ({ exercise: '', weight: '', reps: '', sets: '', failure: 'N', rest: '' });
 const normalizeExerciseRows = (rows) => {
@@ -86,6 +90,7 @@ export default function ThiccFittSection() {
   const [state, setState] = useState(initialState);
   const [storageHydrated, setStorageHydrated] = useState(false);
   const [dailyQuote, setDailyQuote] = useState(optionRegistry.thiccFitt.quoteOfDay[0]);
+  const [twerkSauce, setTwerkSauce] = useState(null);
   const todayDay = WEEK_DAYS[new Date().getDay()];
   const todaySleep = normalizeSleepEntry(state.weeklyTrackers.byDay[todayDay]?.sleep || {});
   const dailySleepMinutes = calculateSleepMinutes(todaySleep.sleep_start, todaySleep.wake_time);
@@ -96,6 +101,10 @@ export default function ThiccFittSection() {
     sleep_quality: todaySleep.sleep_quality,
     sleep_notes: todaySleep.sleep_notes
   };
+
+  useEffect(() => {
+    try { setTwerkSauce(JSON.parse(window.localStorage.getItem(TWERK_SAUCE_STORAGE_KEY) || 'null')); } catch { setTwerkSauce(null); }
+  }, []);
 
   useEffect(() => {
     try {
@@ -307,5 +316,20 @@ export default function ThiccFittSection() {
     { id: 'I', columns: 1, className: 'tf30-shelf-f', panels: [{ id: 'arena-rules', token: 'strip', content: <><h2>ARENA RULES</h2><div className="tf30-footer"><span>MIN 75 MIN</span><span>MAX 120 MIN</span><span>CORE 15 MIN</span><span>CARDIO 60 MIN / 3X WEEK</span><span>POSE DAILY. STAGE COMMAND</span><span>PROGRESS REMINDER</span></div></> }] }
   ];
 
-  return <SectionShell className="tf30-shell thicc-fitt-page"><ScenePlate><div className="tf30-bg" /><div className="tf30-overlay" /></ScenePlate><SectionOverlay><ArtLane className="tf30-left" /><ContentScroller className="tf30-content"><header className="tf30-district-banner"><div><h1>THICC.FITT</h1><span>CHAOTICA TRAINING DISTRICT</span></div><p>EVERY STATION REMAINS · SELECT ONE TO EXPAND · THE WORLD STAYS VISIBLE</p></header><BlueprintStack shelves={shelves} /></ContentScroller></SectionOverlay></SectionShell>;
+  const panelById = Object.fromEntries(shelves.flatMap((shelf) => shelf.panels).map((panel) => [panel.id, panel.content]));
+  const firstExercise = state.exerciseRows.find((row) => row.exercise);
+  const tiles = [
+    { id: 'beginning', title: 'IN THE BEGINNING…', summary: `${state.control.seasonPhase || 'PHASE NOT SET'}\n${state.control.workoutLength || 'WORKOUT LENGTH PENDING'}`, content: <>{panelById['entry-gate']}{panelById['arena-rules']}</> },
+    { id: 'twerk-sauce', title: 'TWERK SAUCE', summary: twerkSauce ? `${twerkSauce.name}\n${twerkSauce.artist}` : 'MANUALLY SELECT WORKOUT SONG', media: twerkSauce?.image ? <Image className="tf30-song-cover" src={twerkSauce.image} alt="" width={72} height={72} unoptimized /> : null, content: <SpotifyTrackPicker value={twerkSauce} onChange={setTwerkSauce} storageKey={TWERK_SAUCE_STORAGE_KEY} label="TWERK SAUCE" /> },
+    { id: 'war-cry', title: 'WAR CRY', summary: dailyQuote?.text || 'TODAY’S VERIFIED QUOTE', content: panelById['war-cry'] },
+    { id: 'chase', title: 'THE CHASE', summary: `${state.cardio.type || 'CARDIO PENDING'}\n${weeklyDaysTrained} DAYS · ${weeklyTotalHours} HOURS`, content: <>{panelById.chase}{panelById['weekly-battle-tally']}</> },
+    { id: 'body-receipts', title: 'BODY RECEIPTS', summary: `WEIGHT ${state.body.weight.today || '—'}\nBODY FAT ${state.body.bodyFat.today || '—'}`, content: panelById['body-receipts'] },
+    { id: 'iron-ledger', title: 'IRON.LEDGER', summary: firstExercise ? `${firstExercise.exercise}\n${firstExercise.sets || '—'} SETS · ${firstExercise.reps || '—'} REPS · ${firstExercise.weight || '—'}` : 'OPEN TO LOG TODAY’S WORKOUT', content: <>{panelById['iron-ledger']}{panelById['da-vault']}</> },
+    { id: 'upup-juice', title: 'UPUP JUICE', summary: `${caffeineTotal} MG THIS WEEK\n${caffeineAvg} MG DAILY AVERAGE`, content: panelById['caffeine-tally'] },
+    { id: 'trophy-wall', title: 'TROPHY WALL', summary: `${photoSlots.filter((slot) => state.photo[slot.key]).length} OF ${photoSlots.length} RECEIPTS SEALED`, content: panelById['proof-wall'] },
+    { id: 'sleep-watch', title: 'SLEEP WATCH', summary: `${todaySleep.sleep_total || 'NO SLEEP TOTAL'}\n${todaySleep.sleep_quality || 'QUALITY PENDING'}`, content: panelById['sleep-watch'] },
+    { id: 'how-doin', title: 'SO HOW YOU DOIN ⁉️', summary: `${state.soHowYouDoin || 'CHECK-IN PENDING'}\n${state.soHowYouDoinNotes || 'OPEN TO COMPLETE SESSION NOTES'}`, content: panelById['how-doin'] },
+  ];
+
+  return <SectionShell className="tf30-shell thicc-fitt-page"><ScenePlate><div className="tf30-bg" /></ScenePlate><FloatingCrystalTileDeck className="tf30-floating-deck" tiles={tiles} ariaLabel="THICC.FITT training stations" /></SectionShell>;
 }

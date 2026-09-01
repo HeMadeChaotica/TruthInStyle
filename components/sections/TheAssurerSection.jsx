@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
 import { getChaoticaDailyWord, isLegacyMadeUpWord } from '../../lib/theAssurer/chaoticaDailyLexicon';
@@ -29,10 +30,12 @@ import {
 } from '../../lib/theAssurer/weatherOptions';
 import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS, getChaoticaDayNumber } from '../../src/services/summationService';
 import '../../styles/sections/the-assurer.css';
+import SpotifyTrackPicker from '../shared/SpotifyTrackPicker';
 
 const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
+const HEAD_HUMMER_STORAGE_KEY = 'truthinstyle_assurer_head_hummer_v1';
 
 const ASSURER_PHASES = ['morning', 'day', 'evening', 'night'];
 const ASSURER_PHASE_SCENES = {
@@ -540,7 +543,8 @@ export default function TheAssurerSection() {
       if (typeof savedDay?.singlenessLevel === 'string') setSinglenessLevel(savedDay.singlenessLevel);
       if (typeof savedDay?.lobitoCheckIn === 'string') setLobitoCheckIn(savedDay.lobitoCheckIn);
       if (typeof savedDay?.location === 'string') setLocation(savedDay.location);
-      if (typeof savedDay?.headHummer === 'string') setHeadHummer(savedDay.headHummer);
+      if (savedDay?.headHummer && typeof savedDay.headHummer === 'object') setHeadHummer(savedDay.headHummer);
+      else if (typeof savedDay?.headHummer === 'string' && savedDay.headHummer) setHeadHummer({ id: `legacy-${storageDate}`, name: savedDay.headHummer, artist: 'LEGACY ENTRY', album: '', image: '', spotifyUrl: '' });
       if (typeof savedDay?.assuredThoughts === 'string') setAssuredThoughts(savedDay.assuredThoughts);
       const savedPennyQuestions = normalizePennyQuestions(savedDay?.pennyQuestions);
       setPennyQuestions(savedPennyQuestions.length === 2 ? savedPennyQuestions : createDailyPennyQuestions());
@@ -754,6 +758,7 @@ export default function TheAssurerSection() {
     word: 'WORD OF THE DAY',
     thoughts: 'ASSURED THOUGHTS',
     dailyOrbit: 'ASSURER SIGNALS',
+    headHummer: 'HEAD HUMMER',
     moments: 'MOMENT FLIP CARDS',
     mealLog: 'MEAL LOG',
     thiccFitt: 'THICC.FITT WORKOUT LOG + TRACKING',
@@ -862,14 +867,13 @@ export default function TheAssurerSection() {
             <AssurerField id="assurer-lobito-expanded" label="LOBITO CHECK-IN">
               <AssurerSelect id="assurer-lobito-expanded" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
             </AssurerField>
-            <AssurerField id="assurer-head-hummer-expanded" label="HEAD HUMMER">
-              <input id="assurer-head-hummer-expanded" className="assurer-control" value={headHummer} onChange={(event) => setHeadHummer(event.target.value)} placeholder="SONG / LOOP" />
-            </AssurerField>
             <AssurerField id="assurer-location-expanded" label="LOCATION">
               <input id="assurer-location-expanded" className="assurer-control" value={location} onChange={(event) => setLocation(event.target.value)} placeholder="LOCATION" />
             </AssurerField>
           </div>
         );
+      case 'headHummer':
+        return <SpotifyTrackPicker value={headHummer} onChange={setHeadHummer} storageKey={HEAD_HUMMER_STORAGE_KEY} label="HEAD HUMMER" />;
       case 'moments':
         return (
           <AssurerMomentCards cards={momentCards} expanded />
@@ -1145,15 +1149,6 @@ export default function TheAssurerSection() {
               <AssurerField id="assurer-era" label="ERA">
                 <AssurerSelect id="assurer-era" value={era} onChange={setEra} options={eraOptions} />
               </AssurerField>
-              <AssurerField id="assurer-head-hummer" label="HEAD HUMMER">
-                <input
-                  id="assurer-head-hummer"
-                  className="assurer-control"
-                  value={headHummer}
-                  onChange={(event) => setHeadHummer(event.target.value)}
-                  placeholder="SONG / LOOP"
-                />
-              </AssurerField>
               <AssurerField id="assurer-lobito" label="LOBITO CHECK-IN">
                 <AssurerSelect id="assurer-lobito" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
               </AssurerField>
@@ -1169,6 +1164,15 @@ export default function TheAssurerSection() {
                   placeholder="LOCATION"
                 />
               </AssurerField>
+            </div>
+          </article>
+
+          <article className="assurer-widget assurer-head-hummer" data-slot="09">
+            <button className="assurer-expand-button" type="button" onClick={() => openExpandedWidget('headHummer')} aria-label="EXPAND HEAD HUMMER">⤢</button>
+            <div className="assurer-widget-content assurer-head-hummer-content">
+              <strong>HEAD HUMMER</strong>
+              {headHummer?.image ? <Image src={headHummer.image} alt="" width={72} height={72} unoptimized /> : <span className="assurer-head-hummer-empty">SELECT TODAY’S SONG</span>}
+              <span className="assurer-head-hummer-copy"><b>{headHummer?.name || 'NO SONG SELECTED'}</b><small>{headHummer?.artist || 'MANUAL SPOTIFY SELECTION'}</small></span>
             </div>
           </article>
 

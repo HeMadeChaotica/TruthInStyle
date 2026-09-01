@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '../../styles/sections/universal-frame.css';
 import '../../styles/sections/da-eater.css';
-import { ArtLane, BlueprintStack, ContentScroller, ScenePlate, SectionOverlay, SectionShell } from '../shared/UniversalSectionFrame';
+import { ScenePlate, SectionShell } from '../shared/UniversalSectionFrame';
 import { calculateDaEaterTotals, deleteCheatFlexEntry, deleteMealEntry, deleteSupplementEntry, getDaEaterDay, saveDaEaterDay, upsertCheatFlexEntry, upsertMealEntry, upsertSupplementEntry } from '../../src/services/daEaterService';
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import { CLOCK_IT_KEYS, useClockItNumericOptions, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
+import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const THICC_DAY_STORAGE_KEY = 'truthinstyle_da_eater_thicc_treat_day_v1';
@@ -120,5 +121,28 @@ export default function DaEaterSection() {
     { id: 'E', columns: 1, panels: [{ id: 'cheat', token: 'medium', className: 'da-eater-panel da-eater-thicc-treat', content: <><h2>THICC.TREAT</h2><div className="da-eater-thicc-days">{THICC_DAYS.map((label) => <button type="button" key={label} className={`da-eater-thicc-day-pill ${selectedThiccDay === label ? 'is-active' : ''}`} onClick={() => selectThiccDay(label)}>{label}</button>)}</div><div className="da-eater-thicc-grid"><select value={cheatForm.type} onChange={(e)=>setCheatForm({...cheatForm,type:e.target.value})}>{CHEAT_TYPES.map((x)=><option key={x}>{x}</option>)}</select><input placeholder="SLUTTY MEAL" value={cheatForm.meal} onChange={(e)=>setCheatForm({...cheatForm,meal:e.target.value})}/><input placeholder="SLUTTY DESSERT" value={cheatForm.dessert} onChange={(e)=>setCheatForm({...cheatForm,dessert:e.target.value})}/><input placeholder="ROUGH CALORIES" value={cheatForm.roughCalories} onChange={(e)=>setCheatForm({...cheatForm,roughCalories:e.target.value})}/><select value={cheatForm.worthItPercent} onChange={(e)=>setCheatForm({...cheatForm,worthItPercent:e.target.value})}><option value="">WORTH IT %</option>{worthItOptions.map((option)=><option key={option.value} value={option.value}>{option.label}</option>)}</select><textarea placeholder="NOTES" value={cheatForm.notes} onChange={(e)=>setCheatForm({...cheatForm,notes:e.target.value})}/></div><button onClick={saveCheat}>SAVE CHEAT/FLEX</button>{(day.cheatFlexEntries||[]).map((c)=><div key={c.id} className="da-eater-list-row"><span>{c.type} • {c.day || 'WEDNESDAY'} • {c.meal}</span><button onClick={()=>{ setCheatForm(c); if (c.day && THICC_DAYS.includes(c.day)) selectThiccDay(c.day); }}>EDIT</button><button onClick={()=>setDay(deleteCheatFlexEntry(date,c.id))}>DELETE</button></div>)}</> }] }
   ];
 
-  return <SectionShell className="da-eater-shell"><ScenePlate><div className="da-eater-bg" /></ScenePlate><SectionOverlay><ArtLane className="da-eater-left" /><ContentScroller className="da-eater-content"><header className="da-eater-live-header"><h1>DA.EATER</h1><time dateTime={date}>{date}</time></header><BlueprintStack shelves={shelves} /></ContentScroller></SectionOverlay></SectionShell>;
+  const panelById = Object.fromEntries(shelves.flatMap((shelf) => shelf.panels).map((panel) => [panel.id, panel.content]));
+  const mealCalories = (day.meals || []).reduce((sum, meal) => sum + Number(meal.calories || 0), 0);
+  const averageMealKcal = day.meals?.length ? Math.round(mealCalories / day.meals.length) : 0;
+  const photoUrl = (entry) => {
+    const ref = entry?.photoRef;
+    if (typeof ref === 'string') return ref;
+    return ref?.url || ref?.previewUrl || ref?.objectUrl || '';
+  };
+  const firstPhoto = photoLog.find((entry) => photoUrl(entry));
+  const macroSummary = (
+    <div className="da-eater-summary-macros">
+      {[['P','protein','g'],['C','carbs','g'],['F','fats','g'],['KCAL','calories',''],['WATER','waterOz','oz']].map(([label, key, unit]) => <div key={key}><span>{label} {totals.totals[key]} / {totals.targets[key]}{unit}</span><i><b style={{ width: `${Math.min(totals.progress[key], 100)}%` }} /></i></div>)}
+    </div>
+  );
+  const tiles = [
+    { id: 'macro-harvest', title: 'MACRO HARVEST', summary: 'TODAY’S LIVE PROGRESSION', media: macroSummary, content: panelById.macro },
+    { id: 'thicc-eats', title: 'THICC.EATS', summary: `${day.meals?.length || 0} MEALS\nAVG MEAL ${averageMealKcal} KCAL`, content: panelById.meals },
+    { id: 'thicc-obsession', title: 'THICC.OBSESSION', summary: `${day.hyperFixationMeal?.currentFixation || day.hyperFixationMeal?.mealName || 'FIXATION PENDING'}\n${day.hyperFixationMeal?.weeklyCount || 0} TIMES THIS WEEK`, media: firstPhoto ? <div className="da-eater-summary-photo" style={{ backgroundImage: `url(${JSON.stringify(photoUrl(firstPhoto)).slice(1, -1)})` }} aria-hidden="true" /> : <div className="da-eater-summary-photo is-empty" aria-hidden="true">PHOTO</div>, content: panelById['fixation-photo-log'] },
+    { id: 'thicc-supps', title: 'THICC.SUPPS', summary: `${day.supplements?.length || 0} TODAY`, content: panelById.supps },
+    { id: 'thicc-cravings', title: 'THICC.CRAVINGS', summary: `${day.cravings?.length || 0} ACTIVE`, content: panelById.craving },
+    { id: 'thicc-treat', title: 'THICC.TREAT', summary: `${day.cheatFlexEntries?.length || 0} THIS WEEK\n${selectedThiccDay}`, content: panelById.cheat },
+  ];
+
+  return <SectionShell className="da-eater-shell"><ScenePlate><div className="da-eater-bg" /></ScenePlate><label className="da-eater-date-control">DAY<input type="date" value={date} onChange={(event) => { const nextDate = event.target.value; setDate(nextDate); setDay(getDaEaterDay(nextDate)); }} /></label><FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER orchard stations" /></SectionShell>;
 }

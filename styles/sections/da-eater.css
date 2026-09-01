@@ -142,3 +142,23 @@
 .da-eater-bar{background:rgba(130,76,91,.18);border-color:rgba(143,77,96,.28)}
 @media(max-width:1100px){.da-eater-shell .usf-overlay{grid-template-columns:27% 73%}.da-eater-shell .usf-stack{grid-template-columns:1fr 1fr}.da-eater-shell .usf-shelf:nth-child(n){grid-column:auto;grid-row:auto}.da-eater-shell .usf-shelf:nth-child(1),.da-eater-shell .usf-shelf:nth-child(2),.da-eater-shell .usf-shelf:nth-child(4){grid-column:1/-1}}
 @media(max-width:760px){.da-eater-shell .usf-overlay{grid-template-columns:1fr;padding:72px 10px 14px}.da-eater-left{min-height:16vh}.da-eater-shell .usf-stack{grid-template-columns:1fr}.da-eater-shell .usf-shelf:nth-child(n){grid-column:1}.da-eater-live-header{margin-top:0}}
+
+/* Approved orchard-first station layout. The original forms open inside these living-world tiles. */
+.da-eater-date-control{position:absolute;right:5.2rem;top:1rem;z-index:6;display:flex;align-items:center;gap:.55rem;padding:.45rem .7rem;border:1px solid rgba(159,82,105,.42);border-radius:999px;background:rgba(255,242,238,.75);backdrop-filter:blur(12px);color:#8d5063;font-size:.68rem;font-weight:800;letter-spacing:.08em}
+.da-eater-date-control input{border:0;background:transparent;color:#82465b;font:inherit}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest{left:30.5%;top:4%;width:37%;min-height:clamp(220px,30vh,300px);display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats{left:37%;top:42%;width:24%}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession{right:4.8%;top:19%;width:25%;min-height:150px}
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:23.5%;bottom:8%;width:18%}
+.da-eater-floating-deck .crystal-summary-tile--thicc-cravings{right:5.2%;top:52%;width:23%}
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat{right:5.2%;bottom:6%;width:21%}
+.da-eater-summary-macros{display:grid;gap:.45rem;width:100%}
+.da-eater-summary-macros>div{display:grid;grid-template-columns:minmax(110px,.85fr) minmax(120px,1.5fr);gap:.55rem;align-items:center}
+.da-eater-summary-macros span{font-size:clamp(.62rem,.72vw,.88rem)!important;font-weight:800!important;color:#8b4d61!important;-webkit-text-fill-color:#8b4d61!important;white-space:nowrap;text-shadow:none!important}
+.da-eater-summary-macros i{display:block;height:10px;border:1px solid rgba(143,77,97,.42);border-radius:999px;background:rgba(255,248,244,.62);overflow:hidden}
+.da-eater-summary-macros b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#db93aa,#efb6c4);box-shadow:0 0 10px rgba(226,142,174,.45)}
+.da-eater-summary-photo{width:clamp(76px,6vw,112px);aspect-ratio:1;flex:0 0 auto;border:1px solid rgba(153,80,102,.42);border-radius:10px;background-position:center;background-size:cover;background-repeat:no-repeat}
+.da-eater-summary-photo.is-empty{display:grid;place-items:center;background:rgba(255,250,247,.5);color:#9b6072;font-size:.65rem;font-weight:800}
+.da-eater-floating-deck .crystal-detail-body{font-family:Impact,'Arial Narrow',sans-serif}
+@media(max-width:1100px) and (min-width:901px){.da-eater-floating-deck .crystal-summary-tile{transform:scale(.9);transform-origin:center}.da-eater-summary-macros>div{grid-template-columns:95px 1fr}}
+@media(max-width:900px){.da-eater-date-control{right:4.5rem;top:1rem}.da-eater-summary-macros>div{grid-template-columns:110px 1fr}}

@@ -182,7 +182,7 @@ export function dayCapsuleFactGroups(record) {
 }
 
 export function filterRecordsByWindow(records, windowKey, anchor = new Date()) {
-  const days = windowKey === 'week' ? 7 : windowKey === '6m' ? 183 : windowKey === '12m' ? 366 : null;
+  const days = windowKey === 'week' ? 7 : windowKey === '30d' ? 30 : windowKey === '6m' ? 183 : windowKey === '9m' ? 274 : windowKey === '12m' ? 366 : null;
   if (!days) return records;
   const cutoff = new Date(anchor);
   cutoff.setHours(0, 0, 0, 0);
