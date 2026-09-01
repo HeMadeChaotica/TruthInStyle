@@ -195,6 +195,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     window.isOpaque = true
     window.backgroundColor = .black
     window.minSize = NSSize(width: 1024, height: 720)
+    window.collectionBehavior.insert(.fullScreenPrimary)
     window.center()
 
     let rootView = NSView(frame: startFrame)
@@ -218,6 +219,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
       self.window.makeKeyAndOrderFront(nil)
       self.window.orderFrontRegardless()
       NSApp.activate(ignoringOtherApps: true)
+      if !self.window.styleMask.contains(.fullScreen) {
+        self.window.toggleFullScreen(nil)
+      }
       self.ensureShrineCompanionIsRunning()
     }
 
