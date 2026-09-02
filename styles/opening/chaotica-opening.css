@@ -166,6 +166,24 @@ body:has(.chaotica-opening) { background: #10070b; }
 
 .chaotica-oath-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
 
+.chaotica-oath .chaotica-oath-listen-button {
+  justify-self: center;
+  width: min(320px, 82vw);
+  min-height: 48px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-size: clamp(.9rem, 1.2vw, 1.08rem);
+  font-weight: 700;
+  letter-spacing: .08em;
+  box-shadow: 0 0 22px rgba(245, 157, 180, .52), inset 0 0 12px rgba(255,255,255,.32);
+}
+
+.chaotica-oath .chaotica-oath-listen-button:focus-visible {
+  outline: 2px solid rgba(255, 231, 190, .95);
+  outline-offset: 4px;
+}
+
 .chaotica-oath-listener {
   display: grid;
   grid-template-columns: 26px auto;

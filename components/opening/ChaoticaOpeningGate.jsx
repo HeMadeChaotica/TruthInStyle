@@ -25,10 +25,8 @@ function countMatchedPhrases(value) {
 export default function ChaoticaOpeningGate() {
   const router = useRouter();
   const recognitionRef = useRef(null);
-  const restartTimerRef = useRef(null);
   const phaseRef = useRef('password');
   const acceptedRef = useRef(false);
-  const startSpeechRef = useRef(null);
   const [phase, setPhase] = useState('password');
   const [heardOath, setHeardOath] = useState('');
   const [message, setMessage] = useState('');
@@ -41,14 +39,6 @@ export default function ChaoticaOpeningGate() {
   const spokenOathIsAccepted = oathPiecesHeard >= 3;
   phaseRef.current = phase;
   acceptedRef.current = spokenOathIsAccepted;
-
-  function scheduleSpeechRestart(delay = 650) {
-    window.clearTimeout(restartTimerRef.current);
-    if (phaseRef.current !== 'oath' || acceptedRef.current) return;
-    restartTimerRef.current = window.setTimeout(() => {
-      if (phaseRef.current === 'oath' && !acceptedRef.current) startSpeechRef.current?.();
-    }, delay);
-  }
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -79,7 +69,6 @@ export default function ChaoticaOpeningGate() {
   useEffect(() => () => {
     recognitionRef.current?.stop?.();
     window.ChaoticaNativeSpeech?.stop?.();
-    window.clearTimeout(restartTimerRef.current);
   }, []);
 
   useEffect(() => {
@@ -98,7 +87,7 @@ export default function ChaoticaOpeningGate() {
       }
       if (detail.type === 'ended' && phaseRef.current === 'oath') {
         setListening(false);
-        scheduleSpeechRestart();
+        setMessage('LISTENING STOPPED. TAP TO LISTEN AGAIN.');
       }
       if (detail.type === 'level') setSpeechLevel(Math.max(0, Math.min(1, Number(detail.level) || 0)));
       if (detail.type === 'quiet') setMessage('THE SEAL CANNOT HEAR WORDS YET. SPEAK CLOSER TO THE MACBOOK MICROPHONE.');
@@ -106,10 +95,6 @@ export default function ChaoticaOpeningGate() {
         setListening(false);
         setSpeechLevel(0);
         setMessage(detail.message || 'THE SPOKEN OATH LISTENER COULD NOT START.');
-        const reason = normalize(detail.message);
-        if (!reason.includes('permission') && !reason.includes('denied') && !reason.includes('not authorized')) {
-          scheduleSpeechRestart(900);
-        }
       }
     };
     window.addEventListener('chaotica-native-speech', onNativeSpeech);
@@ -120,8 +105,9 @@ export default function ChaoticaOpeningGate() {
     if (phase !== 'oath') return undefined;
     setHeardOath('');
     setSpeechLevel(0);
-    const timer = window.setTimeout(() => startSpeech(), 180);
-    return () => window.clearTimeout(timer);
+    setListening(false);
+    setMessage('TAP TO LISTEN, THEN SPEAK THE OATH.');
+    return undefined;
   }, [phase]);
 
   useEffect(() => {
@@ -143,7 +129,6 @@ export default function ChaoticaOpeningGate() {
 
   function startSpeech() {
     if (phaseRef.current !== 'oath' || acceptedRef.current) return;
-    window.clearTimeout(restartTimerRef.current);
     if (window.ChaoticaNativeSpeech?.start) {
       setListening(true);
       setMessage('CHAOTICA IS LISTENING. SPEAK THE OATH.');
@@ -162,20 +147,30 @@ export default function ChaoticaOpeningGate() {
     recognition.lang = 'en-US';
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results).map((result) => result[0]?.transcript || '').join(' ');
-      setHeardOath(transcript);
+      setHeardOath((current) => {
+        const next = String(transcript);
+        return normalize(next).includes(normalize(current)) ? next : `${current} ${next}`.trim();
+      });
       if (normalize(transcript)) setMessage('THE OATH HAS BEEN HEARD. KEEP SPEAKING.');
     };
     recognition.onend = () => {
       setListening(false);
-      scheduleSpeechRestart();
+      if (!acceptedRef.current) setMessage('LISTENING STOPPED. TAP TO LISTEN AGAIN.');
     };
     recognition.onerror = (event) => {
       setListening(false);
-      const terminalError = ['not-allowed', 'service-not-allowed'].includes(event?.error);
-      setMessage(terminalError
-        ? 'MICROPHONE ACCESS IS REQUIRED FOR THE SPOKEN OATH.'
-        : 'THE SEAL PAUSED. LISTENING WILL RESUME AUTOMATICALLY.');
-      if (!terminalError) scheduleSpeechRestart(900);
+      const error = event?.error || 'unknown';
+      if (['not-allowed', 'service-not-allowed'].includes(error)) {
+        setMessage('MICROPHONE ACCESS IS BLOCKED. ALLOW IT, THEN TAP TO LISTEN AGAIN.');
+      } else if (error === 'audio-capture') {
+        setMessage('NO MICROPHONE AUDIO WAS FOUND. CHECK THE INPUT, THEN TAP TO TRY AGAIN.');
+      } else if (error === 'no-speech') {
+        setMessage('NO WORDS WERE HEARD. TAP TO LISTEN AGAIN AND SPEAK CLOSER TO THE MICROPHONE.');
+      } else if (error === 'network') {
+        setMessage('VOICE RECOGNITION COULD NOT CONNECT. TAP TO TRY AGAIN.');
+      } else {
+        setMessage('THE LISTENER STOPPED. TAP TO TRY AGAIN.');
+      }
     };
     recognitionRef.current = recognition;
     setListening(true);
@@ -183,10 +178,9 @@ export default function ChaoticaOpeningGate() {
       recognition.start();
     } catch {
       setListening(false);
-      scheduleSpeechRestart(900);
+      setMessage('THE LISTENER COULD NOT START. TAP TO TRY AGAIN.');
     }
   }
-  startSpeechRef.current = startSpeech;
 
   return (
     <main className="chaotica-opening" data-phase={phase}>
@@ -220,6 +214,14 @@ export default function ChaoticaOpeningGate() {
             </span>
             <i aria-hidden="true"><b /><b /><b /><b /><b /></i>
           </div>
+          <button
+            type="button"
+            className="chaotica-oath-listen-button"
+            onClick={startSpeech}
+            disabled={!speechSupported || spokenOathIsAccepted}
+          >
+            {!speechSupported ? 'VOICE UNAVAILABLE IN THIS BROWSER' : listening ? 'RESTART LISTENING' : 'TAP TO LISTEN'}
+          </button>
           {!speechSupported ? <span className="chaotica-visually-hidden">SPOKEN OATH IS UNAVAILABLE IN THIS BROWSER.</span> : null}
         </section>
       ) : null}
