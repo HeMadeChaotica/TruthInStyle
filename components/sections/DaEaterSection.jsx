@@ -179,14 +179,14 @@ export default function DaEaterSection() {
           <defs>
             <linearGradient id="da-eater-swirl-gold" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stopColor="#b98a4f" stopOpacity="0" />
-              <stop offset=".26" stopColor="#f2d69e" stopOpacity=".86" />
-              <stop offset=".72" stopColor="#c99754" stopOpacity=".76" />
+              <stop offset=".26" stopColor="#f8d993" stopOpacity=".96" />
+              <stop offset=".72" stopColor="#d6a45c" stopOpacity=".9" />
               <stop offset="1" stopColor="#f7dfac" stopOpacity="0" />
             </linearGradient>
             <linearGradient id="da-eater-swirl-nude" x1="1" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#d78e93" stopOpacity="0" />
-              <stop offset=".28" stopColor="#efb3ad" stopOpacity=".78" />
-              <stop offset=".75" stopColor="#c98283" stopOpacity=".7" />
+              <stop offset=".28" stopColor="#efaaa6" stopOpacity=".92" />
+              <stop offset=".75" stopColor="#d48888" stopOpacity=".86" />
               <stop offset="1" stopColor="#efb3ad" stopOpacity="0" />
             </linearGradient>
             <filter id="da-eater-swirl-glow" x="-30%" y="-30%" width="160%" height="160%">
