@@ -240,7 +240,7 @@
 .tf30-floating-deck .crystal-summary-tile--beginning .tf30-footer span{font-size:clamp(.38rem,.43vw,.52rem)!important;line-height:1.15!important}
 .tf30-floating-deck .crystal-summary-tile--beginning .tf30-footer+h2,
 .tf30-floating-deck .crystal-summary-tile--beginning h2:nth-of-type(2){display:none}
-.tf30-floating-deck .crystal-summary-tile--twerk-sauce{left:39%;top:32%;width:23%;height:22%;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;align-items:center;justify-items:center;text-align:center}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce{left:39%;top:29%;width:23%;height:22%;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;align-items:center;justify-items:center;text-align:center}
 .tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy{display:contents}
 .tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy strong{grid-column:1;grid-row:1;justify-self:center}
 .tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy>span{grid-column:1;grid-row:3;justify-self:center}
@@ -265,7 +265,7 @@
 .tf30-floating-deck .crystal-summary-tile--iron-ledger>div>h2:nth-of-type(2){margin-top:.75rem}
 .tf30-floating-deck .crystal-summary-tile--upup-juice{right:4.2%;top:58%;width:19%}
 .tf30-floating-deck .crystal-summary-tile--trophy-wall{right:4.2%;top:70%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--sleep-watch{left:63%;top:25%;width:20%}
+.tf30-floating-deck .crystal-summary-tile--sleep-watch{left:70%;top:18%;width:20%}
 .tf30-floating-deck .crystal-summary-tile--how-doin{right:4.2%;top:82%;width:23%}
 .tf30-song-cover{width:clamp(56px,4.3vw,76px);height:clamp(56px,4.3vw,76px);flex:0 0 auto;border-radius:8px;object-fit:contain;background:#fff}
 .tf30-floating-deck .crystal-detail-body{font-family:Impact,'Arial Narrow',sans-serif}
