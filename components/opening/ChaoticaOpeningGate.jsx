@@ -182,6 +182,16 @@ export default function ChaoticaOpeningGate() {
     }
   }
 
+  function enterWithoutVoice() {
+    recognitionRef.current?.stop?.();
+    window.ChaoticaNativeSpeech?.stop?.();
+    setListening(false);
+    setSpeechLevel(0);
+    setMessage('THE PASSWORD IS TRUE. CHAOTICA IS OPENING.');
+    window.sessionStorage.setItem(GATE_RELEASE_KEY, 'true');
+    setPhase('opening');
+  }
+
   return (
     <main className="chaotica-opening" data-phase={phase}>
       <div className="chaotica-opening-scenes" aria-hidden="true">
@@ -214,14 +224,19 @@ export default function ChaoticaOpeningGate() {
             </span>
             <i aria-hidden="true"><b /><b /><b /><b /><b /></i>
           </div>
-          <button
-            type="button"
-            className="chaotica-oath-listen-button"
-            onClick={startSpeech}
-            disabled={!speechSupported || spokenOathIsAccepted}
-          >
-            {!speechSupported ? 'VOICE UNAVAILABLE IN THIS BROWSER' : listening ? 'RESTART LISTENING' : 'TAP TO LISTEN'}
-          </button>
+          <div className="chaotica-oath-actions">
+            <button
+              type="button"
+              className="chaotica-oath-listen-button"
+              onClick={startSpeech}
+              disabled={!speechSupported || spokenOathIsAccepted}
+            >
+              {!speechSupported ? 'VOICE UNAVAILABLE IN THIS BROWSER' : listening ? 'RESTART LISTENING' : 'TAP TO LISTEN'}
+            </button>
+            <button type="button" className="chaotica-oath-enter-button" onClick={enterWithoutVoice}>
+              ENTER CHAOTICA
+            </button>
+          </div>
           {!speechSupported ? <span className="chaotica-visually-hidden">SPOKEN OATH IS UNAVAILABLE IN THIS BROWSER.</span> : null}
         </section>
       ) : null}

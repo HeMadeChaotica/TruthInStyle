@@ -166,8 +166,8 @@ body:has(.chaotica-opening) { background: #10070b; }
 
 .chaotica-oath-actions { display: flex; justify-content: center; align-items: center; gap: 12px; }
 
-.chaotica-oath .chaotica-oath-listen-button {
-  justify-self: center;
+.chaotica-oath .chaotica-oath-listen-button,
+.chaotica-oath .chaotica-oath-enter-button {
   width: min(320px, 82vw);
   min-height: 48px;
   padding: 10px 22px;
@@ -182,6 +182,12 @@ body:has(.chaotica-opening) { background: #10070b; }
 .chaotica-oath .chaotica-oath-listen-button:focus-visible {
   outline: 2px solid rgba(255, 231, 190, .95);
   outline-offset: 4px;
+}
+
+.chaotica-oath .chaotica-oath-enter-button {
+  width: auto;
+  min-width: 190px;
+  background: rgba(75, 25, 47, .62);
 }
 
 .chaotica-oath-listener {
