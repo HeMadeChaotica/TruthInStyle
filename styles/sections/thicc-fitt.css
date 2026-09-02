@@ -228,14 +228,16 @@
 @media(max-width:760px){.tf30-shell .usf-overlay{grid-template-columns:1fr;padding:72px 10px 14px}.tf30-left{min-height:16vh}.tf30-shell .usf-stack{grid-template-columns:1fr}.tf30-shell .usf-shelf:nth-child(n){grid-column:1}.tf30-district-banner{align-items:flex-start;flex-direction:column}}
 
 /* Approved scene-first station layout. Detailed forms remain inside each expandable tile. */
-.tf30-floating-deck .crystal-summary-tile--beginning{left:40%;top:3%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--twerk-sauce{left:53%;top:31%;width:26%;min-height:104px}
-.tf30-floating-deck .crystal-summary-tile--war-cry{right:5.5%;top:6%;width:24%}
+.tf30-floating-deck .crystal-summary-tile--beginning{left:39%;top:2.5%;width:23%;min-height:clamp(112px,15vh,150px)}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce{left:39%;top:33%;width:23%;min-height:clamp(150px,19vh,190px);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy{align-self:start}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .tf30-song-cover{grid-column:1/-1;grid-row:2;width:clamp(84px,7vw,118px);height:clamp(84px,7vw,118px);justify-self:start}
+.tf30-floating-deck .crystal-summary-tile--war-cry{right:5%;top:13%;width:27%;min-height:clamp(100px,13vh,132px)}
 .tf30-floating-deck .crystal-summary-tile--chase{right:3.8%;top:29%;width:20%}
-.tf30-floating-deck .crystal-summary-tile--body-receipts{left:54%;top:45%;width:20%}
+.tf30-floating-deck .crystal-summary-tile--body-receipts{left:63%;top:43%;width:20%}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger{left:34%;top:56%;width:38%;min-height:118px}
 .tf30-floating-deck .crystal-summary-tile--upup-juice{right:4.2%;top:58%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--trophy-wall{right:4.2%;bottom:5%;width:17%}
+.tf30-floating-deck .crystal-summary-tile--trophy-wall{left:72%;top:70%;width:19%}
 .tf30-floating-deck .crystal-summary-tile--sleep-watch{left:44%;bottom:4.5%;width:19%}
 .tf30-floating-deck .crystal-summary-tile--how-doin{left:64%;bottom:2.4%;width:23%}
 .tf30-song-cover{width:clamp(56px,4.3vw,76px);height:clamp(56px,4.3vw,76px);flex:0 0 auto;border-radius:8px;object-fit:contain;background:#fff}

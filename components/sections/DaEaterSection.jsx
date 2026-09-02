@@ -11,6 +11,7 @@ import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const THICC_DAY_STORAGE_KEY = 'truthinstyle_da_eater_thicc_treat_day_v1';
+const EMPTY_REUP_ROWS = () => Array.from({ length: 10 }, () => ({ amount: '', status: '', mealName: '' }));
 
 export default function DaEaterSection() {
   const MEAL_TYPES = useClockItOptions(CLOCK_IT_KEYS.daEaterMealTypes);
@@ -28,6 +29,11 @@ export default function DaEaterSection() {
   const fileInputRefs = useRef({});
 
   const saveDay = (next) => { const saved = saveDaEaterDay(next); setDay(saved); };
+  const reupRows = [...(day.reupRows || []), ...EMPTY_REUP_ROWS()].slice(0, 10);
+  const updateReupRow = (index, field, value) => {
+    const nextRows = reupRows.map((row, rowIndex) => rowIndex === index ? { ...row, [field]: value } : row);
+    saveDay({ ...day, reupRows: nextRows });
+  };
   const totals = useMemo(() => calculateDaEaterTotals(day), [day]);
   const dayName = useMemo(() => new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase(), [date]);
 
@@ -130,6 +136,19 @@ export default function DaEaterSection() {
     return ref?.url || ref?.previewUrl || ref?.objectUrl || '';
   };
   const firstPhoto = photoLog.find((entry) => photoUrl(entry));
+  const reupContent = (
+    <div className="da-reup-panel">
+      <div className="da-reup-head"><span>#</span><span>AMOUNT</span><span>S OR R</span><span>MEAL NAME</span></div>
+      {reupRows.map((row, index) => (
+        <div className="da-reup-row" key={index}>
+          <span>{index + 1}</span>
+          <input aria-label={`DA.REUP ROW ${index + 1} AMOUNT`} value={row.amount} onChange={(event) => updateReupRow(index, 'amount', event.target.value)} />
+          <select aria-label={`DA.REUP ROW ${index + 1} S OR R`} value={row.status} onChange={(event) => updateReupRow(index, 'status', event.target.value)}><option value="">—</option><option value="S">S</option><option value="R">R</option></select>
+          <input aria-label={`DA.REUP ROW ${index + 1} MEAL NAME`} value={row.mealName} onChange={(event) => updateReupRow(index, 'mealName', event.target.value)} />
+        </div>
+      ))}
+    </div>
+  );
   const macroSummary = (
     <div className="da-eater-summary-macros">
       {[['P','protein','g'],['C','carbs','g'],['F','fats','g'],['KCAL','calories',''],['WATER','waterOz','oz']].map(([label, key, unit]) => <div key={key}><span>{label} {totals.totals[key]} / {totals.targets[key]}{unit}</span><i><b style={{ width: `${Math.min(totals.progress[key], 100)}%` }} /></i></div>)}
@@ -142,7 +161,8 @@ export default function DaEaterSection() {
     { id: 'thicc-supps', title: 'THICC.SUPPS', summary: `${day.supplements?.length || 0} TODAY`, content: panelById.supps },
     { id: 'thicc-cravings', title: 'THICC.CRAVINGS', summary: `${day.cravings?.length || 0} ACTIVE`, content: panelById.craving },
     { id: 'thicc-treat', title: 'THICC.TREAT', summary: `${day.cheatFlexEntries?.length || 0} THIS WEEK\n${selectedThiccDay}`, content: panelById.cheat },
+    { id: 'da-reup', title: 'DA.REUP', summary: `${reupRows.filter((row) => row.amount || row.status || row.mealName).length} OF 10 ROWS`, content: reupContent },
   ];
 
-  return <SectionShell className="da-eater-shell"><ScenePlate><div className="da-eater-bg" /></ScenePlate><label className="da-eater-date-control">DAY<input type="date" value={date} onChange={(event) => { const nextDate = event.target.value; setDate(nextDate); setDay(getDaEaterDay(nextDate)); }} /></label><FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER orchard stations" /></SectionShell>;
+  return <SectionShell className="da-eater-shell"><ScenePlate><div className="da-eater-bg" /></ScenePlate><FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER orchard stations" /></SectionShell>;
 }

@@ -125,3 +125,18 @@
   border-color:rgba(165,88,115,.4)!important;
 }
 .remember-actions{background:rgba(246,218,222,.86)!important}
+
+/* Seasonal scene-fit correction. Compact cards carry only their three names;
+   saved detail remains available on the flipped face. */
+.remember-page{--remember-scene-glass:linear-gradient(145deg,rgba(58,37,35,.58),rgba(92,59,54,.44));--remember-scene-line:rgba(255,213,196,.68);--remember-scene-ink:#f3b4c6}
+.remember-season-spring{--remember-scene-glass:linear-gradient(145deg,rgba(49,73,57,.54),rgba(91,85,61,.40));--remember-scene-line:rgba(235,255,204,.66)}
+.remember-season-summer{--remember-scene-glass:linear-gradient(145deg,rgba(39,68,71,.56),rgba(90,72,54,.42));--remember-scene-line:rgba(197,244,255,.68)}
+.remember-season-fall{--remember-scene-glass:linear-gradient(145deg,rgba(75,37,29,.64),rgba(112,55,34,.48));--remember-scene-line:rgba(255,190,151,.72)}
+.remember-season-winter{--remember-scene-glass:linear-gradient(145deg,rgba(39,50,69,.64),rgba(65,51,70,.46));--remember-scene-line:rgba(208,224,255,.72)}
+.remember-main{top:2.2%!important;bottom:2.2%!important;width:47%!important;overflow:visible!important}
+.remember-main.remember-calendar-left{left:1.5%!important}.remember-main.remember-calendar-right{right:1.5%!important}
+.remember-calendar-panel,.remember-standout-postcards{background:var(--remember-scene-glass)!important;border-color:var(--remember-scene-line)!important;box-shadow:inset 0 0 0 1px rgba(255,237,226,.12),0 14px 34px rgba(35,15,18,.24)!important;backdrop-filter:blur(5px) saturate(112%)!important;-webkit-backdrop-filter:blur(5px) saturate(112%)!important}
+.remember-calendar-panel{padding:clamp(8px,.72vw,13px)!important;overflow:hidden}.remember-grid{gap:clamp(3px,.32vw,6px)!important}.remember-day{padding:clamp(4px,.38vw,7px)!important}.remember-weekdays span{font-size:clamp(.72rem,.68vw,.95rem)!important}.remember-day-num{font-size:clamp(.84rem,.76vw,1.08rem)!important}.remember-chip{font-size:clamp(.52rem,.48vw,.7rem)!important;padding:3px 4px!important}
+.remember-page .remember-main,.remember-page .remember-main *{color:var(--remember-scene-ink)!important;-webkit-text-fill-color:var(--remember-scene-ink)!important;text-shadow:0 1px 3px rgba(24,8,12,.76)!important}
+.moment-card-face,.remember-moment-face{background:var(--remember-scene-glass)!important;border-color:var(--remember-scene-line)!important;box-shadow:inset 0 0 0 1px rgba(255,238,226,.11),0 9px 22px rgba(30,11,15,.22)!important}
+.remember-moment-front{gap:0!important}.remember-moment-front strong{font-size:clamp(1.25rem,1.55vw,2rem)!important}.remember-moment-front .remember-moment-kicker,.remember-moment-front .remember-moment-empty,.remember-moment-front .remember-moment-saved-indicator{display:none!important}

@@ -27,22 +27,7 @@ const RAIL_ITEMS = [
 ];
 
 function RailMark({ item }) {
-  const shared = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' };
-  const mark = {
-    home: <><path {...shared} d="M7 12.2 12 7l5 5.2v5.3H7z"/><path {...shared} d="M10 17.5v-4h4v4"/><path {...shared} d="M12 4.4 13.3 6 12 7.6 10.7 6z"/></>,
-    back: <><path {...shared} d="m14.8 6.5-5.5 5.5 5.5 5.5"/><path {...shared} d="M9.7 12h8"/></>,
-    'its-getting-thicc': <><path {...shared} d="M9 5.5c.8 1 1.8 1.5 3 1.5s2.2-.5 3-1.5M8.5 8.5c-1 2.3-1 4.7 0 7M15.5 8.5c1 2.3 1 4.7 0 7M9 18.5c.8-1 1.8-1.5 3-1.5s2.2.5 3 1.5"/><path {...shared} d="M12 8v8"/></>,
-    'thicc-fitt': <><path {...shared} d="M5 9v6M7.5 7.5v9M16.5 7.5v9M19 9v6M7.5 12h9"/></>,
-    'da-eater': <><path {...shared} d="M5 15.5h14M6.5 15.5a5.5 5.5 0 0 1 11 0M12 7V5.5"/><circle {...shared} cx="12" cy="5" r=".7"/></>,
-    'remember-me': <><rect {...shared} x="5.5" y="6.8" width="13" height="11.5" rx="1.8"/><path {...shared} d="M8.5 4.8v4M15.5 4.8v4M5.5 10.5h13M8.5 13h2M13.5 13h2M8.5 16h2"/></>,
-    hopewood: <><path {...shared} d="M5 18V7h14v11zM7.5 15l3-3 2.2 2.2 2.2-2.2 2.6 3"/><path {...shared} d="M8 5h8"/></>,
-    '525600': <><circle {...shared} cx="12" cy="12" r="6.5"/><circle {...shared} cx="12" cy="12" r="2"/><path {...shared} d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.5 1.5M16.5 16.5 18 18M18 6l-1.5 1.5M7.5 16.5 6 18"/></>,
-    'clock-it': <><path {...shared} d="M5 8.5h14M12 5v13M8 8.5l-3 5h6zM16 8.5l-3 5h6zM9 19h6"/><path {...shared} d="M10 5h4"/></>,
-  }[item.key];
-
-  const preserveArtwork = item.key === 'entrance' || item.key === 'the-summation' || item.type === 'sacred';
-  if (preserveArtwork || !mark) return <img src={item.src} alt="" draggable={false} aria-hidden="true" />;
-  return <svg className="tis-rail-symbol" viewBox="0 0 24 24" aria-hidden="true"><path className="tis-rail-symbol-crystal" d="M12 1.8 21 12l-9 10.2L3 12z"/>{mark}</svg>;
+  return <img src={item.src} alt="" draggable={false} aria-hidden="true" />;
 }
 
 function pad(value) {

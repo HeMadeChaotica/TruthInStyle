@@ -62,16 +62,12 @@ export default function MomentFlipCard({ type, moment, isFlipped, onToggle }) {
     >
       <div className="moment-card-plane remember-moment-plane">
         <div className="moment-card-face front remember-moment-face remember-moment-front" aria-hidden={isFlipped}>
-          <span className="remember-moment-kicker">{hasMoment ? 'SAVED REMEMBER.ME' : 'READY FOR REMEMBER.ME'}</span>
           <strong>{type}</strong>
           {hasMoment ? (
             <>
-              <span className="remember-moment-saved-indicator">SAVED • TAP TO FLIP</span>
               {frontSummary ? <span className="remember-moment-front-summary">{frontSummary}</span> : null}
             </>
-          ) : (
-            <span className="remember-moment-empty">NO MOMENT RECORDED YET</span>
-          )}
+          ) : null}
         </div>
 
         <div className="moment-card-face back remember-moment-face remember-moment-back" aria-hidden={!isFlipped}>

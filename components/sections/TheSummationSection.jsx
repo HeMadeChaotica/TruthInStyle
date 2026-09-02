@@ -257,10 +257,8 @@ function getVisualizationCopy(renderStatus, renderRecord, renderMessage) {
   if (isProviderBlockedStatus(renderStatus, renderRecord)) {
     return {
       eyebrow: 'Visualization Status',
-      title: /limit|quota|billing|payment/i.test(providerReason(renderRecord)) ? 'PROVIDER LIMIT REACHED' : 'Visualization Held',
-      message: /limit|quota|billing|payment/i.test(providerReason(renderRecord))
-        ? 'The Day Capsule is prepared, but the external visualization renderer could not complete because the render provider returned a billing or usage-limit response.'
-        : 'The Day Capsule is prepared, but external rendering could not complete because the provider returned a configuration or credential response.',
+      title: 'Visualization Could Not Complete',
+      message: 'The Day Capsule is prepared. The exact renderer response is preserved below so the failure is visible without covering the Crystallization Hall.',
     };
   }
   return {

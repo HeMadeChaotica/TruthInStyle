@@ -274,7 +274,7 @@ function AssurerWorkoutMirror({ mirror, expanded = false }) {
   const vault = safeMirror.vault || {};
   const dailySignals = safeMirror.dailySignals || {};
   const media = safeMirror.media || {};
-  const visibleRows = expanded ? exerciseRows : exerciseRows.slice(0, 4);
+  const visibleRows = expanded ? exerciseRows : exerciseRows.slice(0, 2);
 
   if (!safeMirror.hasData) {
     return (
@@ -306,9 +306,9 @@ function AssurerWorkoutMirror({ mirror, expanded = false }) {
       <div className="assurer-workout-footer" aria-label="THICC.FITT DAILY SIGNALS">
         <SignalTile label="CARDIO" value={[cardio.type, cardio.duration].filter(Boolean).join(' • ')} />
         <SignalTile label="SLEEP" value={safeMirror.sleep?.isValid ? [safeMirror.sleep.sleep_total, safeMirror.sleep.sleep_quality].filter(Boolean).join(' • ') : ''} />
-        <SignalTile label="RECOVERY" value={[recovery.soreness, recovery.status].filter(Boolean).join(' • ')} />
-        <SignalTile label="VAULT" value={[vault.compoundSummary, vault.cycleWeek && `WEEK ${vault.cycleWeek}`, vault.shotTrackingSummary && `SHOT ${vault.shotTrackingSummary}`].filter(Boolean).join(' • ')} />
-        <SignalTile label="SO HOW YOU DOIN 🫪⁉️" value={dailySignals.soHowYouDoin} />
+        {expanded ? <SignalTile label="RECOVERY" value={[recovery.soreness, recovery.status].filter(Boolean).join(' • ')} /> : null}
+        {expanded ? <SignalTile label="VAULT" value={[vault.compoundSummary, vault.cycleWeek && `WEEK ${vault.cycleWeek}`, vault.shotTrackingSummary && `SHOT ${vault.shotTrackingSummary}`].filter(Boolean).join(' • ')} /> : null}
+        {expanded ? <SignalTile label="SO HOW YOU DOIN 🫪⁉️" value={dailySignals.soHowYouDoin} /> : null}
         {expanded ? <SignalTile label="NOTES / TAKE" value={dailySignals.notes} className="assurer-signal-wide" /> : null}
         {expanded ? <SignalTile label="TROPHY WALL" value={media.latestTrophyWallImageRef} className="assurer-signal-wide" /> : null}
         {expanded ? <SignalTile label="WEEKLY TOTAL" value={`${summary.daysTrained} DAYS • ${summary.totalMinutes} MIN`} className="assurer-signal-wide" /> : null}
@@ -435,6 +435,10 @@ function AssurerMomentCards({ cards, expanded = false }) {
       {cards.map((card) => {
         const hasMoment = Boolean(card.moment);
         const previewText = hasMoment && card.moment.text ? card.moment.text : 'NO MOMENT RECORDED YET';
+
+        if (!expanded) {
+          return <article key={card.type} className="assurer-moment-card assurer-moment-card-compact"><strong className="assurer-moment-type">{card.type}</strong></article>;
+        }
 
         return (
           <article
@@ -966,7 +970,7 @@ export default function TheAssurerSection() {
               <div className="assurer-title-fields">
                 <div className="assurer-title-meta">
                   <time dateTime={date}>{date}</time>
-                  <span>CHAOTICA THE.ASSURER</span>
+                  <span>TELL NO LIES</span>
                   <span>CHAOTICA DAY #{chaoticaDayNumber}</span>
                 </div>
                 <input
@@ -1149,20 +1153,11 @@ export default function TheAssurerSection() {
               <AssurerField id="assurer-era" label="ERA">
                 <AssurerSelect id="assurer-era" value={era} onChange={setEra} options={eraOptions} />
               </AssurerField>
-              <AssurerField id="assurer-lobito" label="LOBITO CHECK-IN">
-                <AssurerSelect id="assurer-lobito" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
-              </AssurerField>
               <AssurerField id="assurer-singleness" label="SINGLENESS LEVEL">
                 <AssurerSelect id="assurer-singleness" value={singlenessLevel} onChange={setSinglenessLevel} options={singlenessOptions} />
               </AssurerField>
-              <AssurerField id="assurer-location" label="LOCATION">
-                <input
-                  id="assurer-location"
-                  className="assurer-control"
-                  value={location}
-                  onChange={(event) => setLocation(event.target.value)}
-                  placeholder="LOCATION"
-                />
+              <AssurerField id="assurer-lobito" label="LOBITO CHECK-IN">
+                <AssurerSelect id="assurer-lobito" value={lobitoCheckIn} onChange={setLobitoCheckIn} options={lobitoOptions} />
               </AssurerField>
             </div>
           </article>

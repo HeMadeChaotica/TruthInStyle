@@ -45,6 +45,7 @@ const emptyDay = (date) => ({
   meals: [],
   supplements: [],
   cravings: [],
+  reupRows: Array.from({ length: 10 }, () => ({ amount: '', status: '', mealName: '' })),
   cheatFlexEntries: [],
   hyperFixationMeal: { mealName: '', currentFixation: '', weeklyCount: '', notes: '', macroEstimate: '' },
   photoLog: [{ slot: 1, photoRef: '', description: '' }, { slot: 2, photoRef: '', description: '' }]

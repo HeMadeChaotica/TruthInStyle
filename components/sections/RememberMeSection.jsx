@@ -125,11 +125,10 @@ const colorForEntry = (entry) => {
 
 export default function RememberMeSection() {
   const configuredEventTypes = useClockItOptions(CLOCK_IT_KEYS.rememberEventTypes);
-  const configuredStandoutTypes = useClockItOptions(CLOCK_IT_KEYS.rememberMomentTypes);
   const eventTypes = [...new Set([...(configuredEventTypes.length ? configuredEventTypes : ['SOMETHING NEW DAY', 'REMINDER']), 'PAYDAY'])];
-  const standoutTypes = configuredStandoutTypes.length ? configuredStandoutTypes : ['WOW', 'WTF', 'PLOT TWIST'];
-  const [viewDate, setViewDate] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const standoutTypes = ['WOW', 'WTF', 'PLOT TWIST'];
+  const [viewDate, setViewDate] = useState(() => new Date(2000, 0, 1));
+  const [selectedDay, setSelectedDay] = useState(1);
   const [rememberRows, setRememberRows] = useState([]);
   const [workoutRows, setWorkoutRows] = useState([]);
   const [entriesByDate, setEntriesByDate] = useState({});
@@ -141,6 +140,12 @@ export default function RememberMeSection() {
   const [momentDraft, setMomentDraft] = useState(EMPTY_MOMENT);
   const [flippedMomentType, setFlippedMomentType] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const current = new Date();
+    setViewDate(new Date(current.getFullYear(), current.getMonth(), 1));
+    setSelectedDay(current.getDate());
+  }, []);
 
   const selectedDateKey = useMemo(
     () => safeDateKey(viewDate.getFullYear(), viewDate.getMonth(), selectedDay),

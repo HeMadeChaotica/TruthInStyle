@@ -44,7 +44,7 @@ export default function HopewoodSection() {
   const [selectedDate, setSelectedDate] = useState('');
   const [lookupMode, setLookupMode] = useState('date');
   const [lookupValue, setLookupValue] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const applyArchive = (archive = []) => {
@@ -96,7 +96,7 @@ export default function HopewoodSection() {
               <figcaption><strong>{day?.title || 'UNTITLED DAY'}</strong><span>{[day?.displayDate, day?.dayOfWeek].filter(Boolean).join(' · ')}</span></figcaption>
             </figure>
           ) : (
-            <div className="hopewood-render-empty"><span>SEALED DAY VISUALIZATION</span><strong>{day?.title || 'NO SEALED DAY SELECTED'}</strong><p>{day ? 'This Day Capsule has facts, but no completed landscape visualization is sealed yet.' : 'Choose a sealed day from the archive.'}</p></div>
+            <div className="hopewood-render-empty"><span>HOPEWOOD ARCHIVE</span><strong>{day?.title || 'NO SEALED DAY SELECTED'}</strong><p>{day ? 'This sealed day has no completed landscape visualization yet.' : 'Open the crystal drawer to find a sealed day.'}</p></div>
           )}
         </section>
 

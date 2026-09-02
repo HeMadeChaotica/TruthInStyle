@@ -2374,6 +2374,59 @@
   }
 }
 
+/* Final scene-first correction: native translucent crystal stations with the
+   moving multicolor edge restored. */
+.assurer-phase-layout .assurer-widget,
+.assurer-phase-layout .assurer-macro-widget{
+  --assurer-readable-ink:#f3a9bf;
+  --assurer-readable-ink-soft:#d98aa3;
+  --assurer-readable-paper:rgba(55,31,34,.44);
+  --assurer-readable-paper-soft:rgba(55,31,34,.34);
+  color:#f3a9bf!important;
+  background:linear-gradient(145deg,rgba(68,44,41,.48),rgba(103,68,61,.32))!important;
+  border-color:rgba(255,205,218,.62)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,235,225,.12),0 8px 24px rgba(39,16,21,.24)!important;
+  backdrop-filter:blur(5px) saturate(114%)!important;
+  -webkit-backdrop-filter:blur(5px) saturate(114%)!important;
+}
+.assurer-phase-layout .assurer-widget::before{
+  border-width:2px;
+  background:linear-gradient(90deg,#ffe9c8,#ed90bd,#b5ecff,#ddffb3,#ffd2df,#ffe9c8) border-box;
+  background-size:240% 100%;
+  animation:assurerTrueThiccShimmer 6s linear infinite;
+}
+.assurer-phase-layout .assurer-title-meta,
+.assurer-phase-layout .assurer-title-input,
+.assurer-phase-layout .assurer-control,
+.assurer-phase-layout .assurer-definition-input,
+.assurer-phase-layout .assurer-thoughts-textarea,
+.assurer-phase-layout .assurer-widget-content>strong:first-child{
+  color:#f3a9bf!important;-webkit-text-fill-color:#f3a9bf!important;
+  background:rgba(49,28,31,.42)!important;border-color:rgba(244,169,191,.34)!important;
+}
+.assurer-phase-layout .assurer-widget *{color:#f3a9bf!important;-webkit-text-fill-color:#f3a9bf!important;font-weight:600}
+.assurer-phase-layout .assurer-title-meta{font-size:clamp(17px,1vw,25px)!important}
+.assurer-phase-layout .assurer-title-input{font-size:clamp(20px,1.2vw,30px)!important;text-align:center}
+.assurer-phase-layout .assurer-daily-content{display:grid!important;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr 1fr;align-content:stretch!important;gap:5px 8px!important}
+.assurer-phase-layout .assurer-daily-content>strong{grid-column:1/-1}
+.assurer-phase-layout .assurer-daily-content .assurer-field{min-height:0!important;display:grid!important;grid-template-rows:auto minmax(26px,1fr);gap:2px!important}
+.assurer-phase-layout .assurer-daily-content .assurer-field>span{font-size:clamp(9px,.54vw,13px)!important;white-space:normal}
+.assurer-phase-layout .assurer-daily-content .assurer-control{min-height:26px!important;font-size:clamp(10px,.58vw,14px)!important}
+.assurer-lined-writing{
+  background:repeating-linear-gradient(to bottom,rgba(49,28,31,.30) 0,rgba(49,28,31,.30) 27px,rgba(244,169,191,.62) 28px)!important;
+  line-height:28px!important;padding-top:4px!important;
+}
+.assurer-definition-input{min-height:72px!important;line-height:1.35!important;background:rgba(49,28,31,.42)!important}
+.assurer-workout-list{gap:3px!important}
+.assurer-workout-row{padding:4px 6px!important}
+.assurer-phase-day .assurer-title-cluster{left:30%;top:1.5%;width:41%;height:10%}
+.assurer-phase-day .assurer-macro-bars{left:1.5%;top:2%;width:24%;height:20%}
+.assurer-phase-day .assurer-weather-tile{left:1.5%;top:23.5%;width:13%;height:24%}
+.assurer-phase-day .assurer-word-panel{left:1.5%;top:49%;width:13%;height:20%}
+.assurer-phase-day .assurer-daily-orbit{left:15.5%;top:49%;width:15%;height:20%}
+.assurer-phase-day .assurer-head-hummer{left:15.5%;top:37.5%;width:15%;height:10%}
+.assurer-phase-day .assurer-thicc-fitt-workout{left:1.5%;top:70.5%;width:29%;height:27%}
+
 /* 2026-08-26 legibility lock
    The scene remains the visual surface. Panels are warm, clear local glass—not
    black cards—and dense information receives its contrast at the text/row level. */
@@ -2557,3 +2610,17 @@
   color: var(--assurer-readable-ink) !important;
   -webkit-text-fill-color: var(--assurer-readable-ink) !important;
 }
+
+/* Final cascade lock for the approved multicolor crystal language. */
+.assurer-phase-layout{--assurer-readable-ink:#f3a9bf;--assurer-readable-ink-soft:#d98aa3;--assurer-readable-paper:rgba(55,31,34,.44);--assurer-readable-paper-soft:rgba(55,31,34,.34)}
+.assurer-phase-layout .assurer-widget,.assurer-phase-layout .assurer-macro-widget{color:#f3a9bf!important;background:linear-gradient(145deg,rgba(68,44,41,.48),rgba(103,68,61,.32))!important;border-color:rgba(255,205,218,.62)!important;box-shadow:inset 0 0 0 1px rgba(255,235,225,.12),0 8px 24px rgba(39,16,21,.24)!important;backdrop-filter:blur(5px) saturate(114%)!important;-webkit-backdrop-filter:blur(5px) saturate(114%)!important}
+.assurer-phase-layout .assurer-widget::before{border-width:2px;background:linear-gradient(90deg,#ffe9c8,#ed90bd,#b5ecff,#ddffb3,#ffd2df,#ffe9c8) border-box!important;background-size:240% 100%!important;animation:assurerTrueThiccShimmer 6s linear infinite!important}
+.assurer-phase-layout .assurer-widget *,.assurer-phase-layout .assurer-macro-widget *{color:#f3a9bf!important;-webkit-text-fill-color:#f3a9bf!important;text-shadow:0 1px 3px rgba(25,8,13,.78)!important;font-weight:600}
+.assurer-phase-layout .assurer-title-meta,.assurer-phase-layout .assurer-title-input,.assurer-phase-layout .assurer-control,.assurer-phase-layout .assurer-definition-input,.assurer-phase-layout .assurer-thoughts-textarea,.assurer-phase-layout .assurer-widget-content>strong:first-child{background:rgba(49,28,31,.42)!important;border-color:rgba(244,169,191,.34)!important}
+.assurer-phase-layout .assurer-title-meta{font-size:clamp(17px,1vw,25px)!important}.assurer-phase-layout .assurer-title-input{font-size:clamp(20px,1.2vw,30px)!important;text-align:center}
+.assurer-phase-layout .assurer-daily-content{display:grid!important;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr 1fr;align-content:stretch!important;gap:5px 8px!important}.assurer-phase-layout .assurer-daily-content>strong{grid-column:1/-1}.assurer-phase-layout .assurer-daily-content .assurer-field{min-height:0!important;display:grid!important;grid-template-rows:auto minmax(26px,1fr);gap:2px!important}.assurer-phase-layout .assurer-daily-content .assurer-field>span{font-size:clamp(9px,.54vw,13px)!important;white-space:normal}.assurer-phase-layout .assurer-daily-content .assurer-control{min-height:26px!important;font-size:clamp(10px,.58vw,14px)!important}
+.assurer-phase-layout .assurer-lined-writing{background:repeating-linear-gradient(to bottom,rgba(49,28,31,.30) 0,rgba(49,28,31,.30) 27px,rgba(244,169,191,.68) 28px)!important;line-height:28px!important;padding-top:4px!important}.assurer-phase-layout .assurer-definition-input{min-height:72px!important;line-height:1.35!important}.assurer-phase-layout .assurer-workout-list{gap:3px!important}.assurer-phase-layout .assurer-workout-row{padding:4px 6px!important}
+.assurer-phase-day .assurer-title-cluster{left:30%;top:1.5%;width:41%;height:10%}.assurer-phase-day .assurer-macro-bars{left:1.5%;top:2%;width:24%;height:20%}.assurer-phase-day .assurer-weather-tile{left:1.5%;top:23.5%;width:13%;height:24%}.assurer-phase-day .assurer-word-panel{left:1.5%;top:49%;width:13%;height:20%}.assurer-phase-day .assurer-daily-orbit{left:15.5%;top:49%;width:15%;height:20%}.assurer-phase-day .assurer-head-hummer{left:15.5%;top:37.5%;width:15%;height:10%}.assurer-phase-day .assurer-thicc-fitt-workout{left:1.5%;top:70.5%;width:29%;height:27%}
+.assurer-expanded-panel{background:linear-gradient(145deg,rgba(65,38,39,.92),rgba(112,70,67,.88))!important;border-color:rgba(255,202,220,.8)!important;color:#f3a9bf!important;backdrop-filter:blur(8px)!important}.assurer-expanded-panel,.assurer-expanded-panel *{color:#f3a9bf!important;-webkit-text-fill-color:#f3a9bf!important}.assurer-expanded-close,.assurer-widget-expand{background:rgba(66,35,42,.72)!important;border-color:rgba(255,192,216,.56)!important;color:#f3a9bf!important}
+.assurer-phase-layout .assurer-moment-card-list{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;height:100%!important}.assurer-phase-layout .assurer-moment-card-compact{display:grid!important;place-items:center!important;min-height:0!important;padding:6px!important;background:rgba(47,27,31,.42)!important;border:1px solid rgba(244,169,191,.38)!important;border-radius:10px!important}.assurer-phase-layout .assurer-moment-card-compact .assurer-moment-type{font-size:clamp(11px,.72vw,16px)!important;text-align:center!important}
+.assurer-phase-day .assurer-word-panel{left:1.5%;top:48%;width:15.5%;height:22%}.assurer-phase-day .assurer-daily-orbit{left:18%;top:48%;width:18%;height:22%}.assurer-phase-day .assurer-head-hummer{left:18%;top:36.5%;width:18%;height:10%}.assurer-phase-day .assurer-thicc-fitt-workout{left:1.5%;top:71.5%;width:34.5%;height:26%}

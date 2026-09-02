@@ -28,3 +28,37 @@
 .spotify-track-results button{display:flex;align-items:center;gap:.65rem;min-width:0;padding:.55rem;border:1px solid rgba(153,80,102,.28);border-radius:12px;background:rgba(255,251,248,.7);color:#82465b;text-align:left}
 .spotify-track-results img{width:58px;height:58px;flex:0 0 58px;border-radius:7px;object-fit:contain}.spotify-track-results span{display:grid;gap:.18rem;min-width:0}.spotify-track-results strong,.spotify-track-results small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:640px){.spotify-track-results{grid-template-columns:1fr}.spotify-track-selected img,.spotify-track-placeholder{width:72px;height:72px;flex-basis:72px}}
+
+/* Crystallization-world station glass. The approved scene stays visible through
+   every summary and expanded work surface. */
+.crystal-summary-tile{
+  border:1px solid rgba(255,202,218,.76);
+  background:
+    linear-gradient(145deg,rgba(69,43,40,.56),rgba(112,76,70,.42)),
+    radial-gradient(circle at 15% 10%,rgba(255,220,227,.17),transparent 42%);
+  box-shadow:inset 0 0 0 2px rgba(255,234,225,.16),0 12px 30px rgba(38,17,22,.28),0 0 18px rgba(238,157,190,.18);
+  backdrop-filter:blur(5px) saturate(116%);
+  -webkit-backdrop-filter:blur(5px) saturate(116%);
+  overflow:hidden;
+}
+.crystal-summary-tile::before{
+  content:'';position:absolute;inset:0;padding:2px;pointer-events:none;
+  background:linear-gradient(115deg,#ffe9c8,#ef91be,#b8efff,#e7ffbd,#ffc7dd,#ffe9c8);background-size:240% 100%;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:crystal-station-border 7s linear infinite;
+}
+@keyframes crystal-station-border{to{background-position:240% 0}}
+.crystal-summary-copy strong,.crystal-summary-copy>span{color:#ffd1dd!important;-webkit-text-fill-color:#ffd1dd!important;text-shadow:0 1px 4px rgba(30,10,16,.9)!important}
+.crystal-summary-expand{border-color:rgba(255,217,229,.78);background:linear-gradient(145deg,rgba(255,225,233,.82),rgba(198,122,154,.78));color:#71394f!important;-webkit-text-fill-color:#71394f!important}
+.crystal-detail-backdrop{background:rgba(20,9,13,.08);backdrop-filter:none;-webkit-backdrop-filter:none}
+.crystal-detail-panel{
+  width:min(1120px,90vw);max-height:min(84vh,900px);border:1px solid rgba(255,202,220,.82);border-radius:20px;
+  background:linear-gradient(145deg,rgba(66,39,39,.88),rgba(111,71,69,.82));
+  box-shadow:inset 0 0 0 2px rgba(255,232,222,.16),0 26px 70px rgba(35,12,20,.42),0 0 28px rgba(238,147,187,.2);
+  backdrop-filter:blur(8px) saturate(120%);-webkit-backdrop-filter:blur(8px) saturate(120%);color:#ffd1dd;
+}
+.crystal-detail-panel>header{border-bottom-color:rgba(255,205,220,.32);background:rgba(52,27,32,.28)}
+.crystal-detail-panel>header h2,.crystal-detail-body label,.crystal-detail-body span,.crystal-detail-body strong,.crystal-detail-body p,.crystal-detail-body small{color:#ffd1dd!important;-webkit-text-fill-color:#ffd1dd!important;text-shadow:0 1px 3px rgba(25,8,13,.75)!important}
+.crystal-detail-panel>header button,.crystal-detail-body button{border-color:rgba(255,200,219,.48)!important;background:rgba(255,224,230,.14)!important;color:#ffd7e2!important;-webkit-text-fill-color:#ffd7e2!important}
+.crystal-detail-body input,.crystal-detail-body select,.crystal-detail-body textarea{color:#ffe5eb!important;-webkit-text-fill-color:#ffe5eb!important;background:rgba(44,23,28,.54)!important;border-color:rgba(255,194,216,.46)!important}
+.spotify-track-selected,.spotify-track-results button{background:rgba(43,22,27,.48);border-color:rgba(255,194,216,.4);color:#ffd1dd}
