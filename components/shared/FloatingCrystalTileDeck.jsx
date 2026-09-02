@@ -18,7 +18,15 @@ export default function FloatingCrystalTileDeck({ tiles, className = '', ariaLab
 
   return (
     <div className={`crystal-tile-deck ${className}`.trim()} aria-label={ariaLabel}>
-      {tiles.map((tile) => (
+      {tiles.map((tile) => tile.alwaysOpen ? (
+        <section
+          className={`crystal-summary-tile crystal-summary-tile--${tile.id} crystal-summary-tile-always-open ${tile.className || ''}`.trim()}
+          key={tile.id}
+          aria-label={tile.title}
+        >
+          <div className="crystal-always-open-body">{tile.content}</div>
+        </section>
+      ) : (
         <button
           type="button"
           className={`crystal-summary-tile crystal-summary-tile--${tile.id} ${tile.className || ''}`.trim()}

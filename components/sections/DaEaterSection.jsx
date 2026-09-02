@@ -156,7 +156,7 @@ export default function DaEaterSection() {
   );
   const tiles = [
     { id: 'macro-harvest', title: 'MACRO HARVEST', summary: 'TODAY’S LIVE PROGRESSION', media: macroSummary, content: panelById.macro },
-    { id: 'thicc-eats', title: 'THICC.EATS', summary: `${day.meals?.length || 0} MEALS\nAVG MEAL ${averageMealKcal} KCAL`, content: panelById.meals },
+    { id: 'thicc-eats', title: 'THICC.EATS', summary: `${day.meals?.length || 0} MEALS\nAVG MEAL ${averageMealKcal} KCAL`, content: panelById.meals, alwaysOpen: true },
     { id: 'thicc-obsession', title: 'THICC.OBSESSION', summary: `${day.hyperFixationMeal?.currentFixation || day.hyperFixationMeal?.mealName || 'FIXATION PENDING'}\n${day.hyperFixationMeal?.weeklyCount || 0} TIMES THIS WEEK`, media: firstPhoto ? <div className="da-eater-summary-photo" style={{ backgroundImage: `url(${JSON.stringify(photoUrl(firstPhoto)).slice(1, -1)})` }} aria-hidden="true" /> : <div className="da-eater-summary-photo is-empty" aria-hidden="true">PHOTO</div>, content: panelById['fixation-photo-log'] },
     { id: 'thicc-supps', title: 'THICC.SUPPS', summary: `${day.supplements?.length || 0} TODAY`, content: panelById.supps },
     { id: 'thicc-cravings', title: 'THICC.CRAVINGS', summary: `${day.cravings?.length || 0} ACTIVE`, content: panelById.craving },
