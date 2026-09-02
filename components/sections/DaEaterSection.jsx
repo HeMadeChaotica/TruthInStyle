@@ -151,7 +151,14 @@ export default function DaEaterSection() {
   );
   const macroSummary = (
     <div className="da-eater-summary-macros">
-      {[['P','protein','g'],['C','carbs','g'],['F','fats','g'],['KCAL','calories',''],['WATER','waterOz','oz']].map(([label, key, unit]) => <div key={key}><span>{label} {totals.totals[key]} / {totals.targets[key]}{unit}</span><i><b style={{ width: `${Math.min(totals.progress[key], 100)}%` }} /></i></div>)}
+      {[['P','PROTEIN','protein','G'],['C','CARBS','carbs','G'],['F','FAT','fats','G'],['K','CALORIES','calories','KCAL'],['W','WATER','waterOz','OZ']].map(([symbol, label, key, unit]) => (
+        <div key={key}>
+          <span className="da-eater-macro-symbol" aria-hidden="true">{symbol}</span>
+          <strong>{label}</strong>
+          <i><b style={{ width: `${Math.min(totals.progress[key], 100)}%` }} /></i>
+          <em>{totals.totals[key]} / {totals.targets[key]} {unit}</em>
+        </div>
+      ))}
     </div>
   );
   const tiles = [
