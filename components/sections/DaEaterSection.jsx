@@ -190,7 +190,7 @@ export default function DaEaterSection() {
               <stop offset="1" stopColor="#efb3ad" stopOpacity="0" />
             </linearGradient>
             <filter id="da-eater-swirl-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="2.4" result="blur" />
+              <feGaussianBlur stdDeviation="4" result="blur" />
               <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>

@@ -427,19 +427,20 @@
 .da-eater-orchard-swirls .da-eater-swirl{
   fill:none;
   stroke:url(#da-eater-swirl-gold);
-  stroke-width:3;
+  stroke-width:5;
   stroke-linecap:round;
   stroke-dasharray:5 8;
-  opacity:.84;
+  opacity:.98;
+  mix-blend-mode:screen;
   animation:daEaterSwirlFlow 15s linear infinite,daEaterSwirlBreathe 5.5s ease-in-out infinite;
 }
 .da-eater-orchard-swirls .da-eater-swirl path:nth-child(even){
   stroke:url(#da-eater-swirl-nude);
-  stroke-width:3.5;
+  stroke-width:5.8;
   stroke-dasharray:none;
 }
 .da-eater-orchard-swirls .da-eater-swirl--right{animation-delay:-5s,-1.5s}
 .da-eater-orchard-swirls .da-eater-swirl--lower{animation-delay:-10s,-3s}
 @keyframes daEaterSwirlFlow{to{stroke-dashoffset:-130}}
-@keyframes daEaterSwirlBreathe{0%,100%{opacity:.62}50%{opacity:.94}}
-@media(prefers-reduced-motion:reduce){.da-eater-orchard-swirls .da-eater-swirl{animation:none;opacity:.78}}
+@keyframes daEaterSwirlBreathe{0%,100%{opacity:.84}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.da-eater-orchard-swirls .da-eater-swirl{animation:none;opacity:.96}}
