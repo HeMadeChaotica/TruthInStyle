@@ -227,19 +227,46 @@
 @media(max-width:1100px){.tf30-shell .usf-overlay{grid-template-columns:28% 72%}.tf30-shell .usf-stack{grid-template-columns:1fr 1fr}.tf30-shell .usf-shelf:nth-child(n){grid-column:auto;grid-row:auto}.tf30-shell .usf-shelf:nth-child(2),.tf30-shell .usf-shelf:nth-child(6),.tf30-shell .usf-shelf:nth-child(8){grid-column:1/-1}}
 @media(max-width:760px){.tf30-shell .usf-overlay{grid-template-columns:1fr;padding:72px 10px 14px}.tf30-left{min-height:16vh}.tf30-shell .usf-stack{grid-template-columns:1fr}.tf30-shell .usf-shelf:nth-child(n){grid-column:1}.tf30-district-banner{align-items:flex-start;flex-direction:column}}
 
-/* Approved scene-first station layout. Detailed forms remain inside each expandable tile. */
-.tf30-floating-deck .crystal-summary-tile--beginning{left:39%;top:2.5%;width:23%;min-height:clamp(112px,15vh,150px)}
-.tf30-floating-deck .crystal-summary-tile--twerk-sauce{left:39%;top:33%;width:23%;min-height:clamp(150px,19vh,190px);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
-.tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy{align-self:start}
-.tf30-floating-deck .crystal-summary-tile--twerk-sauce .tf30-song-cover{grid-column:1/-1;grid-row:2;width:clamp(84px,7vw,118px);height:clamp(84px,7vw,118px);justify-self:start}
-.tf30-floating-deck .crystal-summary-tile--war-cry{right:5%;top:13%;width:27%;min-height:clamp(100px,13vh,132px)}
+/* Approved scene-first station layout. IN THE BEGINNING and IRON.LEDGER stay
+   open as working surfaces; the remaining stations retain their detail views. */
+.tf30-floating-deck .crystal-summary-tile--beginning{left:39%;top:2.5%;width:30%;height:22%;min-height:0;padding:clamp(.55rem,.8vw,.8rem)}
+.tf30-floating-deck .crystal-summary-tile--beginning .crystal-always-open-body{overflow:auto;padding-right:2px}
+.tf30-floating-deck .crystal-summary-tile--beginning h2{margin:0 0 .35rem;font-size:clamp(.82rem,1.04vw,1.12rem)}
+.tf30-floating-deck .crystal-summary-tile--beginning .tf30-grid-2{grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem .45rem}
+.tf30-floating-deck .crystal-summary-tile--beginning label{display:grid;gap:.15rem;font-size:clamp(.48rem,.55vw,.66rem)!important;letter-spacing:.06em}
+.tf30-floating-deck .crystal-summary-tile--beginning input,
+.tf30-floating-deck .crystal-summary-tile--beginning select{min-height:clamp(24px,3vh,31px);padding:.25rem .4rem;border-radius:7px;font-size:clamp(.55rem,.62vw,.72rem)}
+.tf30-floating-deck .crystal-summary-tile--beginning .tf30-footer{grid-template-columns:repeat(6,minmax(0,1fr));gap:.2rem;margin-top:.35rem}
+.tf30-floating-deck .crystal-summary-tile--beginning .tf30-footer span{font-size:clamp(.38rem,.43vw,.52rem)!important;line-height:1.15!important}
+.tf30-floating-deck .crystal-summary-tile--beginning .tf30-footer+h2,
+.tf30-floating-deck .crystal-summary-tile--beginning h2:nth-of-type(2){display:none}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce{left:39%;top:32%;width:23%;height:22%;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;align-items:center;justify-items:center;text-align:center}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy{display:contents}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy strong{grid-column:1;grid-row:1;justify-self:center}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-copy>span{grid-column:1;grid-row:3;justify-self:center}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .tf30-song-cover{grid-column:1;grid-row:2;width:clamp(118px,9.5vw,164px);height:clamp(118px,9.5vw,164px);justify-self:center}
+.tf30-floating-deck .crystal-summary-tile--twerk-sauce .crystal-summary-expand{position:absolute;right:clamp(.45rem,.7vw,.75rem);top:clamp(.45rem,.7vw,.75rem)}
+.tf30-floating-deck .crystal-summary-tile--war-cry{right:5%;top:13%;width:25.5%;min-height:clamp(100px,13vh,132px)}
+.tf30-floating-deck .crystal-summary-tile--war-cry .crystal-summary-copy strong{font-size:clamp(1.05rem,1.35vw,1.5rem)!important}
+.tf30-floating-deck .crystal-summary-tile--war-cry .crystal-summary-copy>span{font-size:clamp(.82rem,.94vw,1.08rem)!important;line-height:1.32!important}
 .tf30-floating-deck .crystal-summary-tile--chase{right:3.8%;top:29%;width:20%}
 .tf30-floating-deck .crystal-summary-tile--body-receipts{left:63%;top:43%;width:20%}
-.tf30-floating-deck .crystal-summary-tile--iron-ledger{left:34%;top:56%;width:38%;min-height:118px}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger{left:34%;top:56%;width:38%;height:42%;min-height:0;padding:clamp(.55rem,.8vw,.8rem);align-items:stretch}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .crystal-always-open-body{overflow:auto;padding-right:.3rem;scrollbar-color:rgba(255,194,216,.72) rgba(44,23,28,.24);scrollbar-width:thin}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger h2{margin:0 0 .4rem;font-size:clamp(.82rem,1vw,1.08rem)}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head,
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-row{grid-template-columns:minmax(0,18px) minmax(86px,1.7fr) repeat(4,minmax(58px,.72fr)) minmax(62px,.82fr);gap:.3rem}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head{margin-bottom:.3rem}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head span{font-size:clamp(.42rem,.48vw,.56rem)!important}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-row{padding:.3rem;margin-bottom:.3rem;border-radius:7px}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-row>span{font-size:clamp(.5rem,.56vw,.65rem)!important}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger select,
+.tf30-floating-deck .crystal-summary-tile--iron-ledger input{min-height:clamp(26px,3.2vh,34px);padding:.25rem .35rem;border-radius:7px;font-size:clamp(.5rem,.58vw,.68rem)}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger>div>h2:nth-of-type(2){margin-top:.75rem}
 .tf30-floating-deck .crystal-summary-tile--upup-juice{right:4.2%;top:58%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--trophy-wall{left:72%;top:70%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--sleep-watch{left:44%;bottom:4.5%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--how-doin{left:64%;bottom:2.4%;width:23%}
+.tf30-floating-deck .crystal-summary-tile--trophy-wall{right:4.2%;top:70%;width:19%}
+.tf30-floating-deck .crystal-summary-tile--sleep-watch{left:39%;top:24.5%;width:20%}
+.tf30-floating-deck .crystal-summary-tile--how-doin{right:4.2%;top:82%;width:23%}
 .tf30-song-cover{width:clamp(56px,4.3vw,76px);height:clamp(56px,4.3vw,76px);flex:0 0 auto;border-radius:8px;object-fit:contain;background:#fff}
 .tf30-floating-deck .crystal-detail-body{font-family:Impact,'Arial Narrow',sans-serif}
 .tf30-floating-deck .crystal-detail-body>.tf30-footer{margin-top:1rem}

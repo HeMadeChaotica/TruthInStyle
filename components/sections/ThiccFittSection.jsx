@@ -319,12 +319,12 @@ export default function ThiccFittSection() {
   const panelById = Object.fromEntries(shelves.flatMap((shelf) => shelf.panels).map((panel) => [panel.id, panel.content]));
   const firstExercise = state.exerciseRows.find((row) => row.exercise);
   const tiles = [
-    { id: 'beginning', title: 'IN THE BEGINNING…', summary: `${state.control.seasonPhase || 'PHASE NOT SET'}\n${state.control.workoutLength || 'WORKOUT LENGTH PENDING'}`, content: <>{panelById['entry-gate']}{panelById['arena-rules']}</> },
+    { id: 'beginning', title: 'IN THE BEGINNING…', alwaysOpen: true, summary: `${state.control.seasonPhase || 'PHASE NOT SET'}\n${state.control.workoutLength || 'WORKOUT LENGTH PENDING'}`, content: <>{panelById['entry-gate']}{panelById['arena-rules']}</> },
     { id: 'twerk-sauce', title: 'TWERK SAUCE', summary: twerkSauce ? `${twerkSauce.name}\n${twerkSauce.artist}` : 'MANUALLY SELECT WORKOUT SONG', media: twerkSauce?.image ? <Image className="tf30-song-cover" src={twerkSauce.image} alt="" width={72} height={72} unoptimized /> : null, content: <SpotifyTrackPicker value={twerkSauce} onChange={setTwerkSauce} storageKey={TWERK_SAUCE_STORAGE_KEY} label="TWERK SAUCE" /> },
     { id: 'war-cry', title: 'WAR CRY', summary: dailyQuote?.text || 'TODAY’S VERIFIED QUOTE', content: panelById['war-cry'] },
     { id: 'chase', title: 'THE CHASE', summary: `${state.cardio.type || 'CARDIO PENDING'}\n${weeklyDaysTrained} DAYS · ${weeklyTotalHours} HOURS`, content: <>{panelById.chase}{panelById['weekly-battle-tally']}</> },
     { id: 'body-receipts', title: 'BODY RECEIPTS', summary: `WEIGHT ${state.body.weight.today || '—'}\nBODY FAT ${state.body.bodyFat.today || '—'}`, content: panelById['body-receipts'] },
-    { id: 'iron-ledger', title: 'IRON.LEDGER', summary: firstExercise ? `${firstExercise.exercise}\n${firstExercise.sets || '—'} SETS · ${firstExercise.reps || '—'} REPS · ${firstExercise.weight || '—'}` : 'OPEN TO LOG TODAY’S WORKOUT', content: <>{panelById['iron-ledger']}{panelById['da-vault']}</> },
+    { id: 'iron-ledger', title: 'IRON.LEDGER', alwaysOpen: true, summary: firstExercise ? `${firstExercise.exercise}\n${firstExercise.sets || '—'} SETS · ${firstExercise.reps || '—'} REPS · ${firstExercise.weight || '—'}` : 'OPEN TO LOG TODAY’S WORKOUT', content: <>{panelById['iron-ledger']}{panelById['da-vault']}</> },
     { id: 'upup-juice', title: 'UPUP JUICE', summary: `${caffeineTotal} MG THIS WEEK\n${caffeineAvg} MG DAILY AVERAGE`, content: panelById['caffeine-tally'] },
     { id: 'trophy-wall', title: 'TROPHY WALL', summary: `${photoSlots.filter((slot) => state.photo[slot.key]).length} OF ${photoSlots.length} RECEIPTS SEALED`, content: panelById['proof-wall'] },
     { id: 'sleep-watch', title: 'SLEEP WATCH', summary: `${todaySleep.sleep_total || 'NO SLEEP TOTAL'}\n${todaySleep.sleep_quality || 'QUALITY PENDING'}`, content: panelById['sleep-watch'] },
