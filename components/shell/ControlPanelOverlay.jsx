@@ -15,7 +15,7 @@ const RAIL_ITEMS = [
   { key: 'back', src: '/ui/glyphs/control%20panel/glyph-back-crystallization-v3.png', alt: 'Back', type: 'route' },
   { key: 'its-getting-thicc', src: '/ui/glyphs/control%20panel/glyph-its-getting-thicc-crystallization-v2.png', alt: 'ITS.GETTING.THICC', type: 'route' },
   { key: 'thicc-fitt', src: '/ui/glyphs/control%20panel/glyph-thicc-fitt-crystallization-v2.png', alt: 'THICC.FITT', type: 'route' },
-  { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater-crystallization-v2.png', alt: 'DA.EATER', type: 'route' },
+  { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater-crystallization-v3.png', alt: 'DA.EATER', type: 'route', className: 'tis-da-eater-glyph' },
   { key: 'remember-me', src: '/ui/glyphs/control%20panel/glyph-remember-me-crystallization-v2.png', alt: 'REMEMBER.ME', type: 'route' },
   { key: 'hopewood', src: '/ui/glyphs/control%20panel/glyph-hopewood-crystallization-v2.png', alt: 'HOPEWOOD', type: 'route' },
   { key: '525600', src: '/ui/glyphs/control%20panel/glyph-525600-crystallization-v3.png', alt: '525600', type: 'route' },

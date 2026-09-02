@@ -554,15 +554,21 @@ export default function TheAssurerSection() {
       setPennyQuestions(savedPennyQuestions.length === 2 ? savedPennyQuestions : createDailyPennyQuestions());
 
       const dayWord = savedDay?.wordOfDay && typeof savedDay.wordOfDay === 'object' ? savedDay.wordOfDay : null;
+      let resolvedWord = defaultDailyWord.word;
       if (typeof dayWord?.word === 'string' && !isLegacyMadeUpWord(dayWord.word)) {
-        setWordOfDay(dayWord.word);
+        resolvedWord = dayWord.word;
       } else if (typeof savedWord?.word === 'string' && !isLegacyMadeUpWord(savedWord.word)) {
-        setWordOfDay(savedWord.word);
+        resolvedWord = savedWord.word;
       }
-      if (typeof dayWord?.definition === 'string' && !isLegacyMadeUpWord(dayWord.word)) {
+      setWordOfDay(resolvedWord);
+      if (typeof dayWord?.definition === 'string' && dayWord.definition.trim() && !isLegacyMadeUpWord(dayWord.word)) {
         setWordDefinition(dayWord.definition);
-      } else if (typeof savedWord?.definition === 'string' && !isLegacyMadeUpWord(savedWord.word)) {
+      } else if (typeof savedWord?.definition === 'string' && savedWord.definition.trim() && !isLegacyMadeUpWord(savedWord.word)) {
         setWordDefinition(savedWord.definition);
+      } else if (resolvedWord.trim().toLowerCase() === defaultDailyWord.word.trim().toLowerCase()) {
+        setWordDefinition(defaultDailyWord.definition);
+      } else {
+        setWordDefinition('');
       }
     } catch {
       setPennyQuestions(createDailyPennyQuestions());
@@ -570,7 +576,7 @@ export default function TheAssurerSection() {
     } finally {
       setStorageLoaded(true);
     }
-  }, [storageDate]);
+  }, [defaultDailyWord, storageDate]);
 
   useEffect(() => {
     if (!storageLoaded) {
