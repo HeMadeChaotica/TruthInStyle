@@ -171,5 +171,46 @@ export default function DaEaterSection() {
     { id: 'da-reup', title: 'DA.REUP', summary: `${reupRows.filter((row) => row.amount || row.status || row.mealName).length} OF 10 ROWS`, content: reupContent },
   ];
 
-  return <SectionShell className="da-eater-shell"><ScenePlate><div className="da-eater-bg" /></ScenePlate><FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER orchard stations" /></SectionShell>;
+  return (
+    <SectionShell className="da-eater-shell">
+      <ScenePlate>
+        <div className="da-eater-bg" />
+        <svg className="da-eater-orchard-swirls" viewBox="0 0 1280 720" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="da-eater-swirl-gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#b98a4f" stopOpacity="0" />
+              <stop offset=".26" stopColor="#f2d69e" stopOpacity=".86" />
+              <stop offset=".72" stopColor="#c99754" stopOpacity=".76" />
+              <stop offset="1" stopColor="#f7dfac" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="da-eater-swirl-nude" x1="1" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#d78e93" stopOpacity="0" />
+              <stop offset=".28" stopColor="#efb3ad" stopOpacity=".78" />
+              <stop offset=".75" stopColor="#c98283" stopOpacity=".7" />
+              <stop offset="1" stopColor="#efb3ad" stopOpacity="0" />
+            </linearGradient>
+            <filter id="da-eater-swirl-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="2.4" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
+          <g className="da-eater-swirl da-eater-swirl--upper" filter="url(#da-eater-swirl-glow)">
+            <path d="M826 86 C902 34 984 92 932 142 C899 174 843 138 865 106 C884 78 927 96 918 121" />
+            <path d="M856 151 C906 183 987 157 1014 111 C1033 79 1024 53 1001 40" />
+          </g>
+          <g className="da-eater-swirl da-eater-swirl--right" filter="url(#da-eater-swirl-glow)">
+            <path d="M930 300 C1000 259 1128 275 1147 325 C1161 363 1104 384 1077 350 C1056 324 1092 301 1117 318" />
+            <path d="M953 462 C1019 425 1124 440 1162 490 C1198 537 1150 579 1103 554 C1064 533 1084 488 1120 493" />
+            <path d="M966 487 C925 520 925 560 964 577" />
+          </g>
+          <g className="da-eater-swirl da-eater-swirl--lower" filter="url(#da-eater-swirl-glow)">
+            <path d="M432 588 C505 548 590 578 572 626 C557 665 494 653 500 617 C504 590 542 586 554 609" />
+            <path d="M592 650 C664 694 782 670 792 613 C799 574 761 553 730 573 C703 591 720 626 749 619" />
+            <path d="M790 612 C839 582 898 599 918 637" />
+          </g>
+        </svg>
+      </ScenePlate>
+      <FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER orchard stations" />
+    </SectionShell>
+  );
 }
