@@ -229,7 +229,7 @@
 
 /* Approved scene-first station layout. IN THE BEGINNING and IRON.LEDGER stay
    open as working surfaces; the remaining stations retain their detail views. */
-.tf30-floating-deck .crystal-summary-tile--beginning{left:39%;top:2.5%;width:30%;height:17%;min-height:clamp(165px,17vh,196px);padding:clamp(.55rem,.8vw,.8rem);background:linear-gradient(145deg,rgba(62,38,38,.58),rgba(105,69,67,.46))!important}
+.tf30-floating-deck .crystal-summary-tile--beginning{left:39%;top:2.5%;width:30%;height:clamp(168px,11vh,184px);min-height:0;padding:clamp(.55rem,.8vw,.8rem);background:linear-gradient(145deg,rgba(62,38,38,.58),rgba(105,69,67,.46))!important}
 .tf30-floating-deck .crystal-summary-tile--beginning .crystal-always-open-body{overflow:hidden;padding-right:2px}
 .tf30-floating-deck .crystal-summary-tile--beginning h2{margin:0 0 .35rem;font-size:clamp(.82rem,1.04vw,1.12rem)}
 .tf30-floating-deck .crystal-summary-tile--beginning .tf30-grid-2{grid-template-columns:repeat(3,minmax(0,1fr));gap:.3rem .45rem}
@@ -257,15 +257,15 @@
 .tf30-floating-deck .crystal-summary-tile--body-receipts{left:63%;top:46%;width:20%}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger{left:34%;top:56%;width:38%;height:42%;min-height:0;padding:clamp(.55rem,.8vw,.8rem);align-items:stretch;background:linear-gradient(145deg,rgba(62,38,38,.64),rgba(105,69,67,.52))!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .crystal-always-open-body{overflow:auto;padding-right:.3rem;scrollbar-color:rgba(255,194,216,.72) rgba(44,23,28,.24);scrollbar-width:thin}
-.tf30-floating-deck .crystal-summary-tile--iron-ledger h2{margin:0 0 .4rem;font-size:clamp(.82rem,1vw,1.08rem)}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger h2{margin:0 0 .4rem;padding-left:clamp(1rem,1.3vw,1.4rem);font-size:clamp(.82rem,1vw,1.08rem)}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head,
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-row{grid-template-columns:minmax(0,18px) minmax(86px,1.7fr) repeat(4,minmax(58px,.72fr)) minmax(62px,.82fr);gap:.3rem}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head{margin-bottom:.3rem}
-.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head span{font-size:clamp(.5rem,.56vw,.65rem)!important;color:#ffd1dd!important;-webkit-text-fill-color:#ffd1dd!important}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head span{font-size:clamp(.56rem,.62vw,.72rem)!important;color:#ffd1dd!important;-webkit-text-fill-color:#ffd1dd!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-row{padding:.3rem;margin-bottom:.3rem;border-radius:7px;background:rgba(42,22,27,.38)!important;border-color:rgba(255,196,215,.42)!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-row>span{font-size:clamp(.5rem,.56vw,.65rem)!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger select,
-.tf30-floating-deck .crystal-summary-tile--iron-ledger input{min-height:clamp(26px,3.2vh,34px);padding:.25rem .35rem;border-radius:7px;font-size:clamp(.56rem,.62vw,.72rem);color:#ffe1e8!important;-webkit-text-fill-color:#ffe1e8!important;background:rgba(38,19,25,.5)!important;border-color:rgba(255,196,215,.48)!important}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger input{min-height:clamp(26px,3.2vh,34px);padding:.25rem .35rem;border-radius:7px;font-size:clamp(.62rem,.68vw,.78rem);color:#ffe1e8!important;-webkit-text-fill-color:#ffe1e8!important;background:rgba(38,19,25,.5)!important;border-color:rgba(255,196,215,.48)!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger h2,
 .tf30-floating-deck .crystal-summary-tile--iron-ledger label,
 .tf30-floating-deck .crystal-summary-tile--iron-ledger span{color:#ffd1dd!important;-webkit-text-fill-color:#ffd1dd!important;text-shadow:0 1px 4px rgba(30,10,16,.9)!important}
