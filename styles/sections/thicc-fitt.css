@@ -254,8 +254,8 @@
 .tf30-floating-deck .crystal-summary-tile--war-cry .crystal-summary-copy strong{font-size:clamp(1.05rem,1.35vw,1.5rem)!important}
 .tf30-floating-deck .crystal-summary-tile--war-cry .crystal-summary-copy>span{font-size:clamp(.82rem,.94vw,1.08rem)!important;line-height:1.32!important}
 .tf30-floating-deck .crystal-summary-tile--chase{left:66%;right:auto;top:26%;width:20%}
-.tf30-floating-deck .crystal-summary-tile--body-receipts{left:62%;top:38%;width:20%}
-.tf30-floating-deck .crystal-summary-tile--iron-ledger{left:34%;top:56%;width:42%;height:42%;min-height:0;padding:clamp(.55rem,.8vw,.8rem);align-items:stretch;background:linear-gradient(145deg,rgba(62,38,38,.64),rgba(105,69,67,.52))!important}
+.tf30-floating-deck .crystal-summary-tile--body-receipts{left:74.3%;top:38%;width:20%}
+.tf30-floating-deck .crystal-summary-tile--iron-ledger{left:34%;top:56%;width:42%;height:44%;min-height:0;padding:clamp(.55rem,.8vw,.8rem);align-items:stretch;background:linear-gradient(145deg,rgba(62,38,38,.64),rgba(105,69,67,.52))!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .crystal-always-open-body{overflow:auto;padding-right:.3rem;scrollbar-color:rgba(255,194,216,.72) rgba(44,23,28,.24);scrollbar-width:thin}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger h2{margin:0 0 .4rem;padding-left:clamp(1rem,1.3vw,1.4rem);font-size:clamp(.82rem,1vw,1.08rem)}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger .tf30-table-head,
@@ -270,11 +270,72 @@
 .tf30-floating-deck .crystal-summary-tile--iron-ledger label,
 .tf30-floating-deck .crystal-summary-tile--iron-ledger span{color:#ffd1dd!important;-webkit-text-fill-color:#ffd1dd!important;text-shadow:0 1px 4px rgba(30,10,16,.9)!important}
 .tf30-floating-deck .crystal-summary-tile--iron-ledger>div>h2:nth-of-type(2){margin-top:.75rem}
-.tf30-floating-deck .crystal-summary-tile--upup-juice{right:4.2%;top:58%;width:19%}
-.tf30-floating-deck .crystal-summary-tile--trophy-wall{right:4.2%;top:70%;width:19%}
+.tf30-floating-deck .crystal-summary-tile--upup-juice{right:3.1%;top:54%;width:19%}
+.tf30-floating-deck .crystal-summary-tile--trophy-wall{right:5.2%;top:65%;width:19%}
 .tf30-floating-deck .crystal-summary-tile--sleep-watch{left:70%;top:calc(18% - .5cm);width:20%}
-.tf30-floating-deck .crystal-summary-tile--how-doin{right:4.2%;top:82%;width:23%}
+.tf30-floating-deck .crystal-summary-tile--how-doin{right:4.2%;top:82%;width:19%}
 .tf30-song-cover{width:clamp(56px,4.3vw,76px);height:clamp(56px,4.3vw,76px);flex:0 0 auto;border-radius:8px;object-fit:contain;background:#fff}
 .tf30-floating-deck .crystal-detail-body{font-family:Impact,'Arial Narrow',sans-serif}
 .tf30-floating-deck .crystal-detail-body>.tf30-footer{margin-top:1rem}
 @media(max-width:1100px) and (min-width:901px){.tf30-floating-deck .crystal-summary-tile{transform:scale(.9);transform-origin:center}.tf30-floating-deck .crystal-summary-copy>span{font-size:.64rem!important}}
+
+/* Rose-gold station finish from the approved THICC.FITT layout render. */
+.tf30-floating-deck,
+.tf30-floating-deck button,
+.tf30-floating-deck input,
+.tf30-floating-deck select,
+.tf30-floating-deck textarea{font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif}
+.tf30-floating-deck .crystal-summary-tile{
+  border:2px solid rgba(247,180,158,.82);
+  clip-path:polygon(4% 0,96% 0,100% 18%,100% 82%,96% 100%,4% 100%,0 82%,0 18%);
+  background:
+    linear-gradient(145deg,rgba(72,43,39,.5),rgba(111,75,68,.36)),
+    radial-gradient(circle at 18% 8%,rgba(255,220,205,.16),transparent 44%)!important;
+  box-shadow:
+    inset 0 0 0 2px rgba(255,224,207,.22),
+    inset 0 0 0 4px rgba(157,80,73,.14),
+    0 10px 24px rgba(48,20,22,.25),
+    0 0 16px rgba(235,145,169,.16);
+  backdrop-filter:blur(4px) saturate(112%);
+  -webkit-backdrop-filter:blur(4px) saturate(112%);
+}
+.tf30-floating-deck .crystal-summary-tile::before{
+  padding:2px;
+  background:linear-gradient(115deg,#ffd8c3,#ed9fba,#c7eadf,#d8ca92,#f2b3c8,#ffd8c3);
+  background-size:240% 100%;
+}
+.tf30-floating-deck .crystal-summary-copy strong{
+  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
+  font-weight:700!important;
+  letter-spacing:.045em;
+}
+.tf30-floating-deck .crystal-summary-copy>span{
+  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
+  font-weight:600!important;
+  letter-spacing:.025em;
+}
+.tf30-floating-deck .crystal-summary-expand{
+  width:clamp(32px,2.55vw,44px);
+  border-color:rgba(255,207,191,.88);
+  background:
+    linear-gradient(45deg,transparent 47%,rgba(255,238,229,.75) 48% 51%,transparent 52%),
+    linear-gradient(-45deg,transparent 47%,rgba(255,238,229,.58) 48% 51%,transparent 52%),
+    conic-gradient(from 45deg,#f4b6c6,#bd748c,#f8d4c8,#d48ca3,#f4b6c6);
+  box-shadow:inset 0 0 0 2px rgba(255,232,222,.46),0 0 12px rgba(242,166,184,.42);
+}
+.tf30-floating-deck .tf30-vault-inline{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.3rem .55rem;
+  margin-top:.45rem;
+  padding:.45rem .15rem 0;
+  border-top:1px solid rgba(247,180,158,.48);
+}
+.tf30-floating-deck .tf30-vault-inline h2{
+  grid-column:1/-1;
+  margin:0;
+  padding-left:0;
+}
+.tf30-floating-deck .tf30-vault-inline label{display:grid;gap:.18rem}
+.tf30-floating-deck .tf30-vault-inline select{min-height:clamp(26px,3.2vh,34px);padding:.25rem .4rem}
+@media(max-width:900px){.tf30-floating-deck .tf30-vault-inline{grid-template-columns:1fr}}
