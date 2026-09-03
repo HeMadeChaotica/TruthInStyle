@@ -2,7 +2,8 @@
   --app-text-primary: #F4B2BD;
   --app-text-strong: #F8C5CC;
   --app-text-deep: #9C5668;
-  --app-font-ui: 'Avenir Next Condensed', 'Avenir Next', 'Helvetica Neue', Arial, sans-serif;
+  --app-font-marker: 'Marker Felt Thin', 'Marker Felt', 'Same Same But Different', 'Bradley Hand', cursive;
+  --app-font-ui: var(--app-font-marker);
   --signature-pink: var(--app-text-primary);
   --tis-signature-pink: var(--app-text-primary);
   --assurer-text: var(--app-text-primary);
@@ -39,7 +40,7 @@ option,
 ::placeholder,
 * {
   font-family: var(--app-font-ui) !important;
-  font-weight: 600;
+  font-weight: 500 !important;
   color: var(--app-text-primary) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.045em;

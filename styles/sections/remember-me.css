@@ -170,7 +170,7 @@
   color:var(--remember-readable-ink)!important;
   -webkit-text-fill-color:var(--remember-readable-ink)!important;
   font-size:clamp(1.35rem,1.35vw,1.78rem)!important;
-  font-weight:900!important;
+  font-weight:500!important;
   text-shadow:0 2px 5px rgba(20,6,11,.92)!important;
 }
 .remember-page .remember-month-row button{
@@ -178,14 +178,14 @@
   -webkit-text-fill-color:var(--remember-readable-ink)!important;
   background:rgba(31,20,25,.82)!important;
   border-color:var(--remember-day-line)!important;
-  font-weight:900!important;
+  font-weight:500!important;
   text-shadow:0 2px 4px rgba(15,4,8,.94)!important;
 }
 .remember-page .remember-weekdays span{
   color:var(--remember-readable-ink)!important;
   -webkit-text-fill-color:var(--remember-readable-ink)!important;
   font-size:clamp(.78rem,.76vw,1rem)!important;
-  font-weight:900!important;
+  font-weight:500!important;
   letter-spacing:.055em;
   text-shadow:0 2px 4px rgba(15,4,8,.96)!important;
 }
@@ -200,7 +200,7 @@
   color:var(--remember-readable-ink)!important;
   -webkit-text-fill-color:var(--remember-readable-ink)!important;
   font-size:clamp(.94rem,.88vw,1.18rem)!important;
-  font-weight:900!important;
+  font-weight:500!important;
   text-shadow:0 2px 4px rgba(15,4,8,.96)!important;
 }
 .remember-page .remember-main .remember-chip{
@@ -209,7 +209,7 @@
   background:var(--remember-chip-fallback)!important;
   border-color:rgba(255,235,230,.64)!important;
   font-size:clamp(.62rem,.58vw,.78rem)!important;
-  font-weight:900!important;
+  font-weight:500!important;
   line-height:1.15!important;
   padding:4px 6px!important;
   text-shadow:0 1px 3px rgba(18,3,9,.98)!important;
@@ -231,6 +231,74 @@
 .remember-page .remember-moment-back p{
   color:var(--remember-readable-ink)!important;
   -webkit-text-fill-color:var(--remember-readable-ink)!important;
-  font-weight:900!important;
+  font-weight:500!important;
   text-shadow:0 2px 4px rgba(15,4,8,.96)!important;
+}
+
+/* REMEMBER.ME is a working calendar: thin marker typography and compact,
+   time-first appointment rows take priority over decorative pill styling. */
+.remember-page,
+.remember-page *{
+  font-family:var(--app-font-marker)!important;
+  font-weight:500!important;
+}
+.remember-page .remember-month-row strong{
+  font-size:clamp(1.18rem,1.2vw,1.55rem)!important;
+  font-weight:500!important;
+  letter-spacing:.065em!important;
+}
+.remember-page .remember-weekdays span,
+.remember-page .remember-day-num{
+  font-weight:500!important;
+  letter-spacing:.055em!important;
+}
+.remember-day{
+  gap:3px!important;
+  padding:clamp(4px,.34vw,6px)!important;
+}
+.remember-day-chips{
+  display:grid!important;
+  grid-auto-rows:min-content;
+  align-content:start!important;
+  gap:3px!important;
+  width:100%;
+  max-height:none!important;
+  min-height:0;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(255,226,232,.62) rgba(24,10,15,.18);
+}
+.remember-page .remember-main .remember-chip{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr);
+  align-items:start;
+  gap:1px;
+  width:100%;
+  max-width:100%;
+  min-height:0!important;
+  padding:3px 5px!important;
+  border-radius:5px!important;
+  font-size:clamp(.55rem,.5vw,.7rem)!important;
+  font-weight:500!important;
+  line-height:1.12!important;
+  letter-spacing:.025em!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.remember-chip-time{
+  color:#fff9f7!important;
+  -webkit-text-fill-color:#fff9f7!important;
+  white-space:nowrap;
+  font-size:.9em!important;
+  letter-spacing:.04em!important;
+}
+.remember-chip-label{
+  min-width:0;
+  color:#fff9f7!important;
+  -webkit-text-fill-color:#fff9f7!important;
+  overflow-wrap:anywhere;
+  text-align:left;
+  line-height:1.08!important;
 }

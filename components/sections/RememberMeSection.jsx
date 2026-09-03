@@ -58,6 +58,23 @@ const formatDisplayDate = (value) => {
   return year && month && day ? `${month}/${day}/${year}` : '';
 };
 
+const formatCalendarTime = (value) => {
+  const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return 'ALL DAY';
+  const hours = Number(match[1]);
+  const minutes = match[2];
+  if (!Number.isInteger(hours) || hours > 23) return 'ALL DAY';
+  const period = hours >= 12 ? 'PM' : 'AM';
+  return `${hours % 12 || 12}:${minutes} ${period}`;
+};
+
+const calendarEntryLabel = (entry) => {
+  if (entry?._source === 'personal-workout') return entry.workout_label || entry.detail || 'WORKOUT';
+  return entry?.type || entry?.entry_type || entry?.detail || 'APPOINTMENT';
+};
+
+const calendarEntrySortValue = (entry) => String(entry?.time || entry?.start_time || '').trim() || '99:99';
+
 const getMomentType = (moment) => String(moment?.type || moment?.standoutType || '').trim().toUpperCase();
 const getMomentStamp = (moment) => {
   const stamp = Date.parse(moment?.updated_at || moment?.updatedAt || moment?.created_at || moment?.createdAt || moment?.stampedAt || '');
@@ -116,10 +133,13 @@ function RecurrenceControl({ draft, setDraft, selectedDateKey }) {
 const colorForEntry = (entry) => {
   if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ad1f68,#68143f)';
   const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
-  if (type === 'PAYDAY') return 'linear-gradient(135deg,#8a5d10,#4f3308)';
-  if (type.includes('WORK') || type.includes('JOB') || type === 'MEETING') return 'linear-gradient(135deg,#884a2c,#4b281c)';
-  if (type.includes('BIRTHDAY') || type.includes('ANNIVERSARY') || type === 'DATE') return 'linear-gradient(135deg,#a83b6f,#682040)';
-  if (type.includes('TRAVEL')) return 'linear-gradient(135deg,#776415,#4c3e0d)';
+  if (type === 'PAYDAY' || type === 'RENT') return 'linear-gradient(135deg,#8a5d10,#4f3308)';
+  if (type.includes('WORK') || type.includes('JOB') || type === 'MEETING' || type === 'DEADLINE') return 'linear-gradient(135deg,#884a2c,#4b281c)';
+  if (type.includes('BIRTHDAY') || type.includes('ANNIVERSARY') || type === 'TREAT DAY' || type === 'HAIRCUT') return 'linear-gradient(135deg,#a83b6f,#682040)';
+  if (type === 'DATE' || type.includes('DICK APPOINTMENT') || type.includes('SOCIAL')) return 'linear-gradient(135deg,#91406f,#542344)';
+  if (type === 'HEALTH') return 'linear-gradient(135deg,#416c5a,#244339)';
+  if (type.includes('TRAVEL') || type.includes('PACKAGE')) return 'linear-gradient(135deg,#776415,#4c3e0d)';
+  if (type === 'CALL' || type === 'REMINDER') return 'linear-gradient(135deg,#53608c,#303957)';
   return 'linear-gradient(135deg,#9a3d63,#5a233d)';
 };
 
@@ -180,7 +200,10 @@ export default function RememberMeSection() {
       dateKeys.forEach((dateKey) => {
         const events = (groupedRemember[dateKey] || []).map((row) => ({ ...row, _source: 'remember' }));
         const workouts = (groupedWorkouts[dateKey] || []).map((row) => ({ ...row, type: 'PERSONAL WORKOUT', time: row.start_time, detail: row.workout_label, _source: 'personal-workout' }));
-        merged[dateKey] = [...events, ...workouts].sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+        merged[dateKey] = [...events, ...workouts].sort((a, b) => {
+          const byTime = calendarEntrySortValue(a).localeCompare(calendarEntrySortValue(b));
+          return byTime || calendarEntryLabel(a).localeCompare(calendarEntryLabel(b));
+        });
       });
       setRememberRows(nextRememberRows);
       setWorkoutRows(nextWorkoutRows);
@@ -372,12 +395,11 @@ export default function RememberMeSection() {
               }}
               onSelectDate={openNew}
               onEntryClick={editCalendarEntry}
-              getEntryLabel={(entry) => entry._source === 'personal-workout'
-                ? `WORKOUT${entry.time ? ` • ${entry.time}` : ''}`
-                : `${entry.type || entry.entry_type}${entry.time ? ` • ${entry.time}` : ''}`}
+              getEntryLabel={(entry) => `${formatCalendarTime(entry.time || entry.start_time)} — ${calendarEntryLabel(entry)}`}
+              renderEntry={(entry) => <><span className="remember-chip-time">{formatCalendarTime(entry.time || entry.start_time)}</span><span className="remember-chip-label">{calendarEntryLabel(entry)}</span></>}
               getEntryColor={colorForEntry}
               getEntryTextColor={() => '#fff7f0'}
-              maxEntriesPerDay={3}
+              maxEntriesPerDay={24}
             />
           </section>
           <section className="remember-standout-postcards" aria-label="REMEMBER.ME moment flip cards">
@@ -406,7 +428,7 @@ export default function RememberMeSection() {
               {editorMode === 'EVENT' ? (
                 <>
                   <label>EVENT TYPE<select value={entryDraft.type} onChange={(event) => setEntryDraft((draft) => ({ ...draft, type: event.target.value }))}>{eventTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
-                  <label>TIME<input type="time" value={entryDraft.time || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, time: event.target.value }))} /></label>
+                  <label>TIME<input type="time" value={entryDraft.time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} /></label>
                   <label>LOCATION<input value={entryDraft.detail || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, detail: event.target.value }))} /></label>
                   <label>DESCRIPTION<textarea value={entryDraft.description || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
                   <RecurrenceControl draft={entryDraft} setDraft={setEntryDraft} selectedDateKey={selectedDateKey} />
@@ -416,7 +438,7 @@ export default function RememberMeSection() {
               {editorMode === 'WORKOUT' ? (
                 <>
                   <label>WORKOUT / SESSION<input value={workoutDraft.workout_label || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, workout_label: event.target.value }))} /></label>
-                  <div className="remember-time-pair"><label>START<input type="time" value={workoutDraft.start_time || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, start_time: event.target.value }))} /></label><label>END<input type="time" value={workoutDraft.end_time || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, end_time: event.target.value }))} /></label></div>
+                  <div className="remember-time-pair"><label>START<input type="time" value={workoutDraft.start_time || ''} onInput={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, start_time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, start_time: value })); }} /></label><label>END<input type="time" value={workoutDraft.end_time || ''} onInput={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, end_time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, end_time: value })); }} /></label></div>
                   <label>LOCATION<input value={workoutDraft.location || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, location: event.target.value }))} /></label>
                   <label>NOTES<textarea value={workoutDraft.notes || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, notes: event.target.value }))} /></label>
                   <RecurrenceControl draft={workoutDraft} setDraft={setWorkoutDraft} selectedDateKey={selectedDateKey} />
@@ -427,7 +449,7 @@ export default function RememberMeSection() {
                 <>
                   <div className="remember-existing-items">{currentMoments.map((moment) => <button key={moment.id} type="button" className={momentDraft.id === moment.id ? 'active' : ''} onClick={() => setMomentDraft({ ...EMPTY_MOMENT, ...moment, type: moment.type || moment.standoutType, mediaRef: moment.mediaRef || '', persistedMediaRef: moment.persistedMediaRef || moment.photoRef || '' })}>{moment.type || moment.standoutType}</button>)}</div>
                   <label>WOW / WTF / PLOT TWIST<select value={momentDraft.type} onChange={(event) => setMomentDraft((draft) => ({ ...draft, type: event.target.value }))}>{standoutTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
-                  <label>TIME<input type="time" value={momentDraft.time || ''} onChange={(event) => setMomentDraft((draft) => ({ ...draft, time: event.target.value }))} /></label>
+                  <label>TIME<input type="time" value={momentDraft.time || ''} onInput={(event) => { const { value } = event.currentTarget; setMomentDraft((draft) => ({ ...draft, time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setMomentDraft((draft) => ({ ...draft, time: value })); }} /></label>
                   <label>LOCATION<input value={momentDraft.detail || ''} onChange={(event) => setMomentDraft((draft) => ({ ...draft, detail: event.target.value }))} /></label>
                   <label>DESCRIPTION<textarea value={momentDraft.description || ''} onChange={(event) => setMomentDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
                   <label>PHOTO / IMAGE<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={uploadMomentImage} /></label>

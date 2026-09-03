@@ -77,6 +77,7 @@ export default function ChaoticaMonthCalendar({
   getEntryLabel = (entry) => entry?.detail || entry?.title || entry?.type || 'ENTRY',
   getEntryColor = () => '',
   getEntryTextColor = () => '',
+  renderEntry,
   onEntryClick,
   maxEntriesPerDay = 3,
   classNames = {},
@@ -124,13 +125,15 @@ export default function ChaoticaMonthCalendar({
                     key={entry.id || `${cell.dateKey}-entry-${index}-${entryIndex}`}
                     className={classNames.entryChip || 'remember-chip remember-chip-entry'}
                     style={{ '--remember-entry-color': getEntryColor(entry), '--remember-entry-text': getEntryTextColor(entry) }}
+                    aria-label={getEntryLabel(entry)}
+                    title={getEntryLabel(entry)}
                     onClick={(event) => {
                       if (!onEntryClick) return;
                       event.stopPropagation();
                       onEntryClick(entry, cell.dateKey);
                     }}
                   >
-                    {getEntryLabel(entry)}
+                    {renderEntry ? renderEntry(entry) : getEntryLabel(entry)}
                   </span>
                 ))}
                 {entries.length > maxEntriesPerDay ? <span className={classNames.moreChip || 'remember-chip'}>+{entries.length - maxEntriesPerDay} MORE</span> : null}

@@ -155,7 +155,7 @@
 .da-eater-floating-deck .crystal-summary-tile--da-reup{left:40%;top:66%;width:24%;min-height:96px}
 .da-eater-summary-macros{display:grid;gap:.45rem;width:100%}
 .da-eater-summary-macros>div{display:grid;grid-template-columns:minmax(110px,.85fr) minmax(120px,1.5fr);gap:.55rem;align-items:center}
-.da-eater-summary-macros span{font-size:clamp(.62rem,.72vw,.88rem)!important;font-weight:800!important;color:#8b4d61!important;-webkit-text-fill-color:#8b4d61!important;white-space:nowrap;text-shadow:none!important}
+.da-eater-summary-macros span{font-size:clamp(.62rem,.72vw,.88rem)!important;font-weight:500!important;color:#8b4d61!important;-webkit-text-fill-color:#8b4d61!important;white-space:nowrap;text-shadow:none!important}
 .da-eater-summary-macros i{display:block;height:10px;border:1px solid rgba(143,77,97,.42);border-radius:999px;background:rgba(255,248,244,.62);overflow:hidden}
 .da-eater-summary-macros b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#db93aa,#efb6c4);box-shadow:0 0 10px rgba(226,142,174,.45)}
 .da-eater-summary-photo{width:clamp(76px,6vw,112px);aspect-ratio:1;flex:0 0 auto;border:1px solid rgba(153,80,102,.42);border-radius:10px;background-position:center;background-size:cover;background-repeat:no-repeat}
@@ -172,12 +172,12 @@
 }
 .da-eater-floating-deck .crystal-summary-tile::before{border-radius:inherit}
 .da-eater-floating-deck .crystal-summary-copy strong{
-  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
-  font-weight:600!important;
+  font-family:var(--app-font-marker)!important;
+  font-weight:500!important;
   letter-spacing:.055em;
 }
 .da-eater-floating-deck .crystal-summary-copy>span{
-  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
+  font-family:var(--app-font-marker)!important;
   font-weight:600;
   letter-spacing:.045em;
 }
@@ -205,7 +205,7 @@
   margin:0;
   color:#ffd1dd!important;
   -webkit-text-fill-color:#ffd1dd!important;
-  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
+  font-family:var(--app-font-marker)!important;
   font-size:clamp(.78rem,.92vw,1rem);
   font-weight:600;
   letter-spacing:.055em;
@@ -340,13 +340,13 @@
   color:#ffc0be!important;
   -webkit-text-fill-color:#ffc0be!important;
   font-size:.58rem!important;
-  font-weight:700!important;
+  font-weight:500!important;
 }
 .da-eater-summary-macros strong{
   color:#f6b0b7!important;
   -webkit-text-fill-color:#f6b0b7!important;
   font-size:clamp(.62rem,.75vw,.84rem)!important;
-  font-weight:650!important;
+  font-weight:500!important;
   letter-spacing:.05em;
   text-shadow:0 1px 3px rgba(33,12,14,.85)!important;
 }

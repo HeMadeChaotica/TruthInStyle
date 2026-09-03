@@ -94,7 +94,7 @@ body:has(.chaotica-opening) { background: #10070b; }
 .chaotica-auth-plaque h2,
 .chaotica-oath h1 {
   margin: 0;
-  font-family: Cinzel, 'Cinzel Decorative', Georgia, serif !important;
+  font-family: var(--app-font-marker) !important;
   color: #f7d99f !important;
   letter-spacing: 0;
   text-shadow: 0 0 14px rgba(174, 28, 72, .85);
@@ -105,7 +105,7 @@ body:has(.chaotica-opening) { background: #10070b; }
 .chaotica-auth-plaque span,
 .chaotica-oath p,
 .chaotica-oath span {
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-family: var(--app-font-marker) !important;
   color: #f6d79b !important;
   letter-spacing: 0;
 }
@@ -172,7 +172,7 @@ body:has(.chaotica-opening) { background: #10070b; }
   min-height: 48px;
   padding: 10px 22px;
   border-radius: 999px;
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
+  font-family: var(--app-font-marker) !important;
   font-size: clamp(.9rem, 1.2vw, 1.08rem);
   font-weight: 700;
   letter-spacing: .08em;

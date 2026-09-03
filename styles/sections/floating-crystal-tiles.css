@@ -6,7 +6,7 @@
 .crystal-always-open-body{position:relative;z-index:1;width:100%;height:100%;min-height:0;overflow:auto}
 .crystal-summary-copy{display:grid;gap:.35rem;min-width:0}
 .crystal-summary-copy strong{color:#915369!important;-webkit-text-fill-color:#915369!important;font-size:clamp(.9rem,1.12vw,1.35rem)!important;font-weight:800;letter-spacing:.06em;line-height:1!important;text-shadow:none!important}
-.crystal-summary-copy>span{color:#915369!important;-webkit-text-fill-color:#915369!important;font-size:clamp(.68rem,.72vw,.9rem)!important;font-weight:650;letter-spacing:.04em;line-height:1.25!important;text-shadow:none!important;white-space:pre-line}
+.crystal-summary-copy>span{color:#915369!important;-webkit-text-fill-color:#915369!important;font-size:clamp(.68rem,.72vw,.9rem)!important;font-weight:500;letter-spacing:.04em;line-height:1.25!important;text-shadow:none!important;white-space:pre-line}
 .crystal-summary-expand{flex:0 0 auto;display:grid;place-items:center;width:clamp(34px,2.8vw,50px);aspect-ratio:1;transform:rotate(45deg);border:1px solid rgba(166,83,109,.5);background:linear-gradient(145deg,rgba(255,232,239,.98),rgba(218,156,180,.84));color:#88475f!important;-webkit-text-fill-color:#88475f!important;font-size:clamp(1rem,1.35vw,1.5rem)!important;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55),0 0 14px rgba(241,164,196,.5);text-shadow:none!important}
 .crystal-summary-expand::first-letter{transform:rotate(-45deg)}
 .crystal-detail-backdrop{position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:clamp(70px,8vh,110px) clamp(70px,7vw,120px) clamp(24px,4vh,50px) clamp(24px,4vw,70px);background:rgba(57,27,34,.2);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);pointer-events:auto}

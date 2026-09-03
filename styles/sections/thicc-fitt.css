@@ -305,13 +305,13 @@
   background-size:240% 100%;
 }
 .tf30-floating-deck .crystal-summary-copy strong{
-  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
-  font-weight:700!important;
+  font-family:var(--app-font-marker)!important;
+  font-weight:500!important;
   letter-spacing:.045em;
 }
 .tf30-floating-deck .crystal-summary-copy>span{
-  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
-  font-weight:600!important;
+  font-family:var(--app-font-marker)!important;
+  font-weight:500!important;
   letter-spacing:.025em;
 }
 .tf30-floating-deck .crystal-summary-expand{
