@@ -123,7 +123,7 @@ export default function ChaoticaMonthCalendar({
                   <span
                     key={entry.id || `${cell.dateKey}-entry-${index}-${entryIndex}`}
                     className={classNames.entryChip || 'remember-chip remember-chip-entry'}
-                    style={{ background: getEntryColor(entry), color: getEntryTextColor(entry) }}
+                    style={{ '--remember-entry-color': getEntryColor(entry), '--remember-entry-text': getEntryTextColor(entry) }}
                     onClick={(event) => {
                       if (!onEntryClick) return;
                       event.stopPropagation();

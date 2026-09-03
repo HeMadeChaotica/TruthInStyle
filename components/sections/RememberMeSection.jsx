@@ -114,13 +114,13 @@ function RecurrenceControl({ draft, setDraft, selectedDateKey }) {
 }
 
 const colorForEntry = (entry) => {
-  if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ff4fa8,#a6246d)';
+  if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ad1f68,#68143f)';
   const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
-  if (type === 'PAYDAY') return 'linear-gradient(135deg,#f6d36a,#ad7428)';
-  if (type.includes('WORK') || type.includes('JOB') || type === 'MEETING') return 'linear-gradient(135deg,#d99866,#7e472c)';
-  if (type.includes('BIRTHDAY') || type.includes('ANNIVERSARY') || type === 'DATE') return 'linear-gradient(135deg,#ff9fc9,#b43779)';
-  if (type.includes('TRAVEL')) return 'linear-gradient(135deg,#e7d65a,#9b792b)';
-  return 'linear-gradient(135deg,#e68caf,#8f3f62)';
+  if (type === 'PAYDAY') return 'linear-gradient(135deg,#8a5d10,#4f3308)';
+  if (type.includes('WORK') || type.includes('JOB') || type === 'MEETING') return 'linear-gradient(135deg,#884a2c,#4b281c)';
+  if (type.includes('BIRTHDAY') || type.includes('ANNIVERSARY') || type === 'DATE') return 'linear-gradient(135deg,#a83b6f,#682040)';
+  if (type.includes('TRAVEL')) return 'linear-gradient(135deg,#776415,#4c3e0d)';
+  return 'linear-gradient(135deg,#9a3d63,#5a233d)';
 };
 
 export default function RememberMeSection() {
