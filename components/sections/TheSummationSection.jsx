@@ -295,7 +295,7 @@ function VisualizationPage({
     return (
       <div className="summation-page-empty summation-right-page" role="status">
         <p>No visualization requested.</p>
-        <span>No Day Capsule payload has been prepared, so no generated visualization exists yet.</span>
+        <span>Choose the day with the Eye of Truth, then use the Crystal Wand.</span>
       </div>
     );
   }
@@ -306,48 +306,51 @@ function VisualizationPage({
   return (
     <article className="summation-day-page summation-right-page" aria-label="Generated Day Visualization">
       {canShowArtifact ? (
-        <>
-          <figure className="summation-artifact-frame">
-            <div className="summation-artifact-canvas">
-              <img className="summation-render-artifact" src={previewUrl} alt="Generated Day Capsule visualization" />
-              <header className="summation-artifact-identity" aria-label="Day identity">
-                <strong>{dayIdentity?.titleOfDay || 'THE.SUMMATION'}</strong>
-                <span>
-                  {[dayIdentity?.displayDate, dayIdentity?.dayOfWeek].filter(Boolean).join(' · ')}
-                  {dayIdentity?.chaoticaDayNumber !== null && dayIdentity?.chaoticaDayNumber !== undefined
-                    ? ` · CHAOTICA DAY #${dayIdentity.chaoticaDayNumber}`
-                    : ''}
-                </span>
-              </header>
-            </div>
-            <figcaption className="summation-visually-hidden">{renderRecord?.renderArtifact?.storagePath || renderRecord?.artifactPath || 'External Day Capsule artifact'}</figcaption>
-          </figure>
-        </>
+        <figure className="summation-artifact-frame">
+          <div
+            className="summation-render-artifact"
+            role="img"
+            aria-label="Generated Day Capsule visualization"
+            style={{ backgroundImage: `url(${previewUrl})` }}
+          />
+          <figcaption className="summation-artifact-identity">
+            <strong>{dayIdentity?.titleOfDay || 'THE.SUMMATION'}</strong>
+            <span>
+              {[dayIdentity?.displayDate, dayIdentity?.dayOfWeek].filter(Boolean).join(' · ')}
+              {dayIdentity?.chaoticaDayNumber !== null && dayIdentity?.chaoticaDayNumber !== undefined
+                ? ` · CHAOTICA DAY #${dayIdentity.chaoticaDayNumber}`
+                : ''}
+            </span>
+          </figcaption>
+        </figure>
       ) : (
         <div className="summation-visual-status" role="status">
           <span className="summation-status-eyebrow">{copy.eyebrow}</span>
           <h2>{copy.title}</h2>
           <p>{copy.message}</p>
-          {detailChips.length ? (
-            <dl className="summation-status-chips">
-              {detailChips.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-            </dl>
-          ) : null}
-          {renderRecord?.providerPrompt ? (
-            <div className="summation-hybrid-actions" aria-label="Manual visualization fallback">
-              <button type="button" onClick={onOpenChatGPT}>Copy Prompt + Open ChatGPT</button>
-              <label className={isUploading ? 'is-uploading' : ''}>
-                <span>{isUploading ? 'Placing Visualization…' : 'Upload Finished Visualization'}</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  disabled={isUploading}
-                  onChange={onUploadImage}
-                />
-              </label>
-              <small>{hybridMessage || 'Generate the copied prompt in ChatGPT, download the image, then upload it here.'}</small>
-            </div>
-          ) : null}
+          {(detailChips.length || renderRecord?.providerPrompt) ? <details className="summation-diagnostics">
+            <summary>Render details</summary>
+            {detailChips.length ? (
+              <dl className="summation-status-chips">
+                {detailChips.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+              </dl>
+            ) : null}
+            {renderRecord?.providerPrompt ? (
+              <div className="summation-hybrid-actions" aria-label="Manual visualization fallback">
+                <button type="button" onClick={onOpenChatGPT}>Copy Prompt + Open ChatGPT</button>
+                <label className={isUploading ? 'is-uploading' : ''}>
+                  <span>{isUploading ? 'Placing Visualization…' : 'Upload Finished Visualization'}</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled={isUploading}
+                    onChange={onUploadImage}
+                  />
+                </label>
+                <small>{hybridMessage || 'Use only if the connected renderer cannot complete the day.'}</small>
+              </div>
+            ) : null}
+          </details> : null}
         </div>
       )}
     </article>
@@ -489,7 +492,6 @@ export default function TheSummationSection() {
       data-render-button-reason={renderButtonReason}
     >
       <section className="summation-stage" aria-label="THE.SUMMATION landscape Day Sketch">
-        <div className="summation-stage-aura" aria-hidden="true" />
         <VisualizationPage
           payload={payload}
           renderRecord={renderRecord}

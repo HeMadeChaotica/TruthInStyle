@@ -16,7 +16,7 @@ import {
 } from '../../src/services/dayCapsuleAnalytics';
 import '../../styles/sections/hopewood.css';
 
-const BACKGROUND_URL = '/backgrounds/HOPEWOOD/hopewood-archive-hall-approved-v6.png';
+const BACKGROUND_URL = '/backgrounds/HOPEWOOD/hopewood-archive-chamber-approved-v7.png';
 const LOOKUP_MODES = [
   ['date', 'DATE'],
   ['phrase', 'WORDS'],
@@ -44,7 +44,6 @@ export default function HopewoodSection() {
   const [selectedDate, setSelectedDate] = useState('');
   const [lookupMode, setLookupMode] = useState('date');
   const [lookupValue, setLookupValue] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const applyArchive = (archive = []) => {
@@ -96,13 +95,12 @@ export default function HopewoodSection() {
               <figcaption><strong>{day?.title || 'UNTITLED DAY'}</strong><span>{[day?.displayDate, day?.dayOfWeek].filter(Boolean).join(' · ')}</span></figcaption>
             </figure>
           ) : (
-            <div className="hopewood-render-empty"><span>HOPEWOOD ARCHIVE</span><strong>{day?.title || 'NO SEALED DAY SELECTED'}</strong><p>{day ? 'This sealed day has no completed landscape visualization yet.' : 'Open the crystal drawer to find a sealed day.'}</p></div>
+            <div className="hopewood-render-empty"><span>HOPEWOOD ARCHIVE</span><strong>{day?.title || 'NO SEALED DAY SELECTED'}</strong><p>{day ? 'This sealed day has no completed landscape visualization yet.' : 'Seal a completed day in THE.SUMMATION to begin the archive.'}</p></div>
           )}
         </section>
 
-        <aside className={`hopewood-lookup ${drawerOpen ? 'is-open' : 'is-collapsed'}`} aria-label="Find a Day Capsule">
-          <button className="hopewood-drawer-crystal" type="button" onClick={() => setDrawerOpen((current) => !current)} aria-expanded={drawerOpen} aria-label={drawerOpen ? 'Collapse Hopewood archive search' : 'Open Hopewood archive search'}>✦</button>
-          {drawerOpen ? <div className="hopewood-drawer-content">
+        <aside className="hopewood-lookup" aria-label="Find a Day Capsule">
+          <div className="hopewood-drawer-content">
             <div className="hopewood-search-row">
               <label><span className="sr-only">SEARCH HOPEWOOD</span>{lookupMode === 'phrase'
                 ? <input type="search" value={lookupValue} onChange={(event) => setLookupValue(event.target.value)} placeholder="SEARCH HOPEWOOD" aria-label="Search Hopewood words" />
@@ -110,14 +108,14 @@ export default function HopewoodSection() {
               <div className="hopewood-mode-tabs">{LOOKUP_MODES.map(([value, label]) => <button type="button" key={value} className={lookupMode === value ? 'active' : ''} onClick={() => chooseMode(value)}>{label}</button>)}</div>
             </div>
             <div className="hopewood-results" aria-live="polite">
-            {matches.length ? matches.slice(0, 12).map((record) => {
+            {matches.length ? matches.map((record) => {
               const date = getHopewoodRecordDate(record);
               const recordDay = normalizeDayCapsuleRecord(record);
               const thumb = getHopewoodArtifactUrl(record);
               return <button type="button" className={date === getHopewoodRecordDate(selected) ? 'is-active' : ''} key={record.id || date} onClick={() => setSelectedDate(date)}>{thumb ? <span className="hopewood-result-thumb" style={{ backgroundImage: `url(${thumb})` }} /> : <span className="hopewood-result-thumb is-empty">✦</span>}<strong>{recordDay.title || 'UNTITLED DAY'}</strong><span>{recordDay.displayDate || date}</span></button>;
-            }) : <span>NO MATCHES</span>}
+            }) : null}
             </div>
-          </div> : null}
+          </div>
         </aside>
       </SectionOverlay>
     </SectionShell>
