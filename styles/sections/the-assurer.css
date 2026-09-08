@@ -2704,7 +2704,9 @@
 .assurer-phase-layout .assurer-thicc-fitt-workout .assurer-widget-content>strong:first-child,
 .assurer-phase-layout .assurer-week-strip-widget .assurer-widget-content>strong:first-child,
 .assurer-phase-layout .assurer-day-timeline .assurer-widget-content>strong:first-child{background:transparent!important;padding-left:0!important}
-.assurer-phase-layout .assurer-word-content{justify-content:flex-start!important;overflow-y:auto!important}
-.assurer-phase-layout .assurer-word-content .assurer-field{flex:0 0 auto!important}
-.assurer-phase-layout .assurer-definition-input,.assurer-phase-layout .assurer-example-input{min-height:clamp(38px,3.5vw,64px)!important;resize:none}
+.assurer-phase-layout .assurer-word-content{display:grid!important;grid-template-rows:auto auto minmax(0,1fr) minmax(0,1fr)!important;align-content:stretch!important;gap:3px!important;overflow:hidden!important;padding-block:clamp(.28rem,.42vw,.5rem)!important}
+.assurer-phase-layout .assurer-word-content .assurer-field{display:grid!important;grid-template-columns:minmax(58px,34%) minmax(0,1fr)!important;align-items:center!important;gap:4px!important;min-height:0!important}
+.assurer-phase-layout .assurer-word-content .assurer-field>span{font-size:clamp(8px,.48vw,11px)!important;line-height:1.05!important;white-space:normal!important}
+.assurer-phase-layout .assurer-word-content .assurer-control{height:100%!important;min-height:22px!important;padding:2px 5px!important;font-size:clamp(8px,.5vw,12px)!important;line-height:1.12!important}
+.assurer-phase-layout .assurer-word-content .assurer-definition-input,.assurer-phase-layout .assurer-word-content .assurer-example-input{min-height:0!important;resize:none!important;overflow-y:auto!important}
 .assurer-expanded-example-input{min-height:8rem!important}
