@@ -1,295 +1,159 @@
 import Cocoa
-import WebKit
+import QuartzCore
 
-private let openSize = NSSize(width: 1152, height: 720)
-// About 2.7 inches tall on the 2019 Retina MacBook Pro: present, ornamental,
-// and crisp without becoming a corner-spanning vertical obstruction.
-private let glyphSize = NSSize(width: 104, height: 312)
-private let validRoutes: Set<String> = ["the-assurer", "da-eater", "thicc-fitt", "its-getting-thicc", "remember-me"]
+private let staffSize = NSSize(width: 118, height: 320)
+private let hostBundleIdentifier = "app.chaotica.desktop"
+private let companionBundleIdentifier = "com.chaotica.desk-shrine"
 
-private struct ShrineMacroBar: Codable {
-  var label: String
-  var current: Double
-  var target: Double
-  var unit: String
-}
-
-private struct ShrineRememberDay: Codable {
-  var label: String
-  var dayNumber: Int
-  var types: [String]
-}
-
-private struct ShrineSignal: Codable {
-  var label: String
-  var value: String?
-  var route: String
-  var kind: String?
-}
-
-private struct ShrineSnapshot: Codable {
-  var title: String? = nil
-  var displayDate: String? = nil
-  var dayOfWeek: String? = nil
-  var chaoticaDayNumber: Int? = nil
-  var mood: String? = nil
-  var era: String? = nil
-  var location: String? = nil
-  var headHummer: String? = nil
-  var macroBars: [ShrineMacroBar] = []
-  var rememberDays: [ShrineRememberDay] = []
-  var signals: [ShrineSignal] = []
-}
-
-private final class ShrinePanel: NSPanel {
+private final class StaffPanel: NSPanel {
   override var canBecomeKey: Bool { false }
   override var canBecomeMain: Bool { false }
 }
 
-private final class ShrineGlyphView: NSImageView {
+private final class StaffView: NSImageView {
   var onActivate: (() -> Void)?
+  private let beam = CAGradientLayer()
 
-  override func mouseDown(with event: NSEvent) {
-    onActivate?()
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    wantsLayer = true
+    imageScaling = .scaleProportionallyUpOrDown
+    imageAlignment = .alignCenter
+    layer?.masksToBounds = false
+    layer?.shadowColor = NSColor.systemPink.cgColor
+    layer?.shadowRadius = 10
+    layer?.shadowOpacity = 0.38
+    layer?.shadowOffset = .zero
+    beam.colors = [NSColor.clear.cgColor, NSColor.systemPink.withAlphaComponent(0.95).cgColor, NSColor.white.withAlphaComponent(0.9).cgColor, NSColor.clear.cgColor]
+    beam.startPoint = CGPoint(x: 0, y: 0.5)
+    beam.endPoint = CGPoint(x: 1, y: 0.5)
+    beam.opacity = 0
+    layer?.addSublayer(beam)
   }
 
-  override func resetCursorRects() {
-    addCursorRect(bounds, cursor: .pointingHand)
+  required init?(coder: NSCoder) { nil }
+  override func layout() { super.layout(); beam.frame = CGRect(x: -160, y: bounds.midY - 4, width: 190, height: 8) }
+  override func mouseDown(with event: NSEvent) { onActivate?() }
+  override func resetCursorRects() { addCursorRect(bounds, cursor: .pointingHand) }
+
+  func signal() {
+    let pulse = CABasicAnimation(keyPath: "transform.scale")
+    pulse.fromValue = 1.0
+    pulse.toValue = 1.1
+    pulse.duration = 0.72
+    pulse.autoreverses = true
+    pulse.repeatCount = 3
+    layer?.add(pulse, forKey: "staffPulse")
+    let light = CAKeyframeAnimation(keyPath: "opacity")
+    light.values = [0, 1, 0.85, 0]
+    light.keyTimes = [0, 0.18, 0.72, 1]
+    light.duration = 2.4
+    beam.add(light, forKey: "pinkBeam")
   }
 }
 
-final class ShrineDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler {
-  private static let keepExpandedShrineInFrontKey = "CHAOTICA_KEEP_EXPANDED_SHRINE_IN_FRONT"
-  private var shrinePanel: ShrinePanel!
-  private var glyphPanel: ShrinePanel!
-  private var webView: WKWebView!
-  private var statusItem: NSStatusItem!
-  private var keepInFrontItem: NSMenuItem!
-  private var globalFlagsMonitor: Any?
-  private var localFlagsMonitor: Any?
-  private var screenParametersObserver: NSObjectProtocol?
-  private var chordLatched = false
+final class StaffDelegate: NSObject, NSApplicationDelegate {
+  private var panel: StaffPanel!
+  private var staffView: StaffView!
+  private var scheduleTimer: Timer?
+  private var activationObserver: NSObjectProtocol?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
-    makeShrinePanel()
-    makeGlyphPanel()
-    makeStatusMenu()
-    beginShortcutMonitoring()
+    makeStaff()
     installLoginLaunchAgent()
-    screenParametersObserver = NotificationCenter.default.addObserver(
-      forName: NSApplication.didChangeScreenParametersNotification,
-      object: nil,
-      queue: .main
-    ) { [weak self] _ in
-      guard let self else { return }
-      self.shrinePanel.isVisible ? self.positionOpenPanel() : self.positionGlyphPanel()
-    }
-    retractShrine()
+    activationObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in self?.syncVisibility() }
+    scheduleTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in self?.checkSignalSchedule() }
+    syncVisibility()
+    checkSignalSchedule()
   }
 
   func applicationWillTerminate(_ notification: Notification) {
-    if let globalFlagsMonitor { NSEvent.removeMonitor(globalFlagsMonitor) }
-    if let localFlagsMonitor { NSEvent.removeMonitor(localFlagsMonitor) }
-    if let screenParametersObserver { NotificationCenter.default.removeObserver(screenParametersObserver) }
+    scheduleTimer?.invalidate()
+    if let activationObserver { NSWorkspace.shared.notificationCenter.removeObserver(activationObserver) }
   }
 
-  private func makeShrinePanel() {
-    shrinePanel = ShrinePanel(contentRect: NSRect(origin: .zero, size: openSize), styleMask: [.borderless, .fullSizeContentView], backing: .buffered, defer: false)
-    applyExpandedShrineLevel()
-    shrinePanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-    shrinePanel.isOpaque = false
-    shrinePanel.backgroundColor = .clear
-    shrinePanel.hasShadow = true
-    shrinePanel.hidesOnDeactivate = false
-    shrinePanel.isMovableByWindowBackground = true
-
-    let configuration = WKWebViewConfiguration()
-    configuration.userContentController.add(self, name: "chaoticaShrine")
-    webView = WKWebView(frame: shrinePanel.contentView?.bounds ?? .zero, configuration: configuration)
-    webView.autoresizingMask = [.width, .height]
-    webView.setValue(false, forKey: "drawsBackground")
-    shrinePanel.contentView = webView
-    guard let htmlURL = Bundle.main.url(forResource: "shrine", withExtension: "html") else { return }
-    webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
-    positionOpenPanel()
+  private func makeStaff() {
+    panel = StaffPanel(contentRect: NSRect(origin: .zero, size: staffSize), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+    panel.isFloatingPanel = true
+    panel.level = .floating
+    panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+    panel.isOpaque = false
+    panel.backgroundColor = .clear
+    panel.hasShadow = false
+    panel.hidesOnDeactivate = false
+    staffView = StaffView(frame: NSRect(origin: .zero, size: staffSize))
+    staffView.image = Bundle.main.url(forResource: "HopewoodLifeStaff-v2", withExtension: "png").flatMap(NSImage.init(contentsOf:))
+    staffView.onActivate = { [weak self] in self?.openChaotica() }
+    panel.contentView = staffView
+    positionStaff()
   }
 
-  private func makeGlyphPanel() {
-    glyphPanel = ShrinePanel(contentRect: NSRect(origin: .zero, size: glyphSize), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-    glyphPanel.isFloatingPanel = true
-    glyphPanel.level = .floating
-    glyphPanel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-    glyphPanel.isOpaque = false
-    glyphPanel.backgroundColor = .clear
-    glyphPanel.hasShadow = false
-    glyphPanel.hidesOnDeactivate = false
-    let wandView = ShrineGlyphView(frame: NSRect(origin: .zero, size: glyphSize))
-    wandView.image = Bundle.main.url(forResource: "HopewoodLifeStaff-v2", withExtension: "png").flatMap(NSImage.init(contentsOf:))
-    wandView.imageScaling = .scaleProportionallyUpOrDown
-    wandView.imageAlignment = .alignCenter
-    wandView.onActivate = { [weak self] in self?.summonShrine() }
-    glyphPanel.contentView = wandView
-    positionGlyphPanel()
-  }
-
-  private func positionOpenPanel() {
+  private func positionStaff() {
     guard let screen = NSScreen.main else { return }
     let visible = screen.visibleFrame
-    shrinePanel.setFrameOrigin(NSPoint(x: visible.maxX - openSize.width - 24, y: visible.minY + 28))
+    panel.setFrameOrigin(NSPoint(x: visible.maxX - staffSize.width - 8, y: visible.minY + 18))
   }
 
-  private func positionGlyphPanel() {
-    guard let screen = NSScreen.main else { return }
-    let visible = screen.visibleFrame
-    glyphPanel.setFrameOrigin(NSPoint(x: visible.maxX - glyphSize.width - 10, y: visible.minY + 18))
+  private func syncVisibility() {
+    if NSWorkspace.shared.frontmostApplication?.bundleIdentifier == hostBundleIdentifier {
+      panel.orderOut(nil)
+    } else {
+      positionStaff()
+      panel.orderFrontRegardless()
+    }
+  }
+
+  private func checkSignalSchedule() {
+    let now = Date()
+    let calendar = Calendar.current
+    let hour = calendar.component(.hour, from: now)
+    let minute = calendar.component(.minute, from: now)
+    let isReminder = [10, 14, 18, 22].contains(hour) && minute == 0
+    let isSummation = hour == 0 && minute == 1
+    guard isReminder || isSummation else { return }
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd-HH-mm"
+    let signalKey = formatter.string(from: now)
+    guard UserDefaults.standard.string(forKey: "CHAOTICA_LAST_STAFF_SIGNAL") != signalKey else { return }
+    UserDefaults.standard.set(signalKey, forKey: "CHAOTICA_LAST_STAFF_SIGNAL")
+    if NSWorkspace.shared.frontmostApplication?.bundleIdentifier != hostBundleIdentifier {
+      panel.orderFrontRegardless()
+      staffView.signal()
+    }
+    if isSummation { DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in self?.openChaotica(route: "the-summation", autoSummate: true) } }
+  }
+
+  private func openChaotica(route: String? = nil, autoSummate: Bool = false) {
+    let hostApp = URL(fileURLWithPath: "/Applications/CHAOTICA.app")
+    guard FileManager.default.fileExists(atPath: hostApp.path) else { NSSound.beep(); return }
+    let configuration = NSWorkspace.OpenConfiguration()
+    configuration.activates = true
+    NSWorkspace.shared.openApplication(at: hostApp, configuration: configuration) { _, _ in
+      guard let route else { return }
+      var components = URLComponents()
+      components.scheme = "chaotica"
+      components.host = route
+      if autoSummate { components.queryItems = [URLQueryItem(name: "autoSummate", value: "1")] }
+      guard let deepLink = components.url else { return }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { NSWorkspace.shared.open(deepLink) }
+    }
   }
 
   private func installLoginLaunchAgent() {
-    let installedBundlePath = "/Applications/CHAOTICA Shrine.app"
-    guard Bundle.main.bundleURL.path == installedBundlePath,
-          let executablePath = Bundle.main.executablePath else { return }
-    let launchAgents = FileManager.default.homeDirectoryForCurrentUser
-      .appendingPathComponent("Library/LaunchAgents", isDirectory: true)
-    let launchAgent = launchAgents.appendingPathComponent("com.chaotica.desk-shrine.plist")
-    let payload: [String: Any] = [
-      "Label": "com.chaotica.desk-shrine",
-      "ProgramArguments": [executablePath],
-      "RunAtLoad": true,
-      "KeepAlive": ["SuccessfulExit": false],
-      "ProcessType": "Interactive",
-      "LimitLoadToSessionType": "Aqua"
-    ]
+    guard Bundle.main.bundleURL.path == "/Applications/CHAOTICA Staff.app", let executablePath = Bundle.main.executablePath else { return }
+    let launchAgents = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/LaunchAgents", isDirectory: true)
+    let launchAgent = launchAgents.appendingPathComponent("\(companionBundleIdentifier).plist")
+    let payload: [String: Any] = ["Label": companionBundleIdentifier, "ProgramArguments": [executablePath], "RunAtLoad": true, "KeepAlive": ["SuccessfulExit": false], "ProcessType": "Interactive", "LimitLoadToSessionType": "Aqua"]
     do {
       try FileManager.default.createDirectory(at: launchAgents, withIntermediateDirectories: true)
       let data = try PropertyListSerialization.data(fromPropertyList: payload, format: .xml, options: 0)
       try data.write(to: launchAgent, options: .atomic)
-    } catch {
-      // The main CHAOTICA app also relaunches the Shrine, so this optional
-      // login helper must never prevent the companion from opening.
-    }
-  }
-
-  private func makeStatusMenu() {
-    statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-    statusItem.button?.title = "✦"
-    statusItem.button?.toolTip = "CHAOTICA Shrine"
-    let menu = NSMenu()
-    menu.addItem(withTitle: "Summon CHAOTICA Shrine", action: #selector(summonShrine), keyEquivalent: "")
-    menu.addItem(withTitle: "Retract CHAOTICA Shrine", action: #selector(retractShrine), keyEquivalent: "")
-    keepInFrontItem = menu.addItem(withTitle: "Keep Expanded Shrine Above Other Apps", action: #selector(toggleKeepExpandedShrineInFront), keyEquivalent: "")
-    keepInFrontItem.state = keepExpandedShrineInFront ? .on : .off
-    menu.addItem(NSMenuItem.separator())
-    menu.addItem(withTitle: "Open The Assurer", action: #selector(openAssurer), keyEquivalent: "")
-    menu.addItem(withTitle: "Open DA.EATER", action: #selector(openDaEater), keyEquivalent: "")
-    menu.addItem(withTitle: "Open THICC.FITT", action: #selector(openThiccFitt), keyEquivalent: "")
-    menu.addItem(withTitle: "Open ITS.GETTING.THICC", action: #selector(openItsGettingThicc), keyEquivalent: "")
-    menu.addItem(NSMenuItem.separator())
-    menu.addItem(withTitle: "Quit CHAOTICA Shrine", action: #selector(quit), keyEquivalent: "q")
-    menu.items.forEach { $0.target = self }
-    statusItem.menu = menu
-  }
-
-  private var keepExpandedShrineInFront: Bool {
-    UserDefaults.standard.bool(forKey: Self.keepExpandedShrineInFrontKey)
-  }
-
-  private func applyExpandedShrineLevel() {
-    let keepInFront = keepExpandedShrineInFront
-    shrinePanel?.isFloatingPanel = keepInFront
-    shrinePanel?.level = keepInFront ? .floating : .normal
-  }
-
-  private func beginShortcutMonitoring() {
-    let inspect: (NSEvent) -> Void = { [weak self] event in self?.inspectShortcut(event) }
-    localFlagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
-      inspect(event)
-      return event
-    }
-    globalFlagsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: inspect)
-  }
-
-  private func inspectShortcut(_ event: NSEvent) {
-    let flags = event.modifierFlags
-    let matches = flags.contains(.command) && flags.contains(.option) && flags.contains(.control) && flags.contains(.function)
-    if matches && !chordLatched {
-      chordLatched = true
-      DispatchQueue.main.async { [weak self] in self?.toggleShrine() }
-    } else if !matches {
-      chordLatched = false
-    }
-  }
-
-  private func toggleShrine() {
-    shrinePanel.isVisible ? retractShrine() : summonShrine()
-  }
-
-  @objc private func summonShrine() {
-    positionOpenPanel()
-    applyExpandedShrineLevel()
-    glyphPanel.orderOut(nil)
-    if keepExpandedShrineInFront {
-      shrinePanel.orderFrontRegardless()
-    } else {
-      shrinePanel.makeKeyAndOrderFront(nil)
-    }
-    refreshSnapshot()
-  }
-
-  @objc private func retractShrine() {
-    shrinePanel.orderOut(nil)
-    positionGlyphPanel()
-    glyphPanel.orderFrontRegardless()
-  }
-
-  @objc private func toggleKeepExpandedShrineInFront() {
-    UserDefaults.standard.set(!keepExpandedShrineInFront, forKey: Self.keepExpandedShrineInFrontKey)
-    applyExpandedShrineLevel()
-    keepInFrontItem.state = keepExpandedShrineInFront ? .on : .off
-  }
-
-  @objc private func openAssurer() { openChaotica(route: "the-assurer") }
-  @objc private func openDaEater() { openChaotica(route: "da-eater") }
-  @objc private func openThiccFitt() { openChaotica(route: "thicc-fitt") }
-  @objc private func openItsGettingThicc() { openChaotica(route: "its-getting-thicc") }
-  @objc private func quit() { NSApp.terminate(nil) }
-
-  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-    guard message.name == "chaoticaShrine", let payload = message.body as? [String: String], payload["action"] == "open", let route = payload["route"], validRoutes.contains(route) else { return }
-    openChaotica(route: route)
-  }
-
-  private func openChaotica(route: String) {
-    retractShrine()
-    let hostApp = URL(fileURLWithPath: "/Applications/CHAOTICA.app")
-    let deepLink = URL(string: "chaotica://\(route)")!
-    if FileManager.default.fileExists(atPath: hostApp.path) {
-      let configuration = NSWorkspace.OpenConfiguration()
-      configuration.activates = true
-      NSWorkspace.shared.openApplication(at: hostApp, configuration: configuration) { _, _ in
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { NSWorkspace.shared.open(deepLink) }
-      }
-    } else {
-      NSWorkspace.shared.open(URL(string: "https://www.tellnolies.app/\(route)")!)
-    }
-  }
-
-  private func refreshSnapshot() {
-    let snapshot = loadSnapshot()
-    guard let data = try? JSONEncoder().encode(snapshot), let json = String(data: data, encoding: .utf8) else { return }
-    let script = "window.ChaoticaShrine?.setSnapshot(\(json));"
-    webView.evaluateJavaScript(script)
-  }
-
-  private func loadSnapshot() -> ShrineSnapshot {
-    let url = FileManager.default.homeDirectoryForCurrentUser
-      .appendingPathComponent("Library/Application Support/CHAOTICA/shrine-day.json")
-    guard let data = try? Data(contentsOf: url), let snapshot = try? JSONDecoder().decode(ShrineSnapshot.self, from: data) else { return ShrineSnapshot() }
-    return snapshot
+    } catch { }
   }
 }
 
 let app = NSApplication.shared
-let delegate = ShrineDelegate()
+let delegate = StaffDelegate()
 app.delegate = delegate
 app.run()

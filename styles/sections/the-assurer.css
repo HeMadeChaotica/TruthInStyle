@@ -2676,3 +2676,35 @@
 .assurer-phase-layout .assurer-word-content{justify-content:flex-start;gap:2px;padding-block:clamp(.32rem,.55vw,.62rem)}
 .assurer-phase-layout .assurer-word-content .assurer-field{gap:1px}
 .assurer-phase-layout .assurer-definition-input{min-height:clamp(42px,4.4vw,70px)!important;resize:none}
+
+/* 2026-09-07 functional readability correction. These read-only mirrors use
+   clear crystal rows so the scene remains visible; no gray or white cards. */
+.assurer-phase-layout,.assurer-phase-layout *{font-family:var(--app-font-marker)!important;font-weight:500!important}
+.assurer-phase-layout .assurer-macro-widget,
+.assurer-phase-layout .assurer-thicc-fitt-workout,
+.assurer-phase-layout .assurer-week-strip-widget,
+.assurer-phase-layout .assurer-day-timeline{
+  background:linear-gradient(145deg,rgba(48,26,31,.34),rgba(94,57,54,.22))!important;
+  border-color:rgba(255,194,217,.6)!important;
+  backdrop-filter:blur(3px) saturate(116%)!important;
+  -webkit-backdrop-filter:blur(3px) saturate(116%)!important;
+}
+.assurer-phase-layout .assurer-macro-glass{background:rgba(45,24,29,.18)!important;backdrop-filter:blur(2px)!important;-webkit-backdrop-filter:blur(2px)!important}
+.assurer-phase-layout .assurer-macro-compact-row,
+.assurer-phase-layout .assurer-workout-summary span,
+.assurer-phase-layout .assurer-workout-row,
+.assurer-phase-layout .assurer-workout-footer span,
+.assurer-phase-layout .assurer-workout-footer p,
+.assurer-phase-layout .assurer-timeline-row,
+.assurer-phase-layout .assurer-week-day{
+  background:rgba(52,29,34,.28)!important;
+  border-color:rgba(244,169,191,.34)!important;
+}
+.assurer-phase-layout .assurer-macro-title,
+.assurer-phase-layout .assurer-thicc-fitt-workout .assurer-widget-content>strong:first-child,
+.assurer-phase-layout .assurer-week-strip-widget .assurer-widget-content>strong:first-child,
+.assurer-phase-layout .assurer-day-timeline .assurer-widget-content>strong:first-child{background:transparent!important;padding-left:0!important}
+.assurer-phase-layout .assurer-word-content{justify-content:flex-start!important;overflow-y:auto!important}
+.assurer-phase-layout .assurer-word-content .assurer-field{flex:0 0 auto!important}
+.assurer-phase-layout .assurer-definition-input,.assurer-phase-layout .assurer-example-input{min-height:clamp(38px,3.5vw,64px)!important;resize:none}
+.assurer-expanded-example-input{min-height:8rem!important}

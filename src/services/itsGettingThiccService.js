@@ -401,17 +401,20 @@ export function normalizeScheduleEntry(row = {}) {
     recurrence_type: row.recurrence_type || 'none',
     recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [],
     recurrence_active: Boolean(row.recurrence_active),
+    series_parent_id: row.series_parent_id || '',
+    recurrence_cancelled: Boolean(row.recurrence_cancelled),
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || new Date().toISOString(),
   };
 }
 
 export function groupScheduleEntriesByDate(rows = []) {
-  const safeRows = Array.isArray(rows) ? rows : [];
-  return safeRows.reduce((acc, row) => {
-    const normalized = normalizeScheduleEntry(row);
+  const safeRows = (Array.isArray(rows) ? rows : []).map(normalizeScheduleEntry);
+  const exceptionKeys = new Set(safeRows.filter((row) => row.series_parent_id && row.entry_date).map((row) => `${row.series_parent_id}|${row.entry_date}`));
+  return safeRows.reduce((acc, normalized) => {
     if (!normalized.entry_date) return acc;
-    acc[normalized.entry_date] = [...(acc[normalized.entry_date] || []), normalized];
+    const parentDateReplaced = normalized.recurrence_active && exceptionKeys.has(`${normalized.id}|${normalized.entry_date}`);
+    if (!normalized.recurrence_cancelled && !parentDateReplaced) acc[normalized.entry_date] = [...(acc[normalized.entry_date] || []), normalized];
     const recurrenceDays = [...new Set((normalized.recurrence_days || []).map((value) => String(value).toLowerCase()))];
     if (normalized.recurrence_type === 'weekly' && normalized.recurrence_active && recurrenceDays.length) {
       const start = new Date(`${normalized.entry_date}T12:00:00`);
@@ -420,6 +423,7 @@ export function groupScheduleEntriesByDate(rows = []) {
         candidate.setDate(start.getDate() + offset);
         if (!recurrenceDays.includes(WEEKDAY_KEYS[candidate.getDay()])) continue;
         const dateKey = toLocalIsoDate(candidate);
+        if (exceptionKeys.has(`${normalized.id}|${dateKey}`)) continue;
         const derived = {
           ...normalized,
           entry_date: dateKey,
@@ -545,6 +549,8 @@ export async function saveScheduleEntry(entry) {
     'recurrence_type',
     'recurrence_days',
     'recurrence_active',
+    'series_parent_id',
+    'recurrence_cancelled',
     'created_at',
     'updated_at',
   ];
@@ -605,6 +611,23 @@ export async function deleteScheduleEntry(id) {
     console.warn('THICC.TIME delete using local calendar fallback.', error);
   }
   return true;
+}
+
+export async function cancelScheduleOccurrence(entry, dateKey) {
+  return saveScheduleEntry({
+    entry_type: entry.entry_type || 'personal',
+    schedule_layer: entry.schedule_layer || 'mista_thicc',
+    entry_date: dateKey,
+    start_time: entry.start_time || '00:00',
+    end_time: entry.end_time || '',
+    workout_label: entry.workout_label || 'WORKOUT',
+    color_option_key: entry.color_option_key || 'mista-thicc-pink',
+    series_parent_id: entry.original_entry_id || entry.id,
+    recurrence_cancelled: true,
+    recurrence_type: 'none',
+    recurrence_days: [],
+    recurrence_active: false,
+  });
 }
 
 export async function fetchClientColors() {

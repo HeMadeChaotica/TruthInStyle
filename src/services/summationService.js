@@ -1078,7 +1078,7 @@ export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
   const match = requestedDateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return 0;
   const requestedUtc = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  const officialDayOneUtc = Date.UTC(2026, 8, 1);
+  const officialDayOneUtc = Date.UTC(2026, 8, 7);
   return Math.max(0, Math.floor((requestedUtc - officialDayOneUtc) / 86400000) + 1);
 }
 

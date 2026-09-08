@@ -14,6 +14,13 @@ const WEEKDAYS = [
   ['sun', 'SUN'], ['mon', 'MON'], ['tue', 'TUE'], ['wed', 'WED'],
   ['thu', 'THU'], ['fri', 'FRI'], ['sat', 'SAT'],
 ];
+const EDITOR_MODES = [
+  ['EVENT', 'EVENTS'],
+  ['STANDOUT', 'WOW · WTF · PLOT TWIST'],
+  ['WORKOUT', 'WORKOUT'],
+  ['WORK', 'WORK SCHEDULE'],
+  ['POPUP', 'POP-UP SCHEDULE'],
+];
 
 const SEASON_BY_MONTH = {
   0: { key: 'winter', calendarSide: 'right' },
@@ -37,7 +44,7 @@ const BACKGROUND_BY_SEASON = {
   winter: 'remember-me-season-winter-crystallization.png',
 };
 
-const EMPTY_EVENT = { type: 'SOMETHING NEW DAY', time: '', detail: '', description: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
+const EMPTY_EVENT = { type: 'SOMETHING NEW DAY', label: '', schedule_kind: 'event', time: '', detail: '', description: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
 const EMPTY_WORKOUT = { start_time: '', end_time: '', workout_label: '', location: '', notes: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
 const EMPTY_MOMENT = { type: 'WOW', time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' };
 
@@ -70,7 +77,7 @@ const formatCalendarTime = (value) => {
 
 const calendarEntryLabel = (entry) => {
   if (entry?._source === 'personal-workout') return entry.workout_label || entry.detail || 'WORKOUT';
-  return entry?.type || entry?.entry_type || entry?.detail || 'APPOINTMENT';
+  return entry?.label || entry?.type || entry?.entry_type || entry?.detail || 'APPOINTMENT';
 };
 
 const calendarEntrySortValue = (entry) => String(entry?.time || entry?.start_time || '').trim() || '99:99';
@@ -133,6 +140,8 @@ function RecurrenceControl({ draft, setDraft, selectedDateKey }) {
 const colorForEntry = (entry) => {
   if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ad1f68,#68143f)';
   const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
+  if (entry?.schedule_kind === 'popup') return 'linear-gradient(135deg,#2b8f92,#15545f)';
+  if (entry?.schedule_kind === 'work') return 'linear-gradient(135deg,#b47726,#704318)';
   if (type === 'PAYDAY' || type === 'RENT') return 'linear-gradient(135deg,#8a5d10,#4f3308)';
   if (type.includes('WORK') || type.includes('JOB') || type === 'MEETING' || type === 'DEADLINE') return 'linear-gradient(135deg,#884a2c,#4b281c)';
   if (type.includes('BIRTHDAY') || type.includes('ANNIVERSARY') || type === 'TREAT DAY' || type === 'HAIRCUT') return 'linear-gradient(135deg,#a83b6f,#682040)';
@@ -238,24 +247,29 @@ export default function RememberMeSection() {
     if (entry._source === 'personal-workout') {
       const originalId = entry.original_entry_id || entry.id;
       const original = workoutRows.find((row) => row.id === originalId) || entry;
-      setWorkoutDraft({ ...EMPTY_WORKOUT, ...original });
+      const occurrenceOnly = entry.derived_recurrence || entry.recurrence_active;
+      setWorkoutDraft(occurrenceOnly ? { ...EMPTY_WORKOUT, ...original, id: '', entry_date: dateKey, original_entry_id: originalId, series_parent_id: originalId, derived_recurrence: true, recurrence_type: 'none', recurrence_days: [], recurrence_active: false } : { ...EMPTY_WORKOUT, ...original });
       setEditorMode('WORKOUT');
     } else {
       const originalId = entry.original_entry_id || entry.id;
       const original = rememberRows.find((row) => row.id === originalId) || entry;
+      const occurrenceOnly = entry.derived_recurrence || entry.recurrence_active;
       setEntryDraft({
         ...EMPTY_EVENT,
         ...original,
+        ...(occurrenceOnly ? { id: '', date_key: dateKey, original_entry_id: originalId, series_parent_id: originalId, derived_recurrence: true, recurrence_type: 'none', recurrence_days: [], recurrence_active: false } : {}),
         type: original.type || original.entry_type,
         time: original.time || original.time_value,
       });
-      setEditorMode('EVENT');
+      setEditorMode(original.schedule_kind === 'work' ? 'WORK' : original.schedule_kind === 'popup' ? 'POPUP' : 'EVENT');
     }
     setPostcardOpen(true);
   };
 
   const saveEvent = async () => {
     if (!selectedDateKey) return setError('Select a valid date.');
+    if (['WORK', 'POPUP'].includes(editorMode) && !entryDraft.label?.trim()) return setError('Add the schedule label.');
+    if (['WORK', 'POPUP'].includes(editorMode) && !entryDraft.time) return setError('Add the schedule time.');
     setError('Saving event...');
     try {
       const service = await import('../../src/services/rememberMeService');
@@ -263,6 +277,9 @@ export default function RememberMeSection() {
         id: entryDraft.id,
         date_key: entryDraft.date_key || selectedDateKey,
         entry_type: entryDraft.type,
+        label: normalizeUserText(entryDraft.label),
+        schedule_kind: editorMode === 'WORK' ? 'work' : editorMode === 'POPUP' ? 'popup' : 'event',
+        series_parent_id: entryDraft.series_parent_id || '',
         time_value: entryDraft.time,
         detail: normalizeUserText(entryDraft.detail),
         description: normalizeUserText(entryDraft.description),
@@ -306,9 +323,15 @@ export default function RememberMeSection() {
 
   const deleteActive = async () => {
     try {
-      if (editorMode === 'EVENT' && entryDraft.id) {
+      if (['EVENT', 'WORK', 'POPUP'].includes(editorMode) && entryDraft.derived_recurrence) {
+        const service = await import('../../src/services/rememberMeService');
+        await service.cancelRememberMeOccurrence(entryDraft, entryDraft.date_key || selectedDateKey);
+      } else if (['EVENT', 'WORK', 'POPUP'].includes(editorMode) && entryDraft.id) {
         const service = await import('../../src/services/rememberMeService');
         await service.deleteRememberMeEntry(entryDraft.id);
+      } else if (editorMode === 'WORKOUT' && workoutDraft.derived_recurrence) {
+        const service = await import('../../src/services/itsGettingThiccService');
+        await service.cancelScheduleOccurrence(workoutDraft, workoutDraft.entry_date || selectedDateKey);
       } else if (editorMode === 'WORKOUT' && workoutDraft.id) {
         const service = await import('../../src/services/itsGettingThiccService');
         await service.deleteScheduleEntry(workoutDraft.id);
@@ -422,17 +445,17 @@ export default function RememberMeSection() {
           <section className="remember-postcard-popout">
             <header><h3>{formatDisplayDate(selectedDateKey)}</h3><button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></header>
             <div className="remember-type-switch">
-              {['EVENT', 'WORKOUT', 'STANDOUT'].map((mode) => <button key={mode} type="button" className={editorMode === mode ? 'active' : ''} onClick={() => setEditorMode(mode)}>{mode}</button>)}
+              {EDITOR_MODES.map(([mode, label]) => <button key={mode} type="button" className={editorMode === mode ? 'active' : ''} onClick={() => { setEditorMode(mode); if (mode === 'WORK') setEntryDraft((draft) => ({ ...draft, schedule_kind: 'work', type: 'WORK SCHEDULE' })); if (mode === 'POPUP') setEntryDraft((draft) => ({ ...draft, schedule_kind: 'popup', type: 'POP-UP SCHEDULE' })); }}>{label}</button>)}
             </div>
             <div className="remember-form">
-              {editorMode === 'EVENT' ? (
+              {['EVENT', 'WORK', 'POPUP'].includes(editorMode) ? (
                 <>
-                  <label>EVENT TYPE<select value={entryDraft.type} onChange={(event) => setEntryDraft((draft) => ({ ...draft, type: event.target.value }))}>{eventTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
+                  {editorMode === 'EVENT' ? <label>EVENT TYPE<select value={entryDraft.type} onChange={(event) => setEntryDraft((draft) => ({ ...draft, type: event.target.value }))}>{eventTypes.filter((type) => !/EVENT\s*\(WORK\)|WORK SCHEDULE|POP-?UP/i.test(type)).map((type) => <option key={type} value={type}>{type}</option>)}</select></label> : <label>{editorMode === 'WORK' ? 'WORK LABEL' : 'POP-UP LABEL'}<input value={entryDraft.label || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, label: event.target.value }))} /></label>}
                   <label>TIME<input type="time" value={entryDraft.time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} /></label>
                   <label>LOCATION<input value={entryDraft.detail || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, detail: event.target.value }))} /></label>
                   <label>DESCRIPTION<textarea value={entryDraft.description || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
                   <RecurrenceControl draft={entryDraft} setDraft={setEntryDraft} selectedDateKey={selectedDateKey} />
-                  <div className="remember-actions"><button type="button" onClick={saveEvent}>SAVE EVENT</button>{entryDraft.id ? <button type="button" onClick={deleteActive}>DELETE</button> : null}</div>
+                  <div className="remember-actions"><button type="button" onClick={saveEvent}>SAVE {editorMode === 'EVENT' ? 'EVENT' : editorMode === 'WORK' ? 'WORK SCHEDULE' : 'POP-UP'}</button>{entryDraft.id || entryDraft.derived_recurrence ? <button type="button" onClick={deleteActive}>DELETE THIS DATE</button> : null}</div>
                 </>
               ) : null}
               {editorMode === 'WORKOUT' ? (
@@ -442,7 +465,7 @@ export default function RememberMeSection() {
                   <label>LOCATION<input value={workoutDraft.location || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, location: event.target.value }))} /></label>
                   <label>NOTES<textarea value={workoutDraft.notes || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, notes: event.target.value }))} /></label>
                   <RecurrenceControl draft={workoutDraft} setDraft={setWorkoutDraft} selectedDateKey={selectedDateKey} />
-                  <div className="remember-actions"><button type="button" onClick={saveWorkout}>SAVE WORKOUT</button>{workoutDraft.id ? <button type="button" onClick={deleteActive}>DELETE</button> : null}</div>
+                  <div className="remember-actions"><button type="button" onClick={saveWorkout}>SAVE WORKOUT</button>{workoutDraft.id || workoutDraft.derived_recurrence ? <button type="button" onClick={deleteActive}>DELETE THIS DATE</button> : null}</div>
                 </>
               ) : null}
               {editorMode === 'STANDOUT' ? (

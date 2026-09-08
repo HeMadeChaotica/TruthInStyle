@@ -36,7 +36,7 @@
 .remember-popout-scrim{position:fixed;inset:0;z-index:998;background:rgba(0,0,0,.18)}
 .remember-postcard-popout{position:fixed;left:50%;top:clamp(18px,6vh,72px);transform:translateX(-50%);width:min(92vw,560px);max-height:min(84dvh,720px);overflow-y:auto;z-index:999;padding:clamp(12px,1.4vw,18px);border-radius:18px;background:linear-gradient(145deg,rgba(18,0,14,.94),rgba(34,4,26,.84));border:1px solid rgba(255,102,202,.78);box-shadow:0 0 0 1px rgba(255,205,244,.08) inset,0 18px 60px rgba(0,0,0,.56),0 0 32px rgba(255,36,169,.18);backdrop-filter:blur(5px)}
 .remember-postcard-popout header{display:flex;justify-content:space-between;align-items:center;gap:8px}.remember-postcard-popout h3{margin:0}
-.remember-type-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:6px;margin-top:8px}.remember-type-switch button.active{box-shadow:0 0 0 2px rgba(255,128,201,.95)}
+.remember-type-switch{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;gap:6px;margin-top:8px}.remember-type-switch button{min-height:44px;padding:6px;font-size:clamp(.56rem,.7vw,.78rem)}.remember-type-switch button.active{box-shadow:0 0 0 2px rgba(255,128,201,.95)}
 .remember-observance-note{margin:8px 0 10px;padding:9px 11px;border-radius:12px;background:linear-gradient(135deg,rgba(255,57,174,.18),rgba(52,0,35,.68));border:1px solid rgba(255,125,214,.64);color: var(--app-text-primary);box-shadow:0 0 18px rgba(255,43,160,.14)}
 .remember-observance-note strong{display:block;color: var(--app-text-primary);font-size:.82rem;margin-bottom:4px}
 .remember-observance-note p{margin:3px 0;color: var(--app-text-primary);font-size:.72rem;line-height:1.35;text-transform:uppercase}

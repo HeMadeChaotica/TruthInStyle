@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealCurrentDayCapsuleToHopewood, setStoredSummationActiveDay } from '../../src/services/summationService';
+import { fetchHopewoodSummationArchive, findHopewoodSummationByDate, getHopewoodRecordDate } from '../../src/services/hopewoodService';
 
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
@@ -10,12 +11,12 @@ const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 
 const RAIL_ITEMS = [
-  { key: 'entrance', src: '/opening/chaotica-opening-entrance-closed.png', alt: 'EXIT TO ENTRANCE', type: 'route', className: 'tis-entrance-glyph' },
+  { key: 'entrance', src: '/opening/chaotica-opening-entrance-closed.png', alt: 'EXIT TO ENTRANCE', type: 'route' },
   { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home-crystallization-v2.png', alt: 'HOME / THE.ASSURER', type: 'route' },
   { key: 'back', src: '/ui/glyphs/control%20panel/glyph-back-crystallization-v3.png', alt: 'Back', type: 'route' },
   { key: 'its-getting-thicc', src: '/ui/glyphs/control%20panel/glyph-its-getting-thicc-crystallization-v2.png', alt: 'ITS.GETTING.THICC', type: 'route' },
   { key: 'thicc-fitt', src: '/ui/glyphs/control%20panel/glyph-thicc-fitt-crystallization-v2.png', alt: 'THICC.FITT', type: 'route' },
-  { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater-crystallization-v3.png', alt: 'DA.EATER', type: 'route', className: 'tis-da-eater-glyph' },
+  { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater-crystallization-v3.png', alt: 'DA.EATER', type: 'route' },
   { key: 'remember-me', src: '/ui/glyphs/control%20panel/glyph-remember-me-crystallization-v2.png', alt: 'REMEMBER.ME', type: 'route' },
   { key: 'hopewood', src: '/ui/glyphs/control%20panel/glyph-hopewood-crystallization-v2.png', alt: 'HOPEWOOD', type: 'route' },
   { key: '525600', src: '/ui/glyphs/control%20panel/glyph-525600-crystallization-v3.png', alt: '525600', type: 'route' },
@@ -147,6 +148,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   const [now, setNow] = useState(initialDate);
   const [status, setStatus] = useState('');
   const eyeButtonRef = useRef(null);
+  const autoSummateHandledRef = useRef(false);
   const [dayPanelPosition, setDayPanelPosition] = useState({ top: 96, right: 96 });
 
   useEffect(() => {
@@ -266,6 +268,31 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
     onClose?.();
     router.push('/the-summation');
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autoSummate') !== '1' || autoSummateHandledRef.current) return;
+    autoSummateHandledRef.current = true;
+    const sourceDate = localDateKey(new Date());
+    params.delete('autoSummate');
+    window.history.replaceState({}, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`);
+    void (async () => {
+      if (findHopewoodSummationByDate(sourceDate)) {
+        setStatus(`ALREADY SEALED ${sourceDate}`);
+        return;
+      }
+      try {
+        const archive = await fetchHopewoodSummationArchive();
+        if (archive.some((record) => getHopewoodRecordDate(record) === sourceDate)) {
+          setStatus(`ALREADY SEALED ${sourceDate}`);
+          return;
+        }
+      } catch {
+        // The authenticated render path below will surface the real failure.
+      }
+      await handleSummate();
+    })();
+  }, []);
 
   const handleSeal = async () => {
     setStatus('SEALING DAY CAPSULE...');

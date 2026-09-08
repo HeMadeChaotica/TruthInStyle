@@ -4,40 +4,6 @@ import Speech
 
 private let chaoticaURL = URL(string: "https://www.tellnolies.app/")!
 
-private struct ShrineDaySnapshot: Codable {
-  let title: String?
-  let displayDate: String?
-  let dayOfWeek: String?
-  let chaoticaDayNumber: Int?
-  let mood: String?
-  let era: String?
-  let location: String?
-  let headHummer: String?
-  let macroBars: [ShrineMacroBar]
-  let rememberDays: [ShrineRememberDay]
-  let signals: [ShrineSignal]
-}
-
-private struct ShrineMacroBar: Codable {
-  let label: String
-  let current: Double
-  let target: Double
-  let unit: String
-}
-
-private struct ShrineRememberDay: Codable {
-  let label: String
-  let dayNumber: Int
-  let types: [String]
-}
-
-private struct ShrineSignal: Codable {
-  let label: String
-  let value: String?
-  let route: String
-  let kind: String?
-}
-
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
   private var window: NSWindow!
   private var webView: WKWebView!
@@ -50,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   private var recognitionID = UUID()
   private var lastLevelSentAt: TimeInterval = 0
   private var recognitionActive = false
-  private var shrineTerminationObserver: NSObjectProtocol?
+  private var staffTerminationObserver: NSObjectProtocol?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -59,7 +25,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     configuration.websiteDataStore = .default()
     configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
     configuration.userContentController.add(self, name: "chaoticaSpeech")
-    configuration.userContentController.add(self, name: "chaoticaShrineSync")
     configuration.userContentController.addUserScript(WKUserScript(
       source: """
         window.ChaoticaNativeSpeech = Object.freeze({
@@ -68,112 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         });
       """,
       injectionTime: .atDocumentStart,
-      forMainFrameOnly: true
-    ))
-    configuration.userContentController.addUserScript(WKUserScript(
-      source: """
-        (() => {
-          const send = window.webkit?.messageHandlers?.chaoticaShrineSync;
-          if (!send) return;
-          const clean = (value) => typeof value === 'string' && value.trim() ? value.trim().slice(0, 300) : null;
-          const parse = (value) => {
-            try { return value ? JSON.parse(value) : null; } catch { return null; }
-          };
-          const localDate = (source = new Date()) => {
-            const d = source;
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${d.getFullYear()}-${month}-${day}`;
-          };
-          const first = (...values) => values.map(clean).find(Boolean) || null;
-          const safeArray = (value) => Array.isArray(value) ? value : [];
-          const object = (value) => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
-          const formatDate = (date) => new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(date);
-          const dayName = (date) => new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date);
-          const signal = (label, value, route, kind = 'text') => ({ label, value: clean(value), route, kind });
-          const sync = () => {
-            const date = localDate();
-            const today = new Date();
-            const assurer = parse(localStorage.getItem(`the_assurer_day:${date}`)) || parse(localStorage.getItem('the_assurer_day')) || {};
-            const daDays = parse(localStorage.getItem('truthinstyle_da_eater_days_v1')) || {};
-            const daDay = daDays[date] || {};
-            const meals = Array.isArray(daDay.meals) ? daDay.meals : [];
-            const total = (field) => meals.reduce((sum, meal) => sum + Number(meal?.[field] || 0), 0);
-            const calories = total('calories') + (Array.isArray(daDay.cheatFlexEntries) ? daDay.cheatFlexEntries.reduce((sum, item) => sum + Number(item?.roughCalories || 0), 0) : 0);
-            const targets = { protein: 250, carbs: 120, fats: 75, calories: 4500 };
-            const macroBars = [
-              { label: 'Protein', current: total('protein'), target: targets.protein, unit: 'g' },
-              { label: 'Carbs', current: total('carbs'), target: targets.carbs, unit: 'g' },
-              { label: 'Fats', current: total('fats'), target: targets.fats, unit: 'g' },
-              { label: 'Calories', current: calories, target: targets.calories, unit: 'cal' }
-            ];
-            const macroSummary = `P ${total('protein')}/${targets.protein} · C ${total('carbs')}/${targets.carbs} · F ${total('fats')}/${targets.fats} · ${calories}/${targets.calories} CAL`;
-            const word = object(assurer.wordOfDay || assurer.wordOfTheDay);
-            const penny = safeArray(assurer.pennyQuestions).find((entry) => clean(entry?.answer));
-            const thiccFitt = object(assurer.thiccFitt);
-            const workout = object(thiccFitt.workout);
-            const firstExercise = safeArray(thiccFitt.exerciseRows).find((entry) => clean(entry?.exercise));
-            const thiccTime = object(assurer.thiccTime);
-            const todaySchedule = safeArray(thiccTime.entries).filter((entry) => entry?.date === date);
-            const [year, month, dayOfMonth] = date.split('-').map(Number);
-            const officialDayOne = Date.UTC(2026, 8, 1);
-            const activeDay = Date.UTC(year, month - 1, dayOfMonth);
-            const chaoticaDayNumber = Math.max(0, Math.floor((activeDay - officialDayOne) / 86400000) + 1);
-            const mood = first(assurer.mood, assurer.nativeFields?.mood);
-            const era = first(assurer.era, assurer.nativeFields?.era);
-            const location = first(assurer.location, assurer.nativeFields?.location);
-            const headHummer = first(assurer.headHummer, assurer.nativeFields?.headHummer);
-            const rememberRaw = object(parse(localStorage.getItem('remember_me_standout_moments_v1')));
-            const rememberDays = Array.from({ length: 7 }, (_, index) => {
-              const day = new Date(today);
-              day.setHours(12, 0, 0, 0);
-              day.setDate(day.getDate() - 6 + index);
-              const dateKey = localDate(day);
-              const types = safeArray(rememberRaw[dateKey])
-                .map((entry) => String(entry?.type || entry?.standoutType || '').trim().toUpperCase())
-                .filter((type, typeIndex, all) => ['WOW', 'WTF', 'PLOT TWIST'].includes(type) && all.indexOf(type) === typeIndex);
-              return {
-                label: new Intl.DateTimeFormat('en-US', { weekday: 'narrow' }).format(day),
-                dayNumber: day.getDate(),
-                types
-              };
-            });
-            const battleCry = typeof assurer.battleCry === 'string' ? assurer.battleCry : first(assurer.battleCry?.quote, assurer.battleCry?.text, assurer.battleCry?.statement);
-            const signals = [
-              signal('Macro Progress', macroSummary, 'da-eater', 'macro'),
-              signal('Penny for Your Thoughts', penny?.answer, 'the-assurer'),
-              signal('Word of the Day', [clean(word.word), clean(word.definition)].filter(Boolean).join(' — '), 'the-assurer'),
-              signal('Assured Thought', assurer.assuredThoughts, 'the-assurer'),
-              signal('Battle Cry', battleCry, 'the-assurer'),
-              signal('THICC.FITT', first(workout.duration && `Workout · ${workout.duration}`, firstExercise && [firstExercise.exercise, firstExercise.sets && `${firstExercise.sets} sets`, firstExercise.reps && `${firstExercise.reps} reps`].filter(Boolean).join(' · '), thiccFitt.notes), 'thicc-fitt'),
-              signal('THICC.TIME', first(todaySchedule[0]?.title, todaySchedule[0]?.label, todaySchedule[0]?.entryType, todaySchedule[0]?.person), 'its-getting-thicc'),
-              signal('REMEMBER.ME', '7 DAYS · WOW / WTF / PLOT TWIST', 'remember-me', 'remember')
-            ];
-            send.postMessage({
-              action: 'sync',
-              snapshot: {
-                title: first(assurer.titleOfDay, assurer.title, localStorage.getItem(`the_assurer_title_of_day:${date}`), localStorage.getItem('the_assurer_title_of_day')),
-                displayDate: first(assurer.displayDate, formatDate(today)),
-                dayOfWeek: first(assurer.dayOfWeek, dayName(today)),
-                chaoticaDayNumber,
-                mood,
-                era,
-                location,
-                headHummer,
-                macroBars,
-                rememberDays,
-                signals
-              }
-            });
-          };
-          window.addEventListener('storage', sync);
-          window.addEventListener('focus', sync);
-          document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
-          setInterval(sync, 15000);
-          sync();
-        })();
-      """,
-      injectionTime: .atDocumentEnd,
       forMainFrameOnly: true
     ))
 
@@ -222,22 +81,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
       if !self.window.styleMask.contains(.fullScreen) {
         self.window.toggleFullScreen(nil)
       }
-      self.ensureShrineCompanionIsRunning()
+      self.ensureStaffCompanionIsRunning()
     }
 
-    shrineTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+    staffTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
       forName: NSWorkspace.didTerminateApplicationNotification,
       object: nil,
       queue: .main
     ) { [weak self] note in
       guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
             app.bundleIdentifier == "com.chaotica.desk-shrine" else { return }
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { self?.ensureShrineCompanionIsRunning() }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { self?.ensureStaffCompanionIsRunning() }
     }
   }
 
   func applicationDidBecomeActive(_ notification: Notification) {
-    ensureShrineCompanionIsRunning()
+    ensureStaffCompanionIsRunning()
   }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -246,15 +105,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func applicationWillTerminate(_ notification: Notification) {
     stopNativeSpeech(notify: false)
-    if let shrineTerminationObserver {
-      NSWorkspace.shared.notificationCenter.removeObserver(shrineTerminationObserver)
+    if let staffTerminationObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(staffTerminationObserver)
     }
   }
 
-  private func ensureShrineCompanionIsRunning() {
+  private func ensureStaffCompanionIsRunning() {
     let bundleIdentifier = "com.chaotica.desk-shrine"
     guard NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).isEmpty else { return }
-    let companion = URL(fileURLWithPath: "/Applications/CHAOTICA Shrine.app")
+    let companion = URL(fileURLWithPath: "/Applications/CHAOTICA Staff.app")
     guard FileManager.default.fileExists(atPath: companion.path) else { return }
     let configuration = NSWorkspace.OpenConfiguration()
     configuration.activates = false
@@ -264,12 +123,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
     guard let body = message.body as? [String: Any] else { return }
-
-    if message.name == "chaoticaShrineSync",
-       let snapshotBody = body["snapshot"] as? [String: Any] {
-      writeShrineSnapshot(snapshotBody)
-      return
-    }
 
     guard message.name == "chaoticaSpeech", let action = body["action"] as? String else { return }
 
@@ -284,7 +137,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     guard let url = urls.first, url.scheme?.lowercased() == "chaotica" else { return }
     let route = url.host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     guard !route.isEmpty else { return }
-    let destination = URL(string: "https://www.tellnolies.app/\(route)")!
+    var destinationParts = URLComponents(string: "https://www.tellnolies.app/\(route)")!
+    destinationParts.queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+    guard let destination = destinationParts.url else { return }
     webView.load(URLRequest(url: destination))
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
@@ -315,20 +170,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     // or image state that can change between deployments and trap the app on
     // its static safety frame.
     revealWebContentWhenOpeningSceneIsReady()
-  }
-
-  private func writeShrineSnapshot(_ raw: [String: Any]) {
-    do {
-      let snapshotData = try JSONSerialization.data(withJSONObject: raw)
-      let snapshot = try JSONDecoder().decode(ShrineDaySnapshot.self, from: snapshotData)
-      let folder = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Application Support/CHAOTICA", isDirectory: true)
-      try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-      let data = try JSONEncoder().encode(snapshot)
-      try data.write(to: folder.appendingPathComponent("shrine-day.json"), options: .atomic)
-    } catch {
-      // Shrine synchronization is optional and must never interrupt CHAOTICA.
-    }
   }
 
   private func revealWebContentWhenOpeningSceneIsReady() {

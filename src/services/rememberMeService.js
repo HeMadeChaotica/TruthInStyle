@@ -60,6 +60,10 @@ function normalizeRow(row = {}) {
     detail,
     location: detail,
     description: row.description || '',
+    label: row.label || '',
+    schedule_kind: row.schedule_kind || (/EVENT\s*\(WORK\)|WORK SCHEDULE/i.test(entryType) ? 'work' : /POP-?UP/i.test(entryType) ? 'popup' : 'event'),
+    series_parent_id: row.series_parent_id || '',
+    recurrence_cancelled: Boolean(row.recurrence_cancelled),
     recurrence_type: row.recurrence_type || 'none',
     recurrence_days: Array.isArray(row.recurrence_days) ? row.recurrence_days : [],
     recurrence_active: Boolean(row.recurrence_active),
@@ -87,10 +91,14 @@ export async function fetchRememberMeEntriesSafe() {
 }
 
 export function groupRememberMeEntriesByDate(rows = [], { daysAhead = 370 } = {}) {
-  return (Array.isArray(rows) ? rows : []).reduce((grouped, row) => {
-    const normalized = normalizeRow(row);
+  const normalizedRows = (Array.isArray(rows) ? rows : []).map(normalizeRow);
+  const exceptionKeys = new Set(normalizedRows
+    .filter((row) => row.series_parent_id && row.date_key)
+    .map((row) => `${row.series_parent_id}|${row.date_key}`));
+  return normalizedRows.reduce((grouped, normalized) => {
     if (!normalized.date_key) return grouped;
-    grouped[normalized.date_key] = [...(grouped[normalized.date_key] || []), normalized];
+    const parentDateReplaced = normalized.recurrence_active && exceptionKeys.has(`${normalized.id}|${normalized.date_key}`);
+    if (!normalized.recurrence_cancelled && !parentDateReplaced) grouped[normalized.date_key] = [...(grouped[normalized.date_key] || []), normalized];
 
     const recurrenceDays = [...new Set((normalized.recurrence_days || []).map((day) => String(day).toLowerCase()))];
     if (normalized.recurrence_type !== 'weekly' || !normalized.recurrence_active || !recurrenceDays.length) return grouped;
@@ -102,6 +110,7 @@ export function groupRememberMeEntriesByDate(rows = [], { daysAhead = 370 } = {}
       candidate.setDate(start.getDate() + offset);
       if (!recurrenceDays.includes(WEEKDAY_KEYS[candidate.getDay()])) continue;
       const dateKey = toLocalDateKey(candidate);
+      if (exceptionKeys.has(`${normalized.id}|${dateKey}`)) continue;
       const derived = {
         ...normalized,
         date_key: dateKey,
@@ -143,6 +152,10 @@ export async function upsertRememberMeEntry(entry) {
     time_value: localSaved.time_value || null,
     detail: localSaved.detail || null,
     description: localSaved.description || null,
+    label: localSaved.label || null,
+    schedule_kind: localSaved.schedule_kind || 'event',
+    series_parent_id: localSaved.series_parent_id || null,
+    recurrence_cancelled: Boolean(localSaved.recurrence_cancelled),
     recurrence_type: localSaved.recurrence_type || 'none',
     recurrence_days: Array.isArray(localSaved.recurrence_days) ? localSaved.recurrence_days : [],
     recurrence_active: Boolean(localSaved.recurrence_active),
@@ -178,4 +191,17 @@ export async function deleteRememberMeEntry(id) {
     throw new Error(`REMEMBER.ME DELETE FAILED: ${res.status} ${body}`);
   }
   return true;
+}
+
+export async function cancelRememberMeOccurrence(entry, dateKey) {
+  return upsertRememberMeEntry({
+    date_key: dateKey,
+    entry_type: entry.entry_type || entry.type || 'EVENT',
+    schedule_kind: entry.schedule_kind || 'event',
+    series_parent_id: entry.original_entry_id || entry.id,
+    recurrence_cancelled: true,
+    recurrence_type: 'none',
+    recurrence_days: [],
+    recurrence_active: false,
+  });
 }

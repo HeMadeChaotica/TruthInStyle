@@ -17,33 +17,34 @@ import {
 import '../../styles/sections/hopewood.css';
 
 const BACKGROUND_URL = '/backgrounds/HOPEWOOD/hopewood-archive-chamber-approved-v7.png';
-const LOOKUP_MODES = [
-  ['date', 'DATE'],
-  ['phrase', 'WORDS'],
-  ['mood', 'FEELING'],
+const SEARCH_CATEGORIES = [
+  ['date', 'DAY'],
+  ['title', 'TITLE OF THE DAY'],
+  ['mood', 'MOOD'],
+  ['era', 'ERA'],
+  ['phrase', 'PHRASE'],
+  ['event', 'EVENT'],
+  ['song', 'SONG'],
 ];
 
-function fieldValue(record, mode) {
+function fieldValues(record, mode) {
   const day = normalizeDayCapsuleRecord(record);
-  return cleanAnalyticsText({
-    date: day.sourceDate,
-    mood: day.mood,
-    era: day.era,
-    lobito: day.lobito,
-    title: day.title,
-    word: day.word,
-  }[mode]);
-}
-
-function searchableText(record) {
-  return JSON.stringify(record).toLocaleLowerCase();
+  const values = {
+    date: [day.sourceDate],
+    title: [day.title],
+    mood: [day.mood],
+    era: [day.era],
+    phrase: [day.word, day.battleCry, ...(day.assuredThoughts || [])],
+    event: [...(day.moments || []), ...(day.schedule || [])],
+    song: [day.headHummer],
+  }[mode] || [];
+  return [...new Set(values.map(cleanAnalyticsText).filter(Boolean))];
 }
 
 export default function HopewoodSection() {
   const [records, setRecords] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
-  const [lookupMode, setLookupMode] = useState('date');
-  const [lookupValue, setLookupValue] = useState('');
+  const [filters, setFilters] = useState(() => Object.fromEntries(SEARCH_CATEGORIES.map(([key]) => [key, ''])));
 
   useEffect(() => {
     const applyArchive = (archive = []) => {
@@ -61,27 +62,32 @@ export default function HopewoodSection() {
     };
   }, []);
 
-  const options = useMemo(() => {
-    if (lookupMode === 'phrase') return [];
-    return [...new Set(records.map((record) => fieldValue(record, lookupMode)).filter(Boolean))]
-      .sort((left, right) => lookupMode === 'date' ? right.localeCompare(left) : left.localeCompare(right));
-  }, [lookupMode, records]);
+  const optionsByCategory = useMemo(() => Object.fromEntries(SEARCH_CATEGORIES.map(([key]) => [
+    key,
+    [...new Set(records.flatMap((record) => fieldValues(record, key)))]
+      .sort((left, right) => key === 'date' ? right.localeCompare(left) : left.localeCompare(right)),
+  ])), [records]);
 
   const matches = useMemo(() => {
-    const query = lookupValue.trim().toLocaleLowerCase();
-    const newest = [...records].reverse();
-    if (!query) return newest;
-    if (lookupMode === 'phrase') return newest.filter((record) => searchableText(record).includes(query));
-    return newest.filter((record) => fieldValue(record, lookupMode).toLocaleLowerCase() === query);
-  }, [lookupMode, lookupValue, records]);
+    const activeFilters = Object.entries(filters).filter(([, value]) => value);
+    return [...records].reverse().filter((record) => activeFilters.every(([key, value]) => (
+      fieldValues(record, key).some((candidate) => candidate.toLocaleLowerCase() === value.toLocaleLowerCase())
+    )));
+  }, [filters, records]);
 
-  const selected = records.find((record) => getHopewoodRecordDate(record) === selectedDate) || matches[0] || records.at(-1) || null;
+  const hasActiveFilters = Object.values(filters).some(Boolean);
+  const selected = matches.find((record) => getHopewoodRecordDate(record) === selectedDate) || matches[0] || (hasActiveFilters ? null : records.at(-1)) || null;
   const day = selected ? normalizeDayCapsuleRecord(selected) : null;
   const artifactUrl = getHopewoodArtifactUrl(selected);
 
-  const chooseMode = (mode) => {
-    setLookupMode(mode);
-    setLookupValue('');
+  const updateFilter = (key, value) => {
+    const nextFilters = { ...filters, [key]: value };
+    setFilters(nextFilters);
+    const match = [...records].reverse().find((record) => Object.entries(nextFilters)
+      .filter(([, filterValue]) => filterValue)
+      .every(([filterKey, filterValue]) => fieldValues(record, filterKey)
+        .some((candidate) => candidate.toLocaleLowerCase() === filterValue.toLocaleLowerCase())));
+    if (match) setSelectedDate(getHopewoodRecordDate(match));
   };
 
   return (
@@ -101,20 +107,17 @@ export default function HopewoodSection() {
 
         <aside className="hopewood-lookup" aria-label="Find a Day Capsule">
           <div className="hopewood-drawer-content">
-            <div className="hopewood-search-row">
-              <label><span className="sr-only">SEARCH HOPEWOOD</span>{lookupMode === 'phrase'
-                ? <input type="search" value={lookupValue} onChange={(event) => setLookupValue(event.target.value)} placeholder="SEARCH HOPEWOOD" aria-label="Search Hopewood words" />
-                : <select value={lookupValue} onChange={(event) => setLookupValue(event.target.value)} aria-label={`${lookupMode} value`}><option value="">SEARCH HOPEWOOD · ALL</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select>}</label>
-              <div className="hopewood-mode-tabs">{LOOKUP_MODES.map(([value, label]) => <button type="button" key={value} className={lookupMode === value ? 'active' : ''} onClick={() => chooseMode(value)}>{label}</button>)}</div>
+            <div className="hopewood-search-primary">
+              {SEARCH_CATEGORIES.slice(0, 2).map(([key, label]) => (
+                <label key={key}><span>{label}</span><select value={filters[key]} onChange={(event) => updateFilter(key, event.target.value)} aria-label={`Search Hopewood by ${label}`}><option value="">ALL {label}</option>{optionsByCategory[key].map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+              ))}
             </div>
-            <div className="hopewood-results" aria-live="polite">
-            {matches.length ? matches.map((record) => {
-              const date = getHopewoodRecordDate(record);
-              const recordDay = normalizeDayCapsuleRecord(record);
-              const thumb = getHopewoodArtifactUrl(record);
-              return <button type="button" className={date === getHopewoodRecordDate(selected) ? 'is-active' : ''} key={record.id || date} onClick={() => setSelectedDate(date)}>{thumb ? <span className="hopewood-result-thumb" style={{ backgroundImage: `url(${thumb})` }} /> : <span className="hopewood-result-thumb is-empty">✦</span>}<strong>{recordDay.title || 'UNTITLED DAY'}</strong><span>{recordDay.displayDate || date}</span></button>;
-            }) : null}
+            <div className="hopewood-search-crystals" aria-live="polite">
+              {SEARCH_CATEGORIES.slice(2).map(([key, label]) => (
+                <label key={key}><span>{label}</span><select value={filters[key]} onChange={(event) => updateFilter(key, event.target.value)} aria-label={`Search Hopewood by ${label}`}><option value="">ALL</option>{optionsByCategory[key].map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+              ))}
             </div>
+            {hasActiveFilters && matches.length > 1 ? <select className="hopewood-match-picker" value={getHopewoodRecordDate(selected)} onChange={(event) => setSelectedDate(event.target.value)} aria-label="Matching sealed days">{matches.map((record) => { const recordDay = normalizeDayCapsuleRecord(record); const date = getHopewoodRecordDate(record); return <option key={record.id || date} value={date}>{recordDay.displayDate || date} · {recordDay.title}</option>; })}</select> : null}
           </div>
         </aside>
       </SectionOverlay>

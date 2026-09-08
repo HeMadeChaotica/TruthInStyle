@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
-import { getChaoticaDailyWord, isLegacyMadeUpWord } from '../../lib/theAssurer/chaoticaDailyLexicon';
+import { fetchChaoticaWordMeaning, getChaoticaDailyWord, isLegacyMadeUpWord } from '../../lib/theAssurer/chaoticaDailyLexicon';
 import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
 import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
@@ -96,6 +96,7 @@ function buildAssurerDayPayload({
   headHummer,
   wordOfDay,
   wordDefinition,
+  wordExample,
   assuredThoughts,
   pennyQuestions,
   battleCry,
@@ -119,6 +120,7 @@ function buildAssurerDayPayload({
     source: 'THE.ASSURER WORD OF THE DAY',
     word: wordOfDay,
     definition: wordDefinition,
+    example: wordExample,
   };
   const weatherPayload = {
     source: 'THE.ASSURER WEATHER',
@@ -508,6 +510,7 @@ export default function TheAssurerSection() {
   const [expandedWidget, setExpandedWidget] = useState(null);
   const [wordOfDay, setWordOfDay] = useState(defaultDailyWord.word);
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
+  const [wordExample, setWordExample] = useState(defaultDailyWord.example || '');
   const [assuredThoughts, setAssuredThoughts] = useState('');
   const [pennyQuestions, setPennyQuestions] = useState([]);
   const [storageLoaded, setStorageLoaded] = useState(false);
@@ -570,6 +573,7 @@ export default function TheAssurerSection() {
       } else {
         setWordDefinition('');
       }
+      setWordExample(typeof dayWord?.example === 'string' && dayWord.example.trim() ? dayWord.example : (typeof savedWord?.example === 'string' ? savedWord.example : defaultDailyWord.example || ''));
     } catch {
       setPennyQuestions(createDailyPennyQuestions());
       // Keep the blank title and deterministic daily word when local storage is unavailable.
@@ -577,6 +581,17 @@ export default function TheAssurerSection() {
       setStorageLoaded(true);
     }
   }, [defaultDailyWord, storageDate]);
+
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      const meaning = await fetchChaoticaWordMeaning(wordOfDay);
+      if (!active) return;
+      if (meaning.definition) setWordDefinition(meaning.definition);
+      if (meaning.example) setWordExample(meaning.example);
+    }, 350);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [wordOfDay]);
 
   useEffect(() => {
     if (!storageLoaded) {
@@ -640,11 +655,12 @@ export default function TheAssurerSection() {
       window.localStorage.setItem(`${ASSURER_WORD_STORAGE_KEY}:${storageDate}`, JSON.stringify({
         word: wordOfDay,
         definition: wordDefinition,
+        example: wordExample,
       }));
     } catch {
       // Local storage is optional for this native panel.
     }
-  }, [storageDate, storageLoaded, wordDefinition, wordOfDay]);
+  }, [storageDate, storageLoaded, wordDefinition, wordExample, wordOfDay]);
 
   const loadWeather = async ({ displayLabel, coordinates }) => {
     setWeatherDisplayLabel(displayLabel);
@@ -767,7 +783,7 @@ export default function TheAssurerSection() {
     weekStrip: 'THICC.TIME WEEK',
     word: 'WORD OF THE DAY',
     thoughts: 'ASSURED THOUGHTS',
-    dailyOrbit: 'ASSURER SIGNALS',
+    dailyOrbit: 'ICK-O-METER',
     headHummer: 'HEAD HUMMER',
     moments: 'MOMENT FLIP CARDS',
     mealLog: 'MEAL LOG',
@@ -848,6 +864,7 @@ export default function TheAssurerSection() {
               onChange={(event) => setWordDefinition(event.target.value)}
               aria-label="WORD OF THE DAY DEFINITION"
             />
+            <label>USED IN A SENTENCE<textarea className="assurer-control assurer-expanded-example-input" value={wordExample} onChange={(event) => setWordExample(event.target.value)} aria-label="WORD OF THE DAY USED IN A SENTENCE" /></label>
           </div>
         );
       case 'thoughts':
@@ -913,6 +930,7 @@ export default function TheAssurerSection() {
     headHummer,
     wordOfDay,
     wordDefinition,
+    wordExample,
     assuredThoughts,
     pennyQuestions,
     battleCry: dailyBattleCry,
@@ -937,6 +955,7 @@ export default function TheAssurerSection() {
     headHummer,
     wordOfDay,
     wordDefinition,
+    wordExample,
     assuredThoughts,
     pennyQuestions,
     dailyBattleCry,
@@ -977,7 +996,7 @@ export default function TheAssurerSection() {
                 <div className="assurer-title-meta">
                   <time dateTime={date}>{date}</time>
                   <span>TELL NO LIES</span>
-                  <span>CHAOTICA DAY #{chaoticaDayNumber}</span>
+                  <span>CHAOTICA DAY #{chaoticaDayNumber || 1}</span>
                 </div>
                 <input
                   id="assurer-title-of-day"
@@ -1139,6 +1158,9 @@ export default function TheAssurerSection() {
                   onChange={(event) => setWordDefinition(event.target.value)}
                 />
               </AssurerField>
+              <AssurerField id="assurer-word-example" label="USED IN A SENTENCE:">
+                <textarea id="assurer-word-example" className="assurer-control assurer-example-input" value={wordExample} onChange={(event) => setWordExample(event.target.value)} />
+              </AssurerField>
             </div>
           </article>
 
@@ -1147,12 +1169,12 @@ export default function TheAssurerSection() {
               className="assurer-expand-button"
               type="button"
               onClick={() => openExpandedWidget('dailyOrbit')}
-              aria-label="EXPAND DAILY ORBIT"
+              aria-label="EXPAND ICK-O-METER"
             >
               ⤢
             </button>
             <div className="assurer-widget-content assurer-daily-content">
-              <strong>ASSURER SIGNALS</strong>
+              <strong>ICK-O-METER</strong>
               <AssurerField id="assurer-mood" label="MOOD">
                 <AssurerSelect id="assurer-mood" value={mood} onChange={setMood} options={moodOptions} />
               </AssurerField>

@@ -87,11 +87,14 @@
   overflow: hidden !important;
 }
 
-.hopewood-drawer-content { display: grid; grid-template-rows: 31% minmax(0, 1fr); gap: 8%; width: 100%; height: 100%; padding: 0; }
-.hopewood-search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2%; align-items: center; padding: 0 4%; }
-.hopewood-search-row label { display: block; min-width: 0; }
-.hopewood-search-row input,
-.hopewood-search-row select {
+.hopewood-drawer-content { position:relative; display:grid; grid-template-rows:31% minmax(0,1fr); gap:8%; width:100%; height:100%; padding:0 4%; }
+.hopewood-search-primary { display:grid; grid-template-columns:1fr 1.45fr; gap:4%; align-items:center; }
+.hopewood-search-crystals { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3.2%; align-items:center; }
+.hopewood-search-primary label,.hopewood-search-crystals label{display:grid;gap:2px;min-width:0;text-align:center}
+.hopewood-search-primary label>span,.hopewood-search-crystals label>span{color:#f8bdd3!important;font-size:clamp(.5rem,.62vw,.75rem);letter-spacing:.08em}
+.hopewood-search-primary select,
+.hopewood-search-crystals select,
+.hopewood-match-picker {
   width: 100%;
   min-height: clamp(28px, 3.2vh, 42px);
   box-sizing: border-box;
@@ -106,55 +109,8 @@
 }
 .hopewood-page ::placeholder { color: #d993ae !important; opacity: 1; }
 
-.hopewood-mode-tabs { display: flex; gap: clamp(.25rem, .45vw, .5rem); }
-.hopewood-mode-tabs button {
-  min-height: clamp(28px, 3.2vh, 42px);
-  padding: 0 clamp(.48rem, .8vw, .9rem);
-  border: 1px solid rgba(255, 185, 216, .42);
-  border-radius: 999px;
-  background: rgba(20, 7, 22, .58);
-  color: #eaaac1;
-  cursor: pointer;
-  font: inherit;
-  font-size: clamp(.52rem, .61vw, .72rem);
-  letter-spacing: .06em;
-}
-.hopewood-mode-tabs button.active { border-color: #ffc3da; background: rgba(119, 43, 82, .76); color: #ffe5ee; box-shadow: 0 0 12px rgba(239, 133, 188, .28); }
-
-.hopewood-results {
-  display: grid !important;
-  grid-auto-flow: column !important;
-  grid-auto-columns: calc((100% - 4 * clamp(.45rem, .85vw, .9rem)) / 5) !important;
-  gap: clamp(.45rem, .85vw, .9rem) !important;
-  min-height: 0;
-  padding: 0 3.9% .2rem !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scrollbar-color: #a84e78 transparent;
-  scrollbar-width: thin;
-}
-.hopewood-results > button {
-  display: grid !important;
-  grid-template-columns: 42% minmax(0, 1fr) !important;
-  grid-template-rows: 1fr auto !important;
-  column-gap: 6%;
-  align-items: center;
-  min-width: 0;
-  padding: 4% !important;
-  border: 1px solid rgba(255, 187, 216, .34) !important;
-  border-radius: 12px !important;
-  background: rgba(24, 8, 27, .52) !important;
-  color: #f3b2ca !important;
-  cursor: pointer;
-  text-align: left;
-  overflow: hidden;
-}
-.hopewood-results > button:hover,
-.hopewood-results > button.is-active { border-color: #ffc0d7 !important; background: rgba(92, 31, 67, .72) !important; box-shadow: inset 0 0 12px rgba(244, 138, 190, .12); }
-.hopewood-result-thumb { grid-row: 1 / 3; width: 100%; aspect-ratio: 1.55; border-radius: 7px; background-position: center; background-repeat: no-repeat; background-size: cover; }
-.hopewood-result-thumb.is-empty { display: grid; place-items: center; background: rgba(64, 22, 51, .68); color: #f2b0c8; }
-.hopewood-results strong { min-width: 0; overflow: hidden; color: #f8bdd3; font-size: clamp(.48rem, .58vw, .68rem); text-overflow: ellipsis; white-space: nowrap; }
-.hopewood-results > button > span:last-child { color: #dda0b7 !important; font-size: clamp(.43rem, .51vw, .6rem); }
+.hopewood-search-crystals select{min-height:clamp(32px,4.2vh,52px);border-radius:12px;text-align:center;background:rgba(19,6,21,.38)}
+.hopewood-match-picker{position:absolute;left:31%;top:-25%;width:38%;border-radius:999px;background:rgba(19,6,21,.86)}
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
