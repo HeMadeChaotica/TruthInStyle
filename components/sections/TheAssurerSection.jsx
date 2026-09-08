@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
-import { fetchChaoticaWordMeaning, getChaoticaDailyWord, isLegacyMadeUpWord } from '../../lib/theAssurer/chaoticaDailyLexicon';
+import { fetchChaoticaWordMeaning, getChaoticaDailyWord } from '../../lib/theAssurer/chaoticaDailyLexicon';
 import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
 import { getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
@@ -97,6 +97,7 @@ function buildAssurerDayPayload({
   wordOfDay,
   wordDefinition,
   wordExample,
+  wordVerification,
   assuredThoughts,
   pennyQuestions,
   battleCry,
@@ -121,6 +122,8 @@ function buildAssurerDayPayload({
     word: wordOfDay,
     definition: wordDefinition,
     example: wordExample,
+    verified: wordVerification?.verified === true,
+    sourceLabel: wordVerification?.source || '',
   };
   const weatherPayload = {
     source: 'THE.ASSURER WEATHER',
@@ -511,6 +514,7 @@ export default function TheAssurerSection() {
   const [wordOfDay, setWordOfDay] = useState(defaultDailyWord.word);
   const [wordDefinition, setWordDefinition] = useState(defaultDailyWord.definition);
   const [wordExample, setWordExample] = useState(defaultDailyWord.example || '');
+  const [wordVerification, setWordVerification] = useState({ verified: Boolean(defaultDailyWord.definition), source: defaultDailyWord.source || '' });
   const [assuredThoughts, setAssuredThoughts] = useState('');
   const [pennyQuestions, setPennyQuestions] = useState([]);
   const [storageLoaded, setStorageLoaded] = useState(false);
@@ -557,23 +561,21 @@ export default function TheAssurerSection() {
       setPennyQuestions(savedPennyQuestions.length === 2 ? savedPennyQuestions : createDailyPennyQuestions());
 
       const dayWord = savedDay?.wordOfDay && typeof savedDay.wordOfDay === 'object' ? savedDay.wordOfDay : null;
-      let resolvedWord = defaultDailyWord.word;
-      if (typeof dayWord?.word === 'string' && !isLegacyMadeUpWord(dayWord.word)) {
-        resolvedWord = dayWord.word;
-      } else if (typeof savedWord?.word === 'string' && !isLegacyMadeUpWord(savedWord.word)) {
-        resolvedWord = savedWord.word;
-      }
+      const expectedWord = defaultDailyWord.word.trim().toLowerCase();
+      const savedMeaning = [dayWord, savedWord].find((entry) => (
+        entry?.verified === true
+        && String(entry?.word || '').trim().toLowerCase() === expectedWord
+        && typeof entry?.definition === 'string'
+        && entry.definition.trim()
+      ));
+      const resolvedWord = defaultDailyWord.word;
       setWordOfDay(resolvedWord);
-      if (typeof dayWord?.definition === 'string' && dayWord.definition.trim() && !isLegacyMadeUpWord(dayWord.word)) {
-        setWordDefinition(dayWord.definition);
-      } else if (typeof savedWord?.definition === 'string' && savedWord.definition.trim() && !isLegacyMadeUpWord(savedWord.word)) {
-        setWordDefinition(savedWord.definition);
-      } else if (resolvedWord.trim().toLowerCase() === defaultDailyWord.word.trim().toLowerCase()) {
-        setWordDefinition(defaultDailyWord.definition);
-      } else {
-        setWordDefinition('');
-      }
-      setWordExample(typeof dayWord?.example === 'string' && dayWord.example.trim() ? dayWord.example : (typeof savedWord?.example === 'string' ? savedWord.example : defaultDailyWord.example || ''));
+      setWordDefinition(savedMeaning?.definition || defaultDailyWord.definition || '');
+      setWordExample(savedMeaning?.example || defaultDailyWord.example || '');
+      setWordVerification({
+        verified: Boolean(savedMeaning?.definition || defaultDailyWord.definition),
+        source: savedMeaning?.source || defaultDailyWord.source || '',
+      });
     } catch {
       setPennyQuestions(createDailyPennyQuestions());
       // Keep the blank title and deterministic daily word when local storage is unavailable.
@@ -589,6 +591,7 @@ export default function TheAssurerSection() {
       if (!active) return;
       if (meaning.definition) setWordDefinition(meaning.definition);
       if (meaning.example) setWordExample(meaning.example);
+      setWordVerification({ verified: meaning.verified === true, source: meaning.source || '' });
     }, 350);
     return () => { active = false; window.clearTimeout(timer); };
   }, [wordOfDay]);
@@ -656,11 +659,13 @@ export default function TheAssurerSection() {
         word: wordOfDay,
         definition: wordDefinition,
         example: wordExample,
+        verified: wordVerification.verified,
+        source: wordVerification.source,
       }));
     } catch {
       // Local storage is optional for this native panel.
     }
-  }, [storageDate, storageLoaded, wordDefinition, wordExample, wordOfDay]);
+  }, [storageDate, storageLoaded, wordDefinition, wordExample, wordOfDay, wordVerification]);
 
   const loadWeather = async ({ displayLabel, coordinates }) => {
     setWeatherDisplayLabel(displayLabel);
@@ -855,16 +860,16 @@ export default function TheAssurerSection() {
             <input
               className="assurer-control assurer-expanded-word-input"
               value={wordOfDay}
-              onChange={(event) => setWordOfDay(event.target.value)}
+              readOnly
               aria-label="WORD OF THE DAY"
             />
             <textarea
               className="assurer-control assurer-expanded-definition-input"
               value={wordDefinition}
-              onChange={(event) => setWordDefinition(event.target.value)}
+              readOnly
               aria-label="WORD OF THE DAY DEFINITION"
             />
-            <label>USED IN A SENTENCE<textarea className="assurer-control assurer-expanded-example-input" value={wordExample} onChange={(event) => setWordExample(event.target.value)} aria-label="WORD OF THE DAY USED IN A SENTENCE" /></label>
+            <label>USED IN A SENTENCE<textarea className="assurer-control assurer-expanded-example-input" value={wordExample} readOnly aria-label="WORD OF THE DAY USED IN A SENTENCE" /></label>
           </div>
         );
       case 'thoughts':
@@ -931,6 +936,7 @@ export default function TheAssurerSection() {
     wordOfDay,
     wordDefinition,
     wordExample,
+    wordVerification,
     assuredThoughts,
     pennyQuestions,
     battleCry: dailyBattleCry,
@@ -956,6 +962,7 @@ export default function TheAssurerSection() {
     wordOfDay,
     wordDefinition,
     wordExample,
+    wordVerification,
     assuredThoughts,
     pennyQuestions,
     dailyBattleCry,
@@ -1147,7 +1154,7 @@ export default function TheAssurerSection() {
                   id="assurer-word-of-day"
                   className="assurer-control"
                   value={wordOfDay}
-                  onChange={(event) => setWordOfDay(event.target.value)}
+                  readOnly
                 />
               </AssurerField>
               <AssurerField id="assurer-word-definition" label="DEFINITION:">
@@ -1155,11 +1162,11 @@ export default function TheAssurerSection() {
                   id="assurer-word-definition"
                   className="assurer-control assurer-definition-input"
                   value={wordDefinition}
-                  onChange={(event) => setWordDefinition(event.target.value)}
+                  readOnly
                 />
               </AssurerField>
               <AssurerField id="assurer-word-example" label="USED IN A SENTENCE:">
-                <textarea id="assurer-word-example" className="assurer-control assurer-example-input" value={wordExample} onChange={(event) => setWordExample(event.target.value)} />
+                <textarea id="assurer-word-example" className="assurer-control assurer-example-input" value={wordExample} readOnly />
               </AssurerField>
             </div>
           </article>
