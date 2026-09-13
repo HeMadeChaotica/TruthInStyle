@@ -1215,9 +1215,10 @@ export default function TheAssurerSection() {
           <article className="assurer-widget assurer-head-hummer" data-slot="09">
             <button className="assurer-expand-button" type="button" onClick={() => openExpandedWidget('headHummer')} aria-label="EXPAND HEAD HUMMER">⤢</button>
             <div className="assurer-widget-content assurer-head-hummer-content">
-              <strong>HEAD HUMMER</strong>
-              {headHummer?.image ? <Image src={headHummer.image} alt="" width={72} height={72} unoptimized /> : <span className="assurer-head-hummer-empty">SELECT TODAY’S SONG</span>}
-              <span className="assurer-head-hummer-copy"><b>{headHummer?.name || 'NO SONG SELECTED'}</b><small>{headHummer?.artist || 'MANUAL SPOTIFY SELECTION'}</small></span>
+              <span className="assurer-head-hummer-art">
+                {headHummer?.image ? <Image src={headHummer.image} alt={`${headHummer.album || headHummer.name} cover`} width={96} height={96} unoptimized /> : <span className="assurer-head-hummer-empty" aria-hidden="true">♫</span>}
+              </span>
+              <span className="assurer-head-hummer-copy"><strong>HEAD HUMMER</strong><b>{headHummer?.name || 'SELECT TODAY’S SONG'}</b><small>{headHummer?.artist || 'NO SONG SELECTED'}</small></span>
             </div>
           </article>
 
