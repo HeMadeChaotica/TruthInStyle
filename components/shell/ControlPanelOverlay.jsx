@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { CONTROL_GLYPHS as RAIL_ITEMS } from '../../lib/routes/controlGlyphs';
+import ControlGlyph from '../shared/ControlGlyph';
 import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealCurrentDayCapsuleToHopewood, setStoredSummationActiveDay } from '../../src/services/summationService';
 import { fetchHopewoodSummationArchive, findHopewoodSummationByDate, getHopewoodRecordDate } from '../../src/services/hopewoodService';
 
@@ -9,27 +11,6 @@ const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
 const OPEN_EYE_EVENT_NAME = 'truthinstyle-open-eye-of-truth';
 const SUMMATE_RENDER_EVENT_NAME = 'truthinstyle-summation-render-request';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
-
-const RAIL_ITEMS = [
-  { key: 'entrance', src: '/opening/chaotica-opening-entrance-closed.png', alt: 'EXIT TO ENTRANCE', type: 'route' },
-  { key: 'home', src: '/ui/glyphs/control%20panel/glyph-home-crystallization-v2.png', alt: 'HOME / THE.ASSURER', type: 'route' },
-  { key: 'back', src: '/ui/glyphs/control%20panel/glyph-back-crystallization-v3.png', alt: 'Back', type: 'route' },
-  { key: 'its-getting-thicc', src: '/ui/glyphs/control%20panel/glyph-its-getting-thicc-crystallization-v2.png', alt: 'ITS.GETTING.THICC', type: 'route' },
-  { key: 'thicc-fitt', src: '/ui/glyphs/control%20panel/glyph-thicc-fitt-crystallization-v2.png', alt: 'THICC.FITT', type: 'route' },
-  { key: 'da-eater', src: '/ui/glyphs/control%20panel/glyph-da-eater-crystallization-v3.png', alt: 'DA.EATER', type: 'route' },
-  { key: 'remember-me', src: '/ui/glyphs/control%20panel/glyph-remember-me-crystallization-v2.png', alt: 'REMEMBER.ME', type: 'route' },
-  { key: 'hopewood', src: '/ui/glyphs/control%20panel/glyph-hopewood-crystallization-v2.png', alt: 'HOPEWOOD', type: 'route' },
-  { key: '525600', src: '/ui/glyphs/control%20panel/glyph-525600-crystallization-v3.png', alt: '525600', type: 'route' },
-  { key: 'the-summation', src: '/ui/glyphs/control%20panel/glyph-the-summation.png', alt: 'THE.SUMMATION', type: 'route' },
-  { key: 'clock-it', src: '/ui/glyphs/control%20panel/glyph-clock-it-crystallization-v2.png', alt: 'CLOCK.IT', type: 'route' },
-  { key: 'eye-of-truth', src: '/ui/glyphs/triggers/glyph-eye-of-truth.png', alt: 'Eye of Truth', type: 'sacred' },
-  { key: 'crystal-wand-summate', src: '/ui/glyphs/triggers/glyph-control-wand.png', alt: 'Crystal Wand / Summate', type: 'sacred' },
-  { key: 'so-let-it-be-done', src: '/ui/glyphs/triggers/glyph-so-let-it-be-done.png', alt: 'So Let It Be Done', type: 'sacred' },
-];
-
-function RailMark({ item }) {
-  return <img src={item.src} alt="" draggable={false} aria-hidden="true" />;
-}
 
 function pad(value) {
   return String(value).padStart(2, '0');
@@ -338,7 +319,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
           {RAIL_ITEMS.map((item) => (
             <div key={item.key} className="tis-rail-control">
               <button type="button" className={`tis-glyph-button tis-rail-glyph ${item.className || ''}`} ref={item.key === 'eye-of-truth' ? eyeButtonRef : null} onClick={() => void handleRailItem(item)} aria-label={item.alt} title={item.alt}>
-                <RailMark item={item} />
+                <ControlGlyph item={item} />
                 <span className="tis-rail-label" aria-hidden="true">{item.alt}</span>
               </button>
             </div>

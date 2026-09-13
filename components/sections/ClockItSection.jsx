@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import ClockItLegend from './ClockItLegend';
 import '../../styles/sections/clock-it.css';
 import {
   CLOCK_IT_REGISTRY,
@@ -10,22 +11,6 @@ import {
 } from '../../lib/dropdowns/clockItRegistry';
 
 const sections = [...new Set(Object.values(CLOCK_IT_REGISTRY).map((entry) => entry.section))];
-const LEGEND_SYSTEMS = [
-  ['THE.ASSURER', 'DAILY TRUTH, MOOD, WORD, WEATHER, AND DAY TITLE'],
-  ['DA.EATER', 'MEALS, MACROS, SUPPLEMENTS, CRAVINGS, TREATS, AND DA.REUP'],
-  ['THICC.FITT', 'TRAINING, BODY RECEIPTS, SLEEP, VAULT, AND WORKOUT MUSIC'],
-  ['REMEMBER.ME', 'LIFE CALENDAR, WORK, POP-UPS, WORKOUTS, AND STANDOUT MOMENTS'],
-  ['THE.SUMMATION', 'AUTHENTICATED DAY RENDER AND FINAL JUDGMENT'],
-  ['HOPEWOOD', 'SEARCHABLE ARCHIVE OF SEALED DAYS'],
-  ['525600', 'LONG-RANGE PATTERNS AND THE YEAR’S VERDICT'],
-  ['CLOCK.IT', 'THE CONTROL REGISTRY FOR EDITABLE APP OPTIONS'],
-];
-const LEGEND_UTILITIES = [
-  ['EYE OF TRUTH', 'CHOOSE THE ACTIVE DAY WITHOUT CHANGING SAVED HISTORY'],
-  ['CRYSTAL WAND', 'SEND THE ACTIVE DAY TO THE AUTHENTICATED SUMMATION RENDERER'],
-  ['SO LET IT BE DONE', 'SEAL THE COMPLETED DAY INTO HOPEWOOD'],
-  ['LIFE STAFF', 'OPEN THE NATIVE APP AND SIGNAL DAILY INPUT TIMES'],
-];
 
 function serializeValues(definition) {
   if (definition.type === 'colors') {
@@ -125,6 +110,7 @@ function RegistryEditor({ registryKey, onSaved }) {
 }
 
 export default function ClockItSection() {
+  const [view, setView] = useState('legend');
   const [activeSection, setActiveSection] = useState(sections[0]);
   const keys = useMemo(() => Object.keys(CLOCK_IT_REGISTRY).filter((key) => CLOCK_IT_REGISTRY[key].section === activeSection), [activeSection]);
   const [status, setStatus] = useState('');
@@ -140,28 +126,25 @@ export default function ClockItSection() {
         <aside className="clockit-art" aria-hidden="true" />
         <main className="clockit-controls">
           <header className="clockit-header">
-            <div><span>CHAOTICA CONTROL ARCHIVE</span><h1>{activeSection} DROPDOWNS</h1></div>
-            <label>
+            <div><span>CLOCK.IT</span><h1>{view === 'legend' ? 'LEGEND BOOK' : `${activeSection} OPTIONS`}</h1></div>
+            {view === 'options' ? <label>
               <span>CHOOSE APP SECTION</span>
               <select value={activeSection} onChange={(event) => chooseSection(event.target.value)}>
-                {sections.map((section) => <option key={section}>{section}</option>)}
+                {sections.map((section) => <option key={section} value={section}>{section === 'LOCKED SYSTEM' ? 'FIXED CHOICES' : section}</option>)}
               </select>
-            </label>
+            </label> : null}
           </header>
+          <nav className="clockit-book-tabs" aria-label="CLOCK.IT views">
+            <button type="button" aria-pressed={view === 'legend'} onClick={() => setView('legend')}>LEGEND BOOK</button>
+            <button type="button" aria-pressed={view === 'options'} onClick={() => setView('options')}>EDIT APP OPTIONS</button>
+          </nav>
+          {view === 'legend' ? <ClockItLegend /> : <>
           <p className="clockit-section-note">Each dropdown is separate. Edit only the field you intend to change.</p>
           <div className="clockit-section-grid">
             {keys.map((key) => <RegistryEditor key={key} registryKey={key} onSaved={setStatus} />)}
           </div>
-          {activeSection === 'LOCKED SYSTEM' ? (
-            <section className="clockit-legend-book" aria-label="CHAOTICA legend book">
-              <header><span>REFERENCE + REPAIR MAP</span><h2>LEGEND BOOK</h2></header>
-              <div className="clockit-legend-columns">
-                <div><h3>SYSTEMS</h3>{LEGEND_SYSTEMS.map(([name, description]) => <dl key={name}><dt>{name}</dt><dd>{description}</dd></dl>)}</div>
-                <div><h3>GLYPHS + UTILITIES</h3>{LEGEND_UTILITIES.map(([name, description]) => <dl key={name}><dt>{name}</dt><dd>{description}</dd></dl>)}<p><strong>IF A VALUE IS WRONG:</strong> CHOOSE ITS APP SECTION ABOVE, EDIT ONLY THAT CONTROL, THEN SAVE. RESTORE DEFAULT REVERSES ONLY THAT CONTROL.</p></div>
-              </div>
-            </section>
-          ) : null}
           {status ? <p className="clockit-status" role="status">{status}</p> : null}
+          </>}
         </main>
       </div>
     </section>

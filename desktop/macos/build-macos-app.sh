@@ -32,7 +32,7 @@ swiftc "$DESKTOP_ROOT/TruthInStyle/Sources/main.swift" \
   -o "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
 cp "$DESKTOP_ROOT/TruthInStyle/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
-cp "$ROOT/public/icons/CHAOTICA.icns" "$APP_BUNDLE/Contents/Resources/CHAOTICA.icns"
+cp "$DESKTOP_ROOT/TruthInStyle/Resources/CHAOTICA.icns" "$APP_BUNDLE/Contents/Resources/CHAOTICA.icns"
 cp "$ROOT/public/opening/chaotica-opening-dormant-v1.png" "$APP_BUNDLE/Contents/Resources/OpeningGate.png"
 sign_bundle "$APP_BUNDLE"
 
@@ -42,7 +42,7 @@ swiftc "$DESKTOP_ROOT/ChaoticaShrine/Sources/main.swift" \
   -o "$STAFF_BUNDLE/Contents/MacOS/$STAFF_NAME"
 
 cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/Info.plist" "$STAFF_BUNDLE/Contents/Info.plist"
-cp "$ROOT/public/icons/CHAOTICA.icns" "$STAFF_BUNDLE/Contents/Resources/CHAOTICA.icns"
+cp "$DESKTOP_ROOT/TruthInStyle/Resources/CHAOTICA.icns" "$STAFF_BUNDLE/Contents/Resources/CHAOTICA.icns"
 cp "$DESKTOP_ROOT/ChaoticaShrine/Resources/HopewoodLifeStaff-v2.png" "$STAFF_BUNDLE/Contents/Resources/HopewoodLifeStaff-v2.png"
 sign_bundle "$STAFF_BUNDLE"
 

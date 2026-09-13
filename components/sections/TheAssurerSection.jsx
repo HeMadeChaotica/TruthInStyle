@@ -352,9 +352,9 @@ function AssurerMealRows({ meals, limit, expanded = false }) {
   );
 }
 
-function AssurerField({ id, label, children }) {
+function AssurerField({ id, label, children, className = '' }) {
   return (
-    <label className="assurer-field" htmlFor={id}>
+    <label className={`assurer-field ${className}`} htmlFor={id}>
       <span>{label}</span>
       {children}
     </label>
@@ -857,19 +857,30 @@ export default function TheAssurerSection() {
       case 'word':
         return (
           <div className="assurer-expanded-word">
-            <input
-              className="assurer-control assurer-expanded-word-input"
-              value={wordOfDay}
-              readOnly
-              aria-label="WORD OF THE DAY"
-            />
-            <textarea
-              className="assurer-control assurer-expanded-definition-input"
-              value={wordDefinition}
-              readOnly
-              aria-label="WORD OF THE DAY DEFINITION"
-            />
-            <label>USED IN A SENTENCE<textarea className="assurer-control assurer-expanded-example-input" value={wordExample} readOnly aria-label="WORD OF THE DAY USED IN A SENTENCE" /></label>
+            <div className="assurer-expanded-word-left">
+              <label>
+                <span>WORD</span>
+                <input
+                  className="assurer-control assurer-expanded-word-input"
+                  value={wordOfDay}
+                  readOnly
+                  aria-label="WORD OF THE DAY"
+                />
+              </label>
+              <label>
+                <span>DEFINITION</span>
+                <textarea
+                  className="assurer-control assurer-expanded-definition-input"
+                  value={wordDefinition}
+                  readOnly
+                  aria-label="WORD OF THE DAY DEFINITION"
+                />
+              </label>
+            </div>
+            <label className="assurer-expanded-word-right">
+              <span>USED IN A SENTENCE</span>
+              <textarea className="assurer-control assurer-expanded-example-input" value={wordExample} readOnly aria-label="WORD OF THE DAY USED IN A SENTENCE" />
+            </label>
           </div>
         );
       case 'thoughts':
@@ -1149,25 +1160,29 @@ export default function TheAssurerSection() {
             </button>
             <div className="assurer-widget-content assurer-word-content">
               <strong>WORD OF THE DAY</strong>
-              <AssurerField id="assurer-word-of-day" label="WORD:">
-                <input
-                  id="assurer-word-of-day"
-                  className="assurer-control"
-                  value={wordOfDay}
-                  readOnly
-                />
-              </AssurerField>
-              <AssurerField id="assurer-word-definition" label="DEFINITION:">
-                <textarea
-                  id="assurer-word-definition"
-                  className="assurer-control assurer-definition-input"
-                  value={wordDefinition}
-                  readOnly
-                />
-              </AssurerField>
-              <AssurerField id="assurer-word-example" label="USED IN A SENTENCE:">
-                <textarea id="assurer-word-example" className="assurer-control assurer-example-input" value={wordExample} readOnly />
-              </AssurerField>
+              <div className="assurer-word-two-column">
+                <div className="assurer-word-left-column">
+                  <AssurerField id="assurer-word-of-day" label="WORD:">
+                    <input
+                      id="assurer-word-of-day"
+                      className="assurer-control"
+                      value={wordOfDay}
+                      readOnly
+                    />
+                  </AssurerField>
+                  <AssurerField id="assurer-word-definition" label="DEFINITION:">
+                    <textarea
+                      id="assurer-word-definition"
+                      className="assurer-control assurer-definition-input"
+                      value={wordDefinition}
+                      readOnly
+                    />
+                  </AssurerField>
+                </div>
+                <AssurerField id="assurer-word-example" label="USED IN A SENTENCE:" className="assurer-word-right-column">
+                  <textarea id="assurer-word-example" className="assurer-control assurer-example-input" value={wordExample} readOnly />
+                </AssurerField>
+              </div>
             </div>
           </article>
 
@@ -1245,7 +1260,7 @@ export default function TheAssurerSection() {
         {expandedWidget ? (
           <div className="assurer-expanded-backdrop" role="presentation" onClick={closeExpandedWidget}>
             <section
-              className="assurer-expanded-panel"
+              className={`assurer-expanded-panel ${expandedWidget === 'word' ? 'assurer-expanded-word-panel' : ''}`}
               role="dialog"
               aria-modal="true"
               aria-labelledby="assurer-expanded-title"

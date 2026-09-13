@@ -7,34 +7,34 @@
 .remember-content{position:relative;z-index:2;min-height:100%;padding:1rem 1.4rem 1.6rem}
 .remember-head,.remember-month-mini,.remember-calendar-title-visible{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .remember-sr-only,.remember-floating-month-control{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.remember-main{position:absolute;top:3%;bottom:3%;width:48%;max-width:none;min-width:0;transform:none;margin:0;z-index:2;overflow:hidden;display:flex;flex-direction:column;gap:clamp(8px,.65vw,14px);align-items:stretch}
-.remember-main.remember-calendar-left{left:2%;right:auto;transform-origin:center left}
-.remember-main.remember-calendar-right{right:2%;left:auto;transform-origin:center right}
-.remember-calendar-panel{width:100%;min-height:0;flex:1 1 auto;display:flex;flex-direction:column;padding:clamp(12px,1vw,18px);background:linear-gradient(145deg,rgba(101,68,56,.48),rgba(44,27,25,.42));border:1px solid rgba(255,221,197,.76);box-shadow:0 16px 38px rgba(31,10,10,.24),inset 0 0 24px rgba(255,226,204,.07);backdrop-filter:blur(11px) saturate(108%);border-radius:18px;color:#fff2e8}
+.remember-main{position:absolute;max-width:none;min-width:0;transform:none;margin:0;z-index:2;display:flex;flex-direction:column;align-items:stretch}
+.remember-main.remember-calendar-left{right:auto;transform-origin:center left}
+.remember-main.remember-calendar-right{left:auto;transform-origin:center right}
+.remember-calendar-panel{width:100%;min-height:0;display:flex;flex-direction:column;border:1px solid rgba(255,221,197,.76);box-shadow:0 16px 38px rgba(31,10,10,.24),inset 0 0 24px rgba(255,226,204,.07);color:#fff2e8}
 .remember-month-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .remember-month-row strong{font-size:clamp(1.25rem,1.2vw,1.65rem);letter-spacing:.04em;color:#fff4eb}
-.remember-month-row button,.remember-day,.remember-postcard-popout button{font:inherit;text-transform:inherit;color:#fff2e8;background:rgba(54,34,30,.50);border:1px solid rgba(255,211,188,.68);border-radius:10px}
+.remember-month-row button,.remember-day,.remember-postcard-popout button{font:inherit;text-transform:inherit;color:#fff2e8;border:1px solid rgba(255,211,188,.68);border-radius:10px}
 .remember-month-row button{width:42px;height:42px;font-size:1.45rem;line-height:1;cursor:pointer}
 .remember-month-sticky{margin-top:8px;display:flex;justify-content:flex-start}
-.remember-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:10px}.remember-weekdays span{text-align:center;font-size:clamp(1rem,.9vw,1.25rem);color:#fff0e5}
-.remember-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:clamp(5px,.5vw,9px);margin-top:9px;min-height:0;flex:1 1 auto}
-.remember-day{min-height:0;border-radius:11px;text-align:left;padding:clamp(7px,.55vw,11px);font-size:clamp(1rem,.9vw,1.25rem);cursor:pointer;display:flex;flex-direction:column;gap:5px;overflow:hidden}
-.remember-day-num{font-size:clamp(1.2rem,1.05vw,1.5rem);font-weight:800;line-height:1;color:#fff4eb}.remember-day-chips{display:flex;flex-wrap:wrap;gap:3px;max-height:3.5em;overflow:hidden;align-content:flex-start}
-.remember-chip{font-size:clamp(.72rem,.62vw,.9rem);line-height:1;padding:4px 6px;border-radius:999px;border:1px solid rgba(255,242,225,.28);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.remember-chip-observance{background:linear-gradient(180deg,rgba(244,195,142,.92),rgba(196,111,91,.9));color:#351b18}.remember-chip-entry{background:rgba(205,112,124,.60);color:#fff4e9}.remember-chip-moment{background:rgba(139,78,70,.68);color:#fff4e9}
+.remember-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:10px}.remember-weekdays span{text-align:center;color:#fff0e5}
+.remember-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));margin-top:9px;min-height:0;flex:1 1 auto}
+.remember-day{min-height:0;border-radius:11px;text-align:left;font-size:clamp(1rem,.9vw,1.25rem);cursor:pointer;display:flex;flex-direction:column;overflow:hidden}
+.remember-day-num{font-weight:800;line-height:1;color:#fff4eb}.remember-day-chips{flex-wrap:wrap;overflow:hidden}
+.remember-chip{line-height:1;border-radius:999px;border:1px solid rgba(255,242,225,.28);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.remember-chip-observance{color:#351b18}.remember-chip-entry{color:#fff4e9}.remember-chip-moment{color:#fff4e9}
 .remember-day.remember-selected{box-shadow:0 0 0 2px rgba(255,211,188,.94),0 0 16px rgba(231,144,131,.28) inset}.remember-day.remember-outside{opacity:.30;cursor:not-allowed}
-.remember-standout-postcards{position:relative;width:100%;flex:0 0 clamp(142px,20%,190px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px 12px;background:linear-gradient(145deg,rgba(101,68,56,.50),rgba(44,27,25,.44));border:1px solid rgba(255,221,197,.72);box-shadow:0 12px 28px rgba(31,10,10,.22),inset 0 0 18px rgba(255,226,204,.06);backdrop-filter:blur(11px) saturate(108%);border-radius:14px;overflow:hidden;contain:layout paint}
+.remember-standout-postcards{position:relative;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:10px 12px;background:linear-gradient(145deg,rgba(101,68,56,.50),rgba(44,27,25,.44));border:1px solid rgba(255,221,197,.72);box-shadow:0 12px 28px rgba(31,10,10,.22),inset 0 0 18px rgba(255,226,204,.06);backdrop-filter:blur(11px) saturate(108%);border-radius:14px;overflow:hidden;contain:layout paint}
 .moment-card-shell,.remember-moment-card{position:relative;display:block;width:100%;height:100%;min-height:0;padding:0;border:0;background:transparent;color:#fff2e8;cursor:pointer;text-align:center;appearance:none;touch-action:manipulation;outline:none;isolation:isolate;overflow:hidden}
 .moment-card-shell:focus-visible,.remember-moment-card:focus-visible{outline:2px solid var(--app-text-primary);outline-offset:3px;border-radius:14px}
 .moment-card-plane,.remember-moment-plane{position:relative;display:block;width:100%;height:100%;overflow:hidden;border-radius:14px}
-.moment-card-face,.remember-moment-face{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:7px;min-width:0;max-width:100%;padding:12px;border:1px solid rgba(255,214,190,.68);border-radius:14px;background:linear-gradient(180deg,rgba(86,52,45,.84),rgba(42,25,24,.84));box-shadow:0 10px 24px rgba(25,8,8,.24),inset 0 0 18px rgba(255,214,190,.07);overflow:hidden;color:#fff2e8;contain:layout paint;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease}
+.moment-card-face,.remember-moment-face{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:7px;min-width:0;max-width:100%;padding:12px;border:1px solid rgba(255,214,190,.68);border-radius:14px;overflow:hidden;color:#fff2e8;contain:layout paint;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease}
 .moment-card-shell:not(.is-flipped) .moment-card-face.front,.remember-moment-card:not(.remember-moment-card-flipped) .remember-moment-front,.moment-card-shell.is-flipped .moment-card-face.back,.remember-moment-card-flipped .remember-moment-back{opacity:1;visibility:visible;pointer-events:auto}
 .moment-card-face.back,.remember-moment-back{align-content:stretch;justify-items:stretch;text-align:left}
 .remember-moment-front strong,.remember-moment-back strong{font-size:clamp(1.15rem,1.25vw,1.55rem);letter-spacing:.08em;color:#fff0e5}
 .remember-moment-kicker,.remember-moment-empty,.remember-moment-time,.remember-moment-title,.remember-moment-description,.remember-moment-front-summary,.remember-moment-saved-indicator{display:block;max-width:100%;color:var(--app-text-primary);overflow-wrap:anywhere;word-break:break-word}
 .remember-moment-kicker{font-size:.8rem;letter-spacing:.12em}.remember-moment-empty,.remember-moment-saved-indicator{font-size:.85rem;line-height:1.25}.remember-moment-saved-indicator{letter-spacing:.08em;color:#ffd8f1}.remember-moment-front-summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 .82rem/1.22 'Arial Narrow',Arial,sans-serif;max-height:2.6em}.remember-moment-back-scroll{display:grid;gap:6px;align-content:start;width:100%;height:100%;max-height:100%;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:2px}.remember-moment-saved-data{display:grid;gap:6px;min-width:0;max-width:100%;overflow:hidden}.remember-moment-time{font-size:.82rem;letter-spacing:.08em}.remember-moment-title{font-size:.9rem;line-height:1.2;font-weight:800}.remember-moment-description{font:700 .82rem/1.28 'Arial Narrow',Arial,sans-serif;text-transform:uppercase;white-space:pre-wrap}.remember-moment-back img{width:100%;max-height:74px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,124,209,.66)}
 .remember-popout-scrim{position:fixed;inset:0;z-index:998;background:rgba(0,0,0,.18)}
-.remember-postcard-popout{position:fixed;left:50%;top:clamp(18px,6vh,72px);transform:translateX(-50%);width:min(92vw,560px);max-height:min(84dvh,720px);overflow-y:auto;z-index:999;padding:clamp(12px,1.4vw,18px);border-radius:18px;background:linear-gradient(145deg,rgba(18,0,14,.94),rgba(34,4,26,.84));border:1px solid rgba(255,102,202,.78);box-shadow:0 0 0 1px rgba(255,205,244,.08) inset,0 18px 60px rgba(0,0,0,.56),0 0 32px rgba(255,36,169,.18);backdrop-filter:blur(5px)}
+.remember-postcard-popout{position:fixed;left:50%;top:clamp(18px,6vh,72px);transform:translateX(-50%);width:min(92vw,560px);max-height:min(84dvh,720px);overflow-y:auto;z-index:999;padding:clamp(12px,1.4vw,18px);border-radius:18px;border:1px solid rgba(255,102,202,.78)}
 .remember-postcard-popout header{display:flex;justify-content:space-between;align-items:center;gap:8px}.remember-postcard-popout h3{margin:0}
 .remember-type-switch{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;gap:6px;margin-top:8px}.remember-type-switch button{min-height:44px;padding:6px;font-size:clamp(.56rem,.7vw,.78rem)}.remember-type-switch button.active{box-shadow:0 0 0 2px rgba(255,128,201,.95)}
 .remember-observance-note{margin:8px 0 10px;padding:9px 11px;border-radius:12px;background:linear-gradient(135deg,rgba(255,57,174,.18),rgba(52,0,35,.68));border:1px solid rgba(255,125,214,.64);color: var(--app-text-primary);box-shadow:0 0 18px rgba(255,43,160,.14)}
@@ -49,11 +49,11 @@
 .remember-weekday-picker span{display:grid;place-items:center;min-height:32px;border:1px solid rgba(255,164,211,.46);border-radius:9px;background:rgba(8,0,6,.48);color:#ffe2f0;font-size:.68rem}
 .remember-weekday-picker input:checked + span{border-color:#ffd2e8;background:linear-gradient(145deg,rgba(225,85,155,.86),rgba(118,38,83,.92));box-shadow:0 0 14px rgba(255,102,186,.28)}
 .remember-time-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.remember-postcard-popout input,.remember-postcard-popout select,.remember-postcard-popout textarea{width:100%;min-height:34px;max-height:none;padding:7px 10px;border-radius:10px;border:1px solid rgba(255,124,209,.72);background:rgba(11,0,9,.70);color: var(--app-text-primary);font:inherit;font-size:clamp(.72rem,.85vw,.88rem);letter-spacing:.03em;outline:none}
+.remember-postcard-popout input,.remember-postcard-popout select,.remember-postcard-popout textarea{width:100%;min-height:34px;max-height:none;padding:7px 10px;border-radius:10px;border:1px solid rgba(255,124,209,.72);color: var(--app-text-primary);font:inherit;font-size:clamp(.72rem,.85vw,.88rem);letter-spacing:.03em;outline:none}
 .remember-postcard-popout textarea{min-height:84px;max-height:140px;resize:vertical}
 .remember-postcard-popout input::placeholder,.remember-postcard-popout textarea::placeholder{color: var(--app-text-primary)}
 .remember-postcard-popout label,.remember-postcard-popout h3,.remember-postcard-popout h4{color: var(--app-text-primary)}
-.remember-actions{display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:rgba(18,0,14,.88);padding-top:8px}
+.remember-actions{display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;padding-top:8px}
 .remember-load-alert{margin:0 0 10px;padding:8px 10px;border-radius:10px;background:rgba(60,0,28,.6);border:1px solid rgba(255,125,214,.6);color: var(--app-text-primary);text-transform:uppercase}
 @media (max-width:760px){.remember-scene-frame{width:100vw;height:100dvh}.remember-main,.remember-main.remember-calendar-left,.remember-main.remember-calendar-right{left:12px;right:12px;bottom:16px;width:auto;max-width:none;min-width:0;transform:none}.remember-day{min-height:48px}.remember-standout-postcards{position:relative;width:100%;max-width:none;margin-top:10px;grid-template-columns:1fr}.remember-moment-card{height:156px}.remember-postcard-popout{top:12px;max-height:88dvh}}
 
@@ -89,17 +89,6 @@
   --remember-ink-soft:#ae7788;
   --remember-glass:linear-gradient(145deg,rgba(255,245,240,.72),rgba(242,207,211,.58));
 }
-.remember-main{top:1.5%;bottom:1.5%;width:49%;gap:clamp(7px,.55vw,12px)}
-.remember-main.remember-calendar-left{left:1.2%}
-.remember-main.remember-calendar-right{right:1.2%}
-.remember-calendar-panel,.remember-standout-postcards{
-  background:var(--remember-glass)!important;
-  border-color:rgba(255,226,220,.84)!important;
-  box-shadow:0 14px 34px rgba(86,43,55,.16),inset 0 0 26px rgba(255,247,243,.24)!important;
-  backdrop-filter:blur(15px) saturate(112%)!important;
-  -webkit-backdrop-filter:blur(15px) saturate(112%)!important;
-}
-.remember-page .remember-main,.remember-page .remember-main *{color:var(--remember-ink)!important;-webkit-text-fill-color:var(--remember-ink)!important;text-shadow:none!important}
 .remember-month-row button,.remember-day,.remember-postcard-popout button{
   background:rgba(255,248,244,.62)!important;
   border-color:rgba(163,91,111,.34)!important;
@@ -108,11 +97,6 @@
 .remember-chip-observance{background:rgba(247,207,190,.86)!important}
 .remember-chip-entry{background:rgba(234,185,198,.82)!important}
 .remember-chip-moment{background:rgba(220,173,187,.82)!important}
-.moment-card-face,.remember-moment-face{
-  background:linear-gradient(145deg,rgba(255,248,244,.84),rgba(239,199,205,.76))!important;
-  border-color:rgba(170,94,115,.34)!important;
-  box-shadow:0 9px 22px rgba(84,40,52,.14),inset 0 0 18px rgba(255,250,247,.28)!important;
-}
 .remember-postcard-popout{
   background:linear-gradient(145deg,rgba(255,246,242,.94),rgba(239,201,210,.9))!important;
   border-color:rgba(168,89,116,.52)!important;
@@ -133,10 +117,10 @@
 .remember-season-summer{--remember-scene-glass:linear-gradient(145deg,rgba(39,68,71,.56),rgba(90,72,54,.42));--remember-scene-line:rgba(197,244,255,.68)}
 .remember-season-fall{--remember-scene-glass:linear-gradient(145deg,rgba(75,37,29,.64),rgba(112,55,34,.48));--remember-scene-line:rgba(255,190,151,.72)}
 .remember-season-winter{--remember-scene-glass:linear-gradient(145deg,rgba(39,50,69,.64),rgba(65,51,70,.46));--remember-scene-line:rgba(208,224,255,.72)}
-.remember-main{top:2.2%!important;bottom:2.2%!important;width:47%!important;overflow:visible!important}
+.remember-main{overflow:visible!important}
 .remember-main.remember-calendar-left{left:1.5%!important}.remember-main.remember-calendar-right{right:1.5%!important}
 .remember-calendar-panel,.remember-standout-postcards{background:var(--remember-scene-glass)!important;border-color:var(--remember-scene-line)!important;box-shadow:inset 0 0 0 1px rgba(255,237,226,.12),0 14px 34px rgba(35,15,18,.24)!important;backdrop-filter:blur(5px) saturate(112%)!important;-webkit-backdrop-filter:blur(5px) saturate(112%)!important}
-.remember-calendar-panel{padding:clamp(8px,.72vw,13px)!important;overflow:hidden}.remember-grid{gap:clamp(3px,.32vw,6px)!important}.remember-day{padding:clamp(4px,.38vw,7px)!important}.remember-weekdays span{font-size:clamp(.72rem,.68vw,.95rem)!important}.remember-day-num{font-size:clamp(.84rem,.76vw,1.08rem)!important}.remember-chip{font-size:clamp(.52rem,.48vw,.7rem)!important;padding:3px 4px!important}
+.remember-calendar-panel{overflow:hidden}.remember-grid{gap:clamp(3px,.32vw,6px)!important}.remember-weekdays span{font-size:clamp(.72rem,.68vw,.95rem)!important}.remember-day-num{font-size:clamp(.84rem,.76vw,1.08rem)!important}.remember-chip{font-size:clamp(.52rem,.48vw,.7rem)!important;padding:3px 4px!important}
 .remember-page .remember-main,.remember-page .remember-main *{color:var(--remember-scene-ink)!important;-webkit-text-fill-color:var(--remember-scene-ink)!important;text-shadow:0 1px 3px rgba(24,8,12,.76)!important}
 .moment-card-face,.remember-moment-face{background:var(--remember-scene-glass)!important;border-color:var(--remember-scene-line)!important;box-shadow:inset 0 0 0 1px rgba(255,238,226,.11),0 9px 22px rgba(30,11,15,.22)!important}
 .remember-moment-front{gap:0!important}.remember-moment-front strong{font-size:clamp(1.25rem,1.55vw,2rem)!important}.remember-moment-front .remember-moment-kicker,.remember-moment-front .remember-moment-empty,.remember-moment-front .remember-moment-saved-indicator{display:none!important}
@@ -169,8 +153,6 @@
 .remember-page .remember-month-row strong{
   color:var(--remember-readable-ink)!important;
   -webkit-text-fill-color:var(--remember-readable-ink)!important;
-  font-size:clamp(1.35rem,1.35vw,1.78rem)!important;
-  font-weight:500!important;
   text-shadow:0 2px 5px rgba(20,6,11,.92)!important;
 }
 .remember-page .remember-month-row button{
@@ -208,10 +190,6 @@
   -webkit-text-fill-color:#fff9f7!important;
   background:var(--remember-chip-fallback)!important;
   border-color:rgba(255,235,230,.64)!important;
-  font-size:clamp(.62rem,.58vw,.78rem)!important;
-  font-weight:500!important;
-  line-height:1.15!important;
-  padding:4px 6px!important;
   text-shadow:0 1px 3px rgba(18,3,9,.98)!important;
   box-shadow:0 2px 6px rgba(22,5,10,.22)!important;
 }
