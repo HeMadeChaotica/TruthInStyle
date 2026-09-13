@@ -302,3 +302,53 @@
   text-align:left;
   line-height:1.08!important;
 }
+
+/* Seasonal Crystal Time Chamber scheduler. Week is the working view, Day is
+   the precision view, and Month remains one tap away. */
+.remember-main{
+  top:1.1%!important;
+  right:.8%!important;
+  bottom:1.1%!important;
+  left:auto!important;
+  width:59%!important;
+  gap:clamp(6px,.5vw,10px)!important;
+}
+.remember-calendar-panel{
+  flex:1 1 auto!important;
+  padding:clamp(7px,.6vw,11px)!important;
+  border-radius:20px!important;
+  background:linear-gradient(145deg,rgba(30,16,22,.64),rgba(55,30,34,.48))!important;
+  backdrop-filter:blur(10px) saturate(125%)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(125%)!important;
+}
+.remember-standout-postcards{flex:0 0 clamp(108px,17%,152px)!important}
+.remember-scheduler{display:flex;flex-direction:column;min-height:0;height:100%;color:var(--remember-readable-ink)}
+.remember-scheduler-toolbar{display:grid;grid-template-columns:auto minmax(130px,1fr) auto;align-items:center;gap:clamp(6px,.65vw,12px);min-height:42px;padding:0 2px 7px;border-bottom:1px solid rgba(255,226,231,.34)}
+.remember-scheduler-toolbar strong{min-width:0;text-align:center;font-size:clamp(.72rem,.82vw,1.05rem)!important;letter-spacing:.055em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important;text-shadow:0 2px 4px rgba(15,4,8,.96)!important}
+.remember-scheduler-nav,.remember-view-switch{display:flex;align-items:center;gap:4px}
+.remember-scheduler-toolbar button{min-width:31px;height:31px;padding:0 8px;border:1px solid rgba(255,219,228,.48);border-radius:10px;background:rgba(29,13,21,.7);color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);cursor:pointer;font-size:clamp(.56rem,.58vw,.76rem)!important;letter-spacing:.04em}
+.remember-scheduler-nav>button:first-child,.remember-scheduler-nav>button:last-child{font-size:1.15rem!important;padding:0}
+.remember-today-button{min-width:52px!important}
+.remember-view-switch button.active{background:linear-gradient(145deg,rgba(230,118,165,.88),rgba(126,50,82,.9));border-color:#ffdce9;box-shadow:0 0 14px rgba(255,137,187,.24),inset 0 1px 0 rgba(255,255,255,.25)}
+.remember-scheduler-legend{display:flex;align-items:center;gap:clamp(5px,.58vw,10px);min-height:25px;padding:4px 3px;border-bottom:1px solid rgba(255,224,230,.26);overflow-x:auto;scrollbar-width:none}.remember-scheduler-legend::-webkit-scrollbar{display:none}.remember-scheduler-legend span{display:flex;align-items:center;gap:4px;flex:0 0 auto;font-size:clamp(.42rem,.44vw,.58rem)!important;letter-spacing:.055em;color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important}.remember-scheduler-legend span::before{content:"";width:8px;height:8px;flex:0 0 8px;border:1px solid rgba(255,246,242,.62);border-radius:3px;background:linear-gradient(135deg,#9a3d63,#5a233d);box-shadow:0 0 7px rgba(255,168,205,.25)}.remember-scheduler-legend [data-kind="standout"]::before{background:linear-gradient(135deg,#7956a8,#49306f)}.remember-scheduler-legend [data-kind="workout"]::before{background:linear-gradient(135deg,#ad1f68,#68143f)}.remember-scheduler-legend [data-kind="work"]::before{background:linear-gradient(135deg,#b47726,#704318)}.remember-scheduler-legend [data-kind="popup"]::before{background:linear-gradient(135deg,#2b8f92,#15545f)}
+.remember-time-view{display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-rows:42px minmax(0,1fr);min-height:0;flex:1 1 auto}
+.remember-time-corner{display:grid;place-items:end center;padding-bottom:7px;border-right:1px solid rgba(255,224,230,.32);border-bottom:1px solid rgba(255,224,230,.34);font-size:.58rem!important;letter-spacing:.08em;color:#f8cbd8!important;-webkit-text-fill-color:#f8cbd8!important}
+.remember-time-day-heads{display:grid;grid-template-columns:repeat(var(--remember-visible-days),minmax(0,1fr));border-bottom:1px solid rgba(255,224,230,.34)}
+.remember-time-day-heads button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;padding:3px 1px;border:0;border-right:1px solid rgba(255,224,230,.18);background:rgba(29,15,21,.34);color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important;cursor:pointer}
+.remember-time-day-heads button span{font-size:clamp(.48rem,.48vw,.64rem)!important;letter-spacing:.06em}.remember-time-day-heads button b{font-size:clamp(.72rem,.72vw,.95rem)!important}.remember-time-day-heads button.is-today{background:linear-gradient(180deg,rgba(231,117,164,.45),rgba(77,31,51,.42));box-shadow:inset 0 -2px 0 #ffd8e7}
+.remember-time-scroll{grid-column:1/-1;display:grid;grid-template-columns:48px minmax(0,1fr);min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(255,213,227,.68) rgba(22,9,15,.25)}
+.remember-time-axis{position:relative;border-right:1px solid rgba(255,224,230,.3);background:rgba(25,12,18,.3)}
+.remember-time-axis span{position:absolute;left:1px;right:3px;transform:translateY(-.45em);text-align:right;font-size:clamp(.46rem,.46vw,.6rem)!important;line-height:1!important;white-space:nowrap;color:#f8cbd8!important;-webkit-text-fill-color:#f8cbd8!important;text-shadow:0 1px 3px rgba(10,2,6,.98)!important}
+.remember-time-days{display:grid;grid-template-columns:repeat(var(--remember-visible-days),minmax(0,1fr));position:relative;background:linear-gradient(180deg,rgba(20,10,15,.12),rgba(20,10,15,.28))}
+.remember-time-day{position:relative;min-width:0;border-right:1px solid rgba(255,225,232,.22);cursor:crosshair}
+.remember-time-day>i{position:absolute;left:0;right:0;height:1px;background:rgba(255,231,236,.1);pointer-events:none}.remember-time-day>i:nth-child(odd){background:rgba(255,231,236,.22)}
+.remember-time-event{position:absolute;z-index:2;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:4px 5px;border:1px solid rgba(255,245,240,.68);border-radius:7px;background:var(--event-color,linear-gradient(135deg,#b64f78,#712b4a));color:var(--event-text,#fff9f7)!important;-webkit-text-fill-color:var(--event-text,#fff9f7)!important;box-shadow:0 3px 8px rgba(13,2,7,.34),inset 0 1px 0 rgba(255,255,255,.18);overflow:hidden;cursor:pointer;text-align:left;text-shadow:0 1px 3px rgba(18,3,9,.98)!important}
+.remember-time-event span{font-size:clamp(.44rem,.45vw,.61rem)!important;line-height:1!important;white-space:nowrap}.remember-time-event strong{display:block;max-width:100%;font-size:clamp(.5rem,.52vw,.7rem)!important;line-height:1.08!important;letter-spacing:.02em;overflow-wrap:anywhere}.remember-time-event em{margin-top:auto;padding:2px 4px;border-radius:4px;background:#511527;color:#fff1f5!important;-webkit-text-fill-color:#fff1f5!important;font-size:clamp(.38rem,.4vw,.52rem)!important;font-style:normal;letter-spacing:.06em}
+.remember-all-day-stack{position:absolute;z-index:3;left:2px;right:2px;top:2px;display:grid;gap:2px}.remember-all-day-stack button{padding:3px 4px;border:1px solid rgba(255,245,240,.58);border-radius:5px;background:var(--event-color);color:#fff9f7!important;-webkit-text-fill-color:#fff9f7!important;font-size:.5rem!important;text-align:left;cursor:pointer}
+.remember-month-view{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;padding-top:5px}.remember-month-view>.remember-month-row{display:none}.remember-month-view .remember-weekdays{margin-top:0}.remember-month-view .remember-grid{margin-top:5px}.remember-month-view .remember-day-chips{max-height:none!important}
+.remember-scheduler[data-view="day"] .remember-time-event strong{font-size:clamp(.68rem,.75vw,.96rem)!important}.remember-scheduler[data-view="day"] .remember-time-event span{font-size:clamp(.58rem,.62vw,.8rem)!important}
+
+@media (max-width:900px){
+  .remember-main{width:61.5%!important;right:.5%!important}
+  .remember-scheduler-toolbar{grid-template-columns:1fr auto}.remember-scheduler-toolbar>strong{grid-column:1/-1;grid-row:1}.remember-scheduler-nav{grid-column:1;grid-row:2}.remember-view-switch{grid-column:2;grid-row:2}.remember-time-view{grid-template-columns:42px minmax(0,1fr)}.remember-time-scroll{grid-template-columns:42px minmax(0,1fr)}
+}

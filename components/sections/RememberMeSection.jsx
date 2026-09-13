@@ -1,10 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import ChaoticaMonthCalendar, { daysInMonth, safeDateKey } from '../shared/ChaoticaMonthCalendar';
+import { daysInMonth, safeDateKey } from '../shared/ChaoticaMonthCalendar';
 import '../../styles/sections/remember-me.css';
 import { normalizeUserText } from '../../lib/utils/textCasing';
 import MomentFlipCard from '../remember-me/MomentFlipCard';
+import RememberMeTimeCalendar from '../remember-me/RememberMeTimeCalendar';
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import { CLOCK_IT_KEYS, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
 
@@ -25,26 +26,34 @@ const EDITOR_MODES = [
 const SEASON_BY_MONTH = {
   0: { key: 'winter', calendarSide: 'right' },
   1: { key: 'winter', calendarSide: 'right' },
-  2: { key: 'spring', calendarSide: 'left' },
-  3: { key: 'spring', calendarSide: 'left' },
-  4: { key: 'spring', calendarSide: 'left' },
+  2: { key: 'spring', calendarSide: 'right' },
+  3: { key: 'spring', calendarSide: 'right' },
+  4: { key: 'spring', calendarSide: 'right' },
   5: { key: 'summer', calendarSide: 'right' },
   6: { key: 'summer', calendarSide: 'right' },
   7: { key: 'summer', calendarSide: 'right' },
-  8: { key: 'fall', calendarSide: 'left' },
-  9: { key: 'fall', calendarSide: 'left' },
-  10: { key: 'fall', calendarSide: 'left' },
+  8: { key: 'fall', calendarSide: 'right' },
+  9: { key: 'fall', calendarSide: 'right' },
+  10: { key: 'fall', calendarSide: 'right' },
   11: { key: 'winter', calendarSide: 'right' },
 };
 
-const BACKGROUND_BY_SEASON = {
-  fall: 'remember-me-season-fall-crystallization.png',
-  spring: 'remember-me-season-spring-crystallization.png',
-  summer: 'remember-me-season-summer-crystallization.png',
-  winter: 'remember-me-season-winter-crystallization.png',
-};
+const BACKGROUND_BY_MONTH = [
+  'remember-me-01-january-time-chamber-v1.png',
+  'remember-me-02-february-time-chamber-v1.png',
+  'remember-me-03-march-time-chamber-v1.png',
+  'remember-me-04-april-time-chamber-v1.png',
+  'remember-me-05-may-time-chamber-v1.png',
+  'remember-me-06-june-time-chamber-v1.png',
+  'remember-me-07-july-time-chamber-v1.png',
+  'remember-me-08-august-time-chamber-v1.png',
+  'remember-me-09-september-time-chamber-v1.png',
+  'remember-me-10-october-time-chamber-v1.png',
+  'remember-me-11-november-time-chamber-v1.png',
+  'remember-me-12-december-time-chamber-v1.png',
+];
 
-const EMPTY_EVENT = { type: 'SOMETHING NEW DAY', label: '', schedule_kind: 'event', time: '', detail: '', description: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
+const EMPTY_EVENT = { type: 'SOMETHING NEW DAY', label: '', schedule_kind: 'event', time: '', end_time: '', detail: '', description: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
 const EMPTY_WORKOUT = { start_time: '', end_time: '', workout_label: '', location: '', notes: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
 const EMPTY_MOMENT = { type: 'WOW', time: '', detail: '', description: '', mediaRef: '', persistedMediaRef: '' };
 
@@ -139,6 +148,7 @@ function RecurrenceControl({ draft, setDraft, selectedDateKey }) {
 
 const colorForEntry = (entry) => {
   if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ad1f68,#68143f)';
+  if (entry?._source === 'standout') return 'linear-gradient(135deg,#7956a8,#49306f)';
   const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
   if (entry?.schedule_kind === 'popup') return 'linear-gradient(135deg,#2b8f92,#15545f)';
   if (entry?.schedule_kind === 'work') return 'linear-gradient(135deg,#b47726,#704318)';
@@ -181,8 +191,24 @@ export default function RememberMeSection() {
     [viewDate, selectedDay],
   );
   const currentMoments = selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
+  const calendarEntriesByDate = useMemo(() => {
+    const merged = { ...entriesByDate };
+    Object.entries(momentByDate).forEach(([dateKey, moments]) => {
+      const standoutEntries = (Array.isArray(moments) ? moments : []).map((moment) => ({
+        ...moment,
+        _source: 'standout',
+        schedule_kind: 'standout',
+        label: moment.type || moment.standoutType || 'STANDOUT',
+      }));
+      merged[dateKey] = [...(merged[dateKey] || []), ...standoutEntries].sort((left, right) => {
+        const byTime = calendarEntrySortValue(left).localeCompare(calendarEntrySortValue(right));
+        return byTime || calendarEntryLabel(left).localeCompare(calendarEntryLabel(right));
+      });
+    });
+    return merged;
+  }, [entriesByDate, momentByDate]);
   const season = SEASON_BY_MONTH[viewDate.getMonth()] || SEASON_BY_MONTH[0];
-  const backgroundName = BACKGROUND_BY_SEASON[season.key];
+  const backgroundName = BACKGROUND_BY_MONTH[viewDate.getMonth()] || BACKGROUND_BY_MONTH[0];
   const momentCards = standoutTypes.map((type) => ({
     type,
     moment: currentMoments
@@ -231,10 +257,10 @@ export default function RememberMeSection() {
 
   useEffect(() => setFlippedMomentType(''), [selectedDateKey]);
 
-  const openNew = (dateKey, day) => {
+  const openNew = (dateKey, day, suggestedTime = '') => {
     setSelectedDay(day);
-    setEntryDraft({ ...EMPTY_EVENT, type: eventTypes[0] || EMPTY_EVENT.type });
-    setWorkoutDraft(EMPTY_WORKOUT);
+    setEntryDraft({ ...EMPTY_EVENT, type: eventTypes[0] || EMPTY_EVENT.type, time: suggestedTime });
+    setWorkoutDraft({ ...EMPTY_WORKOUT, start_time: suggestedTime });
     setMomentDraft({ ...EMPTY_MOMENT, type: standoutTypes[0] || EMPTY_MOMENT.type });
     setEditorMode('EVENT');
     setError('');
@@ -244,7 +270,16 @@ export default function RememberMeSection() {
   const editCalendarEntry = (entry, dateKey) => {
     setSelectedDay(Number(dateKey?.slice(-2)) || selectedDay);
     setError('');
-    if (entry._source === 'personal-workout') {
+    if (entry._source === 'standout') {
+      setMomentDraft({
+        ...EMPTY_MOMENT,
+        ...entry,
+        type: entry.type || entry.standoutType || 'WOW',
+        mediaRef: entry.mediaRef || '',
+        persistedMediaRef: entry.persistedMediaRef || entry.photoRef || '',
+      });
+      setEditorMode('STANDOUT');
+    } else if (entry._source === 'personal-workout') {
       const originalId = entry.original_entry_id || entry.id;
       const original = workoutRows.find((row) => row.id === originalId) || entry;
       const occurrenceOnly = entry.derived_recurrence || entry.recurrence_active;
@@ -281,6 +316,7 @@ export default function RememberMeSection() {
         schedule_kind: editorMode === 'WORK' ? 'work' : editorMode === 'POPUP' ? 'popup' : 'event',
         series_parent_id: entryDraft.series_parent_id || '',
         time_value: entryDraft.time,
+        end_time: entryDraft.end_time,
         detail: normalizeUserText(entryDraft.detail),
         description: normalizeUserText(entryDraft.description),
         recurrence_type: entryDraft.recurrence_type || 'none',
@@ -404,14 +440,14 @@ export default function RememberMeSection() {
   return (
     <section className={`remember-page remember-season-${season.key}`}>
       <div className="remember-scene-frame">
-        <img className="remember-bg-img" src={`/backgrounds/REMEMBER-ME/${backgroundName}`} alt="" aria-hidden="true" />
+        <img className="remember-bg-img" src={`/backgrounds/REMEMBER-ME/time-chambers/${backgroundName}`} alt="" aria-hidden="true" />
         <div className="remember-overlay" aria-hidden="true" />
         <main className={`remember-main remember-calendar-${season.calendarSide}`}>
           <section className="remember-calendar-panel" aria-label="Unified REMEMBER.ME calendar">
-            <ChaoticaMonthCalendar
+            <RememberMeTimeCalendar
               viewDate={viewDate}
               selectedDateKey={selectedDateKey}
-              entriesByDate={entriesByDate}
+              entriesByDate={calendarEntriesByDate}
               onMonthChange={(next, nextDateKey) => {
                 setViewDate(next);
                 setSelectedDay(Number(nextDateKey?.slice(-2)) || Math.min(selectedDay, daysInMonth(next.getFullYear(), next.getMonth())));
@@ -419,10 +455,8 @@ export default function RememberMeSection() {
               onSelectDate={openNew}
               onEntryClick={editCalendarEntry}
               getEntryLabel={(entry) => `${formatCalendarTime(entry.time || entry.start_time)} — ${calendarEntryLabel(entry)}`}
-              renderEntry={(entry) => <><span className="remember-chip-time">{formatCalendarTime(entry.time || entry.start_time)}</span><span className="remember-chip-label">{calendarEntryLabel(entry)}</span></>}
               getEntryColor={colorForEntry}
               getEntryTextColor={() => '#fff7f0'}
-              maxEntriesPerDay={24}
             />
           </section>
           <section className="remember-standout-postcards" aria-label="REMEMBER.ME moment flip cards">
@@ -451,7 +485,7 @@ export default function RememberMeSection() {
               {['EVENT', 'WORK', 'POPUP'].includes(editorMode) ? (
                 <>
                   {editorMode === 'EVENT' ? <label>EVENT TYPE<select value={entryDraft.type} onChange={(event) => setEntryDraft((draft) => ({ ...draft, type: event.target.value }))}>{eventTypes.filter((type) => !/EVENT\s*\(WORK\)|WORK SCHEDULE|POP-?UP/i.test(type)).map((type) => <option key={type} value={type}>{type}</option>)}</select></label> : <label>{editorMode === 'WORK' ? 'WORK LABEL' : 'POP-UP LABEL'}<input value={entryDraft.label || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, label: event.target.value }))} /></label>}
-                  <label>TIME<input type="time" value={entryDraft.time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} /></label>
+                  <div className="remember-time-pair"><label>START<input type="time" value={entryDraft.time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} /></label><label>END<input type="time" value={entryDraft.end_time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, end_time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, end_time: value })); }} /></label></div>
                   <label>LOCATION<input value={entryDraft.detail || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, detail: event.target.value }))} /></label>
                   <label>DESCRIPTION<textarea value={entryDraft.description || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, description: event.target.value }))} /></label>
                   <RecurrenceControl draft={entryDraft} setDraft={setEntryDraft} selectedDateKey={selectedDateKey} />

@@ -47,6 +47,7 @@ function normalizeRow(row = {}) {
   const dateKey = row.date_key || row.date || '';
   const entryType = row.entry_type || row.type || 'SOMETHING NEW DAY';
   const timeValue = row.time_value || row.time || '';
+  const endTime = row.end_time || '';
   const detail = row.detail || row.location || '';
 
   return {
@@ -57,6 +58,7 @@ function normalizeRow(row = {}) {
     type: entryType,
     time_value: timeValue,
     time: timeValue,
+    end_time: endTime,
     detail,
     location: detail,
     description: row.description || '',
@@ -150,6 +152,7 @@ export async function upsertRememberMeEntry(entry) {
     date_key: localSaved.date_key,
     entry_type: localSaved.entry_type,
     time_value: localSaved.time_value || null,
+    end_time: localSaved.end_time || null,
     detail: localSaved.detail || null,
     description: localSaved.description || null,
     label: localSaved.label || null,
