@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
@@ -20,6 +20,11 @@ import {
   getRememberMeMomentDateKey,
   readRememberMeMomentMirror,
 } from '../../lib/theAssurer/rememberMeMomentMirror';
+import {
+  EMPTY_REMEMBER_ME_WEEK_AHEAD,
+  getRememberMeWeekAheadDays,
+  readRememberMeWeekAheadMirror,
+} from '../../lib/theAssurer/rememberMeWeekAheadMirror';
 import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMirror } from '../../lib/theAssurer/thiccTimeWeekMirror';
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import {
@@ -46,9 +51,9 @@ const ASSURER_PHASE_SCENES = {
 };
 
 const MOMENT_BACKS = {
-  WOW: '/art/REMEMBER-ME/moment-backs/wow-moment-back.png',
-  WTF: '/art/REMEMBER-ME/moment-backs/wtf-moment-back.png',
-  'PLOT TWIST': '/art/REMEMBER-ME/moment-backs/plot-twist-moment-back.png',
+  WOW: '/art/REMEMBER-ME/moment-backs/wow-crystallization-card-v1.webp',
+  WTF: '/art/REMEMBER-ME/moment-backs/wtf-crystallization-card-v1.webp',
+  'PLOT TWIST': '/art/REMEMBER-ME/moment-backs/plot-twist-crystallization-card-v1.webp',
 };
 
 function formatAssurerDate(date) {
@@ -189,45 +194,105 @@ function createDailyPennyQuestions() {
   }));
 }
 
-function AssurerTimelineRows({ entries, limit, expanded = false }) {
-  const safeEntries = Array.isArray(entries) ? entries : [];
-  const visibleEntries = typeof limit === 'number' ? safeEntries.slice(0, limit) : safeEntries;
+function timelineHour(value) {
+  const match = String(value || '').trim().match(/^(\d{1,2}):/);
+  const hour = match ? Number(match[1]) : Number.NaN;
+  return Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : null;
+}
 
-  if (!visibleEntries.length) {
-    return <p className="assurer-timeline-empty">NO THICC.TIME ENTRIES THIS WEEK</p>;
-  }
+function formatTimelineHour(hour) {
+  const period = hour >= 12 ? 'PM' : 'AM';
+  return `${hour % 12 || 12}:00 ${period}`;
+}
+
+function formatTimelineEntryTime(entry) {
+  const start = String(entry?.startTime || entry?.time || '').trim();
+  const end = String(entry?.endTime || '').trim();
+  return [start || 'ALL DAY', end].filter(Boolean).join('–');
+}
+
+function AssurerRollingTimeline({ entries, expanded = false }) {
+  const safeEntries = Array.isArray(entries) ? entries : [];
+  const initialHour = new Date().getHours();
+  const [focusedHour, setFocusedHour] = useState(initialHour);
+  const wheelRef = useRef(null);
+  const hours = useMemo(() => Array.from({ length: 24 }, (_, hour) => hour), []);
+  const entriesByHour = useMemo(() => safeEntries.reduce((grouped, entry) => {
+    const hour = timelineHour(entry.startTime || entry.time);
+    const key = hour === null ? 'all-day' : String(hour);
+    return { ...grouped, [key]: [...(grouped[key] || []), entry] };
+  }, {}), [safeEntries]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setFocusedHour(new Date().getHours()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const focusedRow = wheelRef.current?.querySelector(`[data-hour="${focusedHour}"]`);
+    focusedRow?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focusedHour, safeEntries.length]);
+
+  const rotate = (direction) => setFocusedHour((current) => (current + direction + 24) % 24);
 
   return (
-    <div className={`assurer-timeline-list ${expanded ? 'assurer-timeline-list-expanded' : ''}`.trim()}>
-      {visibleEntries.map((entry) => (
-        <article className="assurer-timeline-row" key={entry.id} style={{ borderLeftColor: entry.color }}>
-          <span className="assurer-timeline-time">{entry.startTime || 'TIME TBD'}{entry.endTime ? `-${entry.endTime}` : ''}</span>
-          <span className="assurer-timeline-type">{entry.person}</span>
-          <span className="assurer-timeline-text">{entry.label}</span>
-        </article>
-      ))}
+    <div className={`assurer-timeline-turner ${expanded ? 'assurer-timeline-turner-expanded' : ''}`.trim()}>
+      <div className="assurer-timeline-turner-controls" aria-label="ROTATE DAY TIMELINE">
+        <button type="button" onClick={() => rotate(-1)} aria-label="EARLIER HOUR">▲</button>
+        <span>ROLL THE DAY</span>
+        <button type="button" onClick={() => rotate(1)} aria-label="LATER HOUR">▼</button>
+      </div>
+      {entriesByHour['all-day']?.length ? (
+        <div className="assurer-timeline-all-day">
+          {entriesByHour['all-day'].map((entry) => <span key={entry.id}>{entry.label || entry.text || entry.type}</span>)}
+        </div>
+      ) : null}
+      <div className="assurer-timeline-wheel" ref={wheelRef} role="list" aria-label="ROLLING REMEMBER.ME DAY TIMELINE">
+        <span className="assurer-timeline-focus-band" aria-hidden="true" />
+        {hours.map((hour) => {
+          const hourEntries = entriesByHour[String(hour)] || [];
+          return (
+            <div
+              className={`assurer-timeline-hour ${hour === focusedHour ? 'is-focused' : ''}`.trim()}
+              data-hour={hour}
+              key={hour}
+              role="listitem"
+              tabIndex={hour === focusedHour ? 0 : -1}
+              onFocus={() => setFocusedHour(hour)}
+            >
+              <time>{formatTimelineHour(hour)}</time>
+              <div className="assurer-timeline-hour-events">
+                {hourEntries.length ? hourEntries.map((entry) => (
+                  <span className="assurer-timeline-event" key={entry.id} style={{ '--timeline-entry-color': entry.color || '#9a3d63' }}>
+                    <b>{formatTimelineEntryTime(entry)}</b>
+                    <em>{entry.label || entry.text || entry.type}</em>
+                  </span>
+                )) : <span className="assurer-timeline-open">OPEN</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 function AssurerWeekStrip({ weekMirror }) {
   const weekDays = Array.isArray(weekMirror.weekDays) ? weekMirror.weekDays : [];
-  const hasEntries = weekDays.some((day) => day.entries?.length);
-
-  if (!hasEntries) {
-    return <p className="assurer-week-empty">NO THICC.TIME ENTRIES THIS WEEK</p>;
-  }
 
   return (
-    <div className="assurer-week-strip" aria-label="READ-ONLY THICC.TIME WEEK STRIP">
+    <div className="assurer-week-strip" aria-label="READ-ONLY REMEMBER.ME WEEK AHEAD">
       {weekDays.map((day) => (
         <div className="assurer-week-day" key={day.dateKey}>
-          <span className="assurer-week-day-label">{day.label}</span>
-          <span className="assurer-week-day-count">{day.entries.length}</span>
-          <span className="assurer-week-dot-row" aria-hidden="true">
-            {day.entries.slice(0, 3).map((entry) => (
-              <span className="assurer-week-dot" style={{ backgroundColor: entry.color }} key={entry.id} />
-            ))}
+          <span className="assurer-week-day-label">{day.label} <b>{day.dayNumber}</b></span>
+          <span className="assurer-week-day-count">{day.entries.length} {day.entries.length === 1 ? 'ITEM' : 'ITEMS'}</span>
+          <span className="assurer-week-preview-list">
+            {day.entries.length ? day.entries.slice(0, 2).map((entry) => (
+              <span className="assurer-week-preview" style={{ '--week-entry-color': entry.color }} key={entry.id}>
+                <b>{entry.startTime || 'ALL DAY'}</b>
+                <em>{entry.label}</em>
+              </span>
+            )) : <span className="assurer-week-preview assurer-week-preview-empty">OPEN</span>}
           </span>
         </div>
       ))}
@@ -240,7 +305,7 @@ function AssurerWeekExpanded({ weekMirror }) {
 
   return (
     <div className="assurer-week-expanded">
-      <p className="assurer-source-note">READ-ONLY FROM THICC.TIME</p>
+      <p className="assurer-source-note">NEXT 7 DAYS • READ-ONLY FROM REMEMBER.ME</p>
       <div className="assurer-week-expanded-grid">
         {weekDays.map((day) => (
           <article className="assurer-week-expanded-day" key={day.dateKey}>
@@ -434,28 +499,44 @@ function AssurerMomentMedia({ moment, expanded = false }) {
   );
 }
 
-function AssurerMomentCards({ cards, expanded = false }) {
+function AssurerMomentCards({ cards, expanded = false, dateKey = '' }) {
+  const [flippedType, setFlippedType] = useState('');
+
+  useEffect(() => {
+    setFlippedType('');
+  }, [dateKey, expanded]);
+
   return (
     <div className={expanded ? 'assurer-moment-expanded-grid' : 'assurer-moment-card-list'}>
       {cards.map((card) => {
         const hasMoment = Boolean(card.moment);
         const previewText = hasMoment && card.moment.text ? card.moment.text : 'NO MOMENT RECORDED YET';
-
-        if (!expanded) {
-          return <article key={card.type} className="assurer-moment-card assurer-moment-card-compact"><strong className="assurer-moment-type">{card.type}</strong></article>;
-        }
+        const isFlipped = flippedType === card.type;
 
         return (
-          <article
+          <button
+            type="button"
             key={card.type}
-            className={`assurer-moment-card ${expanded ? 'assurer-moment-card-expanded' : ''}`.trim()}
+            className={`assurer-moment-card ${expanded ? 'assurer-moment-card-expanded' : 'assurer-moment-card-compact'} ${isFlipped ? 'is-flipped' : ''}`.trim()}
             style={{ '--assurer-moment-back': `url(${card.backAsset})` }}
+            onClick={() => setFlippedType((current) => current === card.type ? '' : card.type)}
+            aria-pressed={isFlipped}
+            aria-label={`${card.type} FLIP CARD${hasMoment ? ', SAVED MOMENT AVAILABLE' : ', NO MOMENT RECORDED'}`}
           >
-            <AssurerMomentMedia moment={card.moment} expanded={expanded} />
-            <strong className="assurer-moment-type">{card.type}</strong>
-            {hasMoment ? <small className="assurer-moment-time">{card.displayDateTime}</small> : null}
-            <p className={`assurer-moment-preview ${hasMoment ? '' : 'assurer-moment-empty'}`.trim()}>{previewText}</p>
-          </article>
+            <div className="assurer-moment-card-inner">
+              <div className="assurer-moment-face assurer-moment-art-face" aria-hidden={isFlipped}>
+                <strong className="assurer-moment-type">{card.type}</strong>
+                <small>TAP TO REVEAL</small>
+              </div>
+              <div className="assurer-moment-face assurer-moment-reveal-face" aria-hidden={!isFlipped}>
+                {expanded ? <AssurerMomentMedia moment={card.moment} expanded /> : null}
+                <strong className="assurer-moment-type">{card.type}</strong>
+                {hasMoment ? <small className="assurer-moment-time">{card.displayDateTime}</small> : null}
+                <span className={`assurer-moment-preview ${hasMoment ? '' : 'assurer-moment-empty'}`.trim()}>{previewText}</span>
+                <small className="assurer-moment-return">TAP TO RETURN</small>
+              </div>
+            </div>
+          </button>
         );
       })}
     </div>
@@ -522,6 +603,7 @@ export default function TheAssurerSection() {
   const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
   const [rememberMeMomentMirror, setRememberMeMomentMirror] = useState(EMPTY_REMEMBER_ME_MOMENT_MIRROR);
   const [rememberMeDayTimeline, setRememberMeDayTimeline] = useState({ ...EMPTY_REMEMBER_ME_DAY_TIMELINE, dateKey: rememberMeTimelineDateKey });
+  const [rememberMeWeekAhead, setRememberMeWeekAhead] = useState({ ...EMPTY_REMEMBER_ME_WEEK_AHEAD, weekDays: getRememberMeWeekAheadDays(today) });
   const [thiccTimeWeekMirror, setThiccTimeWeekMirror] = useState({ ...EMPTY_THICC_TIME_WEEK_MIRROR, weekDays: getThiccTimeWeekDays(today) });
   const [thiccFittWorkoutMirror, setThiccFittWorkoutMirror] = useState(EMPTY_THICC_FITT_WORKOUT_MIRROR);
   const [assurerPhase, setAssurerPhase] = useState('morning');
@@ -634,6 +716,20 @@ export default function TheAssurerSection() {
   useEffect(() => {
     let isActive = true;
 
+    readRememberMeWeekAheadMirror(today).then((mirror) => {
+      if (isActive) {
+        setRememberMeWeekAhead(mirror);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [today]);
+
+  useEffect(() => {
+    let isActive = true;
+
     readThiccTimeWeekMirror(today).then((mirror) => {
       if (isActive) {
         setThiccTimeWeekMirror(mirror);
@@ -701,11 +797,6 @@ export default function TheAssurerSection() {
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [expandedWidget]);
-
-  const thiccTimeTodayEntries = useMemo(() => (
-    (Array.isArray(thiccTimeWeekMirror.entries) ? thiccTimeWeekMirror.entries : [])
-      .filter((entry) => entry.date === storageDate)
-  ), [storageDate, thiccTimeWeekMirror.entries]);
 
   const rememberMeSource = useMemo(() => ({
     source: 'REMEMBER.ME',
@@ -785,7 +876,7 @@ export default function TheAssurerSection() {
     battleCry: 'BATTLE CRY',
     weather: 'WEATHER',
     dayTimeline: 'DAY TIMELINE',
-    weekStrip: 'THICC.TIME WEEK',
+    weekStrip: 'REMEMBER.ME WEEK AHEAD',
     word: 'WORD OF THE DAY',
     thoughts: 'ASSURED THOUGHTS',
     dailyOrbit: 'ICK-O-METER',
@@ -834,12 +925,12 @@ export default function TheAssurerSection() {
       case 'dayTimeline':
         return (
           <div className="assurer-expanded-timeline">
-            <p className="assurer-source-note">READ-ONLY FROM THICC.TIME</p>
-            <AssurerTimelineRows entries={thiccTimeTodayEntries} expanded />
+            <p className="assurer-source-note">READ-ONLY FROM REMEMBER.ME • {date}</p>
+            <AssurerRollingTimeline entries={rememberMeDayTimeline.entries} expanded />
           </div>
         );
       case 'weekStrip':
-        return <AssurerWeekExpanded weekMirror={thiccTimeWeekMirror} />;
+        return <AssurerWeekExpanded weekMirror={rememberMeWeekAhead} />;
       case 'mealLog':
         return (
           <div className="assurer-expanded-meal-log">
@@ -919,7 +1010,7 @@ export default function TheAssurerSection() {
         return <SpotifyTrackPicker value={headHummer} onChange={setHeadHummer} storageKey={HEAD_HUMMER_STORAGE_KEY} label="HEAD HUMMER" />;
       case 'moments':
         return (
-          <AssurerMomentCards cards={momentCards} expanded />
+          <AssurerMomentCards cards={momentCards} expanded dateKey={rememberMeMomentDateKey} />
         );
       default:
         return null;
@@ -1065,13 +1156,13 @@ export default function TheAssurerSection() {
               className="assurer-expand-button"
               type="button"
               onClick={() => openExpandedWidget('weekStrip')}
-              aria-label="EXPAND WEEK STRIP"
+              aria-label="EXPAND REMEMBER.ME WEEK AHEAD"
             >
               ⤢
             </button>
             <div className="assurer-widget-content assurer-week-content">
-              <strong>WEEK STRIP</strong>
-              <AssurerWeekStrip weekMirror={thiccTimeWeekMirror} />
+              <strong>WEEK AHEAD</strong>
+              <AssurerWeekStrip weekMirror={rememberMeWeekAhead} />
             </div>
           </article>
 
@@ -1087,7 +1178,7 @@ export default function TheAssurerSection() {
             <div className="assurer-widget-content assurer-timeline-content">
               <strong>DAY TIMELINE</strong>
               <small>{date}</small>
-              <AssurerTimelineRows entries={thiccTimeTodayEntries} limit={4} />
+              <AssurerRollingTimeline entries={rememberMeDayTimeline.entries} />
             </div>
           </article>
 
@@ -1233,7 +1324,7 @@ export default function TheAssurerSection() {
             </button>
             <div className="assurer-widget-content assurer-moment-content">
               <strong>MOMENT FLIP CARDS</strong>
-              <AssurerMomentCards cards={momentCards} />
+              <AssurerMomentCards cards={momentCards} dateKey={rememberMeMomentDateKey} />
             </div>
           </article>
 
