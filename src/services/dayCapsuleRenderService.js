@@ -479,11 +479,14 @@ export async function requestChatGPTDayCapsuleHandoff(renderRequest) {
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
   try {
     const response = await fetch('/api/day-capsule-render', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ renderRequest }),
+      signal: controller.signal,
     });
     const result = await response.json().catch(() => ({}));
     return persistExternalDayCapsuleRender({ ...result, renderRequest: result?.renderRequest || renderRequest });
@@ -497,6 +500,8 @@ export async function requestChatGPTDayCapsuleHandoff(renderRequest) {
       error: error?.message || 'The ChatGPT handoff could not be prepared.',
       updatedAt: new Date().toISOString(),
     });
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 }
 

@@ -8,6 +8,8 @@ globalThis.window = {
     getItem(key) { return records.has(key) ? records.get(key) : null; },
     setItem(key, value) { records.set(key, value); },
   },
+  setTimeout,
+  clearTimeout,
 };
 
 const {
@@ -54,8 +56,10 @@ test('Day Capsule requests prepare a ChatGPT handoff through the authenticated a
 
 test('active handoff route cannot call the direct OpenAI or external renderer paths', async () => {
   const routeSource = await readFile(new URL('../app/api/day-capsule-render/route.js', import.meta.url), 'utf8');
+  const successfulHandoffResponse = routeSource.slice(routeSource.indexOf("console.info('day-capsule-chatgpt-handoff-ready'"));
 
   assert.match(routeSource, /chatgpt_handoff_with_authenticated_return/);
+  assert.doesNotMatch(successfulHandoffResponse, /\n\s*renderRequest,\n\s*renderArtifact/);
   assert.doesNotMatch(routeSource, /renderDayCapsuleWithProvider/);
   assert.doesNotMatch(routeSource, /DAY_CAPSULE_RENDER_ENDPOINT/);
   assert.doesNotMatch(routeSource, /api\.openai\.com/);

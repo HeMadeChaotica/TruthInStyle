@@ -77,7 +77,6 @@ export async function POST(request) {
       provider: 'chatgpt_handoff',
       returnMode: 'authenticated_manual_upload',
     },
-    renderRequest,
     renderArtifact: null,
     configured: true,
     retryable: false,
