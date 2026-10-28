@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CONTROL_GLYPHS as RAIL_ITEMS } from '../../lib/routes/controlGlyphs';
 import ControlGlyph from '../shared/ControlGlyph';
-import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealCurrentDayCapsuleToHopewood, setStoredSummationActiveDay } from '../../src/services/summationService';
+import { createDayCapsulePayloadFromActiveDay, createSummationDraftFromAssurerDay, getChaoticaDayNumber, getStoredSummationActiveDay, isSummationSketchSealable, readAssurerDayForSummation, resolveSummationActiveDay, sealCurrentDayCapsuleToHopewood, setStoredSummationActiveDay, SUMMATION_ACTIVE_DAY_CHANGED_EVENT } from '../../src/services/summationService';
 import { fetchHopewoodSummationArchive, findHopewoodSummationByDate, getHopewoodRecordDate } from '../../src/services/hopewoodService';
 
 const DRAFT_EVENT_NAME = 'truthinstyle-summation-draft';
@@ -130,6 +130,7 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   const [status, setStatus] = useState('');
   const eyeButtonRef = useRef(null);
   const autoSummateHandledRef = useRef(false);
+  const sealPendingRef = useRef(false);
   const [dayPanelPosition, setDayPanelPosition] = useState({ top: 96, right: 96 });
 
   useEffect(() => {
@@ -147,6 +148,19 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const syncActiveDay = (event) => {
+      const sourceDate = event?.detail?.sourceDate;
+      const nextDate = sourceDate ? dateFromSourceDate(sourceDate) : null;
+      if (!nextDate) return;
+      setActiveDate(nextDate);
+      setDraftDateText(displayDate(nextDate));
+      setDraftDatePickerValue(localDateKey(nextDate));
+    };
+    window.addEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+    return () => window.removeEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
   }, []);
 
   useEffect(() => {
@@ -276,12 +290,19 @@ export default function ControlPanelOverlay({ isOpen = false, onOpen, onClose, o
   }, []);
 
   const handleSeal = async () => {
+    if (sealPendingRef.current) {
+      setStatus('SEAL ALREADY IN PROGRESS');
+      return;
+    }
+    sealPendingRef.current = true;
     setStatus('SEALING DAY CAPSULE...');
     try {
       const result = await sealCurrentDayCapsuleToHopewood();
-      setStatus(result?.sealedRecord ? `SEALED ${result.sealedRecord.displayDate || result.sealedRecord.sourceDate}` : `SEAL BLOCKED: ${(result?.missingFields || []).join(', ')}`);
+      setStatus(result?.sealedRecord ? `${result.alreadySealed ? 'ALREADY SEALED' : 'SEALED'} ${result.sealedRecord.displayDate || result.sealedRecord.sourceDate}` : `SEAL BLOCKED: ${(result?.missingFields || []).join(', ')}`);
     } catch (error) {
       setStatus(`SEAL FAILED: ${error?.message || 'UNKNOWN ERROR'}`);
+    } finally {
+      sealPendingRef.current = false;
     }
   };
 

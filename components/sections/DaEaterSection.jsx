@@ -8,6 +8,7 @@ import { calculateDaEaterTotals, deleteCheatFlexEntry, deleteMealEntry, deleteSu
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import { CLOCK_IT_KEYS, useClockItNumericOptions, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
 import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
+import { getStoredSummationActiveDay, SUMMATION_ACTIVE_DAY_CHANGED_EVENT } from '../../src/services/summationService';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const THICC_DAY_STORAGE_KEY = 'truthinstyle_da_eater_thicc_treat_day_v1';
@@ -20,8 +21,9 @@ export default function DaEaterSection() {
   const CHEAT_TYPES = useClockItOptions(CLOCK_IT_KEYS.daEaterTreatTypes);
   const THICC_DAYS = useClockItOptions(CLOCK_IT_KEYS.daEaterTreatDays);
   const worthItOptions = useClockItNumericOptions(CLOCK_IT_KEYS.worthItPercent);
-  const [date, setDate] = useState(today());
-  const [day, setDay] = useState(() => getDaEaterDay(today()));
+  const initialActiveDate = getStoredSummationActiveDay().sourceDate || today();
+  const [date, setDate] = useState(initialActiveDate);
+  const [day, setDay] = useState(() => getDaEaterDay(initialActiveDate));
   const [mealForm, setMealForm] = useState({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '', waterOz: '' });
   const [suppForm, setSuppForm] = useState({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' });
   const [cheatForm, setCheatForm] = useState({ id: '', type: 'CHEAT MEAL', day: '', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
@@ -46,6 +48,20 @@ export default function DaEaterSection() {
     return 'WEDNESDAY';
   };
   const [selectedThiccDay, setSelectedThiccDay] = useState(getInitialThiccDay);
+
+  useEffect(() => {
+    const syncActiveDay = (event) => {
+      const nextDate = event?.detail?.sourceDate || getStoredSummationActiveDay().sourceDate || today();
+      setDate(nextDate);
+      setDay(getDaEaterDay(nextDate));
+      setMealForm({ id: '', type: 'BREAKFAST', name: '', time: '', protein: '', carbs: '', fats: '', calories: '', waterOz: '' });
+      setSuppForm({ id: '', type: 'VITAMIN', name: '', time: '', amount: '', unit: '', notes: '' });
+      setCheatForm({ id: '', type: 'CHEAT MEAL', day: '', meal: '', dessert: '', roughCalories: '', worthItPercent: '', notes: '' });
+      setCravingNotes({ craving: '', trigger: '', intensity: '', response: '', notes: '' });
+    };
+    window.addEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+    return () => window.removeEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+  }, []);
 
 
   useEffect(() => {

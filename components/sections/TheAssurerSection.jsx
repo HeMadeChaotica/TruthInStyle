@@ -33,7 +33,7 @@ import {
   WEATHER_CITY_OPTIONS,
   fetchAssurerWeather,
 } from '../../lib/theAssurer/weatherOptions';
-import { PENNY_FOR_YOUR_THOUGHTS_QUESTIONS, getChaoticaDayNumber } from '../../src/services/summationService';
+import { getStoredSummationActiveDay, PENNY_FOR_YOUR_THOUGHTS_QUESTIONS, getChaoticaDayNumber, SUMMATION_ACTIVE_DAY_CHANGED_EVENT } from '../../src/services/summationService';
 import '../../styles/sections/the-assurer.css';
 import SpotifyTrackPicker from '../shared/SpotifyTrackPicker';
 
@@ -570,7 +570,8 @@ export default function TheAssurerSection() {
   const singlenessOptions = useDropdownOptions(DROPDOWN_KEYS.assessmentSingleness);
   const lobitoOptions = useDropdownOptions(DROPDOWN_KEYS.lobitoCheckIn);
 
-  const today = useMemo(() => new Date(), []);
+  const [activeDayKey, setActiveDayKey] = useState(() => getStoredSummationActiveDay().sourceDate || getLocalDateKey(new Date()));
+  const today = useMemo(() => new Date(`${activeDayKey}T00:00:00`), [activeDayKey]);
   const date = useMemo(() => formatAssurerDate(today), [today]);
   const storageDate = useMemo(() => getLocalDateKey(today), [today]);
   const daEaterStorageDate = useMemo(() => getDaEaterStorageDate(today), [today]);
@@ -599,6 +600,7 @@ export default function TheAssurerSection() {
   const [assuredThoughts, setAssuredThoughts] = useState('');
   const [pennyQuestions, setPennyQuestions] = useState([]);
   const [storageLoaded, setStorageLoaded] = useState(false);
+  const loadedStorageDateRef = useRef('');
   const [macroMirror, setMacroMirror] = useState(ASSURER_MACRO_FALLBACK_MIRROR);
   const [daEaterMeals, setDaEaterMeals] = useState(EMPTY_DA_EATER_MEAL_LOG);
   const [rememberMeMomentMirror, setRememberMeMomentMirror] = useState(EMPTY_REMEMBER_ME_MOMENT_MIRROR);
@@ -607,6 +609,12 @@ export default function TheAssurerSection() {
   const [thiccTimeWeekMirror, setThiccTimeWeekMirror] = useState({ ...EMPTY_THICC_TIME_WEEK_MIRROR, weekDays: getThiccTimeWeekDays(today) });
   const [thiccFittWorkoutMirror, setThiccFittWorkoutMirror] = useState(EMPTY_THICC_FITT_WORKOUT_MIRROR);
   const [assurerPhase, setAssurerPhase] = useState('morning');
+
+  useEffect(() => {
+    const syncActiveDay = (event) => setActiveDayKey(event?.detail?.sourceDate || getStoredSummationActiveDay().sourceDate || getLocalDateKey(new Date()));
+    window.addEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+    return () => window.removeEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+  }, []);
 
   useEffect(() => {
     const syncAssurerPhase = () => {
@@ -620,6 +628,20 @@ export default function TheAssurerSection() {
   }, []);
 
   useEffect(() => {
+    loadedStorageDateRef.current = '';
+    setStorageLoaded(false);
+    setTitleOfDay('');
+    setMood('');
+    setEra('');
+    setSinglenessLevel('');
+    setLobitoCheckIn('');
+    setLocation('');
+    setHeadHummer(null);
+    setAssuredThoughts('');
+    setWordOfDay(defaultDailyWord.word);
+    setWordDefinition(defaultDailyWord.definition || '');
+    setWordExample(defaultDailyWord.example || '');
+    setWordVerification({ verified: Boolean(defaultDailyWord.definition), source: defaultDailyWord.source || '' });
     try {
       const savedDay = safeJsonParse(window.localStorage.getItem(`${ASSURER_DAY_STORAGE_KEY}:${storageDate}`), null);
       const savedTitle = window.localStorage.getItem(`${ASSURER_TITLE_STORAGE_KEY}:${storageDate}`);
@@ -662,6 +684,7 @@ export default function TheAssurerSection() {
       setPennyQuestions(createDailyPennyQuestions());
       // Keep the blank title and deterministic daily word when local storage is unavailable.
     } finally {
+      loadedStorageDateRef.current = storageDate;
       setStorageLoaded(true);
     }
   }, [defaultDailyWord, storageDate]);
@@ -679,7 +702,7 @@ export default function TheAssurerSection() {
   }, [wordOfDay]);
 
   useEffect(() => {
-    if (!storageLoaded) {
+    if (!storageLoaded || loadedStorageDateRef.current !== storageDate) {
       return;
     }
 
@@ -746,7 +769,7 @@ export default function TheAssurerSection() {
   }, [storageDate]);
 
   useEffect(() => {
-    if (!storageLoaded) {
+    if (!storageLoaded || loadedStorageDateRef.current !== storageDate) {
       return;
     }
 
@@ -1007,7 +1030,7 @@ export default function TheAssurerSection() {
           </div>
         );
       case 'headHummer':
-        return <SpotifyTrackPicker value={headHummer} onChange={setHeadHummer} storageKey={HEAD_HUMMER_STORAGE_KEY} label="HEAD HUMMER" />;
+        return <SpotifyTrackPicker value={headHummer} onChange={setHeadHummer} storageKey={`${HEAD_HUMMER_STORAGE_KEY}:${storageDate}`} label="HEAD HUMMER" />;
       case 'moments':
         return (
           <AssurerMomentCards cards={momentCards} expanded dateKey={rememberMeMomentDateKey} />
@@ -1075,7 +1098,7 @@ export default function TheAssurerSection() {
   ]);
 
   useEffect(() => {
-    if (!storageLoaded) {
+    if (!storageLoaded || loadedStorageDateRef.current !== storageDate) {
       return;
     }
 

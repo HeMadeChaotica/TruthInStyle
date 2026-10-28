@@ -52,12 +52,18 @@ export async function readHopewoodArchiveFromSupabase() {
 export async function upsertHopewoodArchiveRecord(record) {
   const sourceDate = cleanText(record?.sourceDate || record?.dayIdentity?.sourceDate);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(sourceDate)) throw new Error('A valid sourceDate is required to seal HOPEWOOD.');
+  const existingDays = await requestTable(`day_record?select=id&day_date=eq.${encodeURIComponent(sourceDate)}&archive_state=eq.sealed&limit=1`);
+  const existingDayId = existingDays?.[0]?.id;
+  if (existingDayId) {
+    const existingPages = await requestTable(`summation_page?select=rendered_page&day_id=eq.${encodeURIComponent(existingDayId)}&archive_ready=eq.true&limit=1`);
+    if (existingPages?.[0]?.rendered_page) return existingPages[0].rendered_page;
+  }
   const title = cleanText(record?.title || record?.dayIdentity?.titleOfDay) || null;
   const searchableText = searchableSnapshot(record);
   const dayRows = await requestTable('day_record?on_conflict=day_date', {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify({ day_date: sourceDate, title_of_day: title, source_state: 'complete', synthesis_state: 'rendered', archive_state: 'sealed', updated_at: new Date().toISOString() }),
+    body: JSON.stringify({ day_date: sourceDate, title_of_day: title, source_state: 'complete', synthesis_state: 'rendered', archive_state: 'pending', updated_at: new Date().toISOString() }),
   });
   const dayId = dayRows?.[0]?.id;
   if (!dayId) throw new Error('Supabase did not return the sealed day record.');
@@ -65,7 +71,7 @@ export async function upsertHopewoodArchiveRecord(record) {
   const pageRows = await requestTable('summation_page?on_conflict=day_id', {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
-    body: JSON.stringify({ day_id: dayId, title_of_day: title, rendered_page: record, searchable_text_snapshot: searchableText, archive_ready: true }),
+    body: JSON.stringify({ day_id: dayId, title_of_day: title, rendered_page: record, searchable_text_snapshot: searchableText, archive_ready: false }),
   });
   const pageId = pageRows?.[0]?.id;
   if (!pageId) throw new Error('Supabase did not return the Summation page.');
@@ -87,6 +93,16 @@ export async function upsertHopewoodArchiveRecord(record) {
       trend_tags: list(signals),
       searchable_text_snapshot: searchableText,
     }),
+  });
+  await requestTable(`summation_page?id=eq.${encodeURIComponent(pageId)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ archive_ready: true }),
+  });
+  await requestTable(`day_record?id=eq.${encodeURIComponent(dayId)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ archive_state: 'sealed', updated_at: new Date().toISOString() }),
   });
   return record;
 }

@@ -11,8 +11,10 @@ import { ScenePlate, SectionShell } from '../shared/UniversalSectionFrame';
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
 import SpotifyTrackPicker from '../shared/SpotifyTrackPicker';
+import { getStoredSummationActiveDay, SUMMATION_ACTIVE_DAY_CHANGED_EVENT } from '../../src/services/summationService';
 
 const STORAGE_KEY = 'thicc_fitt_day';
+const DAYS_STORAGE_KEY = 'truthinstyle_thicc_fitt_days_v2';
 const QUOTE_HISTORY_KEY = 'thicc_fitt_quote_history';
 const TWERK_SAUCE_STORAGE_KEY = 'truthinstyle_thicc_fitt_twerk_sauce_v1';
 const EXERCISE_COUNT = 6;
@@ -78,6 +80,10 @@ const normalizeSleepEntry = (sleep = {}) => {
 };
 
 const initialState = { control: { gymLocation: '', arrivalTime: '', workoutLength: '', seasonPhase: '', sorenessRecovery: '', prepStatus: '' }, exerciseRows: Array.from({ length: EXERCISE_COUNT }, createExerciseRow), core: { focus: '', circuit: '', rounds: '', repScheme: '', format: 'BODYWEIGHT', completed: '' }, cardio: { type: '', duration: '', intensity: '', location: '', notes: '', weeklyGoal: '3 SESSIONS / 60 MIN', weeklyDone: '' }, vault: { compound: '', ester: '', amount: '', shotCurrent: '', shotTotal: '', sensitivity: '', cycleWeekCurrent: '', cycleWeekTotal: '' }, vaultRows: Array.from({ length: VAULT_ROW_COUNT }, createVaultRow), body: Object.fromEntries(bodyRows.map(([k]) => [k, { today: '', lastWeek: '', change: '' }])), bodyNotes: '', stageCall: { months: '', days: '', hours: '', minutes: '', seconds: '', stageDescription: '', posingMinutes: '', mandatoryRoundPracticed: '', strongestPose: '', weakestPose: '', transitions: '', posingFatigue: '', coachSelfNotes: '' }, soHowYouDoin: optionRegistry.thiccFitt.soHowYouDoin[0], soHowYouDoinNotes: '', photo: { progressPhotoRef: '', gymPhotoRef: '' }, weeklyTrackers: { weekStart: getWeekStartKey(), byDay: Object.fromEntries(WEEK_DAYS.map((d) => [d, { training: { gymMinutes: 0, cardioMinutes: 0 }, caffeineMg: '', sleep: createSleepEntry() }])) }, sessionCompleted: '' };
+const createInitialState = (dateKey = todayKey()) => ({
+  ...JSON.parse(JSON.stringify(initialState)),
+  weeklyTrackers: { ...JSON.parse(JSON.stringify(initialState.weeklyTrackers)), weekStart: getWeekStartKey(new Date(`${dateKey}T00:00:00`)) },
+});
 
 export default function ThiccFittSection() {
   const seasonOptions = useClockItOptions(CLOCK_IT_KEYS.thiccFittSeason);
@@ -100,11 +106,14 @@ export default function ThiccFittSection() {
   const exerciseSetOptions = useClockItNumericOptions(CLOCK_IT_KEYS.exerciseSets);
   const exerciseRestOptions = useClockItNumericOptions(CLOCK_IT_KEYS.exerciseRestSeconds);
   const yesNoOptions = useClockItOptions(CLOCK_IT_KEYS.yesNo);
-  const [state, setState] = useState(initialState);
+  const [activeDayKey, setActiveDayKey] = useState(() => getStoredSummationActiveDay().sourceDate || todayKey());
+  const [state, setState] = useState(() => createInitialState(activeDayKey));
   const [storageHydrated, setStorageHydrated] = useState(false);
+  const loadedDayRef = useRef('');
   const [dailyQuote, setDailyQuote] = useState(optionRegistry.thiccFitt.quoteOfDay[0]);
   const [twerkSauce, setTwerkSauce] = useState(null);
-  const todayDay = WEEK_DAYS[new Date().getDay()];
+  const activeDate = useMemo(() => new Date(`${activeDayKey}T00:00:00`), [activeDayKey]);
+  const todayDay = WEEK_DAYS[activeDate.getDay()];
   const todaySleep = normalizeSleepEntry(state.weeklyTrackers.byDay[todayDay]?.sleep || {});
   const dailySleepMinutes = calculateSleepMinutes(todaySleep.sleep_start, todaySleep.wake_time);
   const dailySleepSignal = {
@@ -120,10 +129,20 @@ export default function ThiccFittSection() {
   }, []);
 
   useEffect(() => {
+    const syncActiveDay = (event) => setActiveDayKey(event?.detail?.sourceDate || getStoredSummationActiveDay().sourceDate || todayKey());
+    window.addEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+    return () => window.removeEventListener(SUMMATION_ACTIVE_DAY_CHANGED_EVENT, syncActiveDay);
+  }, []);
+
+  useEffect(() => {
+    loadedDayRef.current = '';
+    setStorageHydrated(false);
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const days = JSON.parse(localStorage.getItem(DAYS_STORAGE_KEY) || '{}');
+      const legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      const raw = days?.[activeDayKey] || (legacy?.date === activeDayKey ? legacy : null);
       if (raw) {
-        const parsed = JSON.parse(raw);
+        const parsed = raw;
         const vaultRows = normalizeVaultRows(parsed.vaultRows, parsed.vault);
         const safe = {
           ...parsed,
@@ -136,7 +155,7 @@ export default function ThiccFittSection() {
           soHowYouDoinNotes: String(parsed.soHowYouDoinNotes ?? ''),
           body: bodyRows.reduce((acc, [k]) => ({ ...acc, [k]: { today: String(parsed?.body?.[k]?.today ?? ''), lastWeek: String(parsed?.body?.[k]?.lastWeek ?? ''), change: String(parsed?.body?.[k]?.change ?? '') } }), {}),
           weeklyTrackers: {
-            weekStart: (parsed?.weeklyTrackers?.weekStart === getWeekStartKey() ? parsed?.weeklyTrackers?.weekStart : getWeekStartKey()),
+            weekStart: (parsed?.weeklyTrackers?.weekStart === getWeekStartKey(activeDate) ? parsed?.weeklyTrackers?.weekStart : getWeekStartKey(activeDate)),
             byDay: Object.fromEntries(WEEK_DAYS.map((day) => [day, {
               training: {
                 gymMinutes: Number(parsed?.weeklyTrackers?.byDay?.[day]?.training?.gymMinutes ?? 0),
@@ -151,24 +170,27 @@ export default function ThiccFittSection() {
           }
         };
         setState((p) => ({ ...p, ...safe }));
-      }
+      } else setState(createInitialState(activeDayKey));
     } catch {
       // keep default state
     } finally {
+      loadedDayRef.current = activeDayKey;
       setStorageHydrated(true);
     }
-  }, []);
+  }, [activeDate, activeDayKey, todayDay]);
   useEffect(() => {
-    if (!storageHydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, date: todayKey(), dailySleep: dailySleepSignal }));
-  }, [state, dailySleepSignal, storageHydrated]);
+    if (!storageHydrated || loadedDayRef.current !== activeDayKey) return;
+    const days = JSON.parse(localStorage.getItem(DAYS_STORAGE_KEY) || '{}');
+    days[activeDayKey] = { ...state, date: activeDayKey, dailySleep: dailySleepSignal };
+    localStorage.setItem(DAYS_STORAGE_KEY, JSON.stringify(days));
+  }, [activeDayKey, state, dailySleepSignal, storageHydrated]);
 
   useEffect(() => {
-    const currentWeek = getWeekStartKey();
+    const currentWeek = getWeekStartKey(activeDate);
     if (state.weeklyTrackers.weekStart !== currentWeek) {
-      setState((p) => ({ ...p, weeklyTrackers: initialState.weeklyTrackers }));
+      setState((p) => ({ ...p, weeklyTrackers: createInitialState(activeDayKey).weeklyTrackers }));
     }
-  }, [state.weeklyTrackers.weekStart]);
+  }, [activeDate, state.weeklyTrackers.weekStart]);
 
   useEffect(() => {
     const gymMinutes = parseDurationMinutes(state.control.workoutLength);
@@ -190,12 +212,12 @@ export default function ThiccFittSection() {
         }
       };
     });
-  }, [state.control.workoutLength, state.cardio.duration]);
+  }, [state.control.workoutLength, state.cardio.duration, todayDay]);
 
   useEffect(() => {
     const quoteBank = quoteOptions.filter((q) => q.verified && q.author && q.source);
     if (!quoteBank.length) return;
-    const key = todayKey();
+    const key = activeDayKey;
     const raw = localStorage.getItem(QUOTE_HISTORY_KEY);
     let history = { quoteByDate: {}, usedQuoteIds: [], cycle: 1, lastQuoteId: '' };
     try {
@@ -226,14 +248,14 @@ export default function ThiccFittSection() {
     history.lastQuoteId = nextQuote.id;
     localStorage.setItem(QUOTE_HISTORY_KEY, JSON.stringify(history));
     setDailyQuote(nextQuote);
-  }, [quoteOptions]);
+  }, [activeDayKey, quoteOptions]);
 
   useEffect(() => {
-    if (!storageHydrated) return;
+    if (!storageHydrated || loadedDayRef.current !== activeDayKey) return;
     publishThiccFittSessionProof({
-      date: todayKey(), trainingTopValues: state.control, gym: state.control.gymLocation, arrival: state.control.arrivalTime, workoutLength: state.control.workoutLength, seasonPhase: state.control.seasonPhase, sorenessRecovery: state.control.sorenessRecovery, prepStatus: state.control.prepStatus, exerciseLogRows: state.exerciseRows, coreAbFinisher: state.core, cardio: state.cardio, vault: state.vault, vaultRows: state.vaultRows, bodyGrowthSummary: state.body, weeklyTrackers: state.weeklyTrackers, dailySleep: dailySleepSignal, sleepSignal: dailySleepSignal, sleep_start: dailySleepSignal.sleep_start, wake_time: dailySleepSignal.wake_time, sleep_total: dailySleepSignal.sleep_total, sleep_quality: dailySleepSignal.sleep_quality, sleep_notes: dailySleepSignal.sleep_notes, soHowYouDoinSelectedOption: state.soHowYouDoin, soHowYouDoinNotes: state.soHowYouDoinNotes, sessionPhoto: state.photo.progressPhotoRef, completed: state.sessionCompleted
+      date: activeDayKey, trainingTopValues: state.control, gym: state.control.gymLocation, arrival: state.control.arrivalTime, workoutLength: state.control.workoutLength, seasonPhase: state.control.seasonPhase, sorenessRecovery: state.control.sorenessRecovery, prepStatus: state.control.prepStatus, exerciseLogRows: state.exerciseRows, coreAbFinisher: state.core, cardio: state.cardio, vault: state.vault, vaultRows: state.vaultRows, bodyGrowthSummary: state.body, weeklyTrackers: state.weeklyTrackers, dailySleep: dailySleepSignal, sleepSignal: dailySleepSignal, sleep_start: dailySleepSignal.sleep_start, wake_time: dailySleepSignal.wake_time, sleep_total: dailySleepSignal.sleep_total, sleep_quality: dailySleepSignal.sleep_quality, sleep_notes: dailySleepSignal.sleep_notes, soHowYouDoinSelectedOption: state.soHowYouDoin, soHowYouDoinNotes: state.soHowYouDoinNotes, sessionPhoto: state.photo.progressPhotoRef, completed: state.sessionCompleted
     });
-  }, [state, storageHydrated]);
+  }, [activeDayKey, dailySleepSignal, state, storageHydrated]);
 
   const update = (section, key, value) => setState((p) => ({ ...p, [section]: { ...p[section], [key]: value } }));
   const updateExercise = (i, key, value) => setState((p) => ({ ...p, exerciseRows: p.exerciseRows.map((r, n) => (i === n ? { ...r, [key]: value } : r)) }));
@@ -317,7 +339,7 @@ export default function ThiccFittSection() {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const uploaded = await uploadPrivateImage(file, { context: 'thicc-fitt', sourceDate: todayKey() });
+      const uploaded = await uploadPrivateImage(file, { context: 'thicc-fitt', sourceDate: activeDayKey });
       updatePhotoRef(slotKey, uploaded.url);
     } catch (error) {
       console.warn('THICC.FITT photo upload failed', error);

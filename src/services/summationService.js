@@ -17,7 +17,8 @@ import {
 import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMirror } from '../../lib/theAssurer/thiccTimeWeekMirror';
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import { DAY_CAPSULE_RENDER_RECORD_KEY, DAY_CAPSULE_RENDER_STATUSES } from './dayCapsuleRenderService';
-import { persistSealedSummation, receiveSealedSummation } from './hopewoodService';
+import { findHopewoodSummationByDate, persistSealedSummation, readHopewoodSummationArchive, receiveSealedSummation } from './hopewoodService';
+import { countArchivedDaysThrough, getNextDaySourceDate } from './dailyLifecycle';
 
 const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfDay', 'assurer:title'];
 const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
@@ -260,8 +261,6 @@ function readStoredValue(baseKeys, dateKeys) {
       const dated = window.localStorage.getItem(`${key}:${dateKey}`);
       if (dated !== null && cleanText(dated)) return dated;
     }
-    const undated = window.localStorage.getItem(key);
-    if (undated !== null && cleanText(undated)) return undated;
   }
   return '';
 }
@@ -1075,11 +1074,22 @@ function readSealedRecords() {
 
 export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
   const requestedDateKey = cleanText(dateKey);
-  const match = requestedDateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return 0;
-  const requestedUtc = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  const officialDayOneUtc = Date.UTC(2026, 8, 7);
-  return Math.max(0, Math.floor((requestedUtc - officialDayOneUtc) / 86400000) + 1);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(requestedDateKey)) return 0;
+  return countArchivedDaysThrough(readHopewoodSummationArchive(), requestedDateKey);
+}
+
+export function getNextChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
+  return getChaoticaDayNumber(dateKey) + (findHopewoodSummationByDate(dateKey) ? 0 : 1);
+}
+
+export function getNextDayDate(sourceDate) {
+  const nextSourceDate = getNextDaySourceDate(sourceDate);
+  return nextSourceDate ? parseSourceDate(nextSourceDate) : null;
+}
+
+export function activateCleanNextDay(sourceDate) {
+  const nextDate = getNextDayDate(sourceDate);
+  return nextDate ? setStoredSummationActiveDay(nextDate) : null;
 }
 
 export function generateSummationVariations(dayPayload = null, pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
@@ -1891,12 +1901,19 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
   return { sealedRecord, missingFields: [] };
 }
 
-export async function sealCurrentDayCapsuleToHopewood() {
+const sealInFlightByDate = new Map();
+
+async function commitCurrentDayCapsuleToHopewood() {
   if (!hasStorage()) return { sealedRecord: null, missingFields: ['localStorage'] };
   const payload = readStoredDayCapsulePayload();
   if (!payload) return { sealedRecord: null, missingFields: ['active Day Capsule payload'] };
   const renderRecord = readStorageObject(DAY_CAPSULE_RENDER_RECORD_KEY, null);
   const dayIdentity = resolveDayIdentityClump(payload.dayIdentity || {}, { updatedAt: new Date().toISOString() });
+  const existingArchiveRecord = findHopewoodSummationByDate(dayIdentity.sourceDate);
+  if (existingArchiveRecord) {
+    activateCleanNextDay(dayIdentity.sourceDate);
+    return { sealedRecord: existingArchiveRecord, missingFields: [], alreadySealed: true };
+  }
   const missingFields = [
     ...listDayIdentityMissingFields(dayIdentity).map((field) => `dayIdentity.${field}`),
     ...getFinalRenderSealBlockFields(dayIdentity),
@@ -1913,6 +1930,11 @@ export async function sealCurrentDayCapsuleToHopewood() {
   const snapshot = payload.sourceSnapshot || renderRecord?.renderRequest?.sourceSnapshot || {};
   const artifact = renderRecord.renderArtifact || {};
   const now = new Date().toISOString();
+  const sealedDayIdentity = {
+    ...dayIdentity,
+    chaoticaDayNumber: getNextChaoticaDayNumber(dayIdentity.sourceDate),
+    updatedAt: now,
+  };
   const sourceSignals = {
     thiccTime: snapshot.thiccTimeSignals || null,
     rememberMe: snapshot.rememberMeMoments || snapshot.moments || [],
@@ -1926,16 +1948,16 @@ export async function sealCurrentDayCapsuleToHopewood() {
     sourceDate: dayIdentity.sourceDate,
     displayDate: dayIdentity.displayDate,
     dayOfWeek: dayIdentity.dayOfWeek,
-    chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
-    dayIdentity,
-    title: dayIdentity.titleOfDay,
+    chaoticaDayNumber: sealedDayIdentity.chaoticaDayNumber,
+    dayIdentity: sealedDayIdentity,
+    title: sealedDayIdentity.titleOfDay,
     mood: snapshot.mood,
     era: snapshot.era,
     singleness: snapshot.singlenessLevel,
     selectedVersionLabel: 'DAY CAPSULE',
     selectedVersionContent: payload.assuredThoughts?.diaryEntry || '',
-    sourceTruthSnapshot: { ...snapshot, dayIdentity, assuredThoughts: payload.assuredThoughts },
-    fullAssurerDaySnapshot: { ...snapshot, dayIdentity, assuredThoughts: payload.assuredThoughts },
+    sourceTruthSnapshot: { ...snapshot, dayIdentity: sealedDayIdentity, assuredThoughts: payload.assuredThoughts },
+    fullAssurerDaySnapshot: { ...snapshot, dayIdentity: sealedDayIdentity, assuredThoughts: payload.assuredThoughts },
     sourceSignals,
     renderId: renderRecord.renderId,
     payloadId: payload.payloadId,
@@ -1946,21 +1968,32 @@ export async function sealCurrentDayCapsuleToHopewood() {
       sourceDate: dayIdentity.sourceDate,
       displayDate: dayIdentity.displayDate,
       dayOfWeek: dayIdentity.dayOfWeek,
-      chaoticaDayNumber: dayIdentity.chaoticaDayNumber,
+      chaoticaDayNumber: sealedDayIdentity.chaoticaDayNumber,
       mood: snapshot.mood,
       era: snapshot.era,
       singleness: snapshot.singlenessLevel,
-      title: dayIdentity.titleOfDay,
-      dayIdentity,
+      title: sealedDayIdentity.titleOfDay,
+      dayIdentity: sealedDayIdentity,
       sourceSignals,
       sealedAt: now,
     },
     sealedAt: now,
   };
+  await persistSealedSummation(sealedRecord);
   const records = readSealedRecords().filter((record) => String(record.sourceDate) !== String(sealedRecord.sourceDate));
   writeStorageArray(SUMMATION_SEALED_STORAGE_KEY, [...records, sealedRecord]);
-  await persistSealedSummation(sealedRecord);
-  writeStorageObject(COMPLETED_SUMMATION_KEY, { dayIdentity, payload, renderRecord, sealedRecord });
+  writeStorageObject(COMPLETED_SUMMATION_KEY, { dayIdentity: sealedDayIdentity, payload, renderRecord, sealedRecord });
+  activateCleanNextDay(sealedRecord.sourceDate);
   window.dispatchEvent(new CustomEvent('truthinstyle-summation-sealed', { detail: { sealedRecord, message: `Sealed ${sealedRecord.displayDate}` } }));
   return { sealedRecord, missingFields: [] };
+}
+
+export async function sealCurrentDayCapsuleToHopewood() {
+  if (!hasStorage()) return { sealedRecord: null, missingFields: ['localStorage'] };
+  const sourceDate = readStoredDayCapsulePayload()?.dayIdentity?.sourceDate || readStoredDayCapsulePayload()?.sourceDate || '';
+  if (!sourceDate) return commitCurrentDayCapsuleToHopewood();
+  if (sealInFlightByDate.has(sourceDate)) return sealInFlightByDate.get(sourceDate);
+  const request = commitCurrentDayCapsuleToHopewood().finally(() => sealInFlightByDate.delete(sourceDate));
+  sealInFlightByDate.set(sourceDate, request);
+  return request;
 }
