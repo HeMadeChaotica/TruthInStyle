@@ -438,8 +438,7 @@ export default function TheSummationSection() {
       const storedRender = readPersistedDayCapsuleRender();
       if (storedPayload
         && storedRender?.status !== 'external_rendered'
-        && storedRender?.status !== 'chatgpt_handoff_ready'
-        && storedRender?.status !== 'chatgpt_handoff_preparing') {
+        && storedRender?.status !== 'chatgpt_handoff_ready') {
         startRender(storedPayload);
       }
     }

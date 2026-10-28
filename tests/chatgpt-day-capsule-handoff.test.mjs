@@ -72,3 +72,10 @@ test('finished ChatGPT visualization still returns through the authenticated Sup
   assert.match(routeSource, /uploadDayCapsuleArtifactToSupabase/);
   assert.match(routeSource, /manual_chatgpt_upload/);
 });
+
+test('a stale preparing record is retried instead of trapping THE.SUMMATION', async () => {
+  const sectionSource = await readFile(new URL('../components/sections/TheSummationSection.jsx', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(sectionSource, /storedRender\?\.status !== 'chatgpt_handoff_preparing'/);
+  assert.match(sectionSource, /storedRender\?\.status !== 'chatgpt_handoff_ready'/);
+});
