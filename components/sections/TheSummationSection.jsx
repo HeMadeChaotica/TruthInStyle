@@ -247,6 +247,27 @@ function isProviderBlockedStatus(status, renderRecord) {
 }
 
 function getVisualizationCopy(renderStatus, renderRecord, renderMessage) {
+  if (renderStatus === 'chatgpt_handoff_ready') {
+    return {
+      eyebrow: 'ChatGPT Handoff Ready',
+      title: 'Continue In ChatGPT',
+      message: 'Your exact Day Capsule prompt is prepared. Continue in ChatGPT, then return the finished visualization here.',
+    };
+  }
+  if (renderStatus === 'chatgpt_handoff_preparing') {
+    return {
+      eyebrow: 'ChatGPT Handoff',
+      title: 'Preparing Your Day Capsule',
+      message: 'TruthInStyle is preparing the exact prompt for ChatGPT.',
+    };
+  }
+  if (renderStatus === 'chatgpt_handoff_failed') {
+    return {
+      eyebrow: 'ChatGPT Handoff',
+      title: 'Handoff Could Not Be Prepared',
+      message: renderMessage,
+    };
+  }
   if (renderStatus === 'external_renderer_not_configured') {
     return {
       eyebrow: 'Visualization Status',
@@ -302,6 +323,7 @@ function VisualizationPage({
 
   const copy = getVisualizationCopy(renderStatus, renderRecord, renderMessage);
   const detailChips = renderDetailChips(renderRecord, renderStatus);
+  const showChatGPTReturn = Boolean(renderRecord?.providerPrompt);
 
   return (
     <article className="summation-day-page summation-right-page" aria-label="Generated Day Visualization">
@@ -328,28 +350,26 @@ function VisualizationPage({
           <span className="summation-status-eyebrow">{copy.eyebrow}</span>
           <h2>{copy.title}</h2>
           <p>{copy.message}</p>
-          {(detailChips.length || renderRecord?.providerPrompt) ? <details className="summation-diagnostics">
+          {showChatGPTReturn ? (
+            <div className="summation-hybrid-actions" aria-label="ChatGPT visualization handoff and return">
+              <button type="button" onClick={onOpenChatGPT}>Copy Prompt + Continue In ChatGPT</button>
+              <label className={isUploading ? 'is-uploading' : ''}>
+                <span>{isUploading ? 'Returning Visualization…' : 'Return Finished Visualization'}</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  disabled={isUploading}
+                  onChange={onUploadImage}
+                />
+              </label>
+              <small>{hybridMessage || 'ChatGPT creates the illustration. Returning the finished image places it back into this Day Capsule.'}</small>
+            </div>
+          ) : null}
+          {detailChips.length ? <details className="summation-diagnostics">
             <summary>Render details</summary>
-            {detailChips.length ? (
-              <dl className="summation-status-chips">
-                {detailChips.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-              </dl>
-            ) : null}
-            {renderRecord?.providerPrompt ? (
-              <div className="summation-hybrid-actions" aria-label="Manual visualization fallback">
-                <button type="button" onClick={onOpenChatGPT}>Copy Prompt + Open ChatGPT</button>
-                <label className={isUploading ? 'is-uploading' : ''}>
-                  <span>{isUploading ? 'Placing Visualization…' : 'Upload Finished Visualization'}</span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    disabled={isUploading}
-                    onChange={onUploadImage}
-                  />
-                </label>
-                <small>{hybridMessage || 'Use only if the connected renderer cannot complete the day.'}</small>
-              </div>
-            ) : null}
+            <dl className="summation-status-chips">
+              {detailChips.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+            </dl>
           </details> : null}
         </div>
       )}
@@ -366,7 +386,7 @@ export default function TheSummationSection() {
   const startRender = useCallback(async (nextPayload) => {
     if (!nextPayload) {
       const missingPayloadRecord = {
-        status: 'external_render_failed',
+        status: 'chatgpt_handoff_failed',
         renderArtifact: null,
         message: 'No active Day Capsule payload was available for this render request.',
         error: 'Use the Eye of Truth to select an active day, then press the Crystal Wand again.',
@@ -379,10 +399,10 @@ export default function TheSummationSection() {
     setRenderRecord({
       renderId: renderRequest.renderId,
       payloadId: renderRequest.payloadId,
-      status: 'external_rendering',
+      status: 'chatgpt_handoff_preparing',
       renderRequest,
       renderArtifact: null,
-      message: 'Rendering Day Capsule…',
+      message: 'Preparing the Day Capsule for ChatGPT…',
     });
     const nextRecord = await requestDayCapsuleRender(renderRequest);
     setRenderRecord(nextRecord);
@@ -401,7 +421,7 @@ export default function TheSummationSection() {
     const storedRender = getDayCapsuleRenderStatus(storedPayload?.payloadId ? `${storedPayload.payloadId}-render` : undefined);
     const renderRequest = storedPayload ? buildDayCapsuleRenderRequest(storedPayload) : null;
     const connectedRender = storedPayload && !storedRender?.renderRequest
-      ? { renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'external_renderer_ready', renderRequest, message: 'Day Capsule external render request ready.' }
+      ? { renderId: renderRequest.renderId, payloadId: renderRequest.payloadId, status: 'chatgpt_handoff_preparing', renderRequest, message: 'Preparing the Day Capsule for ChatGPT…' }
       : storedRender;
     setPayload(storedPayload);
     setRenderRecord(connectedRender);
@@ -413,6 +433,15 @@ export default function TheSummationSection() {
     if (pendingRender) {
       window.sessionStorage.removeItem(PENDING_SUMMATE_RENDER_KEY);
       startRender(pendingRender.payload || readStoredDayCapsulePayload());
+    } else {
+      const storedPayload = readStoredDayCapsulePayload();
+      const storedRender = readPersistedDayCapsuleRender();
+      if (storedPayload
+        && storedRender?.status !== 'external_rendered'
+        && storedRender?.status !== 'chatgpt_handoff_ready'
+        && storedRender?.status !== 'chatgpt_handoff_preparing') {
+        startRender(storedPayload);
+      }
     }
     const onPayload = () => loadPayload();
     const onRenderRequest = (event) => {
@@ -433,6 +462,9 @@ export default function TheSummationSection() {
   const renderMessage = useMemo(() => {
     if (!payload) return 'Use the global Control Panel to prepare a Day Capsule payload first.';
     if (!renderRecord?.renderRequest) return 'No generated visualization has been requested yet.';
+    if (renderStatus === 'chatgpt_handoff_preparing') return 'Preparing the Day Capsule for ChatGPT…';
+    if (renderStatus === 'chatgpt_handoff_ready') return 'Day Capsule prepared for ChatGPT.';
+    if (renderStatus === 'chatgpt_handoff_failed') return renderRecord?.error || renderRecord?.message || 'The ChatGPT handoff could not be prepared.';
     if (renderStatus === 'external_renderer_not_configured') return 'External renderer is not configured yet.';
     if (renderStatus === 'external_renderer_ready') return 'Day Capsule external render request ready.';
     if (renderStatus === 'external_rendering' || renderStatus === 'rendering') return 'Rendering Day Capsule…';
@@ -446,8 +478,8 @@ export default function TheSummationSection() {
   const previewArtifact = renderRecord?.renderArtifact;
   const previewUrl = previewArtifact?.url || renderRecord?.artifactUrl || renderRecord?.artifactPath || renderRecord?.previewPath;
   const canShowArtifact = Boolean(previewUrl) && renderStatus === 'external_rendered';
-  const canRequestExternal = Boolean(payload) && ['external_renderer_not_configured', 'external_render_failed', 'ready_to_render', 'external_renderer_ready'].includes(renderStatus);
-  const renderButtonReason = !payload ? 'no payload' : canRequestExternal ? 'ready' : `status ${renderStatus} is not actionable`;
+  const canContinueInChatGPT = Boolean(payload) && renderStatus === 'chatgpt_handoff_ready' && Boolean(renderRecord?.providerPrompt);
+  const renderButtonReason = !payload ? 'no payload' : canContinueInChatGPT ? 'chatgpt handoff ready' : `status ${renderStatus} is not actionable`;
 
   const openChatGPT = useCallback(async () => {
     const prompt = renderRecord?.providerPrompt;
@@ -476,7 +508,7 @@ export default function TheSummationSection() {
       return;
     }
     setIsUploading(true);
-    setHybridMessage('Placing the visualization into THE.SUMMATION…');
+    setHybridMessage('Returning the visualization to THE.SUMMATION…');
     const nextRecord = await uploadManualDayCapsuleArtifact(image, renderRequest);
     setRenderRecord(nextRecord);
     setHybridMessage(nextRecord.status === 'external_rendered'
@@ -488,7 +520,7 @@ export default function TheSummationSection() {
   return (
     <main
       className="summation-shell"
-      data-can-request-external={canRequestExternal ? 'true' : 'false'}
+      data-chatgpt-handoff-ready={canContinueInChatGPT ? 'true' : 'false'}
       data-render-button-reason={renderButtonReason}
     >
       <section className="summation-stage" aria-label="THE.SUMMATION landscape Day Sketch">

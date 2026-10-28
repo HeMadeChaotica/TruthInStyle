@@ -263,6 +263,9 @@ export const DAY_CAPSULE_RENDER_STATUSES = Object.freeze({
   EXTERNAL_RENDERING: 'external_rendering',
   EXTERNAL_RENDERED: 'external_rendered',
   EXTERNAL_RENDER_FAILED: 'external_render_failed',
+  CHATGPT_HANDOFF_PREPARING: 'chatgpt_handoff_preparing',
+  CHATGPT_HANDOFF_READY: 'chatgpt_handoff_ready',
+  CHATGPT_HANDOFF_FAILED: 'chatgpt_handoff_failed',
   RENDERER_NOT_CONNECTED: 'renderer_not_connected',
   QUEUED: 'queued',
   RENDERING: 'rendering',
@@ -464,15 +467,15 @@ export const buildDayCapsuleRenderRequest = buildExternalDayCapsuleRenderRequest
 export const normalizeDayCapsuleRenderResult = normalizeExternalDayCapsuleRenderResult;
 export const persistDayCapsuleRender = persistExternalDayCapsuleRender;
 
-export async function requestExternalDayCapsuleRender(renderRequest) {
+export async function requestChatGPTDayCapsuleHandoff(renderRequest) {
   const now = new Date().toISOString();
   const renderingRecord = persistExternalDayCapsuleRender({
     renderId: renderRequest?.renderId,
     payloadId: renderRequest?.payloadId,
-    status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDERING,
+    status: DAY_CAPSULE_RENDER_STATUSES.CHATGPT_HANDOFF_PREPARING,
     renderRequest,
     renderArtifact: null,
-    message: 'Rendering Day Capsule…',
+    message: 'Preparing the Day Capsule for ChatGPT…',
     createdAt: renderRequest?.createdAt || now,
     updatedAt: now,
   });
@@ -487,18 +490,18 @@ export async function requestExternalDayCapsuleRender(renderRequest) {
   } catch (error) {
     return persistExternalDayCapsuleRender({
       ...renderingRecord,
-      status: DAY_CAPSULE_RENDER_STATUSES.EXTERNAL_RENDER_FAILED,
+      status: DAY_CAPSULE_RENDER_STATUSES.CHATGPT_HANDOFF_FAILED,
       renderArtifact: null,
       artifactUrl: null,
-      message: 'External Day Capsule render failed.',
-      error: error?.message || 'External Day Capsule render failed.',
+      message: 'The ChatGPT handoff could not be prepared.',
+      error: error?.message || 'The ChatGPT handoff could not be prepared.',
       updatedAt: new Date().toISOString(),
     });
   }
 }
 
 export function requestDayCapsuleRender(renderRequest) {
-  return requestExternalDayCapsuleRender(renderRequest);
+  return requestChatGPTDayCapsuleHandoff(renderRequest);
 }
 
 export async function uploadManualDayCapsuleArtifact(image, renderRequest) {
