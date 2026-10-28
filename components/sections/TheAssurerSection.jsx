@@ -1128,7 +1128,7 @@ export default function TheAssurerSection() {
                 <div className="assurer-title-meta">
                   <time dateTime={date}>{date}</time>
                   <span>TELL NO LIES</span>
-                  <span>CHAOTICA DAY #{chaoticaDayNumber || 1}</span>
+                  <span>CHAOTICA DAY #{chaoticaDayNumber ?? 0}</span>
                 </div>
                 <input
                   id="assurer-title-of-day"
