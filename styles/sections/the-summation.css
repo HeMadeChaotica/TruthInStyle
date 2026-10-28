@@ -101,6 +101,11 @@
   text-align: center;
 }
 
+.summation-visual-status {
+  position: absolute;
+  display: flex;
+}
+
 .summation-visual-status h2,
 .summation-page-empty p {
   margin: 0;

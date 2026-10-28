@@ -79,3 +79,9 @@ test('a stale preparing record is retried instead of trapping THE.SUMMATION', as
   assert.doesNotMatch(sectionSource, /storedRender\?\.status !== 'chatgpt_handoff_preparing'/);
   assert.match(sectionSource, /storedRender\?\.status !== 'chatgpt_handoff_ready'/);
 });
+
+test('the ChatGPT handoff panel is visibly positioned inside THE.SUMMATION frame', async () => {
+  const styles = await readFile(new URL('../styles/sections/the-summation.css', import.meta.url), 'utf8');
+
+  assert.match(styles, /\.summation-visual-status\s*\{[^}]*position:\s*absolute;[^}]*display:\s*flex;/s);
+});
