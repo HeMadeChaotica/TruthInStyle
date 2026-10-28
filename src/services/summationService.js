@@ -18,7 +18,7 @@ import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMi
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import { DAY_CAPSULE_RENDER_RECORD_KEY, DAY_CAPSULE_RENDER_STATUSES } from './dayCapsuleRenderService';
 import { findHopewoodSummationByDate, persistSealedSummation, readHopewoodSummationArchive, receiveSealedSummation } from './hopewoodService';
-import { countArchivedDaysThrough, getNextDaySourceDate } from './dailyLifecycle';
+import { COMPLETED_DAY_LIFECYCLE_STATUS, countArchivedDaysThrough, getNextDaySourceDate } from './dailyLifecycle';
 
 const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfDay', 'assurer:title'];
 const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
@@ -1079,7 +1079,8 @@ export function getChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
 }
 
 export function getNextChaoticaDayNumber(dateKey = getLocalDateKey(new Date())) {
-  return getChaoticaDayNumber(dateKey) + (findHopewoodSummationByDate(dateKey) ? 0 : 1);
+  const existing = findHopewoodSummationByDate(dateKey);
+  return getChaoticaDayNumber(dateKey) + (existing?.lifecycleStatus === COMPLETED_DAY_LIFECYCLE_STATUS ? 0 : 1);
 }
 
 export function getNextDayDate(sourceDate) {
@@ -1944,6 +1945,7 @@ async function commitCurrentDayCapsuleToHopewood() {
   };
   const sealedRecord = {
     id: `summation-${dayIdentity.sourceDate}-day-capsule`,
+    lifecycleStatus: COMPLETED_DAY_LIFECYCLE_STATUS,
     source: 'THE.SUMMATION',
     sourceDate: dayIdentity.sourceDate,
     displayDate: dayIdentity.displayDate,

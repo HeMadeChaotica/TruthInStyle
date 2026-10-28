@@ -1,7 +1,10 @@
+export const COMPLETED_DAY_LIFECYCLE_STATUS = 'complete_tested_archived';
+
 export function countArchivedDaysThrough(records = [], requestedDateKey = '') {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(requestedDateKey || '').trim())) return 0;
   return new Set(
     (Array.isArray(records) ? records : [])
+      .filter((record) => record?.lifecycleStatus === COMPLETED_DAY_LIFECYCLE_STATUS)
       .map((record) => String(record?.sourceDate || record?.dayIdentity?.sourceDate || '').trim())
       .filter((sourceDate) => /^\d{4}-\d{2}-\d{2}$/.test(sourceDate) && sourceDate <= requestedDateKey),
   ).size;

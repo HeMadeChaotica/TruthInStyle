@@ -35,9 +35,10 @@ test('CHAOTICA count remains zero without successfully archived days', () => {
 
 test('CHAOTICA count uses unique successfully archived dates, not calendar distance', () => {
   const archive = [
-    { sourceDate: '2026-10-28', archive: 'HOPEWOOD' },
-    { sourceDate: '2026-10-28', archive: 'HOPEWOOD' },
-    { sourceDate: '2026-10-30', archive: 'HOPEWOOD' },
+    { sourceDate: '2026-09-18', archive: 'HOPEWOOD' },
+    { sourceDate: '2026-10-28', archive: 'HOPEWOOD', lifecycleStatus: 'complete_tested_archived' },
+    { sourceDate: '2026-10-28', archive: 'HOPEWOOD', lifecycleStatus: 'complete_tested_archived' },
+    { sourceDate: '2026-10-30', archive: 'HOPEWOOD', lifecycleStatus: 'complete_tested_archived' },
   ];
   assert.equal(countArchivedDaysThrough(archive, '2026-10-27'), 0);
   assert.equal(countArchivedDaysThrough(archive, '2026-10-28'), 1);
