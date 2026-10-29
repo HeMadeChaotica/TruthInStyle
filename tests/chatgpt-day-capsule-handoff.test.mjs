@@ -95,6 +95,8 @@ test('the complete Day Capsule remains visible in THE.SUMMATION and HOPEWOOD', a
   const hopewoodStyles = await readFile(new URL('../styles/sections/hopewood.css', import.meta.url), 'utf8');
 
   assert.match(summationStyles, /\.summation-render-artifact\s*\{[^}]*background-size:\s*contain;/s);
+  assert.match(summationStyles, /\.summation-stage\s*\{[^}]*top:\s*13\.9%;[^}]*bottom:\s*34\.4%;/s);
+  assert.match(summationStyles, /\.summation-artifact-frame\s*\{[^}]*aspect-ratio:\s*3\s*\/\s*2;/s);
   assert.match(hopewoodStyles, /\.hopewood-render-artifact\s*\{[^}]*background-size:\s*contain;/s);
   assert.match(hopewoodStyles, /\.hopewood-render-panel figure\s*\{[^}]*aspect-ratio:\s*3\s*\/\s*2;/s);
   assert.match(hopewoodStyles, /\.hopewood-render-panel\s*\{[^}]*top:\s*12\.2%\s*!important;[^}]*bottom:\s*34\.4%\s*!important;/s);
