@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import { DROPDOWN_KEYS, useDropdownOptions } from '../../lib/dropdowns/dropdownOptions';
 import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
@@ -41,6 +41,9 @@ const ASSURER_TITLE_STORAGE_KEY = 'the_assurer_title_of_day';
 const ASSURER_WORD_STORAGE_KEY = 'the_assurer_word_of_day';
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const HEAD_HUMMER_STORAGE_KEY = 'truthinstyle_assurer_head_hummer_v1';
+const subscribeToHydrationState = () => () => {};
+const getClientHydrationState = () => true;
+const getServerHydrationState = () => false;
 
 const ASSURER_PHASES = ['morning', 'day', 'evening', 'night'];
 const ASSURER_PHASE_SCENES = {
@@ -565,6 +568,7 @@ function AssurerSelect({ id, value, onChange, options }) {
 }
 
 export default function TheAssurerSection() {
+  const isHydrated = useSyncExternalStore(subscribeToHydrationState, getClientHydrationState, getServerHydrationState);
   const moodOptions = useDropdownOptions(DROPDOWN_KEYS.assessmentMood);
   const eraOptions = useDropdownOptions(DROPDOWN_KEYS.assessmentEra);
   const singlenessOptions = useDropdownOptions(DROPDOWN_KEYS.assessmentSingleness);
@@ -1108,6 +1112,10 @@ export default function TheAssurerSection() {
       // Local storage is optional for this native panel.
     }
   }, [assurerNativePayload, storageDate, storageLoaded]);
+
+  if (!isHydrated) {
+    return <section className="assurer-oracle-shell" aria-label="THE.ASSURER oracle board" aria-busy="true" />;
+  }
 
   return (
     <section className="assurer-oracle-shell" aria-label="THE.ASSURER oracle board">
