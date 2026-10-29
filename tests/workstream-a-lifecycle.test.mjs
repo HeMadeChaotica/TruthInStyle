@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 const records = new Map();
 const events = [];
@@ -46,9 +47,22 @@ test('CHAOTICA count uses unique successfully archived dates, not calendar dista
   assert.equal(countArchivedDaysThrough(archive, '2026-10-30'), 2);
 });
 
-test('successful seal rollover activates the clean next calendar day', () => {
+test('successful seal rollover activates the next calendar day', () => {
   assert.equal(getNextDaySourceDate('2026-10-31'), '2026-11-01');
   assert.equal(getNextDaySourceDate('2028-02-28'), '2028-02-29');
+});
+
+test('successful seal rollover clears only active Day Capsule pointers', async () => {
+  const source = await readFile(new URL('../src/services/summationService.js', import.meta.url), 'utf8');
+  const start = source.indexOf('export function activateCleanNextDay');
+  const end = source.indexOf('\n}\n', start) + 2;
+  const rollover = source.slice(start, end);
+
+  assert.match(rollover, /setStoredSummationActiveDay\(nextDate\)/);
+  assert.match(rollover, /localStorage\.removeItem\(DAY_CAPSULE_PAYLOAD_KEY\)/);
+  assert.match(rollover, /localStorage\.removeItem\(DAY_CAPSULE_RENDER_RECORD_KEY\)/);
+  assert.match(rollover, /sessionStorage\?\.removeItem\(PENDING_SUMMATE_RENDER_KEY\)/);
+  assert.doesNotMatch(rollover, /SUMMATION_SEALED_STORAGE_KEY|HOPEWOOD|ASSURER|THICC_FITT|DA_EATER|REMEMBER_ME/);
 });
 
 test('THICC.FITT reads only the requested date from the dated personal-day store', () => {

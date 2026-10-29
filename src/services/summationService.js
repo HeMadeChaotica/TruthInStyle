@@ -26,6 +26,7 @@ const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
 const SUMMATION_ACTIVE_DAY_KEY = 'the_summation_active_day_v1';
 const DAY_CAPSULE_PAYLOAD_KEY = 'the_summation_day_capsule_payload_v1';
+const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 export const SUMMATION_ACTIVE_DAY_CHANGED_EVENT = 'truthinstyle-summation-active-day-changed';
 
 export const PENNY_FOR_YOUR_THOUGHTS_AREA = 'PENNY FOR YOUR THOUGHTS';
@@ -1090,7 +1091,14 @@ export function getNextDayDate(sourceDate) {
 
 export function activateCleanNextDay(sourceDate) {
   const nextDate = getNextDayDate(sourceDate);
-  return nextDate ? setStoredSummationActiveDay(nextDate) : null;
+  if (!nextDate) return null;
+  const activeDay = setStoredSummationActiveDay(nextDate);
+  if (hasStorage()) {
+    window.localStorage.removeItem(DAY_CAPSULE_PAYLOAD_KEY);
+    window.localStorage.removeItem(DAY_CAPSULE_RENDER_RECORD_KEY);
+    window.sessionStorage?.removeItem(PENDING_SUMMATE_RENDER_KEY);
+  }
+  return activeDay;
 }
 
 export function generateSummationVariations(dayPayload = null, pennyForYourThoughts = createEmptyPennyForYourThoughts()) {
