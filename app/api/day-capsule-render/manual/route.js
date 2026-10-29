@@ -42,10 +42,14 @@ export async function POST(request) {
   }
 
   try {
+    const artifactStorageRequest = {
+      ...renderRequest,
+      renderId: `${renderRequest.renderId}-manual-${Date.now()}`,
+    };
     const buffer = Buffer.from(await image.arrayBuffer());
     const stored = await uploadDayCapsuleArtifactToSupabase(
       buffer.toString('base64'),
-      renderRequest,
+      artifactStorageRequest,
       image.type,
     );
     const now = new Date().toISOString();
