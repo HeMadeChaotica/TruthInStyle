@@ -85,3 +85,11 @@ test('the ChatGPT handoff panel is visibly positioned inside THE.SUMMATION frame
 
   assert.match(styles, /\.summation-visual-status\s*\{[^}]*position:\s*absolute;[^}]*display:\s*flex;/s);
 });
+
+test('the complete Day Capsule remains visible in THE.SUMMATION and HOPEWOOD', async () => {
+  const summationStyles = await readFile(new URL('../styles/sections/the-summation.css', import.meta.url), 'utf8');
+  const hopewoodStyles = await readFile(new URL('../styles/sections/hopewood.css', import.meta.url), 'utf8');
+
+  assert.match(summationStyles, /\.summation-render-artifact\s*\{[^}]*background-size:\s*contain;/s);
+  assert.match(hopewoodStyles, /\.hopewood-render-artifact\s*\{[^}]*background-size:\s*contain;/s);
+});
