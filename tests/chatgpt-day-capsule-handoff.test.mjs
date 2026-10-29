@@ -104,6 +104,8 @@ test('HOPEWOOD controls share the cover-scaled scene coordinate system', async (
 
   assert.match(styles, /\.hopewood-overlay\s*\{[^}]*width:\s*max\(100%,\s*calc\(100dvh\s*\*\s*1\.5987903226\)\)/s);
   assert.match(styles, /\.hopewood-overlay\s*\{[^}]*height:\s*max\(100%,\s*calc\(100vw\s*\/\s*1\.5987903226\)\)/s);
+  assert.match(styles, /\.hopewood-drawer-content\s*\{[^}]*box-sizing:\s*border-box;/s);
   assert.match(styles, /\.hopewood-drawer-content\s*\{[^}]*padding:\s*0\s*8\.5%;/s);
-  assert.match(styles, /\.hopewood-search-primary\s*\{[^}]*grid-template-columns:\s*33%\s*45%;/s);
+  assert.match(styles, /\.hopewood-search-primary\s*\{[^}]*grid-template-columns:\s*40%\s*54%;/s);
+  assert.match(styles, /\.hopewood-search-crystals label\s*\{[^}]*transform:\s*translateY\(-1\.1vh\)/s);
 });
