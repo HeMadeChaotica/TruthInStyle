@@ -26,7 +26,8 @@ rm -rf "$APP_BUNDLE" "$ZIP_PATH" "$STAFF_BUNDLE" "$STAFF_ZIP_PATH"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 mkdir -p "$STAFF_BUNDLE/Contents/MacOS" "$STAFF_BUNDLE/Contents/Resources"
 
-swiftc "$DESKTOP_ROOT/TruthInStyle/Sources/main.swift" \
+swiftc "$DESKTOP_ROOT/Shared/ChaoticaModifierChordRecognizer.swift" \
+  "$DESKTOP_ROOT/TruthInStyle/Sources/main.swift" \
   -framework Cocoa \
   -framework WebKit \
   -o "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
@@ -36,8 +37,10 @@ cp "$DESKTOP_ROOT/TruthInStyle/Resources/CHAOTICA.icns" "$APP_BUNDLE/Contents/Re
 cp "$ROOT/public/opening/chaotica-opening-dormant-v1.png" "$APP_BUNDLE/Contents/Resources/OpeningGate.png"
 sign_bundle "$APP_BUNDLE"
 
-swiftc "$DESKTOP_ROOT/ChaoticaShrine/Sources/main.swift" \
+swiftc "$DESKTOP_ROOT/Shared/ChaoticaModifierChordRecognizer.swift" \
+  "$DESKTOP_ROOT/ChaoticaShrine/Sources/main.swift" \
   -framework Cocoa \
+  -framework ApplicationServices \
   -framework QuartzCore \
   -o "$STAFF_BUNDLE/Contents/MacOS/$STAFF_NAME"
 

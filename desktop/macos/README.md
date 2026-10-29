@@ -7,6 +7,13 @@ This folder builds two native macOS bundles:
 
 The Staff is not a duplicate main app and does not contain a second app window. It stays off-screen while CHAOTICA is active so it cannot cover the app rail. At 10:00 AM, 2:00 PM, 6:00 PM, and 10:00 PM it pulses as a reminder to add day information. At 12:01 AM it opens THE.SUMMATION only when the current day is not already sealed.
 
+The ordered native shortcuts are:
+
+- Open CHAOTICA: press Fn, then Control, then Option, then Command while continuing to hold the earlier keys.
+- Close CHAOTICA: press Command, then Option, then Control, then Fn while continuing to hold the earlier keys.
+
+The order is intentional. An out-of-order chord does nothing, and one completed chord fires only once until the modifiers are released.
+
 ## Build the package
 
 From the repository root:
@@ -25,6 +32,7 @@ The installable packages are created at:
 1. Install `CHAOTICA.app` from `CHAOTICA-macOS.zip` into Applications if the main app needs an update.
 2. Install `CHAOTICA Staff.app` from `CHAOTICA-Staff-macOS.zip` into Applications.
 3. Open the Staff once so it can install its login launch entry.
-4. Click the Staff whenever you want to open the native CHAOTICA app.
+4. When macOS asks, allow CHAOTICA Staff under Privacy & Security > Input Monitoring so the entrance chord works while another app is active.
+5. Click the Staff or use the ordered entrance chord whenever you want to open the native CHAOTICA app.
 
 The first launch may require Control-clicking an app and choosing Open because these local builds are not Apple-notarized.

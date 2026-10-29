@@ -17,6 +17,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   private var lastLevelSentAt: TimeInterval = 0
   private var recognitionActive = false
   private var staffTerminationObserver: NSObjectProtocol?
+  private var localFlagsMonitor: Any?
+  private let shortcutRecognizer = ChaoticaModifierChordRecognizer()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.regular)
@@ -84,6 +86,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
       self.ensureStaffCompanionIsRunning()
     }
 
+    beginShortcutMonitoring()
+
     staffTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
       forName: NSWorkspace.didTerminateApplicationNotification,
       object: nil,
@@ -105,8 +109,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
 
   func applicationWillTerminate(_ notification: Notification) {
     stopNativeSpeech(notify: false)
+    if let localFlagsMonitor { NSEvent.removeMonitor(localFlagsMonitor) }
     if let staffTerminationObserver {
       NSWorkspace.shared.notificationCenter.removeObserver(staffTerminationObserver)
+    }
+  }
+
+  private func beginShortcutMonitoring() {
+    localFlagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+      if self?.shortcutRecognizer.ingest(event.modifierFlags) == .close {
+        DispatchQueue.main.async { NSApp.terminate(nil) }
+      }
+      return event
     }
   }
 

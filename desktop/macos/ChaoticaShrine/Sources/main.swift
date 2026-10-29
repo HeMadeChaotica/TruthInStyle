@@ -1,4 +1,5 @@
 import Cocoa
+import ApplicationServices
 import QuartzCore
 
 private let staffSize = NSSize(width: 118, height: 320)
@@ -57,11 +58,15 @@ final class StaffDelegate: NSObject, NSApplicationDelegate {
   private var staffView: StaffView!
   private var scheduleTimer: Timer?
   private var activationObserver: NSObjectProtocol?
+  private var localFlagsMonitor: Any?
+  private var globalFlagsMonitor: Any?
+  private let shortcutRecognizer = ChaoticaModifierChordRecognizer()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.setActivationPolicy(.accessory)
     makeStaff()
     installLoginLaunchAgent()
+    beginShortcutMonitoring()
     activationObserver = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in self?.syncVisibility() }
     scheduleTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in self?.checkSignalSchedule() }
     syncVisibility()
@@ -71,6 +76,34 @@ final class StaffDelegate: NSObject, NSApplicationDelegate {
   func applicationWillTerminate(_ notification: Notification) {
     scheduleTimer?.invalidate()
     if let activationObserver { NSWorkspace.shared.notificationCenter.removeObserver(activationObserver) }
+    if let localFlagsMonitor { NSEvent.removeMonitor(localFlagsMonitor) }
+    if let globalFlagsMonitor { NSEvent.removeMonitor(globalFlagsMonitor) }
+  }
+
+  private func beginShortcutMonitoring() {
+    if #available(macOS 10.15, *), !CGPreflightListenEventAccess() {
+      _ = CGRequestListenEventAccess()
+    }
+    let inspect: (NSEvent) -> Void = { [weak self] event in
+      self?.inspectShortcut(event)
+    }
+    localFlagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
+      inspect(event)
+      return event
+    }
+    globalFlagsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: inspect)
+  }
+
+  private func inspectShortcut(_ event: NSEvent) {
+    guard let action = shortcutRecognizer.ingest(event.modifierFlags) else { return }
+    DispatchQueue.main.async { [weak self] in
+      switch action {
+      case .open:
+        self?.openChaotica()
+      case .close:
+        self?.closeChaotica()
+      }
+    }
   }
 
   private func makeStaff() {
@@ -137,6 +170,12 @@ final class StaffDelegate: NSObject, NSApplicationDelegate {
       if autoSummate { components.queryItems = [URLQueryItem(name: "autoSummate", value: "1")] }
       guard let deepLink = components.url else { return }
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { NSWorkspace.shared.open(deepLink) }
+    }
+  }
+
+  private func closeChaotica() {
+    NSRunningApplication.runningApplications(withBundleIdentifier: hostBundleIdentifier).forEach { app in
+      _ = app.terminate()
     }
   }
 
