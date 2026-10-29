@@ -1296,7 +1296,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.75rem, 1.4vw, 1.6rem);
   min-width: 0;
+  min-height: clamp(360px, 52vh, 680px);
   width: 100%;
+  align-items: stretch;
 }
 
 .assurer-moment-media-expanded {
@@ -2761,8 +2763,13 @@
 }
 
 .assurer-moment-card-expanded {
-  min-height: clamp(360px, 52vh, 680px);
+  min-height: clamp(360px, 52vh, 680px) !important;
+  height: clamp(360px, 52vh, 680px) !important;
   border-radius: 24px !important;
+}
+
+.assurer-moment-card-expanded .assurer-moment-card-inner {
+  min-height: 100%;
 }
 
 .assurer-moment-card-expanded .assurer-moment-face {
