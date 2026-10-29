@@ -97,6 +97,7 @@ test('the complete Day Capsule remains visible in THE.SUMMATION and HOPEWOOD', a
   assert.match(summationStyles, /\.summation-render-artifact\s*\{[^}]*background-size:\s*contain;/s);
   assert.match(hopewoodStyles, /\.hopewood-render-artifact\s*\{[^}]*background-size:\s*contain;/s);
   assert.match(hopewoodStyles, /\.hopewood-render-panel figure\s*\{[^}]*aspect-ratio:\s*3\s*\/\s*2;/s);
+  assert.match(hopewoodStyles, /\.hopewood-render-panel\s*\{[^}]*top:\s*12\.2%\s*!important;[^}]*bottom:\s*34\.4%\s*!important;/s);
 });
 
 test('HOPEWOOD controls share the cover-scaled scene coordinate system', async () => {
