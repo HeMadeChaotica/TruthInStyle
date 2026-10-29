@@ -71,6 +71,8 @@ test('finished ChatGPT visualization still returns through the authenticated Sup
   assert.match(routeSource, /getChaoticaSession/);
   assert.match(routeSource, /uploadDayCapsuleArtifactToSupabase/);
   assert.match(routeSource, /manual_chatgpt_upload/);
+  assert.match(routeSource, /renderId:\s*renderRequest\.renderId/);
+  assert.doesNotMatch(routeSource, /renderId:\s*`\$\{renderRequest\.renderId\}-manual-/);
 });
 
 test('a stale preparing record is retried instead of trapping THE.SUMMATION', async () => {

@@ -42,22 +42,18 @@ export async function POST(request) {
   }
 
   try {
-    const manualRenderRequest = {
-      ...renderRequest,
-      renderId: `${renderRequest.renderId}-manual-${Date.now()}`,
-    };
     const buffer = Buffer.from(await image.arrayBuffer());
     const stored = await uploadDayCapsuleArtifactToSupabase(
       buffer.toString('base64'),
-      manualRenderRequest,
+      renderRequest,
       image.type,
     );
     const now = new Date().toISOString();
     return NextResponse.json({
       status: 'external_rendered',
-      renderId: manualRenderRequest.renderId,
-      payloadId: manualRenderRequest.payloadId,
-      renderRequest: manualRenderRequest,
+      renderId: renderRequest.renderId,
+      payloadId: renderRequest.payloadId,
+      renderRequest,
       artifactUrl: stored.artifactUrl,
       artifactPath: stored.artifactPath,
       artifactType: stored.artifactType,
