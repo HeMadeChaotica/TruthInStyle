@@ -27,11 +27,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     configuration.websiteDataStore = .default()
     configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
     configuration.userContentController.add(self, name: "chaoticaSpeech")
+    configuration.userContentController.add(self, name: "chaoticaReminders")
     configuration.userContentController.addUserScript(WKUserScript(
       source: """
         window.ChaoticaNativeSpeech = Object.freeze({
           start: () => window.webkit?.messageHandlers?.chaoticaSpeech?.postMessage({ action: 'start' }),
           stop: () => window.webkit?.messageHandlers?.chaoticaSpeech?.postMessage({ action: 'stop' })
+        });
+        window.ChaoticaNativeReminders = Object.freeze({
+          update: (configuration) => window.webkit?.messageHandlers?.chaoticaReminders?.postMessage({ action: 'update', ...configuration })
         });
       """,
       injectionTime: .atDocumentStart,
@@ -138,12 +142,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
     guard let body = message.body as? [String: Any] else { return }
 
+    if message.name == "chaoticaReminders", body["action"] as? String == "update" {
+      saveStaffReminderConfiguration(body)
+      return
+    }
+
     guard message.name == "chaoticaSpeech", let action = body["action"] as? String else { return }
 
     if action == "start" {
       startNativeSpeech()
     } else if action == "stop" {
       stopNativeSpeech(notify: false)
+    }
+  }
+
+  private func saveStaffReminderConfiguration(_ body: [String: Any]) {
+    guard let reminderTimes = body["reminderTimes"] as? [String],
+          let summationTime = body["summationTime"] as? String,
+          let configuration = ChaoticaStaffReminderConfiguration.validated(
+            reminderTimes: reminderTimes,
+            summationTime: summationTime
+          ),
+          let data = try? JSONEncoder().encode(configuration) else { return }
+    let directory = ChaoticaStaffReminderConfiguration.storageURL.deletingLastPathComponent()
+    do {
+      try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+      try data.write(to: ChaoticaStaffReminderConfiguration.storageURL, options: .atomic)
+    } catch {
+      NSLog("CHAOTICA could not save the Staff reminder schedule: %@", error.localizedDescription)
     }
   }
 

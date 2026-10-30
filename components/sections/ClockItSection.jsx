@@ -24,6 +24,20 @@ function serializeValues(definition) {
 
 function parseValues(definition, text) {
   const rows = text.split('\n').map((row) => row.trim()).filter(Boolean);
+  if (definition.type === 'times') {
+    const normalized = rows.map((row) => {
+      const match = row.match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) return null;
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+      if (hour > 23 || minute > 59) return null;
+      return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    });
+    if (!normalized.length || normalized.some((value) => !value) || (definition.maxItems && normalized.length > definition.maxItems)) {
+      throw new Error(definition.maxItems === 1 ? 'ENTER ONE TIME AS HH:MM' : 'ENTER TIMES AS HH:MM');
+    }
+    return [...new Set(normalized)].sort();
+  }
   if (definition.type === 'colors') {
     return rows.map((row, index) => {
       const [key, label, value, active] = row.split('|').map((part) => part.trim());
@@ -50,14 +64,19 @@ function RegistryEditor({ registryKey, onSaved }) {
   }));
 
   const save = () => {
-    const patch = definition.type === 'numeric' ? {
-      min: Number(numericDraft.min),
-      max: Number(numericDraft.max),
-      step: definition.stepLocked ? definition.step : Number(numericDraft.step),
-      unit: numericDraft.unit,
-    } : { values: parseValues(definition, text) };
-    saveClockItDefinition(registryKey, patch);
-    onSaved(`${definition.label} SAVED`);
+    try {
+      const patch = definition.type === 'numeric' ? {
+        min: Number(numericDraft.min),
+        max: Number(numericDraft.max),
+        step: definition.stepLocked ? definition.step : Number(numericDraft.step),
+        unit: numericDraft.unit,
+      } : { values: parseValues(definition, text) };
+      saveClockItDefinition(registryKey, patch);
+      if (patch.values) setText(patch.values.join('\n'));
+      onSaved(`${definition.label} SAVED`);
+    } catch (error) {
+      onSaved(error.message || `${definition.label} NOT SAVED`);
+    }
   };
 
   const reset = () => {
@@ -97,6 +116,8 @@ function RegistryEditor({ registryKey, onSaved }) {
     ? 'KEY | LABEL | HEX | ON/OFF'
     : definition.type === 'quotes'
       ? 'QUOTE | AUTHOR | SOURCE | CATEGORY | ON/OFF'
+      : definition.type === 'times'
+        ? 'ONE 24-HOUR TIME PER LINE · HH:MM'
       : 'ONE OPTION PER LINE';
 
   return (

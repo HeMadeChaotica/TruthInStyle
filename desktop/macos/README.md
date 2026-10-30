@@ -5,7 +5,7 @@ This folder builds two native macOS bundles:
 - `CHAOTICA.app` — the main desktop shell for the live CHAOTICA application. It keeps production authentication, saves, HOPEWOOD, and Day Capsule rendering inside the main app.
 - `CHAOTICA Staff.app` — the separate Life Staff companion. It stays out of the Dock, opens the native CHAOTICA app when clicked, and sends the timed pink reminder signals.
 
-The Staff is not a duplicate main app and does not contain a second app window. It stays off-screen while CHAOTICA is active so it cannot cover the app rail. At 10:00 AM, 2:00 PM, 6:00 PM, and 10:00 PM it pulses as a reminder to add day information. At 12:01 AM it opens THE.SUMMATION only when the current day is not already sealed.
+The Staff is not a duplicate main app and does not contain a second app window. It stays off-screen while CHAOTICA is active so it cannot cover the app rail. CLOCK.IT owns its reminder schedule. The existing defaults remain 10:00 AM, 2:00 PM, 6:00 PM, and 10:00 PM for information pulses, plus 12:01 AM for THE.SUMMATION; saving new 24-hour times in CLOCK.IT updates the native Staff schedule without changing the Staff artwork.
 
 The ordered native shortcuts are:
 

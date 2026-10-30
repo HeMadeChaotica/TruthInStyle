@@ -27,3 +27,17 @@ test('the control Wand travels the right edge and pauses for interaction', async
   assert.match(styles, /@keyframes tis-rail-tab-travel\{0%,8%\{top:[^}]+\}92%,100%\{top:calc\(100dvh - var\(--tis-rail-tab-height\)[^}]+\}\}/s);
   assert.match(styles, /@media \(prefers-reduced-motion:reduce\)\{\.tis-rail-tab\{[^}]*animation:none;/s);
 });
+
+test('CLOCK.IT owns the native Staff reminder schedule', async () => {
+  const registry = await readFile(new URL('../lib/dropdowns/clockItRegistry.js', import.meta.url), 'utf8');
+  const bridge = await readFile(new URL('../components/shell/NativeReminderBridge.jsx', import.meta.url), 'utf8');
+  const nativeApp = await readFile(new URL('../desktop/macos/TruthInStyle/Sources/main.swift', import.meta.url), 'utf8');
+  const nativeStaff = await readFile(new URL('../desktop/macos/ChaoticaShrine/Sources/main.swift', import.meta.url), 'utf8');
+
+  assert.match(registry, /staffReminderTimes:\s*'staffReminderTimes'/);
+  assert.match(registry, /summationReminderTime:\s*'summationReminderTime'/);
+  assert.match(bridge, /ChaoticaNativeReminders\?\.update\(\{/);
+  assert.match(nativeApp, /ChaoticaStaffReminderConfiguration\.validated/);
+  assert.match(nativeStaff, /ChaoticaStaffReminderConfiguration\.load\(\)\.matches/);
+  assert.doesNotMatch(nativeStaff, /\[10, 14, 18, 22\]\.contains/);
+});

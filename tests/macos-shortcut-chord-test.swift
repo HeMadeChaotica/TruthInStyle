@@ -6,7 +6,20 @@ struct MacOSShortcutChordTest {
     verifyOpenSequence()
     verifyCloseSequence()
     verifyOrderAndLatchProtection()
+    verifyReminderConfiguration()
     print("macOS ordered shortcut recognizer passed")
+  }
+
+  private static func verifyReminderConfiguration() {
+    let configuration = ChaoticaStaffReminderConfiguration.validated(
+      reminderTimes: ["9:05", "14:00", "14:00"],
+      summationTime: "0:01"
+    )
+    precondition(configuration?.reminderTimes == ["09:05", "14:00"])
+    precondition(configuration?.summationTime == "00:01")
+    precondition(configuration?.matches(hour: 9, minute: 5).reminder == true)
+    precondition(configuration?.matches(hour: 0, minute: 1).summation == true)
+    precondition(ChaoticaStaffReminderConfiguration.validated(reminderTimes: ["25:00"], summationTime: "00:01") == nil)
   }
 
   private static func verifyOpenSequence() {

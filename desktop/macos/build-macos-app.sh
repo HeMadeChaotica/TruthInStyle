@@ -27,6 +27,7 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
 mkdir -p "$STAFF_BUNDLE/Contents/MacOS" "$STAFF_BUNDLE/Contents/Resources"
 
 swiftc "$DESKTOP_ROOT/Shared/ChaoticaModifierChordRecognizer.swift" \
+  "$DESKTOP_ROOT/Shared/StaffReminderConfiguration.swift" \
   "$DESKTOP_ROOT/TruthInStyle/Sources/main.swift" \
   -framework Cocoa \
   -framework WebKit \
@@ -38,6 +39,7 @@ cp "$ROOT/public/opening/chaotica-opening-dormant-v1.png" "$APP_BUNDLE/Contents/
 sign_bundle "$APP_BUNDLE"
 
 swiftc "$DESKTOP_ROOT/Shared/ChaoticaModifierChordRecognizer.swift" \
+  "$DESKTOP_ROOT/Shared/StaffReminderConfiguration.swift" \
   "$DESKTOP_ROOT/ChaoticaShrine/Sources/main.swift" \
   -framework Cocoa \
   -framework ApplicationServices \

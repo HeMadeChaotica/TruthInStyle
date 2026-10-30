@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import ControlPanelOverlay from './ControlPanelOverlay';
 import CloudStateBridge from './CloudStateBridge';
+import NativeReminderBridge from './NativeReminderBridge';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
 
 const ROUTE_BY_KEY = {
@@ -64,6 +65,7 @@ export default function AppShell({ children }) {
   return (
     <div style={{ height: '100%' }}>
       <CloudStateBridge />
+      <NativeReminderBridge />
       {children}
       {!isOpening ? (
         <ControlPanelOverlay

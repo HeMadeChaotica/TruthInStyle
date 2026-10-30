@@ -142,8 +142,9 @@ final class StaffDelegate: NSObject, NSApplicationDelegate {
     let calendar = Calendar.current
     let hour = calendar.component(.hour, from: now)
     let minute = calendar.component(.minute, from: now)
-    let isReminder = [10, 14, 18, 22].contains(hour) && minute == 0
-    let isSummation = hour == 0 && minute == 1
+    let schedule = ChaoticaStaffReminderConfiguration.load().matches(hour: hour, minute: minute)
+    let isReminder = schedule.reminder
+    let isSummation = schedule.summation
     guard isReminder || isSummation else { return }
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd-HH-mm"
