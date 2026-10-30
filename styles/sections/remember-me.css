@@ -89,6 +89,8 @@
 .remember-month-riddle{display:flex;align-items:center;gap:8px;min-height:27px;padding:4px 8px;border-bottom:1px solid rgba(255,224,230,.26);background:linear-gradient(90deg,rgba(33,12,45,.68),rgba(104,48,30,.48));overflow:hidden}
 .remember-month-riddle strong{flex:0 0 auto;color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important;font-size:clamp(.45rem,.48vw,.62rem)!important;letter-spacing:.08em}
 .remember-month-riddle span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8cbd8!important;-webkit-text-fill-color:#f8cbd8!important;font-size:clamp(.43rem,.46vw,.6rem)!important}
+.remember-month-riddle button{flex:0 0 auto;padding:3px 6px;border:1px solid rgba(255,224,230,.5);border-radius:7px;background:rgba(21,8,27,.72);color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important;font-size:clamp(.4rem,.42vw,.56rem)!important;letter-spacing:.06em;cursor:pointer}
+.remember-month-riddle b{flex:0 0 auto;color:#ffd188!important;-webkit-text-fill-color:#ffd188!important;font-size:clamp(.43rem,.46vw,.6rem)!important;letter-spacing:.06em}
 .remember-chip-official{--remember-entry-color:linear-gradient(135deg,#173c67,#0b2748)!important}
 .remember-chip-fun{--remember-entry-color:linear-gradient(135deg,#bd4f87,#722a55)!important}
 .remember-chip-personal{--remember-entry-color:linear-gradient(135deg,#d69224,#7a4510)!important}

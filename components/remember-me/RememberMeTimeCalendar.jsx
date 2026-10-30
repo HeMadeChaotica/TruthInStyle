@@ -81,6 +81,7 @@ export default function RememberMeTimeCalendar({
   monthIdentity,
 }) {
   const [mode, setMode] = useState('WEEK');
+  const [riddleOpen, setRiddleOpen] = useState(false);
   const scrollerRef = useRef(null);
   const selectedDate = useMemo(() => dateFromKey(selectedDateKey || localDateKey(viewDate)), [selectedDateKey, viewDate]);
   const firstVisibleDate = mode === 'DAY' ? selectedDate : weekStart(selectedDate);
@@ -93,6 +94,8 @@ export default function RememberMeTimeCalendar({
     if (mode === 'MONTH' || !scrollerRef.current) return;
     scrollerRef.current.scrollTop = HOUR_HEIGHT * 2;
   }, [mode, selectedDateKey]);
+
+  useEffect(() => setRiddleOpen(false), [monthIdentity?.key]);
 
   const move = (direction) => {
     if (mode === 'MONTH') {
@@ -153,9 +156,11 @@ export default function RememberMeTimeCalendar({
         <span data-kind="popup">POP-UP</span>
       </div>
       {monthIdentity?.riddle ? (
-        <div className="remember-month-riddle" title={`ANSWER: ${monthIdentity.answer}`}>
+        <div className="remember-month-riddle">
           <strong>SEPTEMBER RIDDLE</strong>
           <span>{monthIdentity.riddle}</span>
+          <button type="button" onClick={() => setRiddleOpen((current) => !current)}>{riddleOpen ? 'HIDE ANSWER' : 'REVEAL ANSWER'}</button>
+          {riddleOpen ? <b>{monthIdentity.answer}</b> : null}
         </div>
       ) : null}
 
