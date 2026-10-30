@@ -77,6 +77,26 @@
 .assurer-flip-back p{margin:0;text-transform:uppercase}
 
 .time-error{margin:0;color: var(--app-text-primary);font-size:.78rem;text-transform:uppercase}
+
+/* REMEMBER.ME identity and observance layers. These extend the working
+   calendar without changing the approved time-chamber placement. */
+.remember-calendar-title{display:grid;min-width:0;gap:2px;text-align:center}
+.remember-calendar-title strong{display:block}
+.remember-calendar-title span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8cbd8!important;-webkit-text-fill-color:#f8cbd8!important;font-size:clamp(.45rem,.5vw,.66rem)!important;letter-spacing:.08em;text-shadow:0 2px 4px rgba(15,4,8,.96)!important}
+.remember-scheduler-legend [data-kind="official"]::before{background:linear-gradient(135deg,#173c67,#0b2748)}
+.remember-scheduler-legend [data-kind="fun"]::before{background:linear-gradient(135deg,#bd4f87,#722a55)}
+.remember-scheduler-legend [data-kind="personal"]::before{background:linear-gradient(135deg,#d69224,#7a4510)}
+.remember-month-riddle{display:flex;align-items:center;gap:8px;min-height:27px;padding:4px 8px;border-bottom:1px solid rgba(255,224,230,.26);background:linear-gradient(90deg,rgba(33,12,45,.68),rgba(104,48,30,.48));overflow:hidden}
+.remember-month-riddle strong{flex:0 0 auto;color:#ffe9ef!important;-webkit-text-fill-color:#ffe9ef!important;font-size:clamp(.45rem,.48vw,.62rem)!important;letter-spacing:.08em}
+.remember-month-riddle span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8cbd8!important;-webkit-text-fill-color:#f8cbd8!important;font-size:clamp(.43rem,.46vw,.6rem)!important}
+.remember-chip-official{--remember-entry-color:linear-gradient(135deg,#173c67,#0b2748)!important}
+.remember-chip-fun{--remember-entry-color:linear-gradient(135deg,#bd4f87,#722a55)!important}
+.remember-chip-personal{--remember-entry-color:linear-gradient(135deg,#d69224,#7a4510)!important}
+.remember-chip-moment{--remember-entry-color:linear-gradient(135deg,#7956a8,#49306f)!important}
+.remember-observance-note small{display:block;margin-top:8px;color:var(--remember-ink-soft)!important;-webkit-text-fill-color:var(--remember-ink-soft)!important;font-size:.66rem;letter-spacing:.08em}
+.remember-observance-official{border-color:rgba(44,91,143,.56)!important}
+.remember-observance-fun{border-color:rgba(189,79,135,.62)!important}
+.remember-observance-personal{border-color:rgba(214,146,36,.64)!important}
 .remember-postcard-popout select{appearance:none;background:rgba(11,0,9,.70)}
 
 .remember-existing-items{display:flex;flex-wrap:wrap;gap:6px}

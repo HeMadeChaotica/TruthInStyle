@@ -8,6 +8,7 @@ import MomentFlipCard from '../remember-me/MomentFlipCard';
 import RememberMeTimeCalendar from '../remember-me/RememberMeTimeCalendar';
 import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import { CLOCK_IT_KEYS, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
+import { getRememberMeMonthIdentity, groupRememberMeObservancesByDate } from '../../lib/rememberMe/observances.mjs';
 
 const REMEMBER_MOMENT_BACKS = { WOW: '', WTF: '', 'PLOT TWIST': '' };
 const MOMENTS_STORAGE_KEY = 'remember_me_standout_moments_v1';
@@ -147,6 +148,9 @@ function RecurrenceControl({ draft, setDraft, selectedDateKey }) {
 }
 
 const colorForEntry = (entry) => {
+  if (entry?._source === 'official-observance') return 'linear-gradient(135deg,#173c67,#0b2748)';
+  if (entry?._source === 'fun-observance') return 'linear-gradient(135deg,#bd4f87,#722a55)';
+  if (entry?._source === 'personal-observance') return 'linear-gradient(135deg,#d69224,#7a4510)';
   if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ad1f68,#68143f)';
   if (entry?._source === 'standout') return 'linear-gradient(135deg,#7956a8,#49306f)';
   const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
@@ -160,6 +164,14 @@ const colorForEntry = (entry) => {
   if (type.includes('TRAVEL') || type.includes('PACKAGE')) return 'linear-gradient(135deg,#776415,#4c3e0d)';
   if (type === 'CALL' || type === 'REMINDER') return 'linear-gradient(135deg,#53608c,#303957)';
   return 'linear-gradient(135deg,#9a3d63,#5a233d)';
+};
+
+const classNameForEntry = (entry) => {
+  if (entry?._source === 'official-observance') return 'remember-chip-official';
+  if (entry?._source === 'fun-observance') return 'remember-chip-fun';
+  if (entry?._source === 'personal-observance') return 'remember-chip-personal';
+  if (entry?._source === 'standout') return 'remember-chip-moment';
+  return 'remember-chip-calendar';
 };
 
 export default function RememberMeSection() {
@@ -179,6 +191,7 @@ export default function RememberMeSection() {
   const [momentDraft, setMomentDraft] = useState(EMPTY_MOMENT);
   const [flippedMomentType, setFlippedMomentType] = useState('');
   const [error, setError] = useState('');
+  const [activeObservance, setActiveObservance] = useState(null);
 
   useEffect(() => {
     const current = new Date();
@@ -192,7 +205,11 @@ export default function RememberMeSection() {
   );
   const currentMoments = selectedDateKey ? (momentByDate[selectedDateKey] || []) : [];
   const calendarEntriesByDate = useMemo(() => {
-    const merged = { ...entriesByDate };
+    const observancesByDate = groupRememberMeObservancesByDate(viewDate.getFullYear());
+    const merged = Object.fromEntries(Object.entries(observancesByDate).map(([dateKey, rows]) => [dateKey, [...rows]]));
+    Object.entries(entriesByDate).forEach(([dateKey, rows]) => {
+      merged[dateKey] = [...(merged[dateKey] || []), ...(rows || [])];
+    });
     Object.entries(momentByDate).forEach(([dateKey, moments]) => {
       const standoutEntries = (Array.isArray(moments) ? moments : []).map((moment) => ({
         ...moment,
@@ -201,14 +218,17 @@ export default function RememberMeSection() {
         label: moment.type || moment.standoutType || 'STANDOUT',
       }));
       merged[dateKey] = [...(merged[dateKey] || []), ...standoutEntries].sort((left, right) => {
+        const byRank = (left.rank || (left._source === 'standout' ? 90 : 70)) - (right.rank || (right._source === 'standout' ? 90 : 70));
+        if (byRank) return byRank;
         const byTime = calendarEntrySortValue(left).localeCompare(calendarEntrySortValue(right));
         return byTime || calendarEntryLabel(left).localeCompare(calendarEntryLabel(right));
       });
     });
     return merged;
-  }, [entriesByDate, momentByDate]);
+  }, [entriesByDate, momentByDate, viewDate]);
   const season = SEASON_BY_MONTH[viewDate.getMonth()] || SEASON_BY_MONTH[0];
   const backgroundName = BACKGROUND_BY_MONTH[viewDate.getMonth()] || BACKGROUND_BY_MONTH[0];
+  const monthIdentity = getRememberMeMonthIdentity(viewDate.getMonth());
   const momentCards = standoutTypes.map((type) => ({
     type,
     moment: currentMoments
@@ -258,6 +278,7 @@ export default function RememberMeSection() {
   useEffect(() => setFlippedMomentType(''), [selectedDateKey]);
 
   const openNew = (dateKey, day, suggestedTime = '') => {
+    setActiveObservance(null);
     setSelectedDay(day);
     setEntryDraft({ ...EMPTY_EVENT, type: eventTypes[0] || EMPTY_EVENT.type, time: suggestedTime });
     setWorkoutDraft({ ...EMPTY_WORKOUT, start_time: suggestedTime });
@@ -270,6 +291,12 @@ export default function RememberMeSection() {
   const editCalendarEntry = (entry, dateKey) => {
     setSelectedDay(Number(dateKey?.slice(-2)) || selectedDay);
     setError('');
+    if (entry?.readOnly && entry?.schedule_kind === 'observance') {
+      setActiveObservance(entry);
+      setPostcardOpen(true);
+      return;
+    }
+    setActiveObservance(null);
     if (entry._source === 'standout') {
       setMomentDraft({
         ...EMPTY_MOMENT,
@@ -438,7 +465,7 @@ export default function RememberMeSection() {
   };
 
   return (
-    <section className={`remember-page remember-season-${season.key}`}>
+    <section className={`remember-page remember-season-${season.key} remember-month-${String(viewDate.getMonth() + 1).padStart(2, '0')}`}>
       <div className="remember-scene-frame">
         <img className="remember-bg-img" src={`/backgrounds/REMEMBER-ME/time-chambers/${backgroundName}`} alt="" aria-hidden="true" />
         <div className="remember-overlay" aria-hidden="true" />
@@ -457,6 +484,8 @@ export default function RememberMeSection() {
               getEntryLabel={(entry) => `${formatCalendarTime(entry.time || entry.start_time)} — ${calendarEntryLabel(entry)}`}
               getEntryColor={colorForEntry}
               getEntryTextColor={() => '#fff7f0'}
+              getEntryClassName={classNameForEntry}
+              monthIdentity={monthIdentity}
             />
           </section>
           <section className="remember-standout-postcards" aria-label="REMEMBER.ME moment flip cards">
@@ -478,11 +507,18 @@ export default function RememberMeSection() {
           <div className="remember-popout-scrim" onClick={() => setPostcardOpen(false)} />
           <section className="remember-postcard-popout">
             <header><h3>{formatDisplayDate(selectedDateKey)}</h3><button type="button" onClick={() => setPostcardOpen(false)}>CLOSE</button></header>
-            <div className="remember-type-switch">
+            {!activeObservance ? <div className="remember-type-switch">
               {EDITOR_MODES.map(([mode, label]) => <button key={mode} type="button" className={editorMode === mode ? 'active' : ''} onClick={() => { setEditorMode(mode); if (mode === 'WORK') setEntryDraft((draft) => ({ ...draft, schedule_kind: 'work', type: 'WORK SCHEDULE' })); if (mode === 'POPUP') setEntryDraft((draft) => ({ ...draft, schedule_kind: 'popup', type: 'POP-UP SCHEDULE' })); }}>{label}</button>)}
-            </div>
+            </div> : null}
             <div className="remember-form">
-              {['EVENT', 'WORK', 'POPUP'].includes(editorMode) ? (
+              {activeObservance ? (
+                <div className={`remember-observance-note remember-observance-${activeObservance.layer}`}>
+                  <strong>{activeObservance.label}</strong>
+                  <p>{activeObservance.detail}</p>
+                  <small>PREMARKED · READ ONLY</small>
+                </div>
+              ) : null}
+              {!activeObservance && ['EVENT', 'WORK', 'POPUP'].includes(editorMode) ? (
                 <>
                   {editorMode === 'EVENT' ? <label>EVENT TYPE<select value={entryDraft.type} onChange={(event) => setEntryDraft((draft) => ({ ...draft, type: event.target.value }))}>{eventTypes.filter((type) => !/EVENT\s*\(WORK\)|WORK SCHEDULE|POP-?UP/i.test(type)).map((type) => <option key={type} value={type}>{type}</option>)}</select></label> : <label>{editorMode === 'WORK' ? 'WORK LABEL' : 'POP-UP LABEL'}<input value={entryDraft.label || ''} onChange={(event) => setEntryDraft((draft) => ({ ...draft, label: event.target.value }))} /></label>}
                   <div className="remember-time-pair"><label>START<input type="time" value={entryDraft.time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, time: value })); }} /></label><label>END<input type="time" value={entryDraft.end_time || ''} onInput={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, end_time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setEntryDraft((draft) => ({ ...draft, end_time: value })); }} /></label></div>
@@ -492,7 +528,7 @@ export default function RememberMeSection() {
                   <div className="remember-actions"><button type="button" onClick={saveEvent}>SAVE {editorMode === 'EVENT' ? 'EVENT' : editorMode === 'WORK' ? 'WORK SCHEDULE' : 'POP-UP'}</button>{entryDraft.id || entryDraft.derived_recurrence ? <button type="button" onClick={deleteActive}>DELETE THIS DATE</button> : null}</div>
                 </>
               ) : null}
-              {editorMode === 'WORKOUT' ? (
+              {!activeObservance && editorMode === 'WORKOUT' ? (
                 <>
                   <label>WORKOUT / SESSION<input value={workoutDraft.workout_label || ''} onChange={(event) => setWorkoutDraft((draft) => ({ ...draft, workout_label: event.target.value }))} /></label>
                   <div className="remember-time-pair"><label>START<input type="time" value={workoutDraft.start_time || ''} onInput={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, start_time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, start_time: value })); }} /></label><label>END<input type="time" value={workoutDraft.end_time || ''} onInput={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, end_time: value })); }} onChange={(event) => { const { value } = event.currentTarget; setWorkoutDraft((draft) => ({ ...draft, end_time: value })); }} /></label></div>
@@ -502,7 +538,7 @@ export default function RememberMeSection() {
                   <div className="remember-actions"><button type="button" onClick={saveWorkout}>SAVE WORKOUT</button>{workoutDraft.id || workoutDraft.derived_recurrence ? <button type="button" onClick={deleteActive}>DELETE THIS DATE</button> : null}</div>
                 </>
               ) : null}
-              {editorMode === 'STANDOUT' ? (
+              {!activeObservance && editorMode === 'STANDOUT' ? (
                 <>
                   <div className="remember-existing-items">{currentMoments.map((moment) => <button key={moment.id} type="button" className={momentDraft.id === moment.id ? 'active' : ''} onClick={() => setMomentDraft({ ...EMPTY_MOMENT, ...moment, type: moment.type || moment.standoutType, mediaRef: moment.mediaRef || '', persistedMediaRef: moment.persistedMediaRef || moment.photoRef || '' })}>{moment.type || moment.standoutType}</button>)}</div>
                   <label>WOW / WTF / PLOT TWIST<select value={momentDraft.type} onChange={(event) => setMomentDraft((draft) => ({ ...draft, type: event.target.value }))}>{standoutTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>

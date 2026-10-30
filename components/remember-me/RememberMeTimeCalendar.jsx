@@ -77,6 +77,8 @@ export default function RememberMeTimeCalendar({
   getEntryLabel,
   getEntryColor,
   getEntryTextColor,
+  getEntryClassName,
+  monthIdentity,
 }) {
   const [mode, setMode] = useState('WEEK');
   const scrollerRef = useRef(null);
@@ -130,7 +132,10 @@ export default function RememberMeTimeCalendar({
           <button type="button" className="remember-today-button" onClick={selectToday}>TODAY</button>
           <button type="button" onClick={() => move(1)} aria-label={`Next ${mode.toLowerCase()}`}>›</button>
         </div>
-        <strong>{title.toUpperCase()}</strong>
+        <div className="remember-calendar-title">
+          <strong>{title.toUpperCase()}</strong>
+          {monthIdentity ? <span>{monthIdentity.title}</span> : null}
+        </div>
         <div className="remember-view-switch" aria-label="Calendar view">
           {['WEEK', 'DAY', 'MONTH'].map((option) => (
             <button key={option} type="button" className={mode === option ? 'active' : ''} onClick={() => setMode(option)}>{option}</button>
@@ -138,12 +143,21 @@ export default function RememberMeTimeCalendar({
         </div>
       </header>
       <div className="remember-scheduler-legend" aria-label="Calendar color legend">
+        <span data-kind="official">OFFICIAL</span>
+        <span data-kind="fun">OFFBEAT</span>
+        <span data-kind="personal">PERSONAL</span>
         <span data-kind="event">EVENTS</span>
         <span data-kind="standout">WOW · WTF · PLOT TWIST</span>
         <span data-kind="workout">WORKOUT</span>
         <span data-kind="work">WORK</span>
         <span data-kind="popup">POP-UP</span>
       </div>
+      {monthIdentity?.riddle ? (
+        <div className="remember-month-riddle" title={`ANSWER: ${monthIdentity.answer}`}>
+          <strong>SEPTEMBER RIDDLE</strong>
+          <span>{monthIdentity.riddle}</span>
+        </div>
+      ) : null}
 
       {mode === 'MONTH' ? (
         <div className="remember-month-view">
@@ -158,6 +172,7 @@ export default function RememberMeTimeCalendar({
             renderEntry={(entry) => <><span className="remember-chip-time">{entryStart(entry) ? timeLabel(timeMinutes(entryStart(entry))) : 'ALL DAY'}</span><span className="remember-chip-label">{getEntryLabel(entry).replace(/^.*?—\s*/, '')}</span></>}
             getEntryColor={getEntryColor}
             getEntryTextColor={getEntryTextColor}
+            getEntryClassName={getEntryClassName}
             maxEntriesPerDay={24}
           />
         </div>
