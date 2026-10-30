@@ -25,7 +25,7 @@ const EDITOR_MODES = [
 ];
 
 const SEASON_BY_MONTH = {
-  0: { key: 'winter', calendarSide: 'right' },
+  0: { key: 'winter', calendarSide: 'left' },
   1: { key: 'winter', calendarSide: 'right' },
   2: { key: 'spring', calendarSide: 'right' },
   3: { key: 'spring', calendarSide: 'right' },
@@ -40,7 +40,7 @@ const SEASON_BY_MONTH = {
 };
 
 const BACKGROUND_BY_MONTH = [
-  'remember-me-01-january-time-chamber-v1.png',
+  'remember-me-01-january-12-01-entrance-v3.png',
   'remember-me-02-february-time-chamber-v1.png',
   'remember-me-03-march-time-chamber-v1.png',
   'remember-me-04-april-time-chamber-v1.png',
