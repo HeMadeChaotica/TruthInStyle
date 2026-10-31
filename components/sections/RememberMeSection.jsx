@@ -27,9 +27,9 @@ const EDITOR_MODES = [
 const SEASON_BY_MONTH = {
   0: { key: 'winter', calendarSide: 'left' },
   1: { key: 'winter', calendarSide: 'right' },
-  2: { key: 'spring', calendarSide: 'right' },
-  3: { key: 'spring', calendarSide: 'right' },
-  4: { key: 'spring', calendarSide: 'right' },
+  2: { key: 'spring', calendarSide: 'left' },
+  3: { key: 'spring', calendarSide: 'left' },
+  4: { key: 'spring', calendarSide: 'left' },
   5: { key: 'summer', calendarSide: 'right' },
   6: { key: 'summer', calendarSide: 'right' },
   7: { key: 'summer', calendarSide: 'right' },
@@ -41,10 +41,10 @@ const SEASON_BY_MONTH = {
 
 const BACKGROUND_BY_MONTH = [
   'remember-me-01-january-12-01-entrance-v3.png',
-  'remember-me-02-february-time-chamber-v1.png',
-  'remember-me-03-march-time-chamber-v1.png',
-  'remember-me-04-april-time-chamber-v1.png',
-  'remember-me-05-may-time-chamber-v1.png',
+  'remember-me-02-february-love-is-legacy-v2.png',
+  'remember-me-03-march-allergy-brunch-v2.png',
+  'remember-me-04-april-pollen-at-the-door-v2.png',
+  'remember-me-05-may-floral-red-carpet-v2.png',
   'remember-me-06-june-time-chamber-v1.png',
   'remember-me-07-july-time-chamber-v1.png',
   'remember-me-08-august-time-chamber-v1.png',
