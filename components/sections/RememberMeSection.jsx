@@ -43,7 +43,7 @@ const BACKGROUND_BY_MONTH = [
   'remember-me-01-january-12-01-entrance-v3.png',
   'remember-me-02-february-love-is-legacy-v2.png',
   'remember-me-03-march-allergy-brunch-v2.png',
-  'remember-me-04-april-pollen-at-the-door-v2.png',
+  'remember-me-04-april-pollen-at-the-door-v3.png',
   'remember-me-05-may-floral-red-carpet-v2.png',
   'remember-me-06-june-time-chamber-v1.png',
   'remember-me-07-july-time-chamber-v1.png',
