@@ -30,13 +30,13 @@ const SEASON_BY_MONTH = {
   2: { key: 'spring', calendarSide: 'left' },
   3: { key: 'spring', calendarSide: 'left' },
   4: { key: 'spring', calendarSide: 'left' },
-  5: { key: 'summer', calendarSide: 'right' },
-  6: { key: 'summer', calendarSide: 'right' },
-  7: { key: 'summer', calendarSide: 'right' },
-  8: { key: 'fall', calendarSide: 'right' },
-  9: { key: 'fall', calendarSide: 'right' },
-  10: { key: 'fall', calendarSide: 'right' },
-  11: { key: 'winter', calendarSide: 'right' },
+  5: { key: 'summer', calendarSide: 'left' },
+  6: { key: 'summer', calendarSide: 'left' },
+  7: { key: 'summer', calendarSide: 'left' },
+  8: { key: 'fall', calendarSide: 'left' },
+  9: { key: 'fall', calendarSide: 'left' },
+  10: { key: 'fall', calendarSide: 'left' },
+  11: { key: 'winter', calendarSide: 'left' },
 };
 
 const BACKGROUND_BY_MONTH = [
@@ -45,13 +45,13 @@ const BACKGROUND_BY_MONTH = [
   'remember-me-03-march-allergy-brunch-v2.png',
   'remember-me-04-april-pollen-at-the-door-v3.png',
   'remember-me-05-may-floral-red-carpet-v2.png',
-  'remember-me-06-june-time-chamber-v1.png',
-  'remember-me-07-july-time-chamber-v1.png',
-  'remember-me-08-august-time-chamber-v1.png',
-  'remember-me-09-september-time-chamber-v1.png',
-  'remember-me-10-october-time-chamber-v1.png',
-  'remember-me-11-november-time-chamber-v1.png',
-  'remember-me-12-december-time-chamber-v1.png',
+  'remember-me-06-june-pride-runway-v2.png',
+  'remember-me-07-july-pitmaster-twilight-v2.png',
+  'remember-me-08-august-grand-theatre-restoration-v2.png',
+  'remember-me-09-september-art-conservation-v2.png',
+  'remember-me-10-october-crystal-masquerade-v2.png',
+  'remember-me-11-november-home-friendsgiving-v2.png',
+  'remember-me-12-december-private-winter-birthday-v2.png',
 ];
 
 const EMPTY_EVENT = { type: 'SOMETHING NEW DAY', label: '', schedule_kind: 'event', time: '', end_time: '', detail: '', description: '', recurrence_type: 'none', recurrence_days: [], recurrence_active: false };
