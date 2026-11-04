@@ -18,13 +18,20 @@ import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMi
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import { DAY_CAPSULE_RENDER_RECORD_KEY, DAY_CAPSULE_RENDER_STATUSES } from './dayCapsuleRenderService';
 import { findHopewoodSummationByDate, persistSealedSummation, readHopewoodSummationArchive, receiveSealedSummation } from './hopewoodService';
-import { COMPLETED_DAY_LIFECYCLE_STATUS, countArchivedDaysThrough, getNextDaySourceDate } from './dailyLifecycle';
+import {
+  COMPLETED_DAY_LIFECYCLE_STATUS,
+  PERSONAL_DAILY_RESET_VERSION,
+  countArchivedDaysThrough,
+  getNextDaySourceDate,
+  resetPersonalDailyDraftForDate,
+} from './dailyLifecycle';
 
 const ASSURER_TITLE_STORAGE_KEY = ['the_assurer_title_of_day', 'assurer:titleOfDay', 'assurer:title'];
 const ASSURER_WORD_STORAGE_KEY = ['the_assurer_word_of_day', 'assurer:wordOfDay', 'assurer:dailyWord'];
 const ASSURER_DAY_STORAGE_KEY = 'the_assurer_day';
 const SUMMATION_SEALED_STORAGE_KEY = 'the_summation_sealed_records_v1';
 const SUMMATION_ACTIVE_DAY_KEY = 'the_summation_active_day_v1';
+const PERSONAL_DAILY_RESET_MIGRATION_KEY = 'truthinstyle_personal_daily_reset_2026_11_04_v1';
 const DAY_CAPSULE_PAYLOAD_KEY = 'the_summation_day_capsule_payload_v1';
 const PENDING_SUMMATE_RENDER_KEY = 'truthinstyle-pending-summation-render';
 export const SUMMATION_ACTIVE_DAY_CHANGED_EVENT = 'truthinstyle-summation-active-day-changed';
@@ -205,7 +212,22 @@ export function getStoredSummationActiveDay(fallbackDate = new Date()) {
     return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate), dayIdentity: resolveDayIdentityClump({ sourceDate }, { createdAt: new Date().toISOString() }) };
   }
   const stored = safeJsonParse(window.localStorage.getItem(SUMMATION_ACTIVE_DAY_KEY), null);
-  if (stored?.sourceDate) return stored;
+  if (stored?.sourceDate) {
+    const migrationApplied = window.localStorage.getItem(PERSONAL_DAILY_RESET_MIGRATION_KEY) === PERSONAL_DAILY_RESET_VERSION;
+    if (!migrationApplied) {
+      const dailyReset = resetPersonalDailyDraftForDate(stored.sourceDate, { reason: 'legacy-rollover-repair' });
+      const repaired = {
+        ...stored,
+        personalDailyResetVersion: PERSONAL_DAILY_RESET_VERSION,
+        personalDailyResetAt: dailyReset.resetAt,
+      };
+      window.localStorage.setItem(SUMMATION_ACTIVE_DAY_KEY, JSON.stringify(repaired));
+      window.localStorage.setItem(PERSONAL_DAILY_RESET_MIGRATION_KEY, PERSONAL_DAILY_RESET_VERSION);
+      return repaired;
+    }
+    return stored;
+  }
+  window.localStorage.setItem(PERSONAL_DAILY_RESET_MIGRATION_KEY, PERSONAL_DAILY_RESET_VERSION);
   const sourceDate = getLocalDateKey(fallbackDate);
   return { sourceDate, displayDate: formatDisplayDate(fallbackDate), dayOfWeek: dayOfWeek(fallbackDate), dayIdentity: resolveDayIdentityClump({ sourceDate }, { createdAt: new Date().toISOString() }) };
 }
@@ -235,7 +257,7 @@ export async function resolveSummationActiveDay(dateOverride = null) {
   };
 }
 
-export function setStoredSummationActiveDay(date = new Date()) {
+export function setStoredSummationActiveDay(date = new Date(), options = {}) {
   const activeDate = date instanceof Date ? date : new Date(date);
   const updatedAt = new Date().toISOString();
   const dayIdentity = resolveDayIdentityClump({ sourceDate: getLocalDateKey(activeDate) }, { updatedAt });
@@ -245,6 +267,8 @@ export function setStoredSummationActiveDay(date = new Date()) {
     dayOfWeek: dayIdentity.dayOfWeek,
     dayIdentity,
     updatedAt,
+    personalDailyResetVersion: options.personalDailyResetVersion || '',
+    personalDailyResetAt: options.personalDailyResetAt || '',
   };
   if (hasStorage()) {
     window.localStorage.setItem(SUMMATION_ACTIVE_DAY_KEY, JSON.stringify(payload));
@@ -1092,7 +1116,12 @@ export function getNextDayDate(sourceDate) {
 export function activateCleanNextDay(sourceDate) {
   const nextDate = getNextDayDate(sourceDate);
   if (!nextDate) return null;
-  const activeDay = setStoredSummationActiveDay(nextDate);
+  const nextSourceDate = getLocalDateKey(nextDate);
+  const dailyReset = resetPersonalDailyDraftForDate(nextSourceDate, { reason: 'summation-rollover' });
+  const activeDay = setStoredSummationActiveDay(nextDate, {
+    personalDailyResetVersion: PERSONAL_DAILY_RESET_VERSION,
+    personalDailyResetAt: dailyReset.resetAt,
+  });
   if (hasStorage()) {
     window.localStorage.removeItem(DAY_CAPSULE_PAYLOAD_KEY);
     window.localStorage.removeItem(DAY_CAPSULE_RENDER_RECORD_KEY);
