@@ -24,6 +24,7 @@ globalThis.window = {
 const { countArchivedDaysThrough, getNextDaySourceDate, resetPersonalDailyDraftForDate } = await import('../src/services/dailyLifecycle.js');
 
 const { readThiccFittWorkoutMirror } = await import('../lib/theAssurer/thiccFittWorkoutMirror.js');
+const { calculateWeeklySleepSummary, resolveThiccFittWeeklyTracker } = await import('../src/services/thiccFittWeeklyService.js');
 
 test.beforeEach(() => {
   records.clear();
@@ -116,4 +117,47 @@ test('THICC.FITT reads only the requested date from the dated personal-day store
   assert.equal(readThiccFittWorkoutMirror('2026-10-28').control.gymLocation, 'DAY ONE GYM');
   assert.equal(readThiccFittWorkoutMirror('2026-10-29').control.gymLocation, 'DAY TWO GYM');
   assert.equal(readThiccFittWorkoutMirror('2026-10-30').hasData, false);
+});
+
+test('SLEEP WATCH totals logged nights across the week and averages only logged nights', () => {
+  const summary = calculateWeeklySleepSummary({
+    MON: { sleep: { sleep_start: '23:00', wake_time: '06:30' } },
+    TUE: { sleep: { sleep_start: '22:45', wake_time: '07:00' } },
+  });
+  assert.equal(summary.totalMinutes, 945);
+  assert.equal(summary.totalLabel, '15h 45m');
+  assert.equal(summary.loggedNights, 2);
+  assert.equal(summary.averageHours, '7.9');
+});
+
+test('THICC.FITT recovers one weekly tally from separate dated daily drafts', () => {
+  const weekly = resolveThiccFittWeeklyTracker({
+    '2026-11-02': { weeklyTrackers: { weekStart: '2026-11-01', byDay: { MON: { sleep: { sleep_start: '23:00', wake_time: '06:30' } } } }, dailySleep: { sleep_start: '23:00', wake_time: '06:30' } },
+    '2026-11-03': { weeklyTrackers: { weekStart: '2026-11-01', byDay: { TUE: { sleep: { sleep_start: '22:45', wake_time: '07:00' } } } }, dailySleep: { sleep_start: '22:45', wake_time: '07:00' } },
+  }, {}, '2026-11-04');
+  assert.equal(weekly.weekStart, '2026-11-01');
+  assert.equal(weekly.byDay.MON.sleep.sleep_start, '23:00');
+  assert.equal(weekly.byDay.TUE.sleep.wake_time, '07:00');
+});
+
+test('daily reset clears only the target weekly slot and daily TWERK SAUCE', () => {
+  records.set('truthinstyle_thicc_fitt_weeks_v1', JSON.stringify({
+    '2026-11-01': { weekStart: '2026-11-01', byDay: {
+      MON: { training: { gymMinutes: 60, cardioMinutes: 0 }, sleep: { sleep_start: '23:00', wake_time: '06:30' } },
+      TUE: { training: { gymMinutes: 120, cardioMinutes: 0 }, sleep: { sleep_start: '22:00', wake_time: '06:00' } },
+    } },
+  }));
+  records.set('truthinstyle_thicc_fitt_twerk_sauce_v1', JSON.stringify({ name: 'YESTERDAY SONG' }));
+  records.set('truthinstyle_thicc_fitt_twerk_sauce_v1:2026-11-04', JSON.stringify({ name: 'STALE TODAY SONG' }));
+
+  resetPersonalDailyDraftForDate('2026-11-04', { storage: window.localStorage });
+
+  const week = JSON.parse(records.get('truthinstyle_thicc_fitt_weeks_v1'))['2026-11-01'];
+  assert.equal(week.byDay.MON.training.gymMinutes, 60);
+  assert.equal(week.byDay.TUE.training.gymMinutes, 120);
+  assert.deepEqual(week.byDay.WED.training, { gymMinutes: 0, cardioMinutes: 0 });
+  assert.equal(records.has('truthinstyle_thicc_fitt_twerk_sauce_v1'), false);
+  assert.equal(records.has('truthinstyle_thicc_fitt_twerk_sauce_v1:2026-11-04'), false);
+  const recovery = JSON.parse(records.get('truthinstyle_personal_daily_reset_recovery_v1'));
+  assert.equal(recovery[0].twerkSauce.name, 'STALE TODAY SONG');
 });

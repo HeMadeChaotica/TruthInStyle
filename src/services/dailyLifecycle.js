@@ -1,8 +1,10 @@
 export const COMPLETED_DAY_LIFECYCLE_STATUS = 'complete_tested_archived';
-export const PERSONAL_DAILY_RESET_VERSION = '2026-11-04-v1';
+export const PERSONAL_DAILY_RESET_VERSION = '2026-11-05-v2';
 
 const THICC_FITT_DAY_STORAGE_KEY = 'thicc_fitt_day';
 const THICC_FITT_DAYS_STORAGE_KEY = 'truthinstyle_thicc_fitt_days_v2';
+const THICC_FITT_WEEKS_STORAGE_KEY = 'truthinstyle_thicc_fitt_weeks_v1';
+const TWERK_SAUCE_STORAGE_KEY = 'truthinstyle_thicc_fitt_twerk_sauce_v1';
 const DA_EATER_DAYS_STORAGE_KEY = 'truthinstyle_da_eater_days_v1';
 const ASSURER_FEED_KEY = 'the_assurer_feed';
 const PERSONAL_DAILY_RESET_RECOVERY_KEY = 'truthinstyle_personal_daily_reset_recovery_v1';
@@ -40,6 +42,32 @@ function writeDatedStoreWithout(storage, storageKey, dateKey) {
   return { previous, changed: true };
 }
 
+function clearThiccFittWeeklyDay(storage, dateKey) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return { previous: null, changed: false };
+  const weekStartDate = new Date(date);
+  weekStartDate.setDate(weekStartDate.getDate() - weekStartDate.getDay());
+  const weekStart = `${weekStartDate.getFullYear()}-${String(weekStartDate.getMonth() + 1).padStart(2, '0')}-${String(weekStartDate.getDate()).padStart(2, '0')}`;
+  const dayName = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][date.getDay()];
+  const weeks = safeParse(storage.getItem(THICC_FITT_WEEKS_STORAGE_KEY), {});
+  const week = weeks?.[weekStart];
+  if (!week) return { previous: null, changed: false };
+  const previous = week?.byDay?.[dayName] || null;
+  weeks[weekStart] = {
+    ...week,
+    byDay: {
+      ...week.byDay,
+      [dayName]: {
+        training: { gymMinutes: 0, cardioMinutes: 0 },
+        caffeineMg: '',
+        sleep: {},
+      },
+    },
+  };
+  storage.setItem(THICC_FITT_WEEKS_STORAGE_KEY, JSON.stringify(weeks));
+  return { previous, changed: true };
+}
+
 /**
  * Starts a genuinely blank personal draft for one date without touching the
  * sealed day, HOPEWOOD, REMEMBER.ME, or any ITS.GETTING.THICC client records.
@@ -54,6 +82,12 @@ export function resetPersonalDailyDraftForDate(sourceDate, options = {}) {
   const reason = String(options.reason || 'summation-rollover');
   const thiccFitt = writeDatedStoreWithout(storage, THICC_FITT_DAYS_STORAGE_KEY, dateKey);
   const daEater = writeDatedStoreWithout(storage, DA_EATER_DAYS_STORAGE_KEY, dateKey);
+  const weeklyTrackerDay = clearThiccFittWeeklyDay(storage, dateKey);
+  const datedTwerkSauceKey = `${TWERK_SAUCE_STORAGE_KEY}:${dateKey}`;
+  const datedTwerkSauce = safeParse(storage.getItem(datedTwerkSauceKey), null);
+  if (datedTwerkSauce) storage.removeItem(datedTwerkSauceKey);
+  const legacyTwerkSauce = safeParse(storage.getItem(TWERK_SAUCE_STORAGE_KEY), null);
+  if (legacyTwerkSauce) storage.removeItem(TWERK_SAUCE_STORAGE_KEY);
 
   const legacyThiccFitt = safeParse(storage.getItem(THICC_FITT_DAY_STORAGE_KEY), null);
   const matchingLegacyThiccFitt = legacyThiccFitt?.date === dateKey ? legacyThiccFitt : null;
@@ -75,10 +109,12 @@ export function resetPersonalDailyDraftForDate(sourceDate, options = {}) {
     reason,
     thiccFitt: thiccFitt.previous,
     daEater: daEater.previous,
+    weeklyTrackerDay: weeklyTrackerDay.previous,
+    twerkSauce: datedTwerkSauce || legacyTwerkSauce,
     legacyThiccFitt: matchingLegacyThiccFitt,
     assurerFeed: feedEntries,
   };
-  const recovered = [thiccFitt.previous, daEater.previous, matchingLegacyThiccFitt, feedEntries]
+  const recovered = [thiccFitt.previous, daEater.previous, weeklyTrackerDay.previous, datedTwerkSauce, legacyTwerkSauce, matchingLegacyThiccFitt, feedEntries]
     .some(hasStoredValue);
 
   if (recovered) {

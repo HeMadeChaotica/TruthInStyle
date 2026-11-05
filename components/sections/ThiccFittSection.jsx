@@ -12,9 +12,11 @@ import { uploadPrivateImage } from '../../src/services/mediaUploadService';
 import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
 import SpotifyTrackPicker from '../shared/SpotifyTrackPicker';
 import { getStoredSummationActiveDay, SUMMATION_ACTIVE_DAY_CHANGED_EVENT } from '../../src/services/summationService';
+import { calculateWeeklySleepSummary, resolveThiccFittWeeklyTracker } from '../../src/services/thiccFittWeeklyService';
 
 const STORAGE_KEY = 'thicc_fitt_day';
 const DAYS_STORAGE_KEY = 'truthinstyle_thicc_fitt_days_v2';
+const WEEKS_STORAGE_KEY = 'truthinstyle_thicc_fitt_weeks_v1';
 const QUOTE_HISTORY_KEY = 'thicc_fitt_quote_history';
 const TWERK_SAUCE_STORAGE_KEY = 'truthinstyle_thicc_fitt_twerk_sauce_v1';
 const EXERCISE_COUNT = 6;
@@ -56,7 +58,6 @@ const minutesFromTime = (time) => { const match = String(time || '').match(/^(\d
 const calculateSleepMinutes = (start, wake) => { const startMinutes = minutesFromTime(start); const wakeMinutes = minutesFromTime(wake); if (startMinutes === null || wakeMinutes === null) return null; let total = wakeMinutes - startMinutes; if (total < 0) total += 24 * 60; return total; };
 const formatSleepTotal = (minutes) => { if (!Number.isFinite(minutes) || minutes <= 0) return ''; const hours = Math.floor(minutes / 60); const mins = minutes % 60; return `${hours}h ${String(mins).padStart(2, '0')}m`; };
 const sleepHoursValue = (minutes) => (Number.isFinite(minutes) && minutes > 0 ? (minutes / 60).toFixed(2) : '');
-const sleepMinutesFromEntry = (sleep = {}) => calculateSleepMinutes(sleep.sleep_start || sleep.bedtime, sleep.wake_time || sleep.wakeTime);
 const normalizeSleepEntry = (sleep = {}) => {
   const sleep_start = String(sleep.sleep_start ?? sleep.sleepStart ?? sleep.bedtime ?? '');
   const wake_time = String(sleep.wake_time ?? sleep.wakeTime ?? '');
@@ -112,6 +113,7 @@ export default function ThiccFittSection() {
   const loadedDayRef = useRef('');
   const [dailyQuote, setDailyQuote] = useState(optionRegistry.thiccFitt.quoteOfDay[0]);
   const [twerkSauce, setTwerkSauce] = useState(null);
+  const twerkSauceStorageKey = `${TWERK_SAUCE_STORAGE_KEY}:${activeDayKey}`;
   const activeDate = useMemo(() => new Date(`${activeDayKey}T00:00:00`), [activeDayKey]);
   const todayDay = WEEK_DAYS[activeDate.getDay()];
   const todaySleep = normalizeSleepEntry(state.weeklyTrackers.byDay[todayDay]?.sleep || {});
@@ -125,8 +127,8 @@ export default function ThiccFittSection() {
   };
 
   useEffect(() => {
-    try { setTwerkSauce(JSON.parse(window.localStorage.getItem(TWERK_SAUCE_STORAGE_KEY) || 'null')); } catch { setTwerkSauce(null); }
-  }, []);
+    try { setTwerkSauce(JSON.parse(window.localStorage.getItem(twerkSauceStorageKey) || 'null')); } catch { setTwerkSauce(null); }
+  }, [twerkSauceStorageKey]);
 
   useEffect(() => {
     const syncActiveDay = (event) => setActiveDayKey(event?.detail?.sourceDate || getStoredSummationActiveDay().sourceDate || todayKey());
@@ -139,8 +141,10 @@ export default function ThiccFittSection() {
     setStorageHydrated(false);
     try {
       const days = JSON.parse(localStorage.getItem(DAYS_STORAGE_KEY) || '{}');
+      const weeks = JSON.parse(localStorage.getItem(WEEKS_STORAGE_KEY) || '{}');
       const legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
       const raw = days?.[activeDayKey] || (legacy?.date === activeDayKey ? legacy : null);
+      const weeklySource = resolveThiccFittWeeklyTracker(days, weeks, activeDayKey);
       if (raw) {
         const parsed = raw;
         const vaultRows = normalizeVaultRows(parsed.vaultRows, parsed.vault);
@@ -155,22 +159,38 @@ export default function ThiccFittSection() {
           soHowYouDoinNotes: String(parsed.soHowYouDoinNotes ?? ''),
           body: bodyRows.reduce((acc, [k]) => ({ ...acc, [k]: { today: String(parsed?.body?.[k]?.today ?? ''), lastWeek: String(parsed?.body?.[k]?.lastWeek ?? ''), change: String(parsed?.body?.[k]?.change ?? '') } }), {}),
           weeklyTrackers: {
-            weekStart: (parsed?.weeklyTrackers?.weekStart === getWeekStartKey(activeDate) ? parsed?.weeklyTrackers?.weekStart : getWeekStartKey(activeDate)),
+            weekStart: weeklySource?.weekStart || getWeekStartKey(activeDate),
             byDay: Object.fromEntries(WEEK_DAYS.map((day) => [day, {
               training: {
-                gymMinutes: Number(parsed?.weeklyTrackers?.byDay?.[day]?.training?.gymMinutes ?? 0),
-                cardioMinutes: Number(parsed?.weeklyTrackers?.byDay?.[day]?.training?.cardioMinutes ?? 0)
+                gymMinutes: Number(weeklySource?.byDay?.[day]?.training?.gymMinutes ?? 0),
+                cardioMinutes: Number(weeklySource?.byDay?.[day]?.training?.cardioMinutes ?? 0)
               },
-              caffeineMg: String(parsed?.weeklyTrackers?.byDay?.[day]?.caffeineMg ?? ''),
+              caffeineMg: String(weeklySource?.byDay?.[day]?.caffeineMg ?? ''),
               sleep: normalizeSleepEntry({
-                ...(parsed?.weeklyTrackers?.byDay?.[day]?.sleep || {}),
+                ...(weeklySource?.byDay?.[day]?.sleep || {}),
                 ...(day === todayDay ? (parsed?.dailySleep || parsed?.sleepSignal || {}) : {})
               })
             }]))
           }
         };
         setState((p) => ({ ...p, ...safe }));
-      } else setState(createInitialState(activeDayKey));
+      } else {
+        const next = createInitialState(activeDayKey);
+        if (weeklySource?.byDay) {
+          next.weeklyTrackers = {
+            weekStart: weeklySource.weekStart,
+            byDay: Object.fromEntries(WEEK_DAYS.map((day) => [day, {
+              training: {
+                gymMinutes: Number(weeklySource?.byDay?.[day]?.training?.gymMinutes ?? 0),
+                cardioMinutes: Number(weeklySource?.byDay?.[day]?.training?.cardioMinutes ?? 0)
+              },
+              caffeineMg: String(weeklySource?.byDay?.[day]?.caffeineMg ?? ''),
+              sleep: normalizeSleepEntry(weeklySource?.byDay?.[day]?.sleep || {})
+            }]))
+          };
+        }
+        setState(next);
+      }
     } catch {
       // keep default state
     } finally {
@@ -183,6 +203,9 @@ export default function ThiccFittSection() {
     const days = JSON.parse(localStorage.getItem(DAYS_STORAGE_KEY) || '{}');
     days[activeDayKey] = { ...state, date: activeDayKey, dailySleep: dailySleepSignal };
     localStorage.setItem(DAYS_STORAGE_KEY, JSON.stringify(days));
+    const weeks = JSON.parse(localStorage.getItem(WEEKS_STORAGE_KEY) || '{}');
+    weeks[state.weeklyTrackers.weekStart] = state.weeklyTrackers;
+    localStorage.setItem(WEEKS_STORAGE_KEY, JSON.stringify(weeks));
   }, [activeDayKey, state, dailySleepSignal, storageHydrated]);
 
   useEffect(() => {
@@ -274,7 +297,7 @@ export default function ThiccFittSection() {
   const weeklyTotalHours = (weeklyBattleRows.reduce((sum, row) => sum + row.totalMinutes, 0) / 60).toFixed(2);
   const caffeineTotal = WEEK_DAYS.reduce((sum, day) => sum + Number(state.weeklyTrackers.byDay[day].caffeineMg || 0), 0);
   const caffeineAvg = (caffeineTotal / 7).toFixed(1);
-  const sleepWeeklyAvg = (WEEK_DAYS.reduce((sum, day) => sum + ((sleepMinutesFromEntry(state.weeklyTrackers.byDay[day].sleep) || 0) / 60), 0) / 7).toFixed(1);
+  const sleepWeeklySummary = calculateWeeklySleepSummary(state.weeklyTrackers.byDay);
   const updateWeeklyDay = (day, key, value) => setState((p) => ({ ...p, weeklyTrackers: { ...p.weeklyTrackers, byDay: { ...p.weeklyTrackers.byDay, [day]: { ...p.weeklyTrackers.byDay[day], [key]: value } } } }));
   const updateSleepDay = (day, key, value) => setState((p) => {
     const previousSleep = normalizeSleepEntry(p.weeklyTrackers.byDay[day].sleep);
@@ -352,7 +375,7 @@ export default function ThiccFittSection() {
     { id: 'C', columns: 2, className: 'tf30-shelf-c', panels: [{ id: 'da-vault', token: 'medium', content: <><h2>DA.VAULT</h2><div className="tf30-vault-table-head"><span>#</span><span>COMPOUND</span><span>ESTER / FORM</span><span>AMOUNT</span></div>{state.vaultRows.map((row, i) => <div className="tf30-vault-row" key={i}><span>{i + 1}</span><select aria-label={`DA.VAULT row ${i + 1} compound`} value={row.compound} onChange={(e) => updateVaultRow(i, 'compound', e.target.value)}><option value="">--</option>{compoundOptions.map((o) => <option key={o}>{o}</option>)}</select><select aria-label={`DA.VAULT row ${i + 1} ester or form`} value={row.ester} onChange={(e) => updateVaultRow(i, 'ester', e.target.value)}><option value="">--</option>{esterOptions.map((o) => <option key={o}>{o}</option>)}</select><select aria-label={`DA.VAULT row ${i + 1} amount`} value={row.amount} onChange={(e) => updateVaultRow(i, 'amount', e.target.value)}><option value="">--</option><optgroup label="CC">{amountCcOptions.map((o) => <option key={o}>{o}</option>)}</optgroup><optgroup label="MG">{amountMgOptions.map((o) => <option key={o}>{o}</option>)}</optgroup></select></div>)}</> }, { id: 'war-cry', token: 'compact', className: 'tf30-quote-panel', content: <><h2>THE WAR CRY</h2><div className="tf30-war-cry-frame"><blockquote>{dailyQuote?.text}</blockquote><div className="tf30-quote-meta">— {dailyQuote?.author} · {dailyQuote?.source}</div></div></> }] },
     { id: 'D', columns: 2, panels: [{ id: 'chase', token: 'medium', content: <><h2>THE CHASE</h2><div className="tf30-cardio-grid"><label>CARDIO TYPE<select value={state.cardio.type} onChange={(e) => update('cardio', 'type', e.target.value)}><option value="">--</option>{cardioTypeOptions.map((o) => <option key={o}>{o}</option>)}</select></label><label>CARDIO DURATION<select value={state.cardio.duration} onChange={(e) => update('cardio', 'duration', e.target.value)}><option value="">--</option>{cardioDurationOptions.map((o) => <option key={o}>{o}</option>)}</select></label><label>CARDIO INTENSITY<select value={state.cardio.intensity} onChange={(e) => update('cardio', 'intensity', e.target.value)}><option value="">--</option>{cardioIntensityOptions.map((o) => <option key={o}>{o}</option>)}</select></label><label>LOCATION<input value={state.cardio.location} onChange={(e) => update('cardio', 'location', e.target.value)} /></label><label className="tf30-span-2">NOTES<textarea value={state.cardio.notes} onChange={(e) => update('cardio', 'notes', e.target.value)} /></label><label>WEEKLY CARDIO GOAL<input value={state.cardio.weeklyGoal} onChange={(e) => update('cardio', 'weeklyGoal', e.target.value)} /></label><label>WEEKLY PROGRESS<input value={state.cardio.weeklyDone} onChange={(e) => update('cardio', 'weeklyDone', e.target.value)} placeholder={cardioComplianceLabel} /></label></div></> }, { id: 'body-receipts', token: 'medium', content: <><h2>BODY RECEIPTS</h2><h3>MEASUREMENTS / RECEIPTS</h3><div className="tf30-metric-header"><span>METRIC</span><span>TODAY</span><span>LAST WEEK</span><span>CHANGE</span></div>{bodyRows.map(([k, l]) => <div className="tf30-metric-row" key={k}><span>{l}</span><input value={state.body[k].today} onChange={(e) => setState((p) => ({ ...p, body: { ...p.body, [k]: { ...p.body[k], today: e.target.value } } }))} /><input value={state.body[k].lastWeek} onChange={(e) => setState((p) => ({ ...p, body: { ...p.body, [k]: { ...p.body[k], lastWeek: e.target.value } } }))} /><input value={state.body[k].change} onChange={(e) => setState((p) => ({ ...p, body: { ...p.body, [k]: { ...p.body[k], change: e.target.value } } }))} /></div>)}<label>NOTES<textarea value={state.bodyNotes} onChange={(e) => setState((p) => ({ ...p, bodyNotes: e.target.value }))} /></label></> }] },
     { id: 'E', columns: 1, panels: [{ id: 'caffeine-tally', token: 'compact', className: 'tf30-upup-panel', content: <><h2>UPUP JUICE TRACKER</h2><div className="tf30-upup-rack">{WEEK_DAYS.map((day) => <label key={day} className="tf30-upup-vial"><span>{day}</span><input value={state.weeklyTrackers.byDay[day].caffeineMg} onChange={(e) => updateWeeklyDay(day, 'caffeineMg', e.target.value)} /><small>MG</small></label>)}</div><div className="tf30-weekly-summary tf30-upup-summary"><span>WEEKLY MG TOTAL: {caffeineTotal}</span><span>DAILY AVERAGE MG: {caffeineAvg}</span></div></> }] },
-    { id: 'F', columns: 2, panels: [{ id: 'weekly-battle-tally', token: 'medium', content: <><h2>WEEKLY BATTLE TALLY</h2><div className="tf30-weekly-pull-label">PULLS FROM WORKOUT LENGTH + CARDIO DURATION</div><div className="tf30-weekly-list">{weeklyBattleRows.map((row) => <div key={row.day} className={`tf30-week-row ${row.trained ? 'is-trained' : 'is-rest'}`}><strong>{row.day}</strong><span className="tf30-week-status">{row.trained ? 'TRAINED' : 'REST'}</span><span>GYM {row.gymMinutes} MIN</span><span>CARDIO {row.cardioMinutes} MIN</span><span>TOTAL {row.totalMinutes} MIN</span></div>)}</div><div className="tf30-weekly-summary"><span>DAYS TRAINED: {weeklyDaysTrained}</span><span className="tf30-weekly-total-hours">TOTAL HOURS TRAINED: {weeklyTotalHours}</span></div></> }, { id: 'sleep-watch', token: 'compact', className: 'tf30-sleep-panel', content: <><h2>SLEEP WATCH</h2><div className="tf30-sleep-grid"><label>SLEEP START<input type="time" value={todaySleep.sleep_start} onChange={(e) => updateSleepDay(todayDay, 'sleep_start', e.target.value)} /></label><label>WAKE TIME<input type="time" value={todaySleep.wake_time} onChange={(e) => updateSleepDay(todayDay, 'wake_time', e.target.value)} /></label><div className="tf30-sleep-total-field"><span>TOTAL SLEEP</span><strong className="tf30-sleep-total-chip" aria-live="polite">{todaySleep.sleep_total || '—'}</strong></div><label>QUALITY<select value={todaySleep.sleep_quality} onChange={(e) => updateSleepDay(todayDay, 'sleep_quality', e.target.value)}><option value="">SELECT QUALITY</option>{sleepQualityOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label><label className="tf30-span-2">SLEEP NOTES<textarea value={todaySleep.sleep_notes} onChange={(e) => updateSleepDay(todayDay, 'sleep_notes', e.target.value)} placeholder="OPTIONAL SLEEP NOTE FOR THE DAILY SIGNAL" /></label></div><div className="tf30-weekly-summary tf30-sleep-summary"><span>WEEKLY SLEEP AVERAGE: {sleepWeeklyAvg}H</span><span>CLEAN DAILY SLEEP SIGNAL SAVED FOR ASSURER FEED</span></div></> }] },
+    { id: 'F', columns: 2, panels: [{ id: 'weekly-battle-tally', token: 'medium', content: <><h2>WEEKLY BATTLE TALLY</h2><div className="tf30-weekly-pull-label">PULLS FROM WORKOUT LENGTH + CARDIO DURATION</div><div className="tf30-weekly-list">{weeklyBattleRows.map((row) => <div key={row.day} className={`tf30-week-row ${row.trained ? 'is-trained' : 'is-rest'}`}><strong>{row.day}</strong><span className="tf30-week-status">{row.trained ? 'TRAINED' : 'REST'}</span><span>GYM {row.gymMinutes} MIN</span><span>CARDIO {row.cardioMinutes} MIN</span><span>TOTAL {row.totalMinutes} MIN</span></div>)}</div><div className="tf30-weekly-summary"><span>DAYS TRAINED: {weeklyDaysTrained}</span><span className="tf30-weekly-total-hours">TOTAL HOURS TRAINED: {weeklyTotalHours}</span></div></> }, { id: 'sleep-watch', token: 'compact', className: 'tf30-sleep-panel', content: <><h2>SLEEP WATCH</h2><div className="tf30-sleep-grid"><label>SLEEP START<input type="time" value={todaySleep.sleep_start} onChange={(e) => updateSleepDay(todayDay, 'sleep_start', e.target.value)} /></label><label>WAKE TIME<input type="time" value={todaySleep.wake_time} onChange={(e) => updateSleepDay(todayDay, 'wake_time', e.target.value)} /></label><div className="tf30-sleep-total-field"><span>TOTAL SLEEP</span><strong className="tf30-sleep-total-chip" aria-live="polite">{todaySleep.sleep_total || '—'}</strong></div><label>QUALITY<select value={todaySleep.sleep_quality} onChange={(e) => updateSleepDay(todayDay, 'sleep_quality', e.target.value)}><option value="">SELECT QUALITY</option>{sleepQualityOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label><label className="tf30-span-2">SLEEP NOTES<textarea value={todaySleep.sleep_notes} onChange={(e) => updateSleepDay(todayDay, 'sleep_notes', e.target.value)} placeholder="OPTIONAL SLEEP NOTE FOR THE DAILY SIGNAL" /></label></div><div className="tf30-weekly-summary tf30-sleep-summary"><span>WEEKLY SLEEP TOTAL: {sleepWeeklySummary.totalLabel}</span><span>LOGGED NIGHT AVERAGE: {sleepWeeklySummary.averageHours}H · {sleepWeeklySummary.loggedNights} NIGHTS</span></div></> }] },
     { id: 'G', columns: 1, panels: [{ id: 'proof-wall', token: 'compact', className: 'tf30-trophy-wall-panel', content: <><h2>THE TROPHY WALL</h2><div className="tf30-trophy-wall-grid">{photoSlots.map((slot) => { const photoRef = state.photo[slot.key]; return <div className="tf30-photo-spot" key={slot.key}><div className="tf30-photo-spot-title">{slot.title}</div>{photoRef ? <><div className="tf30-photo-ref">SELECTED: {getPhotoLabel(photoRef)}</div><div className="tf30-photo-actions"><button type="button" onClick={() => pickPhotoFromLibrary(slot.key)}>REPLACE</button><button type="button" onClick={() => updatePhotoRef(slot.key, '')}>REMOVE</button></div></> : <><div className="tf30-photo-empty">NO PHOTO SELECTED</div><button type="button" onClick={() => pickPhotoFromLibrary(slot.key)}>SELECT FROM LIBRARY</button></>}<input ref={(node) => { fileInputRefs.current[slot.key] = node; }} className="tf30-file-input" type="file" accept="image/*" onChange={(event) => handleFileFallback(slot.key, event)} /></div>; })}</div></> }] },
     { id: 'H', columns: 1, panels: [{ id: 'how-doin', token: 'medium', className: 'tf30-sohow-panel', content: <><h2>SO HOW YOU DOIN 🫪⁉️</h2><select value={state.soHowYouDoin} onChange={(e) => setState((p) => ({ ...p, soHowYouDoin: e.target.value }))}>{soHowOptions.map((o) => <option key={o}>{o}</option>)}</select><label>SESSION NOTES<textarea className="tf30-lined-notes" value={state.soHowYouDoinNotes} onChange={(e) => setState((p) => ({ ...p, soHowYouDoinNotes: e.target.value }))} /></label></> }] },
     { id: 'I', columns: 1, className: 'tf30-shelf-f', panels: [{ id: 'arena-rules', token: 'strip', content: <><h2>ARENA RULES</h2><div className="tf30-footer"><span>MIN 75 MIN</span><span>MAX 120 MIN</span><span>CORE 15 MIN</span><span>CARDIO 60 MIN / 3X WEEK</span><span>POSE DAILY. STAGE COMMAND</span><span>PROGRESS REMINDER</span></div></> }] }
@@ -362,7 +385,7 @@ export default function ThiccFittSection() {
   const firstExercise = state.exerciseRows.find((row) => row.exercise);
   const tiles = [
     { id: 'beginning', title: 'IN THE BEGINNING…', alwaysOpen: true, summary: `${state.control.seasonPhase || 'PHASE NOT SET'}\n${state.control.workoutLength || 'WORKOUT LENGTH PENDING'}`, content: <>{panelById['entry-gate']}{panelById['arena-rules']}</> },
-    { id: 'twerk-sauce', title: 'TWERK SAUCE', summary: twerkSauce ? `${twerkSauce.name}\n${twerkSauce.artist}` : 'MANUALLY SELECT WORKOUT SONG', media: twerkSauce?.image ? <Image className="tf30-song-cover" src={twerkSauce.image} alt="" width={72} height={72} unoptimized /> : null, content: <SpotifyTrackPicker value={twerkSauce} onChange={setTwerkSauce} storageKey={TWERK_SAUCE_STORAGE_KEY} label="TWERK SAUCE" /> },
+    { id: 'twerk-sauce', title: 'TWERK SAUCE', summary: twerkSauce ? `${twerkSauce.name}\n${twerkSauce.artist}` : 'MANUALLY SELECT WORKOUT SONG', media: twerkSauce?.image ? <Image className="tf30-song-cover" src={twerkSauce.image} alt="" width={72} height={72} unoptimized /> : null, content: <SpotifyTrackPicker value={twerkSauce} onChange={setTwerkSauce} storageKey={twerkSauceStorageKey} label="TWERK SAUCE" /> },
     { id: 'war-cry', title: 'WAR CRY', summary: dailyQuote?.text || 'TODAY’S VERIFIED QUOTE', content: panelById['war-cry'] },
     { id: 'chase', title: 'THE CHASE', summary: `${state.cardio.type || 'CARDIO PENDING'}\n${weeklyDaysTrained} DAYS · ${weeklyTotalHours} HOURS`, content: <>{panelById.chase}{panelById['weekly-battle-tally']}</> },
     { id: 'body-receipts', title: 'BODY RECEIPTS', summary: `WEIGHT ${state.body.weight.today || '—'}\nBODY FAT ${state.body.bodyFat.today || '—'}`, content: panelById['body-receipts'] },
