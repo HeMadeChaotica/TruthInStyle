@@ -144,12 +144,12 @@
 .da-eater-date-control{position:absolute;right:5.2rem;top:1rem;z-index:6;display:flex;align-items:center;gap:.55rem;padding:.45rem .7rem;border:1px solid rgba(159,82,105,.42);border-radius:999px;background:rgba(255,242,238,.75);backdrop-filter:blur(12px);color:#8d5063;font-size:.68rem;font-weight:800;letter-spacing:.08em}
 .da-eater-date-control input{border:0;background:transparent;color:#82465b;font:inherit}
 .da-eater-floating-deck .crystal-summary-tile--macro-harvest{left:34.8%;top:6.5%;width:60%;display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
-.da-eater-floating-deck .crystal-summary-tile--thicc-eats{left:34.8%;top:25%;width:39.2%;height:26%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--thicc-obsession{left:75.1%;right:auto;top:25%;width:19.7%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:75.1%;bottom:auto;top:34%;width:19.7%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--thicc-cravings{left:75.1%;right:auto;top:43%;width:19.7%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--thicc-treat{left:75.1%;right:auto;bottom:auto;top:52%;width:19.7%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--da-reup{left:34.8%;top:52%;width:39.2%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats{left:34.8%;top:27%;width:39.2%;height:26%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession{left:75.1%;right:auto;top:27%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:75.1%;bottom:auto;top:36%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-cravings{left:75.1%;right:auto;top:45%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat{left:75.1%;right:auto;bottom:auto;top:54%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--da-reup{left:34.8%;top:54%;width:39.2%;min-height:0}
 .da-eater-summary-macros{display:grid;width:100%}
 .da-eater-summary-macros>div{display:grid;align-items:center}
 .da-eater-summary-macros span{font-size:clamp(.62rem,.72vw,.88rem)!important;font-weight:500!important;color:#8b4d61!important;-webkit-text-fill-color:#8b4d61!important;white-space:nowrap;text-shadow:none!important}
@@ -281,7 +281,7 @@
 }
 
 .da-eater-floating-deck .crystal-summary-tile--macro-harvest{
-  height:17.5%;
+  height:19.5%;
   min-height:0;
   max-height:none;
   padding:clamp(.55rem,.72vw,.78rem) clamp(.75rem,1vw,1.05rem);
@@ -450,7 +450,7 @@
     gap:.42rem;
   }
   .da-eater-floating-deck .crystal-summary-tile--da-reup{
-    height:10.8%;
+    height:9.5%;
     padding:.5rem .7rem;
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy,
