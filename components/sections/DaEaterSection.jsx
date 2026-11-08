@@ -226,7 +226,7 @@ export default function DaEaterSection() {
           </g>
         </svg>
       </ScenePlate>
-      <FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER orchard stations" />
+      <FloatingCrystalTileDeck className="da-eater-floating-deck" tiles={tiles} ariaLabel="DA.EATER royal kitchen stations" />
     </SectionShell>
   );
 }

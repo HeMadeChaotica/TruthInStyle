@@ -120,9 +120,9 @@
   100%{transform:translateX(165%);opacity:0}
 }
 
-/* Crystallization harvest garden: approved art left and the full live food ledger right. */
+/* Approved Crystallization royal kitchen: live food ledger inside the command surface. */
 .da-eater-shell{--app-text-primary:#8d5063;color:#8d5063}
-.da-eater-bg{background-image:url('/backgrounds/DA-EATER/da-eater-crystallization-harvest-garden-v2.png');background-position:center;background-size:cover}
+.da-eater-bg{background-color:#090608;background-image:url('/backgrounds/DA-EATER/da-eater-crystallization-royal-kitchen-v3.png');background-position:center top;background-size:cover;background-repeat:no-repeat}
 .da-eater-shell .usf-overlay{grid-template-columns:minmax(28rem,43%) minmax(0,57%);padding:clamp(10px,1.05vw,17px) clamp(66px,5.7vw,96px) 16px 10px;gap:10px}
 .da-eater-content{padding:0 0 26px}
 .da-eater-live-header{display:inline-flex;justify-content:flex-start;align-items:center;gap:16px;width:auto;max-width:100%;margin:0 0 8px 0;padding:8px 12px;border:1px solid rgba(164,88,110,.46);border-radius:12px;background:rgba(255,240,237,.64);backdrop-filter:blur(3px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.48),0 6px 16px rgba(82,46,53,.12)}
@@ -140,16 +140,16 @@
 @media(max-width:1100px){.da-eater-shell .usf-overlay{grid-template-columns:27% 73%}.da-eater-shell .usf-stack{grid-template-columns:1fr 1fr}.da-eater-shell .usf-shelf:nth-child(n){grid-column:auto;grid-row:auto}.da-eater-shell .usf-shelf:nth-child(1),.da-eater-shell .usf-shelf:nth-child(2),.da-eater-shell .usf-shelf:nth-child(4){grid-column:1/-1}}
 @media(max-width:760px){.da-eater-shell .usf-overlay{grid-template-columns:1fr;padding:72px 10px 14px}.da-eater-left{min-height:16vh}.da-eater-shell .usf-stack{grid-template-columns:1fr}.da-eater-shell .usf-shelf:nth-child(n){grid-column:1}.da-eater-live-header{margin-top:0}}
 
-/* Approved orchard-first station layout. The original forms open inside these living-world tiles. */
+/* Royal-kitchen command surface. The original forms still open inside these live stations. */
 .da-eater-date-control{position:absolute;right:5.2rem;top:1rem;z-index:6;display:flex;align-items:center;gap:.55rem;padding:.45rem .7rem;border:1px solid rgba(159,82,105,.42);border-radius:999px;background:rgba(255,242,238,.75);backdrop-filter:blur(12px);color:#8d5063;font-size:.68rem;font-weight:800;letter-spacing:.08em}
 .da-eater-date-control input{border:0;background:transparent;color:#82465b;font:inherit}
-.da-eater-floating-deck .crystal-summary-tile--macro-harvest{left:30.5%;top:4%;width:37%;display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
-.da-eater-floating-deck .crystal-summary-tile--thicc-eats{left:30.5%;top:36%;width:37%;height:26%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--thicc-obsession{right:4.8%;top:19%;width:25%;min-height:150px}
-.da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:23.5%;bottom:8%;width:18%}
-.da-eater-floating-deck .crystal-summary-tile--thicc-cravings{right:5.2%;top:52%;width:23%}
-.da-eater-floating-deck .crystal-summary-tile--thicc-treat{right:5.2%;bottom:6%;width:21%}
-.da-eater-floating-deck .crystal-summary-tile--da-reup{left:40%;top:66%;width:24%;min-height:96px}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest{left:34.8%;top:6.5%;width:60%;display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats{left:34.8%;top:25%;width:39.2%;height:26%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession{left:75.1%;right:auto;top:25%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:75.1%;bottom:auto;top:34%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-cravings{left:75.1%;right:auto;top:43%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat{left:75.1%;right:auto;bottom:auto;top:52%;width:19.7%;min-height:0}
+.da-eater-floating-deck .crystal-summary-tile--da-reup{left:34.8%;top:52%;width:39.2%;min-height:0}
 .da-eater-summary-macros{display:grid;width:100%}
 .da-eater-summary-macros>div{display:grid;align-items:center}
 .da-eater-summary-macros span{font-size:clamp(.62rem,.72vw,.88rem)!important;font-weight:500!important;color:#8b4d61!important;-webkit-text-fill-color:#8b4d61!important;white-space:nowrap;text-shadow:none!important}
@@ -239,21 +239,20 @@
   .da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-log-layout{grid-template-columns:1fr}
 }
 
-/* Rose-gold orchard glass translated from the approved DA.EATER styling render. */
+/* Obsidian command glass translated from the approved royal-kitchen render. */
 .da-eater-floating-deck .crystal-summary-tile{
-  border:2px solid rgba(255,184,171,.86);
+  border:1px solid rgba(255,191,207,.7);
   background:
-    linear-gradient(135deg,rgba(255,228,210,.1),transparent 32%),
-    repeating-linear-gradient(120deg,rgba(255,211,198,.025) 0 1px,transparent 1px 8px),
-    linear-gradient(145deg,rgba(68,42,34,.5),rgba(98,61,51,.38));
+    linear-gradient(135deg,rgba(255,218,231,.07),transparent 34%),
+    repeating-linear-gradient(120deg,rgba(255,211,226,.018) 0 1px,transparent 1px 9px),
+    linear-gradient(145deg,rgba(20,10,15,.82),rgba(42,20,29,.68));
   box-shadow:
-    inset 0 0 0 1px rgba(255,235,219,.6),
-    inset 0 0 0 5px rgba(91,53,45,.2),
-    inset 0 0 26px rgba(255,176,161,.08),
-    0 10px 26px rgba(42,23,17,.26),
-    0 0 12px rgba(255,151,173,.25);
-  backdrop-filter:blur(4px) saturate(118%);
-  -webkit-backdrop-filter:blur(4px) saturate(118%);
+    inset 0 0 0 1px rgba(255,232,239,.18),
+    inset 0 0 24px rgba(255,158,190,.05),
+    0 8px 20px rgba(0,0,0,.28),
+    0 0 10px rgba(255,144,180,.18);
+  backdrop-filter:blur(2px) saturate(112%);
+  -webkit-backdrop-filter:blur(2px) saturate(112%);
 }
 .da-eater-floating-deck .crystal-summary-tile::before{
   padding:2px;
@@ -282,10 +281,10 @@
 }
 
 .da-eater-floating-deck .crystal-summary-tile--macro-harvest{
-  height:30.5%;
-  min-height:220px;
-  max-height:240px;
-  padding:clamp(.72rem,1vw,1rem) clamp(.9rem,1.25vw,1.35rem);
+  height:17.5%;
+  min-height:0;
+  max-height:none;
+  padding:clamp(.55rem,.72vw,.78rem) clamp(.75rem,1vw,1.05rem);
   gap:.28rem;
 }
 .da-eater-floating-deck .crystal-summary-tile--macro-harvest>.crystal-summary-copy{
@@ -403,6 +402,7 @@
 }
 
 .da-eater-orchard-swirls{
+  display:none;
   position:absolute;
   inset:0;
   z-index:1;
@@ -431,3 +431,48 @@
 @keyframes daEaterSwirlFlow{to{stroke-dashoffset:-130}}
 @keyframes daEaterSwirlBreathe{0%,100%{opacity:.84}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.da-eater-orchard-swirls .da-eater-swirl{animation:none;opacity:.96}}
+
+@media(min-width:901px){
+  .da-eater-date-control{
+    right:6.5%;
+    top:1.6%;
+    border-color:rgba(255,192,211,.58);
+    background:rgba(20,10,15,.74);
+    color:#ffd2df;
+  }
+  .da-eater-date-control input{color:#ffe2e9}
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat{
+    height:7.8%;
+    padding:.42rem .58rem;
+    gap:.42rem;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--da-reup{
+    height:10.8%;
+    padding:.5rem .7rem;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy{gap:.18rem}
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy strong,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy strong,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy strong,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy strong{font-size:clamp(.66rem,.78vw,.92rem)!important}
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy>span,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy>span,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy>span,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy>span{
+    font-size:clamp(.5rem,.58vw,.68rem)!important;
+    line-height:1.15!important;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-expand,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-expand,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-expand,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-expand,
+  .da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-expand{width:clamp(27px,2vw,34px)}
+  .da-eater-summary-macros{gap:.18rem}
+  .da-eater-summary-macros>div{min-height:20px;padding:.08rem .38rem}
+}
