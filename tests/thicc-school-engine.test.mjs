@@ -25,6 +25,7 @@ test('catalog preserves verified curriculum, the 95 percent gate, and birthday p
   const nutrition = THICC_SCHOOL_COURSES.find((course) => course.id === 'nutrition');
   assert.match(cpt.sections[0].title, /FOUNDATIONS OF HEALTH & BEHAVIOR/);
   assert.match(nutrition.sections[0].title, /FOUNDATIONS OF NUTRITION/);
+  assert.equal(nutrition.deadline, '2027-01-31');
   assert.equal(THICC_SCHOOL_COURSES.flatMap((course) => course.sections).some((item) => item.assignedDate === '2026-12-22'), false);
   assert.equal(cpt.verifiedMaterial, true);
   assert.equal(nutrition.verifiedMaterial, true);
