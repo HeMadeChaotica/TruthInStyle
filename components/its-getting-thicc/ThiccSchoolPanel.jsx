@@ -12,7 +12,6 @@ import {
   editThiccSchoolSection,
   getThiccSchoolSummary,
   initializeThiccSchool,
-  markThiccSchoolSection,
   readThiccSchoolState,
   saveThiccSchoolStudyProgress,
   submitThiccSchoolPractice,
@@ -42,8 +41,8 @@ export default function ThiccSchoolPanel() {
   const [activeCourseId, setActiveCourseId] = useState('cpt');
   const [openGuideId, setOpenGuideId] = useState('');
   const [editingId, setEditingId] = useState('');
-  const [editDraft, setEditDraft] = useState({ title: '', assignedDate: '', minutes: 0, guide: '' });
-  const [studyDraft, setStudyDraft] = useState({ studyNotes: '', recallNotes: '', issaCompleted: false });
+  const [editDraft, setEditDraft] = useState({ assignedDate: '', minutes: 0 });
+  const [studyDraft, setStudyDraft] = useState({ issaCompleted: false, textbookCompleted: false, workbookCompleted: false });
   const [practiceSectionId, setPracticeSectionId] = useState('');
   const [practiceQuestions, setPracticeQuestions] = useState([]);
   const [practiceAnswers, setPracticeAnswers] = useState({});
@@ -66,7 +65,7 @@ export default function ThiccSchoolPanel() {
     };
   }, []);
 
-  const courses = useMemo(() => Object.values(school.courses || {}), [school]);
+  const courses = useMemo(() => Object.values(school.courses || {}).filter((course) => course.verifiedMaterial), [school]);
   const activeCourse = school.courses?.[activeCourseId] || courses[0];
   const sections = useMemo(() => Object.values(activeCourse?.sections || {}).sort((a, b) => a.assignedDate.localeCompare(b.assignedDate)), [activeCourse]);
   const summary = useMemo(() => getThiccSchoolSummary(school), [school]);
@@ -83,17 +82,10 @@ export default function ThiccSchoolPanel() {
     setPracticeAnswers({});
     setPracticeResult(null);
     if (nextId) setStudyDraft({
-      studyNotes: item.studyNotes || '',
-      recallNotes: item.recallNotes || '',
       issaCompleted: Boolean(item.issaCompleted),
+      textbookCompleted: Boolean(item.textbookCompleted),
+      workbookCompleted: Boolean(item.workbookCompleted),
     });
-  };
-
-  const persistSection = async (section, complete) => {
-    const next = markThiccSchoolSection(activeCourse.id, section.id, complete);
-    setSchool(next);
-    setStatus(complete ? `${section.title} RECORDED COMPLETE.` : `${section.title} REOPENED.`);
-    await flushAllPendingSaves();
   };
 
   const saveStudyWork = async (item, updates = studyDraft) => {
@@ -101,9 +93,9 @@ export default function ThiccSchoolPanel() {
     const saved = next.courses?.[activeCourse.id]?.sections?.[item.id];
     setSchool(next);
     setStudyDraft({
-      studyNotes: saved?.studyNotes || '',
-      recallNotes: saved?.recallNotes || '',
       issaCompleted: Boolean(saved?.issaCompleted),
+      textbookCompleted: Boolean(saved?.textbookCompleted),
+      workbookCompleted: Boolean(saved?.workbookCompleted),
     });
     setStatus(saved?.status === 'complete'
       ? `${item.title} MASTERED AND ADDED TO CUMULATIVE PROGRESS.`
@@ -113,7 +105,7 @@ export default function ThiccSchoolPanel() {
 
   const openEditor = (item) => {
     setEditingId(item.id);
-    setEditDraft({ title: item.title, assignedDate: item.assignedDate, minutes: item.minutes, guide: item.guide });
+    setEditDraft({ assignedDate: item.assignedDate, minutes: item.minutes });
   };
 
   const saveEditor = async () => {
@@ -191,7 +183,8 @@ export default function ThiccSchoolPanel() {
       <div>
         <small>{activeCourse.portalStatus}</small>
         <h4>{activeCourse.title}</h4>
-        <p>DEADLINE {displayDate(activeCourse.deadline)} · {courseComplete}/{sections.length} SECTIONS · {coursePercent}%</p>
+        <p>{activeCourse.sourceSummary}</p>
+        <p>DEADLINE {displayDate(activeCourse.deadline)} · {courseComplete}/{sections.length} MODULES · {coursePercent}%</p>
       </div>
       {activeCourse.portalCourseId ? <a href={`https://www.issalearn.com/d2l/le/lessons/${activeCourse.portalCourseId}`} target="_blank" rel="noreferrer">OPEN ISSA COURSE</a> : null}
     </section>
@@ -204,19 +197,21 @@ export default function ThiccSchoolPanel() {
         const guideOpen = openGuideId === item.id;
         const gates = getSectionMasteryGates(item);
         const isFinalSection = item.id === `${activeCourse.id}-final`;
-        const usesAutomatedMastery = activeCourse.id === 'cpt';
+        const sourcePlan = item.sourcePlan;
+        const gateCount = 2 + Number(gates.textbookRequired) + Number(gates.workbookRequired);
         return <article key={item.id} className={`thicc-school-section ${complete ? 'complete' : ''} ${item.rolloverCount ? 'rolled' : ''}`}>
           <div className="thicc-school-section-main">
-            {usesAutomatedMastery ? <div className={`thicc-school-mastery-state ${complete ? 'complete' : ''}`}><strong>{complete ? 'MASTERED' : `${Number(item.practiceBestScore || 0)}% BEST`}</strong><small>{complete ? 'CUMULATIVE CREDITED' : '3 GATES REQUIRED'}</small></div> : <button type="button" className="thicc-school-complete" onClick={() => persistSection(item, !complete)} aria-pressed={complete}>{complete ? 'COMPLETE' : 'MARK COMPLETE'}</button>}
+            <div className={`thicc-school-mastery-state ${complete ? 'complete' : ''}`}><strong>{complete ? 'MASTERED' : `${Number(item.practiceBestScore || 0)}% BEST`}</strong><small>{complete ? 'CUMULATIVE CREDITED' : `${gateCount} GATES REQUIRED`}</small></div>
             <div>
               <small>{displayDate(item.assignedDate)} · {minutesLabel(item.minutes)}{item.rolloverCount ? ` · MOVED ${item.rolloverCount}X` : ''}</small>
               <strong>{item.title}</strong>
-              <span>{item.source}</span>
-              {usesAutomatedMastery ? <div className="thicc-school-gates" aria-label={`${item.title} mastery gates`}>
+              <span>{sourcePlan ? `${sourcePlan.sourceTitle} · ${sourcePlan.sourceEdition}` : item.source}</span>
+              <div className="thicc-school-gates" aria-label={`${item.title} mastery gates`}>
+                {gates.textbookRequired ? <span className={gates.textbook ? 'done' : ''}>{gates.textbook ? '✓' : '○'} TEXTBOOK</span> : null}
+                {gates.workbookRequired ? <span className={gates.workbook ? 'done' : ''}>{gates.workbook ? '✓' : '○'} WORKBOOK</span> : null}
                 <span className={gates.issa ? 'done' : ''}>{gates.issa ? '✓' : '○'} ISSA COMPLETE</span>
-                <span className={gates.notes ? 'done' : ''}>{gates.notes ? '✓' : '○'} STUDY WORK</span>
                 <span className={gates.practice ? 'done' : ''}>{gates.practice ? '✓' : '○'} 95%+ PRACTICE</span>
-              </div> : null}
+              </div>
             </div>
             <div className="thicc-school-section-actions">
               <button
@@ -224,23 +219,29 @@ export default function ThiccSchoolPanel() {
                 aria-expanded={guideOpen}
                 aria-controls={`thicc-school-guide-${item.id}`}
                 onClick={() => toggleGuide(item)}
-              >{guideOpen ? 'CLOSE GUIDE' : 'STUDY GUIDE'}</button>
+              >{guideOpen ? 'CLOSE' : isFinalSection ? 'FINAL REQUIREMENTS' : 'OPEN ASSIGNMENT'}</button>
               <button type="button" onClick={() => openEditor(item)}>EDIT</button>
             </div>
           </div>
           {guideOpen ? <div id={`thicc-school-guide-${item.id}`} className="thicc-school-guide" role="region" aria-label={`${item.title} study guide`}>
-            <strong>STUDY GUIDE</strong>
-            <p>{item.guide}</p>
-            <strong>FOCUS TERMS</strong>
-            <p>{(item.focus || []).join(' · ') || 'ADD FOCUS TERMS WHEN THE COURSE UNLOCKS.'}</p>
-            {usesAutomatedMastery ? <><div className="thicc-school-study-work">
+            {sourcePlan ? <>
+              <strong>VERIFIED SOURCE ASSIGNMENT</strong>
+              <p className="thicc-school-source-line">{sourcePlan.sourceTitle} · {sourcePlan.sourceEdition}</p>
+              <div className="thicc-school-chapters">
+                {sourcePlan.chapters.map((chapter) => <section key={chapter.number} className="thicc-school-chapter">
+                  <header><strong>CHAPTER {chapter.number} · {chapter.title}</strong><span>TEXTBOOK PAGES {chapter.pages}{chapter.workbookPages ? ` · WORKBOOK PAGES ${chapter.workbookPages}` : ''}</span></header>
+                  <ul>{chapter.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul>
+                </section>)}
+              </div>
+            </> : <><strong>FINAL REQUIREMENTS</strong><p>{item.guide}</p></>}
+            <div className="thicc-school-study-work">
+              {gates.textbookRequired ? <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.textbookCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, textbookCompleted: event.target.checked }))} />I COMPLETED EVERY ASSIGNED TEXTBOOK PAGE ABOVE</label> : null}
+              {gates.workbookRequired ? <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.workbookCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, workbookCompleted: event.target.checked }))} />I COMPLETED EVERY ASSIGNED WORKBOOK PAGE ABOVE</label> : null}
               <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.issaCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, issaCompleted: event.target.checked }))} />ISSA PORTAL SHOWS THIS {isFinalSection ? 'EXAM' : 'MODULE'} COMPLETED</label>
-              <label>MY STUDY NOTES<textarea value={studyDraft.studyNotes} onChange={(event) => setStudyDraft((current) => ({ ...current, studyNotes: event.target.value }))} placeholder="CAPTURE THE CONCEPTS, EXAMPLES, AND COACHING APPLICATIONS YOU COMPLETED." /></label>
-              <label>WHAT I MUST REMEMBER<textarea value={studyDraft.recallNotes} onChange={(event) => setStudyDraft((current) => ({ ...current, recallNotes: event.target.value }))} placeholder="WRITE THE KEY TERMS, RULES, AND EXAM TRAPS IN YOUR OWN WORDS." /></label>
-              <button type="button" onClick={() => saveStudyWork(item)}>SAVE STUDY WORK</button>
+              <button type="button" onClick={() => saveStudyWork(item)}>SAVE COMPLETION PROGRESS</button>
             </div>
             {isFinalSection ? <p className="thicc-school-final-direction">PASS THE CUMULATIVE FINAL PRACTICE BELOW, THEN CONFIRM THE ISSA EXAM SHOWS COMPLETED.</p> : <div className="thicc-school-module-practice">
-              <header><div><strong>MODULE PRACTICE</strong><small>15 ORIGINAL QUESTIONS · 95% GATE REQUIRES 15/15</small></div><button type="button" onClick={() => startSectionPractice(item)}>{practiceSectionId === item.id && practiceQuestions.length ? 'NEW MODULE FORM' : 'START MODULE PRACTICE'}</button></header>
+              <header><div><strong>MODULE PRACTICE</strong><small>ORIGINAL QUESTIONS FROM THE ASSIGNED CHAPTERS · {THICC_SCHOOL_MASTERY_SCORE}% REQUIRED</small></div><button type="button" onClick={() => startSectionPractice(item)}>{practiceSectionId === item.id && practiceQuestions.length ? 'NEW MODULE FORM' : 'START MODULE PRACTICE'}</button></header>
               {practiceSectionId === item.id ? <>
                 {practiceQuestions.map((question, index) => <fieldset key={question.id} className={practiceResult?.results?.find((result) => result.id === question.id)?.correct === false ? 'missed' : ''}>
                   <legend>{index + 1}. {question.prompt}</legend>
@@ -250,13 +251,11 @@ export default function ThiccSchoolPanel() {
                 {practiceQuestions.length ? <button type="button" className="thicc-school-grade" onClick={gradePractice}>SCORE MODULE PRACTICE</button> : null}
                 {practiceResult ? <div className={`thicc-school-result ${practiceResult.passed ? 'pass' : 'retry'}`}><strong>{practiceResult.score}%</strong><p>{practiceResult.passed ? 'MODULE PRACTICE GATE PASSED.' : `RETAKE REQUIRED. REVIEW: ${practiceResult.weakTopics.join(' · ')}`}</p></div> : null}
               </> : null}
-            </div>}</> : null}
+            </div>}
           </div> : null}
           {editingId === item.id ? <div className="thicc-school-editor">
-            <label>SECTION TITLE<input value={editDraft.title} onChange={(event) => setEditDraft((current) => ({ ...current, title: event.target.value }))} /></label>
             <label>ASSIGNED DATE<input type="date" value={editDraft.assignedDate} onChange={(event) => setEditDraft((current) => ({ ...current, assignedDate: event.target.value }))} /></label>
             <label>MINUTES<input type="number" min="15" step="15" value={editDraft.minutes} onChange={(event) => setEditDraft((current) => ({ ...current, minutes: event.target.value }))} /></label>
-            <label>STUDY GUIDE<textarea value={editDraft.guide} onChange={(event) => setEditDraft((current) => ({ ...current, guide: event.target.value }))} /></label>
             <div><button type="button" onClick={saveEditor}>SAVE SECTION</button><button type="button" onClick={() => setEditingId('')}>CANCEL</button></div>
           </div> : null}
         </article>;
