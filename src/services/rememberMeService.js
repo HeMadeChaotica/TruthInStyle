@@ -1,6 +1,9 @@
 'use client';
 
+import { getIssaStudyPlanEntries, ISSA_STUDY_PLAN_VERSION } from '../../lib/rememberMe/issaStudyPlan.mjs';
+
 const STORAGE_KEY = 'remember_me_entries_v1';
+const ISSA_PLAN_SEED_KEY = 'remember_me_issa_plan_seed_v1';
 
 const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const sbAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -74,6 +77,19 @@ function normalizeRow(row = {}) {
     updated_at: updatedAt,
     updatedAt,
   };
+}
+
+export function ensureIssaStudyPlanEntries() {
+  if (typeof window === 'undefined') return [];
+  const current = loadLocalEntries();
+  const planned = getIssaStudyPlanEntries().map(normalizeRow);
+  const existingIds = new Set(current.map((row) => row.id));
+  const isCurrentVersion = window.localStorage.getItem(ISSA_PLAN_SEED_KEY) === ISSA_STUDY_PLAN_VERSION;
+  if (isCurrentVersion && planned.every((row) => existingIds.has(row.id))) return current;
+  const next = [...current, ...planned.filter((row) => !existingIds.has(row.id))];
+  set(next);
+  window.localStorage.setItem(ISSA_PLAN_SEED_KEY, ISSA_STUDY_PLAN_VERSION);
+  return next;
 }
 
 export async function fetchRememberMeEntriesSafe() {

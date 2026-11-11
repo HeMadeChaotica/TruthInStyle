@@ -153,6 +153,7 @@ const colorForEntry = (entry) => {
   if (entry?._source === 'personal-observance') return 'linear-gradient(135deg,#d69224,#7a4510)';
   if (entry?._source === 'personal-workout') return 'linear-gradient(135deg,#ad1f68,#68143f)';
   if (entry?._source === 'standout') return 'linear-gradient(135deg,#7956a8,#49306f)';
+  if (entry?.schedule_kind === 'issa') return 'linear-gradient(135deg,#1f6f78,#29456f)';
   const type = String(entry?.type || entry?.entry_type || '').toUpperCase();
   if (entry?.schedule_kind === 'popup') return 'linear-gradient(135deg,#2b8f92,#15545f)';
   if (entry?.schedule_kind === 'work') return 'linear-gradient(135deg,#b47726,#704318)';
@@ -171,12 +172,13 @@ const classNameForEntry = (entry) => {
   if (entry?._source === 'fun-observance') return 'remember-chip-fun';
   if (entry?._source === 'personal-observance') return 'remember-chip-personal';
   if (entry?._source === 'standout') return 'remember-chip-moment';
+  if (entry?.schedule_kind === 'issa') return 'remember-chip-issa';
   return 'remember-chip-calendar';
 };
 
 export default function RememberMeSection() {
   const configuredEventTypes = useClockItOptions(CLOCK_IT_KEYS.rememberEventTypes);
-  const eventTypes = [...new Set([...(configuredEventTypes.length ? configuredEventTypes : ['SOMETHING NEW DAY', 'REMINDER']), 'PAYDAY'])];
+  const eventTypes = [...new Set([...(configuredEventTypes.length ? configuredEventTypes : ['SOMETHING NEW DAY', 'REMINDER']), 'PAYDAY', 'ISSA STUDY', 'ISSA WEBINAR', 'ISSA DEADLINE'])];
   const standoutTypes = ['WOW', 'WTF', 'PLOT TWIST'];
   const [viewDate, setViewDate] = useState(() => new Date(2000, 0, 1));
   const [selectedDay, setSelectedDay] = useState(1);
@@ -242,6 +244,7 @@ export default function RememberMeSection() {
         import('../../src/services/rememberMeService'),
         import('../../src/services/itsGettingThiccService'),
       ]);
+      rememberService.ensureIssaStudyPlanEntries();
       const [rememberResult, scheduleResult] = await Promise.all([
         rememberService.fetchRememberMeEntriesSafe(),
         scheduleService.fetchScheduleEntries(),
@@ -271,8 +274,13 @@ export default function RememberMeSection() {
   }, []);
 
   useEffect(() => {
-    setMomentByDate(readStoredMoments());
-    loadUnifiedEntries();
+    const refresh = () => {
+      setMomentByDate(readStoredMoments());
+      loadUnifiedEntries();
+    };
+    refresh();
+    window.addEventListener('truthinstyle-cloud-state-hydrated', refresh);
+    return () => window.removeEventListener('truthinstyle-cloud-state-hydrated', refresh);
   }, [loadUnifiedEntries]);
 
   useEffect(() => setFlippedMomentType(''), [selectedDateKey]);

@@ -150,6 +150,7 @@ export default function RememberMeTimeCalendar({
         <span data-kind="fun">OFFBEAT</span>
         <span data-kind="personal">PERSONAL</span>
         <span data-kind="event">EVENTS</span>
+        <span data-kind="issa">ISSA</span>
         <span data-kind="standout">WOW · WTF · PLOT TWIST</span>
         <span data-kind="workout">WORKOUT</span>
         <span data-kind="work">WORK</span>
