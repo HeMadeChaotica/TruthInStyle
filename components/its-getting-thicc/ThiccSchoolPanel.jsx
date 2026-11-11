@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getCourseQuestions } from '../../lib/thiccSchool/schoolEngine.mjs';
+import { createDefaultSchoolState, getCourseQuestions } from '../../lib/thiccSchool/schoolEngine.mjs';
 import { THICC_SCHOOL_MASTERY_SCORE } from '../../lib/thiccSchool/catalog.mjs';
 import {
   editThiccSchoolSection,
@@ -28,7 +28,10 @@ const displayDate = (dateKey) => {
 };
 
 export default function ThiccSchoolPanel() {
-  const [school, setSchool] = useState(() => readThiccSchoolState());
+  // Keep the server and first browser render identical. Reading localStorage in
+  // the state initializer can leave this panel unhydrated, so its controls look
+  // active while none of their React handlers run.
+  const [school, setSchool] = useState(() => createDefaultSchoolState());
   const [activeCourseId, setActiveCourseId] = useState('cpt');
   const [openGuideId, setOpenGuideId] = useState('');
   const [editingId, setEditingId] = useState('');
@@ -111,7 +114,6 @@ export default function ThiccSchoolPanel() {
       <div>
         <small>ITS.GETTING.THICC · PROFESSIONAL DEVELOPMENT</small>
         <h3>THICC.SCHOOL</h3>
-        <p>THE CURRICULUM LIVES HERE. REMEMBER.ME RECEIVES THE TIME.</p>
       </div>
       <div className="thicc-school-score-grid">
         <span><strong>{summary.completionPercent}%</strong> PROGRAM COMPLETE</span>
@@ -124,7 +126,7 @@ export default function ThiccSchoolPanel() {
     {status ? <p className="thicc-school-status" role="status">{status}</p> : null}
 
     <nav className="thicc-school-course-tabs" aria-label="THICC.SCHOOL courses">
-      {courses.map((course) => <button type="button" key={course.id} className={activeCourseId === course.id ? 'active' : ''} onClick={() => { setActiveCourseId(course.id); setPracticeQuestions([]); setPracticeResult(null); setEditingId(''); }}>{course.short}</button>)}
+      {courses.map((course) => <button type="button" key={course.id} className={activeCourseId === course.id ? 'active' : ''} onClick={() => { setActiveCourseId(course.id); setPracticeQuestions([]); setPracticeResult(null); setEditingId(''); setOpenGuideId(''); }}>{course.short}</button>)}
     </nav>
 
     <section className="thicc-school-course-head">
@@ -151,11 +153,16 @@ export default function ThiccSchoolPanel() {
               <span>{item.source}</span>
             </div>
             <div className="thicc-school-section-actions">
-              <button type="button" onClick={() => setOpenGuideId(guideOpen ? '' : item.id)}>{guideOpen ? 'CLOSE GUIDE' : 'STUDY GUIDE'}</button>
+              <button
+                type="button"
+                aria-expanded={guideOpen}
+                aria-controls={`thicc-school-guide-${item.id}`}
+                onClick={() => setOpenGuideId((current) => current === item.id ? '' : item.id)}
+              >{guideOpen ? 'CLOSE GUIDE' : 'STUDY GUIDE'}</button>
               <button type="button" onClick={() => openEditor(item)}>EDIT</button>
             </div>
           </div>
-          {guideOpen ? <div className="thicc-school-guide"><p>{item.guide}</p><strong>FOCUS TERMS</strong><p>{(item.focus || []).join(' · ') || 'ADD FOCUS TERMS WHEN THE COURSE UNLOCKS.'}</p></div> : null}
+          {guideOpen ? <div id={`thicc-school-guide-${item.id}`} className="thicc-school-guide" role="region" aria-label={`${item.title} study guide`}><strong>STUDY GUIDE</strong><p>{item.guide}</p><strong>FOCUS TERMS</strong><p>{(item.focus || []).join(' · ') || 'ADD FOCUS TERMS WHEN THE COURSE UNLOCKS.'}</p></div> : null}
           {editingId === item.id ? <div className="thicc-school-editor">
             <label>SECTION TITLE<input value={editDraft.title} onChange={(event) => setEditDraft((current) => ({ ...current, title: event.target.value }))} /></label>
             <label>ASSIGNED DATE<input type="date" value={editDraft.assignedDate} onChange={(event) => setEditDraft((current) => ({ ...current, assignedDate: event.target.value }))} /></label>

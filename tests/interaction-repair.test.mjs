@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
+test('THICC.SCHOOL hydrates deterministically so study controls remain interactive', async () => {
+  const component = await readFile(new URL('../components/its-getting-thicc/ThiccSchoolPanel.jsx', import.meta.url), 'utf8');
+  assert.match(component, /useState\(\(\) => createDefaultSchoolState\(\)\)/);
+  assert.doesNotMatch(component, /useState\(\(\) => readThiccSchoolState\(\)\)/);
+  assert.match(component, /aria-expanded=\{guideOpen\}/);
+  assert.match(component, /role="region"/);
+});
+
 test('THE.ASSURER moment cards retain touch/click flip state and expanded height', async () => {
   const component = await readFile(new URL('../components/sections/TheAssurerSection.jsx', import.meta.url), 'utf8');
   const styles = await readFile(new URL('../styles/sections/the-assurer.css', import.meta.url), 'utf8');
