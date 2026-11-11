@@ -4,10 +4,12 @@ import {
   buildRolloverCalendarEntries,
   createDefaultSchoolState,
   normalizeSchoolState,
+  recordSectionPracticeAttempt,
   recordPracticeAttempt,
   rollForwardMissedSections,
   setSectionCompletion,
   summarizeSchoolState,
+  updateSectionStudyProgress,
   updateSectionDetails,
 } from '../../lib/thiccSchool/schoolEngine.mjs';
 import {
@@ -81,6 +83,20 @@ export function editThiccSchoolSection(courseId, sectionId, updates) {
 export function submitThiccSchoolPractice(courseId, questions, answers) {
   const { state, result } = recordPracticeAttempt(readThiccSchoolState(), courseId, questions, answers);
   saveThiccSchoolState(state, { reason: 'practice', courseId, score: result.score });
+  return { state, result };
+}
+
+export function saveThiccSchoolStudyProgress(courseId, sectionId, updates) {
+  const state = updateSectionStudyProgress(readThiccSchoolState(), courseId, sectionId, updates);
+  saveThiccSchoolState(state, { reason: 'study-progress', courseId, sectionId });
+  reconcileThiccSchoolCalendar(state);
+  return state;
+}
+
+export function submitThiccSchoolSectionPractice(courseId, sectionId, questions, answers) {
+  const { state, result } = recordSectionPracticeAttempt(readThiccSchoolState(), courseId, sectionId, questions, answers);
+  saveThiccSchoolState(state, { reason: 'section-practice', courseId, sectionId, score: result.score });
+  reconcileThiccSchoolCalendar(state);
   return { state, result };
 }
 

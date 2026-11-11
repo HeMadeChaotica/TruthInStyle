@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { createDefaultSchoolState, getCourseQuestions } from '../../lib/thiccSchool/schoolEngine.mjs';
+import {
+  createDefaultSchoolState,
+  getCourseQuestions,
+  getSectionMasteryGates,
+  getSectionQuestions,
+} from '../../lib/thiccSchool/schoolEngine.mjs';
 import { THICC_SCHOOL_MASTERY_SCORE } from '../../lib/thiccSchool/catalog.mjs';
 import {
   editThiccSchoolSection,
@@ -9,7 +14,9 @@ import {
   initializeThiccSchool,
   markThiccSchoolSection,
   readThiccSchoolState,
+  saveThiccSchoolStudyProgress,
   submitThiccSchoolPractice,
+  submitThiccSchoolSectionPractice,
   THICC_SCHOOL_UPDATED_EVENT,
 } from '../../src/services/thiccSchoolService';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
@@ -36,6 +43,8 @@ export default function ThiccSchoolPanel() {
   const [openGuideId, setOpenGuideId] = useState('');
   const [editingId, setEditingId] = useState('');
   const [editDraft, setEditDraft] = useState({ title: '', assignedDate: '', minutes: 0, guide: '' });
+  const [studyDraft, setStudyDraft] = useState({ studyNotes: '', recallNotes: '', issaCompleted: false });
+  const [practiceSectionId, setPracticeSectionId] = useState('');
   const [practiceQuestions, setPracticeQuestions] = useState([]);
   const [practiceAnswers, setPracticeAnswers] = useState({});
   const [practiceResult, setPracticeResult] = useState(null);
@@ -66,10 +75,39 @@ export default function ThiccSchoolPanel() {
   const latestAttempt = activeCourse?.attempts?.[activeCourse.attempts.length - 1];
   const bestAttempt = activeCourse?.attempts?.reduce((best, attempt) => Math.max(best, Number(attempt.score || 0)), 0) || 0;
 
+  const toggleGuide = (item) => {
+    const nextId = openGuideId === item.id ? '' : item.id;
+    setOpenGuideId(nextId);
+    setPracticeSectionId('');
+    setPracticeQuestions([]);
+    setPracticeAnswers({});
+    setPracticeResult(null);
+    if (nextId) setStudyDraft({
+      studyNotes: item.studyNotes || '',
+      recallNotes: item.recallNotes || '',
+      issaCompleted: Boolean(item.issaCompleted),
+    });
+  };
+
   const persistSection = async (section, complete) => {
     const next = markThiccSchoolSection(activeCourse.id, section.id, complete);
     setSchool(next);
     setStatus(complete ? `${section.title} RECORDED COMPLETE.` : `${section.title} REOPENED.`);
+    await flushAllPendingSaves();
+  };
+
+  const saveStudyWork = async (item, updates = studyDraft) => {
+    const next = saveThiccSchoolStudyProgress(activeCourse.id, item.id, updates);
+    const saved = next.courses?.[activeCourse.id]?.sections?.[item.id];
+    setSchool(next);
+    setStudyDraft({
+      studyNotes: saved?.studyNotes || '',
+      recallNotes: saved?.recallNotes || '',
+      issaCompleted: Boolean(saved?.issaCompleted),
+    });
+    setStatus(saved?.status === 'complete'
+      ? `${item.title} MASTERED AND ADDED TO CUMULATIVE PROGRESS.`
+      : `${item.title} STUDY WORK SAVED. FINISH EVERY MASTERY GATE.`);
     await flushAllPendingSaves();
   };
 
@@ -89,10 +127,23 @@ export default function ThiccSchoolPanel() {
   const startPractice = () => {
     const attemptIndex = activeCourse?.attempts?.length || 0;
     const questions = getCourseQuestions(activeCourse.id, attemptIndex, 20);
+    setPracticeSectionId('cumulative');
     setPracticeQuestions(questions);
     setPracticeAnswers({});
     setPracticeResult(null);
     setStatus(questions.length ? `PRACTICE FORM ${attemptIndex + 1} READY.` : 'PRACTICE QUESTIONS ARE PENDING VERIFIED COURSE ACCESS.');
+  };
+
+  const startSectionPractice = (item) => {
+    const attemptIndex = item.practiceAttempts?.length || 0;
+    const questions = getSectionQuestions(activeCourse.id, item.id, attemptIndex, 15);
+    setPracticeSectionId(item.id);
+    setPracticeQuestions(questions);
+    setPracticeAnswers({});
+    setPracticeResult(null);
+    setStatus(questions.length
+      ? `${item.title} PRACTICE FORM ${attemptIndex + 1} READY.`
+      : 'MODULE-SPECIFIC PRACTICE IS PENDING VERIFIED COURSE CONTENT.');
   };
 
   const gradePractice = async () => {
@@ -100,10 +151,17 @@ export default function ThiccSchoolPanel() {
       setStatus('ANSWER EVERY QUESTION BEFORE SCORING.');
       return;
     }
-    const recorded = submitThiccSchoolPractice(activeCourse.id, practiceQuestions, practiceAnswers);
+    const recorded = practiceSectionId && practiceSectionId !== 'cumulative'
+      ? submitThiccSchoolSectionPractice(activeCourse.id, practiceSectionId, practiceQuestions, practiceAnswers)
+      : submitThiccSchoolPractice(activeCourse.id, practiceQuestions, practiceAnswers);
     setSchool(recorded.state);
     setPracticeResult(recorded.result);
-    setStatus(recorded.result.passed ? `MASTERY ACHIEVED: ${recorded.result.score}%.` : `${recorded.result.score}% — REVIEW WEAK TOPICS AND RETAKE UNTIL ${THICC_SCHOOL_MASTERY_SCORE}%+.`);
+    const masteredItem = practiceSectionId && practiceSectionId !== 'cumulative'
+      ? recorded.state.courses?.[activeCourse.id]?.sections?.[practiceSectionId]
+      : null;
+    setStatus(recorded.result.passed
+      ? (masteredItem?.status === 'complete' ? `MODULE MASTERED: ${recorded.result.score}%. CUMULATIVE PROGRESS UPDATED.` : `PRACTICE MASTERED: ${recorded.result.score}%. COMPLETE THE REMAINING MODULE GATES.`)
+      : `${recorded.result.score}% — REVIEW WEAK TOPICS AND RETAKE UNTIL ${THICC_SCHOOL_MASTERY_SCORE}%+.`);
     await flushAllPendingSaves();
   };
 
@@ -126,7 +184,7 @@ export default function ThiccSchoolPanel() {
     {status ? <p className="thicc-school-status" role="status">{status}</p> : null}
 
     <nav className="thicc-school-course-tabs" aria-label="THICC.SCHOOL courses">
-      {courses.map((course) => <button type="button" key={course.id} className={activeCourseId === course.id ? 'active' : ''} onClick={() => { setActiveCourseId(course.id); setPracticeQuestions([]); setPracticeResult(null); setEditingId(''); setOpenGuideId(''); }}>{course.short}</button>)}
+      {courses.map((course) => <button type="button" key={course.id} className={activeCourseId === course.id ? 'active' : ''} onClick={() => { setActiveCourseId(course.id); setPracticeSectionId(''); setPracticeQuestions([]); setPracticeResult(null); setEditingId(''); setOpenGuideId(''); }}>{course.short}</button>)}
     </nav>
 
     <section className="thicc-school-course-head">
@@ -144,25 +202,56 @@ export default function ThiccSchoolPanel() {
       {sections.map((item) => {
         const complete = item.status === 'complete';
         const guideOpen = openGuideId === item.id;
+        const gates = getSectionMasteryGates(item);
+        const isFinalSection = item.id === `${activeCourse.id}-final`;
+        const usesAutomatedMastery = activeCourse.id === 'cpt';
         return <article key={item.id} className={`thicc-school-section ${complete ? 'complete' : ''} ${item.rolloverCount ? 'rolled' : ''}`}>
           <div className="thicc-school-section-main">
-            <button type="button" className="thicc-school-complete" onClick={() => persistSection(item, !complete)} aria-pressed={complete}>{complete ? 'COMPLETE' : 'MARK COMPLETE'}</button>
+            {usesAutomatedMastery ? <div className={`thicc-school-mastery-state ${complete ? 'complete' : ''}`}><strong>{complete ? 'MASTERED' : `${Number(item.practiceBestScore || 0)}% BEST`}</strong><small>{complete ? 'CUMULATIVE CREDITED' : '3 GATES REQUIRED'}</small></div> : <button type="button" className="thicc-school-complete" onClick={() => persistSection(item, !complete)} aria-pressed={complete}>{complete ? 'COMPLETE' : 'MARK COMPLETE'}</button>}
             <div>
               <small>{displayDate(item.assignedDate)} · {minutesLabel(item.minutes)}{item.rolloverCount ? ` · MOVED ${item.rolloverCount}X` : ''}</small>
               <strong>{item.title}</strong>
               <span>{item.source}</span>
+              {usesAutomatedMastery ? <div className="thicc-school-gates" aria-label={`${item.title} mastery gates`}>
+                <span className={gates.issa ? 'done' : ''}>{gates.issa ? '✓' : '○'} ISSA COMPLETE</span>
+                <span className={gates.notes ? 'done' : ''}>{gates.notes ? '✓' : '○'} STUDY WORK</span>
+                <span className={gates.practice ? 'done' : ''}>{gates.practice ? '✓' : '○'} 95%+ PRACTICE</span>
+              </div> : null}
             </div>
             <div className="thicc-school-section-actions">
               <button
                 type="button"
                 aria-expanded={guideOpen}
                 aria-controls={`thicc-school-guide-${item.id}`}
-                onClick={() => setOpenGuideId((current) => current === item.id ? '' : item.id)}
+                onClick={() => toggleGuide(item)}
               >{guideOpen ? 'CLOSE GUIDE' : 'STUDY GUIDE'}</button>
               <button type="button" onClick={() => openEditor(item)}>EDIT</button>
             </div>
           </div>
-          {guideOpen ? <div id={`thicc-school-guide-${item.id}`} className="thicc-school-guide" role="region" aria-label={`${item.title} study guide`}><strong>STUDY GUIDE</strong><p>{item.guide}</p><strong>FOCUS TERMS</strong><p>{(item.focus || []).join(' · ') || 'ADD FOCUS TERMS WHEN THE COURSE UNLOCKS.'}</p></div> : null}
+          {guideOpen ? <div id={`thicc-school-guide-${item.id}`} className="thicc-school-guide" role="region" aria-label={`${item.title} study guide`}>
+            <strong>STUDY GUIDE</strong>
+            <p>{item.guide}</p>
+            <strong>FOCUS TERMS</strong>
+            <p>{(item.focus || []).join(' · ') || 'ADD FOCUS TERMS WHEN THE COURSE UNLOCKS.'}</p>
+            {usesAutomatedMastery ? <><div className="thicc-school-study-work">
+              <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.issaCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, issaCompleted: event.target.checked }))} />ISSA PORTAL SHOWS THIS {isFinalSection ? 'EXAM' : 'MODULE'} COMPLETED</label>
+              <label>MY STUDY NOTES<textarea value={studyDraft.studyNotes} onChange={(event) => setStudyDraft((current) => ({ ...current, studyNotes: event.target.value }))} placeholder="CAPTURE THE CONCEPTS, EXAMPLES, AND COACHING APPLICATIONS YOU COMPLETED." /></label>
+              <label>WHAT I MUST REMEMBER<textarea value={studyDraft.recallNotes} onChange={(event) => setStudyDraft((current) => ({ ...current, recallNotes: event.target.value }))} placeholder="WRITE THE KEY TERMS, RULES, AND EXAM TRAPS IN YOUR OWN WORDS." /></label>
+              <button type="button" onClick={() => saveStudyWork(item)}>SAVE STUDY WORK</button>
+            </div>
+            {isFinalSection ? <p className="thicc-school-final-direction">PASS THE CUMULATIVE FINAL PRACTICE BELOW, THEN CONFIRM THE ISSA EXAM SHOWS COMPLETED.</p> : <div className="thicc-school-module-practice">
+              <header><div><strong>MODULE PRACTICE</strong><small>15 ORIGINAL QUESTIONS · 95% GATE REQUIRES 15/15</small></div><button type="button" onClick={() => startSectionPractice(item)}>{practiceSectionId === item.id && practiceQuestions.length ? 'NEW MODULE FORM' : 'START MODULE PRACTICE'}</button></header>
+              {practiceSectionId === item.id ? <>
+                {practiceQuestions.map((question, index) => <fieldset key={question.id} className={practiceResult?.results?.find((result) => result.id === question.id)?.correct === false ? 'missed' : ''}>
+                  <legend>{index + 1}. {question.prompt}</legend>
+                  {question.options.map((option, optionIndex) => <label key={option}><input type="radio" name={question.id} value={optionIndex} checked={Number(practiceAnswers[question.id]) === optionIndex} onChange={() => setPracticeAnswers((current) => ({ ...current, [question.id]: optionIndex }))} />{option}</label>)}
+                  {practiceResult ? <p>{practiceResult.results.find((result) => result.id === question.id)?.correct ? 'CORRECT.' : `REVIEW: ${question.rationale}`}</p> : null}
+                </fieldset>)}
+                {practiceQuestions.length ? <button type="button" className="thicc-school-grade" onClick={gradePractice}>SCORE MODULE PRACTICE</button> : null}
+                {practiceResult ? <div className={`thicc-school-result ${practiceResult.passed ? 'pass' : 'retry'}`}><strong>{practiceResult.score}%</strong><p>{practiceResult.passed ? 'MODULE PRACTICE GATE PASSED.' : `RETAKE REQUIRED. REVIEW: ${practiceResult.weakTopics.join(' · ')}`}</p></div> : null}
+              </> : null}
+            </div>}</> : null}
+          </div> : null}
           {editingId === item.id ? <div className="thicc-school-editor">
             <label>SECTION TITLE<input value={editDraft.title} onChange={(event) => setEditDraft((current) => ({ ...current, title: event.target.value }))} /></label>
             <label>ASSIGNED DATE<input type="date" value={editDraft.assignedDate} onChange={(event) => setEditDraft((current) => ({ ...current, assignedDate: event.target.value }))} /></label>
@@ -176,16 +265,16 @@ export default function ThiccSchoolPanel() {
 
     <section className="thicc-school-practice">
       <header>
-        <div><small>ORIGINAL QUESTIONS · NO COPIED ISSA EXAM ITEMS</small><h4>95% MASTERY LAB</h4><p>BEST {bestAttempt}%{latestAttempt ? ` · LATEST ${latestAttempt.score}%` : ' · NO ATTEMPTS YET'}</p></div>
-        <button type="button" onClick={startPractice}>{practiceQuestions.length ? 'NEW PRACTICE FORM' : 'START PRACTICE'}</button>
+        <div><small>AFTER EVERY MODULE · ORIGINAL QUESTIONS · NO COPIED ISSA EXAM ITEMS</small><h4>CUMULATIVE FINAL PRACTICE</h4><p>BEST {bestAttempt}%{latestAttempt ? ` · LATEST ${latestAttempt.score}%` : ' · NO ATTEMPTS YET'}</p></div>
+        <button type="button" onClick={startPractice}>{practiceSectionId === 'cumulative' && practiceQuestions.length ? 'NEW CUMULATIVE FORM' : 'START CUMULATIVE PRACTICE'}</button>
       </header>
-      {practiceQuestions.map((question, index) => <fieldset key={question.id} className={practiceResult?.results?.find((result) => result.id === question.id)?.correct === false ? 'missed' : ''}>
+      {practiceSectionId === 'cumulative' ? practiceQuestions.map((question, index) => <fieldset key={question.id} className={practiceResult?.results?.find((result) => result.id === question.id)?.correct === false ? 'missed' : ''}>
         <legend>{index + 1}. {question.prompt}</legend>
         {question.options.map((option, optionIndex) => <label key={option}><input type="radio" name={question.id} value={optionIndex} checked={Number(practiceAnswers[question.id]) === optionIndex} onChange={() => setPracticeAnswers((current) => ({ ...current, [question.id]: optionIndex }))} />{option}</label>)}
         {practiceResult ? <p>{practiceResult.results.find((result) => result.id === question.id)?.correct ? 'CORRECT.' : `REVIEW: ${question.rationale}`}</p> : null}
-      </fieldset>)}
-      {practiceQuestions.length ? <button type="button" className="thicc-school-grade" onClick={gradePractice}>SCORE PRACTICE</button> : null}
-      {practiceResult ? <div className={`thicc-school-result ${practiceResult.passed ? 'pass' : 'retry'}`}><strong>{practiceResult.score}%</strong><p>{practiceResult.passed ? 'MASTERY GATE PASSED.' : `RETAKE REQUIRED. REVIEW: ${practiceResult.weakTopics.join(' · ')}`}</p></div> : null}
+      </fieldset>) : null}
+      {practiceSectionId === 'cumulative' && practiceQuestions.length ? <button type="button" className="thicc-school-grade" onClick={gradePractice}>SCORE CUMULATIVE PRACTICE</button> : null}
+      {practiceSectionId === 'cumulative' && practiceResult ? <div className={`thicc-school-result ${practiceResult.passed ? 'pass' : 'retry'}`}><strong>{practiceResult.score}%</strong><p>{practiceResult.passed ? 'CUMULATIVE MASTERY GATE PASSED.' : `RETAKE REQUIRED. REVIEW: ${practiceResult.weakTopics.join(' · ')}`}</p></div> : null}
     </section>
   </div>;
 }
