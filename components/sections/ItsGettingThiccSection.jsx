@@ -15,9 +15,10 @@ import ChaoticaMonthCalendar from '../shared/ChaoticaMonthCalendar';
 import { normalizeObjectStrings, normalizeUserText } from '../../lib/utils/textCasing';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
 import { CLOCK_IT_KEYS, useClockItNumericOptions, useClockItOptions } from '../../lib/dropdowns/clockItRegistry';
+import ThiccSchoolPanel from '../its-getting-thicc/ThiccSchoolPanel';
 
 const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-const tabs = ['THICC.INFO', 'THICC.PEOPLE', 'THICC.FORMS', 'THICC.TIME', 'THICC.NOMO'];
+const tabs = ['THICC.INFO', 'THICC.PEOPLE', 'THICC.FORMS', 'THICC.TIME', 'THICC.SCHOOL', 'THICC.NOMO'];
 const foodPrompts = ['WHAT DO YOU STRUGGLE THE HARDEST TO STAY AWAY FROM', 'WHEN DO YOU USUALLY REACH FOR IT (TIME, MOOD, SITUATION)', 'GROWING UP, WERE YOU FORCED TO FINISH YOUR PLATE, AND HOW HAS THAT AFFECTED YOUR EATING HABITS IN ADULTHOOD?', 'WERE THERE FOOD RULES, PUNISHMENTS, PRESSURE, OR EMOTIONALLY CHARGED EXPERIENCES AROUND EATING GROWING UP THAT STILL AFFECT HOW YOU EAT NOW?', 'HOW DO YOUR EMOTIONS AND FOOD INTERACT TODAY'];
 const movementPrompts = ['WALK ME THROUGH A TYPICAL DAY OF EATING', 'WALK ME THROUGH A NORMAL DAY IN YOUR BODY', 'HOW MUCH OF YOUR DAY IS SITTING VS ACTUALLY MOVING', 'WHEN DO YOU FEEL MOST PHYSICALLY ALIVE'];
 const medicalPrompts = ['EMERGENCY CONTACT NAME / NUMBER', 'PAST / CURRENT INJURIES', 'PAST / UPCOMING SURGERIES', 'RECURRING SEASONAL ISSUES / ALLERGIES', 'MEDICATIONS THAT COULD CAUSE COMPLICATIONS, LIKE BLOOD PRESSURE MEDS', 'PHYSICAL LIMITATIONS', 'MOVEMENTS THAT CAUSE PAIN', 'LEVEL OF FLEXIBILITY, RANGE FROM RIGAMORTUS TO SIMONE BILES WISHES', 'HARD NO’S', 'TRAINING FEARS'];
@@ -518,8 +519,9 @@ export default function ItsGettingThiccSection() {
     </>;
 
   const timeShelves = [{ id: 'time', columns: 1, panels: [{ id: 't1', token: 'ultra', content: timeContent }] }];
+  const schoolShelves = [{ id: 'school', columns: 1, panels: [{ id: 'school-1', token: 'ultra', className: 'igtv2-school-panel', content: <ThiccSchoolPanel /> }] }];
   const nomoShelves = [{ id: 'nomo', columns: 1, panels: [{ id: 'n1', token: 'medium', content: <><h3>THICC.NOMO</h3><p>Deactivate/archive current client from active roster.</p><button onClick={() => { if (!window.confirm('THICC.NOMO this client?')) return; const nextClients = clients.map((c) => (c.id === active.id ? { ...c, active: false } : c)); persist(nextClients, 'client:nomo'); const nextActive = nextClients.find((c) => c.active !== false); setActiveId(nextActive?.id || ''); setActiveTab('THICC.INFO'); }}>THICC.NOMO</button></> }] }];
 
-  const shelves = activeTab === 'THICC.INFO' ? infoShelves : activeTab === 'THICC.PEOPLE' ? peopleShelves : activeTab === 'THICC.FORMS' ? formsShelves : activeTab === 'THICC.TIME' ? timeShelves : nomoShelves;
+  const shelves = activeTab === 'THICC.INFO' ? infoShelves : activeTab === 'THICC.PEOPLE' ? peopleShelves : activeTab === 'THICC.FORMS' ? formsShelves : activeTab === 'THICC.TIME' ? timeShelves : activeTab === 'THICC.SCHOOL' ? schoolShelves : nomoShelves;
   return <SectionShell className="igtv2-page"><ScenePlate className="igtv2-scene-plate"><div className="igtv2-bg" /></ScenePlate><SectionOverlay><ArtLane className="igtv2-left"><div className="igtv2-cabinet">{tabs.map((tab) => <button key={tab} className={`igtv2-cabinet-btn ${activeTab === tab ? 'active' : ''}`} onClick={() => setActiveTab(tab)}>{tab}</button>)}</div></ArtLane><ContentScroller><BlueprintStack shelves={shelves.map((s) => s.id === 'time' ? ({ ...s, panels: s.panels.map((p) => ({ ...p, className: 'igtv2-time-panel' })) }) : s)} /></ContentScroller></SectionOverlay></SectionShell>;
 }
