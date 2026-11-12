@@ -10,6 +10,10 @@ const nextConfig = {
   outputFileTracingExcludes: {
     '/api/day-capsule-render': ['./public/**/*'],
   },
+  outputFileTracingIncludes: {
+    '/api/thicc-school/workbook/page/[page]': ['./private/issa/cpt11-workbook/pages/**/*'],
+    '/api/thicc-school/workbook/assess': ['./private/issa/cpt11-textbook/**/*'],
+  },
 };
 
 module.exports = nextConfig;

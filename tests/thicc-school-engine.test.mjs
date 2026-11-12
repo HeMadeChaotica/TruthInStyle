@@ -3,6 +3,9 @@ import test from 'node:test';
 
 import { THICC_SCHOOL_COURSES, THICC_SCHOOL_MASTERY_SCORE, THICC_SCHOOL_RESERVED_DATES } from '../lib/thiccSchool/catalog.mjs';
 import { CPT_SOURCE, NUTRITION_SOURCE, VERIFIED_MODULE_SOURCES } from '../lib/thiccSchool/sourceCurriculum.mjs';
+import { CPT_WORKBOOK_FIELD_COUNT } from '../lib/thiccSchool/cptWorkbookLayout.mjs';
+import { getCptWorkbookAssignment, getCptWorkbookCompletion } from '../lib/thiccSchool/workbookAssignments.mjs';
+import { assessCptWorkbookAnswer, parseWorkbookAssessment } from '../src/server/cptWorkbookAssessment.mjs';
 import {
   buildRolloverCalendarEntries,
   createDefaultSchoolState,
@@ -17,6 +20,14 @@ import {
   updateSectionStudyProgress,
   updateSectionDetails,
 } from '../lib/thiccSchool/schoolEngine.mjs';
+
+const completeWorkbook = (state, courseId, sectionId) => {
+  const item = state.courses[courseId].sections[sectionId];
+  const assignment = getCptWorkbookAssignment(item.sourcePlan);
+  const workbookAnswers = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, 'Completed source-grounded response.']));
+  const workbookAssessments = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, { accepted: true, score: 100, feedback: 'Accepted.', missingConcepts: [] }]));
+  return updateSectionStudyProgress(state, courseId, sectionId, { workbookAnswers, workbookAssessments });
+};
 
 test('catalog preserves verified curriculum, the 95 percent gate, and birthday protection', () => {
   assert.equal(THICC_SCHOOL_MASTERY_SCORE, 95);
@@ -42,12 +53,21 @@ test('verified source maps cover every attached textbook chapter exactly once', 
   assert.equal(CPT_SOURCE.chapters.find((chapter) => chapter.number === 14).workbookPages, '');
 });
 
+test('the attached CPT workbook is fully mapped into automatic module assignments', () => {
+  assert.equal(CPT_WORKBOOK_FIELD_COUNT, 604);
+  const assignedFieldIds = Object.entries(VERIFIED_MODULE_SOURCES.cpt)
+    .filter(([sectionId]) => !sectionId.endsWith('-final'))
+    .flatMap(([, sourcePlan]) => getCptWorkbookAssignment(sourcePlan).fieldIds);
+  assert.equal(assignedFieldIds.length, 604);
+  assert.equal(new Set(assignedFieldIds).size, 604);
+});
+
 test('next study day always leaves December 22 open', () => {
   assert.equal(nextAvailableStudyDate('2026-12-21'), '2026-12-23');
 });
 
 test('unfinished work rolls to the next available day and adds reserved time', () => {
-  const state = createDefaultSchoolState();
+  let state = createDefaultSchoolState();
   Object.values(state.courses).forEach((course) => Object.values(course.sections).forEach((section) => {
     section.status = 'complete';
     if (course.verifiedMaterial) {
@@ -57,6 +77,9 @@ test('unfinished work rolls to the next available day and adds reserved time', (
       section.practiceBestScore = 100;
     }
   }));
+  Object.values(state.courses.cpt.sections).forEach((section) => {
+    if (getCptWorkbookAssignment(section.sourcePlan).fieldIds.length) state = completeWorkbook(state, 'cpt', section.id);
+  });
   const item = state.courses.cpt.sections['cpt-1'];
   item.assignedDate = '2026-12-21';
   item.minutes = 120;
@@ -108,8 +131,8 @@ test('verified completion and editable course details survive catalog normalizat
   state = updateSectionStudyProgress(state, 'cpt', 'cpt-1', {
     issaCompleted: true,
     textbookCompleted: true,
-    workbookCompleted: true,
   }, '2026-11-16T20:00:00.000Z');
+  state = completeWorkbook(state, 'cpt', 'cpt-1');
   const questions = getSectionQuestions('cpt', 'cpt-1', 0, 15);
   const answers = Object.fromEntries(questions.map((question) => [question.id, question.answer]));
   state = recordSectionPracticeAttempt(state, 'cpt', 'cpt-1', questions, answers, '2026-11-16T21:00:00.000Z').state;
@@ -165,8 +188,8 @@ test('module completion is automatic only after source work, ISSA, and 95 percen
   state = updateSectionStudyProgress(state, 'cpt', 'cpt-1', {
     issaCompleted: true,
     textbookCompleted: true,
-    workbookCompleted: true,
   }, '2026-11-16T20:00:00.000Z');
+  state = completeWorkbook(state, 'cpt', 'cpt-1');
   assert.deepEqual(getSectionMasteryGates(state.courses.cpt.sections['cpt-1']), {
     issa: true,
     textbookRequired: true,
@@ -182,6 +205,56 @@ test('module completion is automatic only after source work, ISSA, and 95 percen
   assert.equal(recorded.result.score, 100);
   assert.equal(recorded.state.courses.cpt.sections['cpt-1'].status, 'complete');
   assert.equal(getSectionMasteryGates(recorded.state.courses.cpt.sections['cpt-1']).complete, true);
+});
+
+test('workbook completion cannot be manually claimed and requires every accepted response', () => {
+  let state = createDefaultSchoolState();
+  state = updateSectionStudyProgress(state, 'cpt', 'cpt-1', { workbookCompleted: true });
+  assert.equal(state.courses.cpt.sections['cpt-1'].workbookCompleted, false);
+  const item = state.courses.cpt.sections['cpt-1'];
+  const assignment = getCptWorkbookAssignment(item.sourcePlan);
+  const workbookAnswers = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, 'Response']));
+  const workbookAssessments = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, { accepted: true, score: 90 }]));
+  const lastFieldId = assignment.fieldIds.at(-1);
+  workbookAssessments[lastFieldId] = { accepted: false, score: 70 };
+  state = updateSectionStudyProgress(state, 'cpt', 'cpt-1', { workbookAnswers, workbookAssessments });
+  assert.equal(getCptWorkbookCompletion(item.sourcePlan, workbookAnswers, workbookAssessments).complete, false);
+  assert.equal(state.courses.cpt.sections['cpt-1'].workbookCompleted, false);
+  workbookAssessments[lastFieldId] = { accepted: true, score: 90 };
+  state = updateSectionStudyProgress(state, 'cpt', 'cpt-1', { workbookAnswers, workbookAssessments });
+  assert.equal(state.courses.cpt.sections['cpt-1'].workbookCompleted, true);
+});
+
+test('instant workbook feedback enforces the 80 percent response gate', () => {
+  assert.equal(parseWorkbookAssessment({ accepted: true, score: 79, feedback: 'Almost.', missingConcepts: ['scope'] }).accepted, false);
+  assert.equal(parseWorkbookAssessment({ accepted: true, score: 95, feedback: 'Complete.', missingConcepts: [] }).accepted, true);
+});
+
+test('workbook assessment sends one source-grounded answer and reads structured feedback', async () => {
+  const sourcePlan = VERIFIED_MODULE_SOURCES.cpt['cpt-1'];
+  const assignment = getCptWorkbookAssignment(sourcePlan);
+  const page = assignment.pages.find((candidate) => candidate.fields.length);
+  const field = page.fields[0];
+  const previousKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = 'test-api-key-for-unit-test';
+  let requestBody;
+  const fetchMock = async (_url, options) => {
+    requestBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({ output: [{ content: [{ type: 'output_text', text: JSON.stringify({ accepted: true, score: 92, feedback: 'Source concepts are present.', missingConcepts: [] }) }] }] }),
+    };
+  };
+  try {
+    const result = await assessCptWorkbookAnswer({ sectionId: 'cpt-1', pageNumber: page.number, fieldId: field.id, answer: 'A source-grounded response.' }, fetchMock);
+    assert.equal(result.accepted, true);
+    assert.equal(result.score, 92);
+    assert.match(requestBody.input[1].content[0].text, /Relevant attached CPT11 textbook excerpts/);
+    assert.doesNotMatch(JSON.stringify(requestBody), /test-api-key-for-unit-test/);
+  } finally {
+    if (previousKey == null) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
 });
 
 test('cumulative practice supplies the final-section practice gate without completing ISSA for the user', () => {

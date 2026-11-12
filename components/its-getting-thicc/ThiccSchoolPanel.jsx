@@ -19,6 +19,7 @@ import {
   THICC_SCHOOL_UPDATED_EVENT,
 } from '../../src/services/thiccSchoolService';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
+import CptWorkbookAssignment from './CptWorkbookAssignment';
 
 const minutesLabel = (minutes) => {
   const hours = Math.floor(Number(minutes || 0) / 60);
@@ -42,7 +43,7 @@ export default function ThiccSchoolPanel() {
   const [openGuideId, setOpenGuideId] = useState('');
   const [editingId, setEditingId] = useState('');
   const [editDraft, setEditDraft] = useState({ assignedDate: '', minutes: 0 });
-  const [studyDraft, setStudyDraft] = useState({ issaCompleted: false, textbookCompleted: false, workbookCompleted: false });
+  const [studyDraft, setStudyDraft] = useState({ issaCompleted: false, textbookCompleted: false });
   const [practiceSectionId, setPracticeSectionId] = useState('');
   const [practiceQuestions, setPracticeQuestions] = useState([]);
   const [practiceAnswers, setPracticeAnswers] = useState({});
@@ -84,7 +85,6 @@ export default function ThiccSchoolPanel() {
     if (nextId) setStudyDraft({
       issaCompleted: Boolean(item.issaCompleted),
       textbookCompleted: Boolean(item.textbookCompleted),
-      workbookCompleted: Boolean(item.workbookCompleted),
     });
   };
 
@@ -95,11 +95,20 @@ export default function ThiccSchoolPanel() {
     setStudyDraft({
       issaCompleted: Boolean(saved?.issaCompleted),
       textbookCompleted: Boolean(saved?.textbookCompleted),
-      workbookCompleted: Boolean(saved?.workbookCompleted),
     });
     setStatus(saved?.status === 'complete'
       ? `${item.title} MASTERED AND ADDED TO CUMULATIVE PROGRESS.`
       : `${item.title} STUDY WORK SAVED. FINISH EVERY MASTERY GATE.`);
+    await flushAllPendingSaves();
+  };
+
+  const saveWorkbookWork = async (item, updates) => {
+    const next = saveThiccSchoolStudyProgress(activeCourse.id, item.id, updates);
+    const saved = next.courses?.[activeCourse.id]?.sections?.[item.id];
+    setSchool(next);
+    setStatus(saved?.workbookCompleted
+      ? `${item.title} WORKBOOK ASSIGNMENT COMPLETED AUTOMATICALLY.`
+      : `${item.title} WORKBOOK RESPONSE SAVED.`);
     await flushAllPendingSaves();
   };
 
@@ -234,9 +243,9 @@ export default function ThiccSchoolPanel() {
                 </section>)}
               </div>
             </> : <><strong>FINAL REQUIREMENTS</strong><p>{item.guide}</p></>}
+            {gates.workbookRequired ? <CptWorkbookAssignment item={item} onPersist={(updates) => saveWorkbookWork(item, updates)} /> : null}
             <div className="thicc-school-study-work">
               {gates.textbookRequired ? <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.textbookCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, textbookCompleted: event.target.checked }))} />I COMPLETED EVERY ASSIGNED TEXTBOOK PAGE ABOVE</label> : null}
-              {gates.workbookRequired ? <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.workbookCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, workbookCompleted: event.target.checked }))} />I COMPLETED EVERY ASSIGNED WORKBOOK PAGE ABOVE</label> : null}
               <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.issaCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, issaCompleted: event.target.checked }))} />ISSA PORTAL SHOWS THIS {isFinalSection ? 'EXAM' : 'MODULE'} COMPLETED</label>
               <button type="button" onClick={() => saveStudyWork(item)}>SAVE COMPLETION PROGRESS</button>
             </div>
