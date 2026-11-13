@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getChaoticaSession } from '../../../../../src/server/chaoticaSupabaseAuth';
-import { assessCptWorkbookAnswer } from '../../../../../src/server/cptWorkbookAssessment.mjs';
+import { assessWorkbookAnswer } from '../../../../../src/server/cptWorkbookAssessment.mjs';
 
 export const runtime = 'nodejs';
 
@@ -9,7 +9,8 @@ export async function POST(request) {
   if (!session.ok) return NextResponse.json({ error: 'A verified Supabase gate session is required.' }, { status: 401 });
   try {
     const body = await request.json();
-    const result = await assessCptWorkbookAnswer({
+    const result = await assessWorkbookAnswer({
+      courseId: String(body?.courseId || 'cpt'),
       sectionId: String(body?.sectionId || ''),
       pageNumber: Number(body?.pageNumber),
       fieldId: String(body?.fieldId || ''),

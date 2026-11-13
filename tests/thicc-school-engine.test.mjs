@@ -4,8 +4,9 @@ import test from 'node:test';
 import { THICC_SCHOOL_COURSES, THICC_SCHOOL_MASTERY_SCORE, THICC_SCHOOL_RESERVED_DATES } from '../lib/thiccSchool/catalog.mjs';
 import { CPT_SOURCE, NUTRITION_SOURCE, VERIFIED_MODULE_SOURCES } from '../lib/thiccSchool/sourceCurriculum.mjs';
 import { CPT_WORKBOOK_FIELD_COUNT } from '../lib/thiccSchool/cptWorkbookLayout.mjs';
-import { getCptWorkbookAssignment, getCptWorkbookCompletion } from '../lib/thiccSchool/workbookAssignments.mjs';
-import { assessCptWorkbookAnswer, parseWorkbookAssessment } from '../src/server/cptWorkbookAssessment.mjs';
+import { getNutritionWorkbookAssignment, getNutritionWorkbookCompletion } from '../lib/thiccSchool/nutritionWorkbook.mjs';
+import { getCptWorkbookAssignment, getCptWorkbookCompletion, getSourceWorkbookCompletion } from '../lib/thiccSchool/workbookAssignments.mjs';
+import { assessCptWorkbookAnswer, assessWorkbookAnswer, parseWorkbookAssessment } from '../src/server/cptWorkbookAssessment.mjs';
 import {
   buildRolloverCalendarEntries,
   createDefaultSchoolState,
@@ -23,7 +24,9 @@ import {
 
 const completeWorkbook = (state, courseId, sectionId) => {
   const item = state.courses[courseId].sections[sectionId];
-  const assignment = getCptWorkbookAssignment(item.sourcePlan);
+  const assignment = item.sourcePlan?.workbookType === 'generated'
+    ? getNutritionWorkbookAssignment(item.sourcePlan)
+    : getCptWorkbookAssignment(item.sourcePlan);
   const workbookAnswers = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, 'Completed source-grounded response.']));
   const workbookAssessments = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, { accepted: true, score: 100, feedback: 'Accepted.', missingConcepts: [] }]));
   return updateSectionStudyProgress(state, courseId, sectionId, { workbookAnswers, workbookAssessments });
@@ -51,6 +54,8 @@ test('verified source maps cover every attached textbook chapter exactly once', 
   assert.deepEqual(nutritionMapped, Array.from({ length: 18 }, (_, index) => index + 1));
   assert.equal(CPT_SOURCE.chapters.find((chapter) => chapter.number === 1).workbookPages, '');
   assert.equal(CPT_SOURCE.chapters.find((chapter) => chapter.number === 14).workbookPages, '');
+  assert.equal(CPT_SOURCE.workbookType, 'official');
+  assert.equal(NUTRITION_SOURCE.workbookType, 'generated');
 });
 
 test('the attached CPT workbook is fully mapped into automatic module assignments', () => {
@@ -60,6 +65,16 @@ test('the attached CPT workbook is fully mapped into automatic module assignment
     .flatMap(([, sourcePlan]) => getCptWorkbookAssignment(sourcePlan).fieldIds);
   assert.equal(assignedFieldIds.length, 604);
   assert.equal(new Set(assignedFieldIds).size, 604);
+});
+
+test('the generated Nutrition workbook covers every assigned chapter with source-based fields', () => {
+  const assignments = Object.values(VERIFIED_MODULE_SOURCES.nutrition).map(getNutritionWorkbookAssignment);
+  const chapters = assignments.flatMap((assignment) => assignment.chapters.map((chapter) => chapter.number));
+  const fields = assignments.flatMap((assignment) => assignment.fields);
+  assert.deepEqual(chapters, Array.from({ length: 18 }, (_, index) => index + 1));
+  assert.ok(fields.length >= 70);
+  assert.equal(new Set(fields.map((field) => field.id)).size, fields.length);
+  assert.equal(fields.every((field) => /textbook page|textbook pages|textbook page or page range/i.test(field.prompt)), true);
 });
 
 test('next study day always leaves December 22 open', () => {
@@ -79,6 +94,9 @@ test('unfinished work rolls to the next available day and adds reserved time', (
   }));
   Object.values(state.courses.cpt.sections).forEach((section) => {
     if (getCptWorkbookAssignment(section.sourcePlan).fieldIds.length) state = completeWorkbook(state, 'cpt', section.id);
+  });
+  Object.values(state.courses.nutrition.sections).forEach((section) => {
+    if (section.sourcePlan) state = completeWorkbook(state, 'nutrition', section.id);
   });
   const item = state.courses.cpt.sections['cpt-1'];
   item.assignedDate = '2026-12-21';
@@ -196,6 +214,9 @@ test('module completion is automatic only after source work, ISSA, and 95 percen
     textbook: true,
     workbookRequired: true,
     workbook: true,
+    issaReady: true,
+    workbookReady: true,
+    practiceReady: true,
     practice: false,
     complete: false,
   });
@@ -205,6 +226,17 @@ test('module completion is automatic only after source work, ISSA, and 95 percen
   assert.equal(recorded.result.score, 100);
   assert.equal(recorded.state.courses.cpt.sections['cpt-1'].status, 'complete');
   assert.equal(getSectionMasteryGates(recorded.state.courses.cpt.sections['cpt-1']).complete, true);
+  assert.equal(recorded.state.courses.cpt.sections['cpt-1'].passedPracticeReview.rows.length, 15);
+  assert.equal(recorded.state.courses.cpt.sections['cpt-1'].passedPracticeReview.rows.every((row) => row.correctAnswer && row.rationale && row.topic), true);
+});
+
+test('module practice is blocked until the source-first stages are complete', () => {
+  const state = createDefaultSchoolState();
+  const questions = getSectionQuestions('cpt', 'cpt-1', 0, 15);
+  const answers = Object.fromEntries(questions.map((question) => [question.id, question.answer]));
+  const recorded = recordSectionPracticeAttempt(state, 'cpt', 'cpt-1', questions, answers);
+  assert.equal(recorded.result.blocked, true);
+  assert.equal(recorded.state.courses.cpt.sections['cpt-1'].practiceAttempts.length, 0);
 });
 
 test('workbook completion cannot be manually claimed and requires every accepted response', () => {
@@ -223,6 +255,22 @@ test('workbook completion cannot be manually claimed and requires every accepted
   workbookAssessments[lastFieldId] = { accepted: true, score: 90 };
   state = updateSectionStudyProgress(state, 'cpt', 'cpt-1', { workbookAnswers, workbookAssessments });
   assert.equal(state.courses.cpt.sections['cpt-1'].workbookCompleted, true);
+});
+
+test('Nutrition workbook completion is cumulative and automatic', () => {
+  let state = createDefaultSchoolState();
+  const item = state.courses.nutrition.sections['nutrition-1'];
+  const assignment = getNutritionWorkbookAssignment(item.sourcePlan);
+  const workbookAnswers = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, 'Source explanation with coaching application and textbook page 10.']));
+  const workbookAssessments = Object.fromEntries(assignment.fieldIds.map((fieldId) => [fieldId, { accepted: true, score: 90 }]));
+  workbookAssessments[assignment.fieldIds.at(-1)] = { accepted: false, score: 70 };
+  state = updateSectionStudyProgress(state, 'nutrition', 'nutrition-1', { workbookAnswers, workbookAssessments });
+  assert.equal(state.courses.nutrition.sections['nutrition-1'].workbookCompleted, false);
+  workbookAssessments[assignment.fieldIds.at(-1)] = { accepted: true, score: 90 };
+  state = updateSectionStudyProgress(state, 'nutrition', 'nutrition-1', { workbookAnswers, workbookAssessments });
+  assert.equal(getNutritionWorkbookCompletion(item.sourcePlan, workbookAnswers, workbookAssessments).complete, true);
+  assert.equal(getSourceWorkbookCompletion(item.sourcePlan, workbookAnswers, workbookAssessments).complete, true);
+  assert.equal(state.courses.nutrition.sections['nutrition-1'].workbookCompleted, true);
 });
 
 test('instant workbook feedback enforces the 80 percent response gate', () => {
@@ -254,6 +302,35 @@ test('workbook assessment sends one source-grounded answer and reads structured 
   } finally {
     if (previousKey == null) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
+  }
+});
+
+test('Nutrition workbook assessment uses attached Nutrition text and the existing protected server key fallback', async () => {
+  const sourcePlan = VERIFIED_MODULE_SOURCES.nutrition['nutrition-1'];
+  const field = getNutritionWorkbookAssignment(sourcePlan).fields[0];
+  const previousOpenAiKey = process.env.OPENAI_API_KEY;
+  const previousRenderKey = process.env.DAY_CAPSULE_RENDER_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+  process.env.DAY_CAPSULE_RENDER_API_KEY = 'protected-render-key-for-unit-test';
+  let requestBody;
+  const fetchMock = async (_url, options) => {
+    assert.equal(options.headers.Authorization, 'Bearer protected-render-key-for-unit-test');
+    requestBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({ output: [{ content: [{ type: 'output_text', text: JSON.stringify({ accepted: true, score: 96, feedback: 'Complete source response.', missingConcepts: [] }) }] }] }),
+    };
+  };
+  try {
+    const result = await assessWorkbookAnswer({ courseId: 'nutrition', sectionId: 'nutrition-1', pageNumber: field.chapterNumber, fieldId: field.id, answer: 'Source explanation, coaching example, textbook page 10.' }, fetchMock);
+    assert.equal(result.accepted, true);
+    assert.match(requestBody.input[1].content[0].text, /Relevant attached Nutrition Coach textbook excerpts/);
+    assert.doesNotMatch(JSON.stringify(requestBody), /protected-render-key-for-unit-test/);
+  } finally {
+    if (previousOpenAiKey == null) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousOpenAiKey;
+    if (previousRenderKey == null) delete process.env.DAY_CAPSULE_RENDER_API_KEY;
+    else process.env.DAY_CAPSULE_RENDER_API_KEY = previousRenderKey;
   }
 });
 

@@ -68,7 +68,7 @@ export default function CptWorkbookAssignment({ item, onPersist }) {
       const response = await fetch('/api/thicc-school/workbook/assess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectionId: item.id, pageNumber: page.number, fieldId: field.id, answer }),
+        body: JSON.stringify({ courseId: 'cpt', sectionId: item.id, pageNumber: page.number, fieldId: field.id, answer }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result?.error || 'ANSWER CHECK FAILED');

@@ -20,6 +20,7 @@ import {
 } from '../../src/services/thiccSchoolService';
 import { flushAllPendingSaves } from '../../lib/state/autosaveRegistry';
 import CptWorkbookAssignment from './CptWorkbookAssignment';
+import NutritionWorkbookAssignment from './NutritionWorkbookAssignment';
 
 const minutesLabel = (minutes) => {
   const hours = Math.floor(Number(minutes || 0) / 60);
@@ -136,6 +137,11 @@ export default function ThiccSchoolPanel() {
   };
 
   const startSectionPractice = (item) => {
+    const gates = getSectionMasteryGates(item);
+    if (!gates.practiceReady) {
+      setStatus('COMPLETE THE READING, ISSA, AND WORKBOOK STAGES IN ORDER BEFORE MODULE PRACTICE.');
+      return;
+    }
     const attemptIndex = item.practiceAttempts?.length || 0;
     const questions = getSectionQuestions(activeCourse.id, item.id, attemptIndex, 15);
     setPracticeSectionId(item.id);
@@ -243,14 +249,29 @@ export default function ThiccSchoolPanel() {
                 </section>)}
               </div>
             </> : <><strong>FINAL REQUIREMENTS</strong><p>{item.guide}</p></>}
-            {gates.workbookRequired ? <CptWorkbookAssignment item={item} onPersist={(updates) => saveWorkbookWork(item, updates)} /> : null}
-            <div className="thicc-school-study-work">
-              {gates.textbookRequired ? <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.textbookCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, textbookCompleted: event.target.checked }))} />I COMPLETED EVERY ASSIGNED TEXTBOOK PAGE ABOVE</label> : null}
-              <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.issaCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, issaCompleted: event.target.checked }))} />ISSA PORTAL SHOWS THIS {isFinalSection ? 'EXAM' : 'MODULE'} COMPLETED</label>
-              <button type="button" onClick={() => saveStudyWork(item)}>SAVE COMPLETION PROGRESS</button>
-            </div>
+            {sourcePlan ? <div className="thicc-school-sequence" aria-label="Required module learning sequence">
+              <section className={`thicc-school-sequence-step ${gates.textbook ? 'done' : ''}`}>
+                <header><b>1</b><div><strong>READ THE REQUIRED TEXTBOOK PAGES</strong><small>READ FIRST · USE THE PAGE RANGES ABOVE</small></div></header>
+                <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.textbookCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, textbookCompleted: event.target.checked }))} />I COMPLETED EVERY ASSIGNED TEXTBOOK PAGE ABOVE</label>
+                <button type="button" onClick={() => saveStudyWork(item, { textbookCompleted: studyDraft.textbookCompleted })}>SAVE READING PROGRESS</button>
+              </section>
+              <section className={`thicc-school-sequence-step ${gates.issa ? 'done' : ''} ${!gates.issaReady ? 'locked' : ''}`}>
+                <header><b>2</b><div><strong>COMPLETE THE MATCHING ISSA LESSON</strong><small>{gates.issaReady ? 'READING SAVED · ISSA STAGE UNLOCKED' : 'LOCKED UNTIL REQUIRED READING IS SAVED'}</small></div></header>
+                <label className="thicc-school-issa-check"><input type="checkbox" disabled={!gates.issaReady} checked={studyDraft.issaCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, issaCompleted: event.target.checked }))} />ISSA PORTAL SHOWS THIS MODULE COMPLETED</label>
+                <button type="button" disabled={!gates.issaReady} onClick={() => saveStudyWork(item, { issaCompleted: studyDraft.issaCompleted })}>SAVE ISSA COMPLETION</button>
+              </section>
+              <section className={`thicc-school-sequence-step ${gates.workbookReady && gates.workbook ? 'done' : ''} ${!gates.workbookReady ? 'locked' : ''}`}>
+                <header><b>3</b><div><strong>COMPLETE THE STUDY GUIDE + WORKBOOK</strong><small>{gates.workbookReady ? 'ISSA SAVED · WORKBOOK STAGE UNLOCKED' : 'LOCKED UNTIL READING AND ISSA ARE SAVED'}</small></div></header>
+                {!gates.workbookReady ? <p className="thicc-school-lock-note">FINISH STAGES 1 AND 2 TO OPEN THIS SOURCE WORK.</p> : gates.workbookRequired ? (activeCourse.id === 'nutrition'
+                  ? <NutritionWorkbookAssignment item={item} onPersist={(updates) => saveWorkbookWork(item, updates)} />
+                  : <CptWorkbookAssignment item={item} onPersist={(updates) => saveWorkbookWork(item, updates)} />) : <p className="thicc-school-lock-note done">NO SEPARATE WORKBOOK PAGES ARE ASSIGNED TO THIS MODULE.</p>}
+              </section>
+            </div> : <div className="thicc-school-study-work">
+              <label className="thicc-school-issa-check"><input type="checkbox" checked={studyDraft.issaCompleted} onChange={(event) => setStudyDraft((current) => ({ ...current, issaCompleted: event.target.checked }))} />ISSA PORTAL SHOWS THIS EXAM COMPLETED</label>
+              <button type="button" onClick={() => saveStudyWork(item, { issaCompleted: studyDraft.issaCompleted })}>SAVE EXAM COMPLETION</button>
+            </div>}
             {isFinalSection ? <p className="thicc-school-final-direction">PASS THE CUMULATIVE FINAL PRACTICE BELOW, THEN CONFIRM THE ISSA EXAM SHOWS COMPLETED.</p> : <div className="thicc-school-module-practice">
-              <header><div><strong>MODULE PRACTICE</strong><small>ORIGINAL QUESTIONS FROM THE ASSIGNED CHAPTERS · {THICC_SCHOOL_MASTERY_SCORE}% REQUIRED</small></div><button type="button" onClick={() => startSectionPractice(item)}>{practiceSectionId === item.id && practiceQuestions.length ? 'NEW MODULE FORM' : 'START MODULE PRACTICE'}</button></header>
+              <header><div><strong>4 · MODULE PRACTICE</strong><small>{gates.practiceReady ? `SOURCE WORK COMPLETE · ${THICC_SCHOOL_MASTERY_SCORE}% REQUIRED` : 'LOCKED UNTIL READING, ISSA, AND WORKBOOK ARE COMPLETE'}</small></div><button type="button" disabled={!gates.practiceReady} onClick={() => startSectionPractice(item)}>{practiceSectionId === item.id && practiceQuestions.length ? 'NEW MODULE FORM' : 'START MODULE PRACTICE'}</button></header>
               {practiceSectionId === item.id ? <>
                 {practiceQuestions.map((question, index) => <fieldset key={question.id} className={practiceResult?.results?.find((result) => result.id === question.id)?.correct === false ? 'missed' : ''}>
                   <legend>{index + 1}. {question.prompt}</legend>
@@ -261,6 +282,15 @@ export default function ThiccSchoolPanel() {
                 {practiceResult ? <div className={`thicc-school-result ${practiceResult.passed ? 'pass' : 'retry'}`}><strong>{practiceResult.score}%</strong><p>{practiceResult.passed ? 'MODULE PRACTICE GATE PASSED.' : `RETAKE REQUIRED. REVIEW: ${practiceResult.weakTopics.join(' · ')}`}</p></div> : null}
               </> : null}
             </div>}
+            {item.passedPracticeReview?.rows?.length ? <section className="thicc-school-open-book-source">
+              <header><strong>OPEN-BOOK PRACTICE SOURCE</strong><small>PASSED {displayDate(String(item.passedPracticeReview.takenAt).slice(0, 10))} · SAVED FOR EXAM REVIEW</small></header>
+              {item.passedPracticeReview.rows.map((row, index) => <details key={`${row.id}-${index}`}>
+                <summary>{index + 1}. {row.prompt}</summary>
+                <p><b>CORRECT ANSWER:</b> {row.correctAnswer}</p>
+                <p><b>WHY:</b> {row.rationale}</p>
+                <p><b>SOURCE TOPIC:</b> {row.topic}</p>
+              </details>)}
+            </section> : null}
           </div> : null}
           {editingId === item.id ? <div className="thicc-school-editor">
             <label>ASSIGNED DATE<input type="date" value={editDraft.assignedDate} onChange={(event) => setEditDraft((current) => ({ ...current, assignedDate: event.target.value }))} /></label>

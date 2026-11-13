@@ -86,7 +86,10 @@ export function ensureIssaStudyPlanEntries() {
   const existingIds = new Set(current.map((row) => row.id));
   const isCurrentVersion = window.localStorage.getItem(ISSA_PLAN_SEED_KEY) === ISSA_STUDY_PLAN_VERSION;
   if (isCurrentVersion && planned.every((row) => existingIds.has(row.id))) return current;
-  const next = [...current, ...planned.filter((row) => !existingIds.has(row.id))];
+  const next = [
+    ...current.filter((row) => !String(row.id || '').startsWith('issa-plan-')),
+    ...planned,
+  ];
   set(next);
   window.localStorage.setItem(ISSA_PLAN_SEED_KEY, ISSA_STUDY_PLAN_VERSION);
   return next;
