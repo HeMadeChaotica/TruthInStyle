@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import '../../styles/sections/universal-frame.css';
 import '../../styles/sections/da-eater.css';
 import { ScenePlate, SectionShell } from '../shared/UniversalSectionFrame';
@@ -13,8 +13,12 @@ import { getStoredSummationActiveDay, SUMMATION_ACTIVE_DAY_CHANGED_EVENT } from 
 const today = () => new Date().toISOString().slice(0, 10);
 const THICC_DAY_STORAGE_KEY = 'truthinstyle_da_eater_thicc_treat_day_v1';
 const EMPTY_REUP_ROWS = () => Array.from({ length: 10 }, () => ({ amount: '', status: '', mealName: '' }));
+const subscribeToHydrationState = () => () => {};
+const getClientHydrationState = () => true;
+const getServerHydrationState = () => false;
 
 export default function DaEaterSection() {
+  const isHydrated = useSyncExternalStore(subscribeToHydrationState, getClientHydrationState, getServerHydrationState);
   const MEAL_TYPES = useClockItOptions(CLOCK_IT_KEYS.daEaterMealTypes);
   const SUP_TYPES = useClockItOptions(CLOCK_IT_KEYS.daEaterSupplementTypes);
   const supplementUnits = useClockItOptions(CLOCK_IT_KEYS.daEaterSupplementUnits);
@@ -183,6 +187,17 @@ export default function DaEaterSection() {
     { id: 'thicc-treat', title: 'THICC.TREAT', summary: `${day.cheatFlexEntries?.length || 0} THIS WEEK\n${selectedThiccDay}`, content: panelById.cheat },
     { id: 'da-reup', title: 'DA.REUP', summary: `${reupRows.filter((row) => row.amount || row.status || row.mealName).length} OF 10 ROWS`, content: reupContent },
   ];
+
+  if (!isHydrated) {
+    return (
+      <SectionShell className="da-eater-shell">
+        <ScenePlate>
+          <div className="da-eater-bg" />
+          <div className="da-eater-hydration-stage" aria-label="DA.EATER royal kitchen stations" aria-busy="true" />
+        </ScenePlate>
+      </SectionShell>
+    );
+  }
 
   return (
     <SectionShell className="da-eater-shell">

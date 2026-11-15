@@ -27,6 +27,13 @@ test('THE.ASSURER waits for client storage before rendering date-bound text', as
   assert.match(component, /if \(!isHydrated\)\s*\{\s*return <section className="assurer-oracle-shell"[^>]*aria-busy="true" \/>;/s);
 });
 
+test('DA.EATER waits for client storage before rendering saved daily entries', async () => {
+  const component = await readFile(new URL('../components/sections/DaEaterSection.jsx', import.meta.url), 'utf8');
+
+  assert.match(component, /useSyncExternalStore\(subscribeToHydrationState,\s*getClientHydrationState,\s*getServerHydrationState\)/);
+  assert.match(component, /if \(!isHydrated\)\s*\{[\s\S]*aria-label="DA\.EATER royal kitchen stations" aria-busy="true"/);
+});
+
 test('the control Wand travels the right edge and pauses for interaction', async () => {
   const styles = await readFile(new URL('../styles/globals.css', import.meta.url), 'utf8');
 
