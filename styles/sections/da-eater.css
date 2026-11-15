@@ -967,3 +967,288 @@
   .da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-log-it,
   .da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-log-it::before{animation:none}
 }
+
+/* DA.EATER command board v4: dense nutrition readout, useful ledger, and restrained crystallization. */
+@media(min-width:901px){
+  .da-eater-floating-deck .crystal-summary-tile--thicc-eats{
+    left:29.8%;
+    top:9.8%;
+    width:23%;
+    height:50.5%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--macro-harvest{
+    left:54%;
+    top:9.8%;
+    width:43.2%;
+    height:18.3%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
+  .da-eater-floating-deck .crystal-summary-tile--da-reup,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps{
+    width:20.8%;
+    height:17.8%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession{left:54%;top:29.2%}
+  .da-eater-floating-deck .crystal-summary-tile--da-reup{left:76.4%;top:29.2%}
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat{left:54%;top:48.1%}
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:76.4%;top:48.1%}
+}
+
+/* The entry column uses the available width; native time controls no longer clip. */
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-row--type-time{
+  grid-template-columns:minmax(0,1.15fr) minmax(92px,1fr);
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats input[type='time']{
+  box-sizing:border-box;
+  min-width:92px;
+  padding-inline:.55rem;
+  color-scheme:dark;
+}
+
+/* THICC.LOG is a working ledger even before the first meal is entered. */
+.da-eater-meal-log{
+  grid-template-rows:auto auto minmax(0,1fr) auto;
+  align-content:stretch;
+  background:
+    linear-gradient(90deg,transparent 0 18%,rgba(255,200,218,.08) 18% 18.4%,transparent 18.4% 100%),
+    repeating-linear-gradient(to bottom,transparent 0 35px,rgba(255,200,218,.1) 35px 36px);
+  border-radius:12px;
+  padding:.62rem .42rem .42rem;
+}
+.da-eater-ledger-head{
+  display:grid;
+  grid-template-columns:.78fr 1.9fr repeat(3,.48fr) .82fr;
+  gap:.28rem;
+  padding:.36rem .38rem;
+  border-block:1px solid rgba(255,207,218,.38);
+  color:#f5b3c1;
+  font-size:clamp(.44rem,.49vw,.58rem);
+  font-weight:800;
+  letter-spacing:.08em;
+  text-align:center;
+}
+.da-eater-ledger-head span:nth-child(2){text-align:left}
+.da-eater-ledger-empty{
+  position:relative;
+  display:grid;
+  place-content:center;
+  justify-items:center;
+  gap:.45rem;
+  min-height:100%;
+  padding:1rem .6rem;
+  color:#ffdce3;
+  text-align:center;
+  overflow:hidden;
+}
+.da-eater-ledger-empty::before{
+  content:'TF';
+  position:absolute;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%) rotate(-8deg);
+  color:rgba(255,189,209,.055);
+  -webkit-text-fill-color:rgba(255,189,209,.055);
+  font-family:Georgia,serif;
+  font-size:clamp(4rem,7vw,7rem);
+  font-weight:900;
+  letter-spacing:-.14em;
+}
+.da-eater-ledger-empty strong,
+.da-eater-ledger-empty span{position:relative;z-index:1}
+.da-eater-ledger-empty strong{
+  color:#ffdce3;
+  -webkit-text-fill-color:#ffdce3;
+  font-size:clamp(.63rem,.7vw,.82rem);
+  letter-spacing:.08em;
+}
+.da-eater-ledger-empty span{
+  color:rgba(255,215,222,.7);
+  -webkit-text-fill-color:rgba(255,215,222,.7);
+  font-size:clamp(.48rem,.54vw,.63rem);
+  letter-spacing:.07em;
+}
+.da-eater-ledger-total{
+  display:flex;
+  justify-content:space-between;
+  gap:.5rem;
+  padding:.4rem .48rem .18rem;
+  border-top:1px solid rgba(255,207,218,.38);
+  color:#ffd6dc;
+  font-size:clamp(.5rem,.56vw,.66rem);
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+/* Macro Harvest is a command board, not five tiny totals. */
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr);
+  align-items:stretch;
+  gap:.46rem;
+  padding:.64rem .78rem .72rem;
+}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest>.crystal-summary-copy{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:1rem;
+  width:100%;
+  text-align:left;
+}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest>.crystal-summary-copy>span{
+  display:block!important;
+  color:rgba(255,217,224,.74)!important;
+  -webkit-text-fill-color:rgba(255,217,224,.74)!important;
+  font-family:'Avenir Next','Helvetica Neue',Arial,sans-serif!important;
+  font-size:clamp(.48rem,.54vw,.64rem)!important;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+.da-eater-summary-macros{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:clamp(.35rem,.52vw,.58rem);
+  min-height:0;
+}
+.da-eater-summary-macros>.da-eater-macro-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr)!important;
+  grid-template-rows:auto!important;
+  align-items:start;
+  align-content:center;
+  gap:.38rem;
+  min-width:0;
+  min-height:0;
+  padding:.48rem .42rem .4rem;
+  border:1px solid rgba(255,210,204,.48);
+  border-radius:13px;
+  background:
+    linear-gradient(145deg,rgba(255,216,225,.085),transparent 44%),
+    rgba(27,10,18,.48);
+  box-shadow:inset 0 0 0 1px rgba(255,242,229,.08),0 6px 14px rgba(0,0,0,.23);
+}
+.da-eater-summary-macros>.da-eater-macro-card::after{
+  content:'';
+  position:absolute;
+  right:7px;
+  top:7px;
+  width:7px;
+  height:7px;
+  transform:rotate(45deg);
+  background:linear-gradient(135deg,#fff4d5,#ef98bd 55%,#9a4e71);
+  box-shadow:0 0 8px rgba(255,182,213,.82);
+}
+.da-eater-summary-macros .da-eater-macro-symbol{
+  display:grid;
+  place-items:center;
+  width:23px;
+  height:23px;
+  border:1px solid rgba(255,224,207,.9);
+  border-radius:7px 7px 11px 11px;
+  background:linear-gradient(150deg,#ffe9c8,#e98faf 48%,#713550);
+  color:#361522!important;
+  -webkit-text-fill-color:#361522!important;
+  font-size:.62rem!important;
+  font-weight:900!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 0 10px rgba(255,159,197,.42);
+}
+.da-eater-macro-card-copy{
+  display:grid;
+  align-content:start;
+  gap:.18rem;
+  min-width:0;
+}
+.da-eater-summary-macros .da-eater-macro-card-copy strong{
+  padding-right:.5rem;
+  font-size:clamp(.51rem,.57vw,.67rem)!important;
+  letter-spacing:.06em;
+  text-align:left;
+}
+.da-eater-summary-macros .da-eater-macro-card-copy em{
+  overflow:hidden;
+  font-size:clamp(.47rem,.51vw,.6rem)!important;
+  text-align:left;
+  text-overflow:ellipsis;
+}
+.da-eater-summary-macros .da-eater-macro-card-copy small{
+  color:rgba(255,218,220,.72);
+  -webkit-text-fill-color:rgba(255,218,220,.72);
+  font-size:clamp(.39rem,.43vw,.5rem);
+  font-weight:700;
+  letter-spacing:.035em;
+  white-space:nowrap;
+}
+.da-eater-summary-macros .da-eater-macro-card-copy i{
+  width:100%;
+  height:6px;
+  margin-top:.08rem;
+}
+.da-eater-macro-percent{
+  position:absolute;
+  right:.42rem;
+  bottom:.35rem;
+  color:#ffe9d6;
+  -webkit-text-fill-color:#ffe9d6;
+  font-size:clamp(.43rem,.47vw,.55rem);
+  font-weight:900;
+}
+
+/* Remove helper labels; retain only a subtle refracted edge. */
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession::after,
+.da-eater-floating-deck .crystal-summary-tile--da-reup::after,
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat::after,
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps::after{
+  content:'';
+  position:absolute;
+  inset:7px;
+  pointer-events:none;
+  border:1px solid rgba(255,226,214,.08);
+  border-radius:calc(clamp(20px,1.8vw,30px) - 7px);
+  background:
+    linear-gradient(135deg,rgba(255,243,219,.16),transparent 14% 84%,rgba(238,128,180,.12)),
+    linear-gradient(105deg,transparent 0 46%,rgba(255,237,222,.055) 49%,transparent 52% 100%);
+}
+
+/* Approved THICC.FITT shield monogram, laid into the royal-kitchen floor. */
+.da-eater-floor-monogram{
+  position:absolute;
+  left:48.3%;
+  top:67.5%;
+  z-index:1;
+  width:48%;
+  aspect-ratio:1/.62;
+  opacity:.3;
+  transform:perspective(520px) rotateX(63deg) rotateZ(-2deg);
+  transform-origin:center;
+  pointer-events:none;
+  filter:drop-shadow(0 0 9px rgba(255,194,101,.4)) drop-shadow(0 0 20px rgba(238,92,157,.22));
+  mix-blend-mode:screen;
+}
+.da-eater-floor-monogram svg{width:100%;height:100%;overflow:visible}
+.da-eater-floor-monogram .da-eater-tf-shield{
+  fill:rgba(4,3,4,.2);
+  stroke:url(#da-eater-tf-gold);
+  stroke-width:5;
+  vector-effect:non-scaling-stroke;
+}
+.da-eater-floor-monogram .da-eater-tf-t,
+.da-eater-floor-monogram .da-eater-tf-f{fill:url(#da-eater-tf-gold)}
+.da-eater-floor-monogram .da-eater-tf-jewel{
+  fill:url(#da-eater-tf-jewel);
+  stroke:#ffe5aa;
+  stroke-width:1.4;
+}
+
+/* Return only the lower crystallization flow, where it reads as floor light. */
+.da-eater-orchard-swirls{display:block;opacity:.32}
+.da-eater-orchard-swirls .da-eater-swirl--upper,
+.da-eater-orchard-swirls .da-eater-swirl--right{display:none}
+.da-eater-orchard-swirls .da-eater-swirl--lower{display:block}
+
+@media(max-width:900px){
+  .da-eater-floor-monogram{left:55%;top:74%;width:28%;opacity:.28}
+  .da-eater-summary-macros{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .da-eater-summary-macros>.da-eater-macro-card{min-height:74px}
+}

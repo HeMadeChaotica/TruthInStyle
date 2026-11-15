@@ -182,10 +182,17 @@ export default function DaEaterSection() {
           </section>
           <section className="da-eater-meal-log" aria-labelledby="da-eater-log-title">
             <h2 id="da-eater-log-title">THICC.LOG</h2>
+            <div className="da-eater-ledger-head" aria-hidden="true">
+              <span>TIME</span><span>MEAL</span><span>P</span><span>F</span><span>C</span><span>KCAL</span>
+            </div>
             <div className="da-eater-meal-saved-list">
               {(day.meals||[]).length===0
-                ? <p className="da-eater-empty">NO MEALS LOGGED YET.</p>
+                ? <div className="da-eater-ledger-empty"><strong>READY FOR FIRST ENTRY</strong><span>LOG IT TO BUILD TODAY’S LEDGER</span></div>
                 : (day.meals||[]).map((m)=><div key={m.id} className="da-eater-meal-card"><div className="da-eater-meal-card-main"><strong>{m.type} • {m.name || 'UNTITLED'}</strong><span>{m.time || 'TIME NOT SET'}</span><div className="da-eater-meal-macros">{m.type === 'WATER' ? <span>WATER {m.waterOz || 0}OZ</span> : <><span>P {m.protein || 0}</span><span>C {m.carbs || 0}</span><span>F {m.fats || 0}</span><span>KCAL {m.calories || 0}</span></>}</div></div><div className="da-eater-meal-controls"><button onClick={()=>setMealForm(m)}>EDIT</button><button onClick={()=>setDay(deleteMealEntry(date,m.id))}>DELETE</button></div></div>)}
+            </div>
+            <div className="da-eater-ledger-total">
+              <span>{day.meals?.length || 0} ENTRIES</span>
+              <span>{totals.totals.calories || 0} KCAL</span>
             </div>
           </section>
         </div>
@@ -205,6 +212,7 @@ export default function DaEaterSection() {
     return ref?.url || ref?.previewUrl || ref?.objectUrl || '';
   };
   const firstPhoto = photoLog.find((entry) => photoUrl(entry));
+  const macroGlyphs = { protein: 'P', carbs: 'C', fats: 'F', calories: 'K', waterOz: 'W' };
   const reupContent = (
     <div className="da-reup-panel">
       <div className="da-reup-head"><span>#</span><span>AMOUNT</span><span>S OR R</span><span>MEAL NAME</span></div>
@@ -220,13 +228,23 @@ export default function DaEaterSection() {
   );
   const macroSummary = (
     <div className="da-eater-summary-macros">
-      {[['PROTEIN','protein','G'],['CARBS','carbs','G'],['FAT','fats','G'],['CALORIES','calories','KCAL'],['WATER','waterOz','OZ']].map(([label, key, unit]) => (
-        <div key={key}>
-          <strong>{label}</strong>
-          <em>{totals.totals[key]} / {totals.targets[key]} {unit}</em>
-          <i><b style={{ width: `${Math.min(totals.progress[key], 100)}%` }} /></i>
+      {[['PROTEIN','protein','G'],['CARBS','carbs','G'],['FAT','fats','G'],['CALORIES','calories','KCAL'],['WATER','waterOz','OZ']].map(([label, key, unit]) => {
+        const current = totals.totals[key];
+        const target = totals.targets[key];
+        const percent = totals.progress[key];
+        const remaining = Math.max(target - current, 0);
+        return (
+        <div className={`da-eater-macro-card da-eater-macro-card--${key}`} key={key}>
+          <span className="da-eater-macro-symbol" aria-hidden="true">{macroGlyphs[key]}</span>
+          <div className="da-eater-macro-card-copy">
+            <strong>{label}</strong>
+            <em>{current} / {target} {unit}</em>
+            <i><b style={{ width: `${Math.min(percent, 100)}%` }} /></i>
+            <small>{remaining} {unit} REMAINING</small>
+          </div>
+          <span className="da-eater-macro-percent">{percent.toFixed(0)}%</span>
         </div>
-      ))}
+      );})}
     </div>
   );
   const tiles = [
@@ -253,6 +271,27 @@ export default function DaEaterSection() {
     <SectionShell className="da-eater-shell">
       <ScenePlate>
         <div className="da-eater-bg" />
+        <div className="da-eater-floor-monogram" aria-hidden="true">
+          <svg viewBox="0 0 100 112" role="presentation">
+            <defs>
+              <linearGradient id="da-eater-tf-gold" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#fff0a8" />
+                <stop offset=".34" stopColor="#d79b38" />
+                <stop offset=".68" stopColor="#fff1a8" />
+                <stop offset="1" stopColor="#9e641d" />
+              </linearGradient>
+              <radialGradient id="da-eater-tf-jewel" cx="35%" cy="25%" r="80%">
+                <stop offset="0" stopColor="#ffd7e7" />
+                <stop offset=".35" stopColor="#f24691" />
+                <stop offset="1" stopColor="#6d143f" />
+              </radialGradient>
+            </defs>
+            <path className="da-eater-tf-shield" d="M12 12H88V65C88 83 72 96 50 105C28 96 12 83 12 65Z" />
+            <path className="da-eater-tf-t" d="M28 31H57V40H47V73H38V40H28Z" />
+            <path className="da-eater-tf-f" d="M54 31H76V40H63V49H73V58H63V73H54Z" />
+            <rect className="da-eater-tf-jewel" x="45" y="5" width="10" height="10" rx="2" transform="rotate(45 50 10)" />
+          </svg>
+        </div>
         <svg className="da-eater-orchard-swirls" viewBox="0 0 1280 720" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="da-eater-swirl-gold" x1="0" y1="0" x2="1" y2="1">
