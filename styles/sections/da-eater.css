@@ -475,14 +475,14 @@
     left:34.8%;
     top:6.5%;
     width:18.3%;
-    height:57.3%;
+    height:63.1%;
     min-height:0;
   }
   .da-eater-floating-deck .crystal-summary-tile--macro-harvest{
     left:53.9%;
     top:6.5%;
     width:40.9%;
-    height:18.5%;
+    height:24.5%;
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
   .da-eater-floating-deck .crystal-summary-tile--da-reup,
@@ -495,19 +495,19 @@
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession{
     left:53.9%;
-    top:26.2%;
+    top:31.8%;
   }
   .da-eater-floating-deck .crystal-summary-tile--da-reup{
     left:74.75%;
-    top:26.2%;
+    top:31.8%;
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-treat{
     left:53.9%;
-    top:45.3%;
+    top:51.1%;
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-supps{
     left:74.75%;
-    top:45.3%;
+    top:51.1%;
   }
 }
 
