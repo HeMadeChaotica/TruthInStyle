@@ -147,7 +147,6 @@
 .da-eater-floating-deck .crystal-summary-tile--thicc-eats{left:34.8%;top:27%;width:39.2%;height:26%;min-height:0}
 .da-eater-floating-deck .crystal-summary-tile--thicc-obsession{left:75.1%;right:auto;top:27%;width:19.7%;min-height:0}
 .da-eater-floating-deck .crystal-summary-tile--thicc-supps{left:75.1%;bottom:auto;top:36%;width:19.7%;min-height:0}
-.da-eater-floating-deck .crystal-summary-tile--thicc-cravings{left:75.1%;right:auto;top:45%;width:19.7%;min-height:0}
 .da-eater-floating-deck .crystal-summary-tile--thicc-treat{left:75.1%;right:auto;bottom:auto;top:54%;width:19.7%;min-height:0}
 .da-eater-floating-deck .crystal-summary-tile--da-reup{left:34.8%;top:54%;width:39.2%;min-height:0}
 .da-eater-summary-macros{display:grid;width:100%}
@@ -386,14 +385,12 @@
 
 .da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
 .da-eater-floating-deck .crystal-summary-tile--thicc-supps,
-.da-eater-floating-deck .crystal-summary-tile--thicc-cravings,
 .da-eater-floating-deck .crystal-summary-tile--thicc-treat,
 .da-eater-floating-deck .crystal-summary-tile--da-reup{
   padding-inline:clamp(.72rem,1vw,1rem);
 }
 .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy strong::before{content:'✧';margin-right:.42rem}
 .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy strong::before{content:'♧';margin-right:.42rem}
-.da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy strong::before{content:'◇';margin-right:.42rem}
 .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy strong::before{content:'△';margin-right:.42rem}
 .da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-copy strong::before{content:'↻';margin-right:.42rem}
 
@@ -443,7 +440,6 @@
   .da-eater-date-control input{color:#ffe2e9}
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
   .da-eater-floating-deck .crystal-summary-tile--thicc-supps,
-  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings,
   .da-eater-floating-deck .crystal-summary-tile--thicc-treat{
     height:7.8%;
     padding:.42rem .58rem;
@@ -455,24 +451,268 @@
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy,
   .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy,
-  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy,
   .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy{gap:.18rem}
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy strong,
   .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy strong,
-  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy strong,
   .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy strong{font-size:clamp(.66rem,.78vw,.92rem)!important}
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy>span,
   .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy>span,
-  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-copy>span,
   .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy>span{
     font-size:clamp(.5rem,.58vw,.68rem)!important;
     line-height:1.15!important;
   }
   .da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-expand,
   .da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-expand,
-  .da-eater-floating-deck .crystal-summary-tile--thicc-cravings .crystal-summary-expand,
   .da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-expand,
   .da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-expand{width:clamp(27px,2vw,34px)}
   .da-eater-summary-macros{gap:.18rem}
   .da-eater-summary-macros>div{min-height:20px;padding:.08rem .38rem}
+}
+
+/* Diagram-locked DA.EATER command board: one clean left stack and a 2 x 2 station grid. */
+@media(min-width:901px){
+  .da-eater-floating-deck .crystal-summary-tile--thicc-eats{
+    left:34.8%;
+    top:6.5%;
+    width:18.3%;
+    height:57.3%;
+    min-height:0;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--macro-harvest{
+    left:53.9%;
+    top:6.5%;
+    width:40.9%;
+    height:18.5%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
+  .da-eater-floating-deck .crystal-summary-tile--da-reup,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat,
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps{
+    width:20.05%;
+    height:18.5%;
+    min-height:0;
+    padding:clamp(.72rem,1vw,1.05rem);
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-obsession{
+    left:53.9%;
+    top:26.2%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--da-reup{
+    left:74.75%;
+    top:26.2%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-treat{
+    left:53.9%;
+    top:45.3%;
+  }
+  .da-eater-floating-deck .crystal-summary-tile--thicc-supps{
+    left:74.75%;
+    top:45.3%;
+  }
+}
+
+/* THICC.EATS and THICC.LOG are one vertical ledger, never competing columns. */
+.da-eater-meal-station,
+.da-eater-meal-entry,
+.da-eater-meal-log{
+  min-width:0;
+  min-height:0;
+}
+.da-eater-meal-station{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:clamp(.62rem,.82vw,.9rem);
+  height:100%;
+}
+.da-eater-meal-entry,
+.da-eater-meal-log{
+  display:grid;
+  align-content:start;
+  gap:.5rem;
+}
+.da-eater-meal-log{
+  padding-top:.72rem;
+  border-top:1px solid rgba(255,199,211,.55);
+  overflow:hidden;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-entry h2,
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-log h2{
+  margin:0;
+  color:#ffdce3!important;
+  -webkit-text-fill-color:#ffdce3!important;
+  font-family:var(--app-font-marker)!important;
+  font-size:clamp(.92rem,1.05vw,1.2rem);
+  font-weight:700;
+  letter-spacing:.07em;
+  line-height:1;
+  text-align:center;
+  text-shadow:0 2px 6px rgba(20,6,11,.95),0 0 12px rgba(255,154,190,.42)!important;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-input-stack{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:.38rem;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats input,
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats select,
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats button{
+  min-height:34px;
+  border-radius:999px;
+  padding:.38rem .72rem;
+  font-size:clamp(.62rem,.68vw,.78rem);
+  text-align:center;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-saved-list{
+  min-height:0;
+  overflow:auto;
+  scrollbar-width:thin;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-empty,
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-meal-card{
+  border-radius:12px;
+  font-size:clamp(.6rem,.66vw,.76rem);
+  line-height:1.35;
+}
+
+/* Matching rounded-square stations with centered, readable hierarchy. */
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession,
+.da-eater-floating-deck .crystal-summary-tile--da-reup,
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat,
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
+  place-items:center;
+  border-radius:clamp(20px,1.8vw,30px);
+  text-align:center;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy,
+.da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-copy,
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy,
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy{
+  display:grid;
+  align-content:center;
+  justify-items:center;
+  gap:.45rem;
+  width:100%;
+  height:100%;
+  padding:.35rem 2.8rem .35rem .35rem;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy strong,
+.da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-copy strong,
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy strong,
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy strong{
+  font-size:clamp(.88rem,1.02vw,1.2rem)!important;
+  line-height:1.08;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-copy>span,
+.da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-copy>span,
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-copy>span,
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-copy>span{
+  font-size:clamp(.66rem,.76vw,.9rem)!important;
+  line-height:1.28!important;
+  white-space:pre-line;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession .da-eater-summary-photo{
+  position:absolute;
+  right:clamp(2.9rem,3.2vw,3.7rem);
+  bottom:clamp(.65rem,.8vw,.9rem);
+  width:clamp(44px,3.6vw,62px);
+  border-radius:14px;
+  box-shadow:0 0 0 1px rgba(255,228,234,.28),0 6px 14px rgba(0,0,0,.3);
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-obsession .crystal-summary-expand,
+.da-eater-floating-deck .crystal-summary-tile--da-reup .crystal-summary-expand,
+.da-eater-floating-deck .crystal-summary-tile--thicc-treat .crystal-summary-expand,
+.da-eater-floating-deck .crystal-summary-tile--thicc-supps .crystal-summary-expand{
+  position:absolute;
+  right:.78rem;
+  bottom:.78rem;
+  width:clamp(32px,2.2vw,40px);
+}
+
+/* MACRO HARVEST gets the glam focal treatment while keeping every number readable. */
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest{
+  isolation:isolate;
+  overflow:hidden;
+  border-color:rgba(255,220,201,.96);
+  background:
+    radial-gradient(circle at 12% 16%,rgba(255,199,221,.2),transparent 30%),
+    radial-gradient(circle at 88% 12%,rgba(255,214,159,.2),transparent 28%),
+    repeating-linear-gradient(118deg,rgba(255,255,255,.035) 0 1px,transparent 1px 10px),
+    linear-gradient(135deg,rgba(30,11,20,.95),rgba(79,31,48,.88) 52%,rgba(33,13,22,.95));
+  box-shadow:
+    inset 0 0 0 2px rgba(255,236,226,.22),
+    inset 0 0 34px rgba(255,137,184,.16),
+    0 14px 32px rgba(0,0,0,.34),
+    0 0 20px rgba(255,153,193,.28);
+}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest::after{
+  content:'';
+  position:absolute;
+  inset:4px;
+  z-index:0;
+  pointer-events:none;
+  border:1px solid rgba(255,229,213,.38);
+  border-radius:inherit;
+  background:linear-gradient(112deg,transparent 0 38%,rgba(255,241,230,.1) 48%,transparent 58% 100%);
+  background-size:240% 100%;
+  animation:daEaterMacroGlam 9s ease-in-out infinite;
+}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest>.crystal-summary-copy,
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest>.da-eater-summary-macros,
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest>.crystal-summary-expand{
+  z-index:1;
+}
+.da-eater-floating-deck .crystal-summary-tile--macro-harvest>.crystal-summary-copy strong{
+  color:#ffdbe5!important;
+  -webkit-text-fill-color:#ffdbe5!important;
+  font-size:clamp(1.3rem,1.75vw,2rem)!important;
+  font-weight:700!important;
+  text-shadow:0 2px 5px rgba(20,5,12,.98),0 0 16px rgba(255,164,203,.7)!important;
+}
+.da-eater-summary-macros{
+  gap:.24rem;
+}
+.da-eater-summary-macros>div{
+  grid-template-columns:24px minmax(72px,.6fr) minmax(130px,1.65fr) minmax(95px,.72fr);
+  min-height:24px;
+  border-color:rgba(255,207,202,.55);
+  border-radius:999px;
+  background:linear-gradient(90deg,rgba(104,42,57,.42),rgba(44,21,28,.58));
+}
+.da-eater-summary-macros strong{
+  color:#ffc7d2!important;
+  -webkit-text-fill-color:#ffc7d2!important;
+  font-size:clamp(.68rem,.78vw,.9rem)!important;
+  font-weight:700!important;
+}
+.da-eater-summary-macros em{
+  color:#fff1e6!important;
+  -webkit-text-fill-color:#fff1e6!important;
+  font-size:clamp(.63rem,.73vw,.84rem);
+}
+.da-eater-summary-macros .da-eater-macro-symbol{
+  border-color:rgba(255,224,213,.92);
+  background:radial-gradient(circle at 34% 28%,#fff7ee 0 8%,#ffb8ce 34%,#a95778 72%,#4b2434 100%);
+  color:#4b1e31!important;
+  -webkit-text-fill-color:#4b1e31!important;
+  box-shadow:0 0 10px rgba(255,173,203,.62);
+}
+.da-eater-summary-macros i{
+  height:10px;
+  border-color:rgba(255,211,201,.72);
+  background:rgba(18,8,12,.7);
+}
+.da-eater-summary-macros b{
+  background:linear-gradient(90deg,#e183a5,#ffd0c0 48%,#f3a2bd 78%,#ffe0a8);
+  box-shadow:0 0 10px rgba(255,174,199,.85),inset 0 1px 2px rgba(255,252,245,.8);
+}
+@keyframes daEaterMacroGlam{
+  0%,20%{background-position:180% 0;opacity:.35}
+  55%{opacity:.9}
+  100%{background-position:-80% 0;opacity:.35}
+}
+@media(prefers-reduced-motion:reduce){
+  .da-eater-floating-deck .crystal-summary-tile--macro-harvest::after{animation:none;background-position:center}
 }
