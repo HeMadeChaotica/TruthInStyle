@@ -856,6 +856,12 @@
   height:100%;
   min-height:0;
   overflow:auto;
+  overflow-x:hidden;
+}
+.da-eater-floating-deck .crystal-summary-tile--thicc-eats .crystal-always-open-body{
+  box-sizing:border-box;
+  padding-right:0;
+  overflow-x:hidden;
 }
 .da-eater-floating-deck .crystal-summary-tile--thicc-eats .da-eater-empty{
   margin:0;
