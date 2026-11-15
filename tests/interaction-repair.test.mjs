@@ -34,6 +34,20 @@ test('DA.EATER waits for client storage before rendering saved daily entries', a
   assert.match(component, /if \(!isHydrated\)\s*\{[\s\S]*aria-label="DA\.EATER royal kitchen stations" aria-busy="true"/);
 });
 
+test('DA.EATER keeps the royal-kitchen board compact and gives THICC.LOG usable space', async () => {
+  const component = await readFile(new URL('../components/sections/DaEaterSection.jsx', import.meta.url), 'utf8');
+  const styles = await readFile(new URL('../styles/sections/da-eater.css', import.meta.url), 'utf8');
+
+  assert.match(component, /da-eater-meal-row--type-time/);
+  assert.match(component, /da-eater-meal-row--calories/);
+  assert.match(component, /da-eater-meal-row--macros/);
+  assert.match(component, /className=\{`da-eater-log-it\$\{mealLogFlash/);
+  assert.match(component, />LOG IT<\/button>/);
+  assert.match(styles, /\.da-eater-floating-deck \.crystal-summary-expand\{display:none!important\}/);
+  assert.match(styles, /\.da-eater-summary-macros\{[\s\S]*grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.da-eater-floating-deck \.crystal-summary-tile--thicc-eats\{\s*left:35\.7%;\s*top:9\.8%;\s*width:17\.4%;\s*height:52\.7%;/s);
+});
+
 test('the control Wand travels the right edge and pauses for interaction', async () => {
   const styles = await readFile(new URL('../styles/globals.css', import.meta.url), 'utf8');
 
