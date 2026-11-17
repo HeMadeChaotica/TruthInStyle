@@ -2,7 +2,7 @@ import { getBattleCryForDate } from '../../lib/theAssurer/battleCryQuotes';
 import { getDaEaterStorageDate } from '../../lib/theAssurer/daEaterDateKey';
 import { getDailyDateKeyCandidates, getLocalDateKey } from '../../lib/theAssurer/localDateKey';
 import { ASSURER_MACRO_FALLBACK_MIRROR, readDaEaterMacroMirror } from '../../lib/theAssurer/daEaterMacroMirror';
-import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
+import { EMPTY_DA_EATER_MEAL_LOG, readDaEaterDetailSignalForDate, readDaEaterMealLogForDate } from '../../lib/theAssurer/daEaterMealMirror';
 import {
   EMPTY_REMEMBER_ME_DAY_TIMELINE,
   getRememberMeDayTimelineDateKey,
@@ -18,6 +18,7 @@ import { EMPTY_THICC_TIME_WEEK_MIRROR, getThiccTimeWeekDays, readThiccTimeWeekMi
 import { EMPTY_THICC_FITT_WORKOUT_MIRROR, readThiccFittWorkoutMirror } from '../../lib/theAssurer/thiccFittWorkoutMirror';
 import { DAY_CAPSULE_RENDER_RECORD_KEY, DAY_CAPSULE_RENDER_STATUSES } from './dayCapsuleRenderService';
 import { findHopewoodSummationByDate, persistSealedSummation, readHopewoodSummationArchive, receiveSealedSummation } from './hopewoodService';
+import { buildThiccFittLlcBuildSignal } from './thiccFittLlcBuildService.js';
 import {
   COMPLETED_DAY_LIFECYCLE_STATUS,
   PERSONAL_DAILY_RESET_VERSION,
@@ -1020,8 +1021,10 @@ export async function readAssurerDayForSummation(date = new Date()) {
 
   const macroMirror = readDaEaterMacroMirror(daEaterDate) || ASSURER_MACRO_FALLBACK_MIRROR;
   const daEaterMeals = readDaEaterMealLogForDate(daEaterDate) || EMPTY_DA_EATER_MEAL_LOG;
+  const daEaterDetailSignals = readDaEaterDetailSignalForDate(daEaterDate);
   const rememberMeMomentMirror = readRememberMeMomentMirror(rememberMeMomentDate) || EMPTY_REMEMBER_ME_MOMENT_MIRROR;
   const thiccFittWorkoutMirror = readThiccFittWorkoutMirror(sourceDateCandidates) || EMPTY_THICC_FITT_WORKOUT_MIRROR;
+  const thiccFittLlcBuild = buildThiccFittLlcBuildSignal(sourceDate);
   const wrapAnswers = normalizeWrapAnswers(readStoredValue(ASSURER_DAILY_FIELD_KEYS.wrapAnswers, sourceDateCandidates));
   const pennyQuestions = normalizeAssuredPennyQuestions(assurerDayPayload?.pennyQuestions);
   const pennyAnswers = pennyQuestions.filter((entry) => cleanText(entry.answer)).map((entry) => ({
@@ -1063,7 +1066,16 @@ export async function readAssurerDayForSummation(date = new Date()) {
     },
     macroHighlights: macroHighlights(macroMirror),
     mealHighlights: mealHighlights(daEaterMeals),
+    daEaterDetailSignals,
     workoutHighlights: workoutHighlights(thiccFittWorkoutMirror),
+    thiccFittBodySignals: {
+      body: thiccFittWorkoutMirror.body || {},
+      sleep: thiccFittWorkoutMirror.sleep || {},
+      recovery: thiccFittWorkoutMirror.recovery || {},
+      cardio: thiccFittWorkoutMirror.cardio || {},
+      weeklySummary: thiccFittWorkoutMirror.weeklySummary || {},
+    },
+    thiccFittLlcBuild,
     weather: weatherFromStorage(sourceDateCandidates),
     weekSignal: weekSignal(thiccTimeWeekMirror),
     timelineHighlights: timelineHighlights(rememberMeDayTimeline),
@@ -1080,7 +1092,9 @@ export async function readAssurerDayForSummation(date = new Date()) {
       assuredThoughts: Boolean(readAssurerNativeField(assurerDayPayload, ['assuredThoughts', 'thoughts', 'assurerThoughts'], ASSURER_DAILY_FIELD_KEYS.assuredThoughts, sourceDateCandidates)),
       macroSnapshot: Boolean(macroHighlights(macroMirror).length),
       mealLog: Boolean(mealHighlights(daEaterMeals).length),
+      daEaterDetails: Boolean(Object.values(daEaterDetailSignals || {}).some((value) => Array.isArray(value) ? value.length : Boolean(value))),
       thiccFitt: Boolean(workoutHighlights(thiccFittWorkoutMirror).length),
+      thiccFittLlcBuild: Boolean(thiccFittLlcBuild),
       rememberMeEvents: Boolean(timelineHighlights(rememberMeDayTimeline).length),
       momentCards: Boolean(momentHighlights(rememberMeMomentMirror).length),
       thiccTimeWeek: Boolean(weekSignal(thiccTimeWeekMirror)),
@@ -1386,9 +1400,12 @@ export function buildDayCapsuleRenderPayload(activeDayPayload) {
     thiccTimeSignals: normalizeNullable(activeDayPayload.thiccTimeSignals || activeDayPayload.weekSignal || activeDayPayload.thiccTime),
     rememberMeMoments: normalizeList(activeDayPayload.rememberMeMoments || activeDayPayload.moments || activeDayPayload.timelineHighlights),
     thiccFittSignals: normalizeList(activeDayPayload.thiccFittSignals || activeDayPayload.workoutHighlights),
+    thiccFittBodySignals: normalizeNullable(activeDayPayload.thiccFittBodySignals),
+    thiccFittLlcBuildSignals: normalizeNullable(activeDayPayload.thiccFittLlcBuildSignals || activeDayPayload.thiccFittLlcBuild),
     daEaterSignals: {
       macroHighlights: normalizeList(activeDayPayload.daEaterSignals?.macroHighlights || activeDayPayload.macroHighlights),
       mealHighlights: normalizeList(activeDayPayload.daEaterSignals?.mealHighlights || activeDayPayload.mealHighlights),
+      detailSignals: normalizeNullable(activeDayPayload.daEaterSignals?.detailSignals || activeDayPayload.daEaterDetailSignals),
     },
     otherSignals: {
       battleCry: normalizeNullable(activeDayPayload.battleCry),
@@ -1801,7 +1818,9 @@ export function resolveSummationSealPayload({ completed = null, draft = null, ve
     thiccTime: normalizedTruth.weekSignal,
     rememberMe: normalizedTruth.moments || normalizedTruth.timelineHighlights,
     thiccFitt: normalizedTruth.workoutHighlights,
-    daEater: normalizedTruth.macroHighlights || normalizedTruth.mealHighlights,
+    thiccFittBody: normalizedTruth.thiccFittBodySignals,
+    thiccFittLlcBuild: normalizedTruth.thiccFittLlcBuild,
+    daEater: { macroHighlights: normalizedTruth.macroHighlights || [], mealHighlights: normalizedTruth.mealHighlights || [], detailSignals: normalizedTruth.daEaterDetailSignals || null },
     pennyAnswers: normalizedTruth.pennyAnswers || normalizedTruth.wrapAnswers || completed?.pennyForYourThoughts?.answers || [],
   };
   const now = new Date().toISOString();
@@ -1925,7 +1944,9 @@ export function sealActiveSummationSelection(completed = null, selectedVersionId
       thiccTime: sourceTruth.weekSignal,
       rememberMe: sourceTruth.moments || sourceTruth.timelineHighlights,
       thiccFitt: sourceTruth.workoutHighlights,
-      daEater: sourceTruth.macroHighlights || sourceTruth.mealHighlights,
+      thiccFittBody: sourceTruth.thiccFittBodySignals,
+      thiccFittLlcBuild: sourceTruth.thiccFittLlcBuild,
+      daEater: { macroHighlights: sourceTruth.macroHighlights || [], mealHighlights: sourceTruth.mealHighlights || [], detailSignals: sourceTruth.daEaterDetailSignals || null },
       pennyAnswers: sourceTruth.pennyAnswers || sourceTruth.wrapAnswers || [],
     },
     sealedAt: now,
@@ -1977,6 +1998,8 @@ async function commitCurrentDayCapsuleToHopewood() {
     thiccTime: snapshot.thiccTimeSignals || null,
     rememberMe: snapshot.rememberMeMoments || snapshot.moments || [],
     thiccFitt: snapshot.thiccFittSignals || [],
+    thiccFittBody: snapshot.thiccFittBodySignals || null,
+    thiccFittLlcBuild: snapshot.thiccFittLlcBuildSignals || null,
     daEater: snapshot.daEaterSignals || {},
     pennyAnswers: payload.assuredThoughts?.pennyQuestions?.map((entry) => entry?.answer).filter(Boolean) || [],
   };

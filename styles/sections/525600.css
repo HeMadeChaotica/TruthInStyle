@@ -67,7 +67,7 @@
 @media(max-width:1100px){.annual525600-review-grid{grid-template-columns:1fr 1fr}.annual525600-card:nth-child(n){grid-column:auto;grid-row:auto}.annual525600-verdict{grid-column:1/-1!important;grid-row:auto!important}}
 @media(max-width:760px){.annual525600-shell{padding:72px 4.4rem 1rem .7rem}.annual525600-header{align-items:flex-start;flex-direction:column}.annual525600-review-grid{grid-template-columns:1fr}.annual525600-verdict{grid-column:1!important}.annual525600-verdict dl{grid-template-columns:1fr 1fr}.annual525600-empty{position:static;margin:45vh 0 0}}
 
-/* Approved seven-station annual court. One range selection drives every expandable tile. */
+/* Eight-station annual court. One range selection drives every expandable tile. */
 .annual525600-window-tabs{position:absolute;left:23%;right:23%;top:2%;z-index:7;display:grid;grid-template-columns:repeat(5,1fr);gap:.35rem;padding:.45rem;border:1px solid rgba(159,82,105,.44);border-radius:18px;background:rgba(255,242,238,.78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.58),0 10px 24px rgba(77,45,51,.14);backdrop-filter:blur(12px)}
 .annual525600-window-tabs button{min-height:42px;border:1px solid rgba(153,80,102,.28);border-radius:12px;background:rgba(255,250,247,.58);color:#8b4d61;font-size:clamp(.62rem,.75vw,.84rem);font-weight:800;letter-spacing:.06em}
 .annual525600-window-tabs button.active{border-color:#9f5b72;background:rgba(229,188,194,.9);box-shadow:inset 0 0 0 1px rgba(255,255,255,.66)}
@@ -78,6 +78,7 @@
 .annual525600-floating-deck .crystal-summary-tile--food-macros{right:5.5%;top:16%;width:27%}
 .annual525600-floating-deck .crystal-summary-tile--strength-body{right:5.5%;top:40%;width:27%}
 .annual525600-floating-deck .crystal-summary-tile--discipline-time{right:5.5%;top:64%;width:27%}
+.annual525600-floating-deck .crystal-summary-tile--llc-build{left:35%;top:17%;width:30%;border-color:rgba(201,114,151,.86);background:linear-gradient(145deg,rgba(255,239,246,.9),rgba(211,145,174,.76));box-shadow:inset 0 0 0 1px rgba(255,255,255,.82),0 0 24px rgba(213,112,157,.28),0 12px 28px rgba(77,45,51,.18)}
 .annual525600-floating-deck .crystal-summary-tile--years-verdict{left:35%;bottom:3%;width:30%}
 .annual525600-floating-deck .crystal-detail-body{font-family:Impact,'Arial Narrow',sans-serif}
 .annual525600-floating-deck .annual525600-ranked>div,.annual525600-floating-deck .annual525600-trend,.annual525600-floating-deck .annual525600-callouts{background:rgba(255,250,247,.5)}
@@ -85,5 +86,22 @@
 .annual525600-verdict-list>div{padding:.7rem;border-left:2px solid #a56077;background:rgba(255,250,247,.52)}
 .annual525600-verdict-list dt{color:#85495e;font-size:.65rem;font-weight:850}.annual525600-verdict-list dd{margin:.3rem 0 0;color:#85495e;font-size:.92rem}
 .annual525600-floating-deck blockquote{margin:1rem 0 0;color:#85495e;font-size:1rem;font-style:italic;text-align:center}
+.annual525600-business{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(18rem,.8fr);gap:1rem;color:#6f334d;font-family:Impact,'Arial Narrow',sans-serif}
+.annual525600-business section{border:1px solid rgba(159,82,105,.28);border-radius:16px;background:rgba(255,248,248,.7);padding:.9rem}
+.annual525600-business-ledger{grid-row:span 2}
+.annual525600-business-ledger>header{display:grid;grid-template-columns:.7fr 1.3fr;gap:.65rem;margin-bottom:.75rem}
+.annual525600-business-ledger>header>div{display:grid;gap:.2rem;padding:.7rem;border-radius:12px;background:linear-gradient(145deg,rgba(225,174,193,.72),rgba(255,248,248,.82))}
+.annual525600-business-ledger header span,.annual525600-business-receipts span{font-size:.58rem;letter-spacing:.09em}.annual525600-business-ledger header strong{font-size:.82rem}
+.annual525600-business-milestones{display:grid;gap:.45rem;max-height:54vh;overflow:auto;padding-right:.25rem}
+.annual525600-business-milestones article{display:grid;grid-template-columns:minmax(13rem,1.4fr) minmax(7rem,.55fr) minmax(8rem,.55fr) minmax(13rem,1fr);gap:.45rem;align-items:center;padding:.6rem;border-left:4px solid #a66a82;border-radius:10px;background:rgba(255,255,255,.55)}
+.annual525600-business-milestones article.is-complete{border-left-color:#5d9b7b}.annual525600-business-milestones article.is-blocked{border-left-color:#b44d5d}
+.annual525600-business-milestones article>div{display:grid;gap:.12rem}.annual525600-business-milestones span,.annual525600-business-milestones small{font-size:.52rem;letter-spacing:.08em}.annual525600-business-milestones strong{font-size:.78rem}
+.annual525600-business input,.annual525600-business select,.annual525600-business button{min-height:36px;border:1px solid rgba(139,77,97,.35);border-radius:9px;background:rgba(255,251,250,.88);color:#6f334d;padding:.4rem .55rem;font:700 .68rem/1.1 Impact,'Arial Narrow',sans-serif;letter-spacing:.04em}
+.annual525600-business button{background:linear-gradient(90deg,#a45176,#db8db2);color:#fff;cursor:pointer}
+.annual525600-business-work h3,.annual525600-business-trend h3{margin:0 0 .6rem;font-size:.78rem;letter-spacing:.08em}
+.annual525600-business-work-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:.4rem}.annual525600-business-work-grid input:nth-of-type(2){grid-column:1/-1}
+.annual525600-business-work form>button{width:100%;margin-top:.5rem}
+.annual525600-business-receipts{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.7rem}.annual525600-business-receipts>div{display:grid;gap:.15rem;padding:.5rem;border-radius:9px;background:rgba(213,145,174,.18);text-align:center}.annual525600-business-receipts strong{font-size:1.05rem}
+.annual525600-business-trend{grid-column:2}.annual525600-business-trend>div{display:grid;grid-template-columns:.7fr .6fr 1.4fr;gap:.45rem;padding:.4rem 0;border-bottom:1px solid rgba(139,77,97,.16)}.annual525600-business-trend p{font:700 .65rem/1.4 Impact,'Arial Narrow',sans-serif;letter-spacing:.04em}
 @media(max-width:1100px) and (min-width:901px){.annual525600-window-tabs{left:18%;right:18%}.annual525600-floating-deck .crystal-summary-tile{transform:scale(.9);transform-origin:center}}
-@media(max-width:900px){.annual525600-window-tabs{position:fixed;left:.7rem;right:4.7rem;top:.7rem;z-index:15;overflow-x:auto}.annual525600-window-tabs button{min-width:92px}.annual525600-capsule-count{display:none}.annual525600-floating-deck{padding-top:78px}.annual525600-verdict-list{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.annual525600-window-tabs{position:fixed;left:.7rem;right:4.7rem;top:.7rem;z-index:15;overflow-x:auto}.annual525600-window-tabs button{min-width:92px}.annual525600-capsule-count{display:none}.annual525600-floating-deck{padding-top:78px}.annual525600-verdict-list{grid-template-columns:1fr 1fr}.annual525600-business{grid-template-columns:1fr}.annual525600-business-ledger{grid-row:auto}.annual525600-business-trend{grid-column:auto}.annual525600-business-milestones article{grid-template-columns:1fr}.annual525600-business-receipts{grid-template-columns:1fr 1fr}}

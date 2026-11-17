@@ -28,6 +28,45 @@ function numericTrend(days, key) {
   return { points, first, latest, change: Number((latest - first).toFixed(2)) };
 }
 
+function latestBusinessSnapshot(days) {
+  return [...days].reverse().find((day) => day.businessBuild && typeof day.businessBuild === 'object')?.businessBuild || null;
+}
+
+function buildBusinessIntelligence(days) {
+  const signals = days.map((day) => ({ sourceDate: day.sourceDate, ...(day.businessBuild || {}) }))
+    .filter((signal) => signal.source && signal.source === 'THICC.FITT LLC BUILD');
+  const latest = latestBusinessSnapshot(days);
+  const workEntries = signals.flatMap((signal) => Array.isArray(signal.dailyWork) ? signal.dailyWork : []);
+  const monthlyMap = new Map();
+  signals.forEach((signal) => {
+    const month = String(signal.sourceDate || '').slice(0, 7);
+    if (!month) return;
+    const current = monthlyMap.get(month) || { month, minutes: 0, completedWork: 0, sealedDays: 0 };
+    current.minutes += Number(signal.workMinutes || 0);
+    current.completedWork += Number(signal.completedWork || 0);
+    current.sealedDays += 1;
+    monthlyMap.set(month, current);
+  });
+  const categoryMap = new Map();
+  workEntries.forEach((entry) => addCount(categoryMap, entry?.category));
+  return {
+    capturedDays: signals.length,
+    workMinutes: signals.reduce((sum, signal) => sum + Number(signal.workMinutes || 0), 0),
+    completedWork: signals.reduce((sum, signal) => sum + Number(signal.completedWork || 0), 0),
+    categories: ranked(categoryMap, 8),
+    completedMilestones: Number(latest?.completedMilestones || 0),
+    totalMilestones: Number(latest?.totalMilestones || 0),
+    overdueMilestones: Array.isArray(latest?.overdueMilestones) ? latest.overdueMilestones : [],
+    blockingItems: Array.isArray(latest?.blockingItems) ? latest.blockingItems : [],
+    nextRequiredAction: cleanAnalyticsText(latest?.nextRequiredAction),
+    nextMilestone: latest?.nextMilestone || null,
+    school: latest?.school || null,
+    operations: latest?.operations || null,
+    monthly: [...monthlyMap.values()].sort((left, right) => left.month.localeCompare(right.month)),
+    latest,
+  };
+}
+
 function verdict(days, emotional, words) {
   const strongest = days.filter((day) => day.tone === 'victory').at(-1) || days.at(-1);
   const hardest = days.filter((day) => day.tone === 'critical' || day.tone === 'intense').at(-1);
@@ -111,6 +150,7 @@ export function buildAnnual525600Intelligence(records = readHopewoodSummationArc
     sleepDays: days.filter((day) => day.sleep).length,
     highlights: topText(days, 'schedule', 8),
   };
+  const business = buildBusinessIntelligence(days);
   const months = Array.from({ length: 12 }, (_, index) => {
     const month = String(index + 1).padStart(2, '0');
     return {
@@ -135,6 +175,7 @@ export function buildAnnual525600Intelligence(records = readHopewoodSummationArc
     nutrition,
     strength,
     discipline,
+    business,
     verdict: verdict(days, emotional, words),
   };
 }

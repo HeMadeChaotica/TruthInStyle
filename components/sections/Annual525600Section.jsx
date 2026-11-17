@@ -7,6 +7,8 @@ import { fetchHopewoodSummationArchive, HOPEWOOD_ARCHIVE_UPDATED_EVENT, readHope
 import { buildAnnual525600Intelligence } from '../../src/services/annual525600Service';
 import '../../styles/sections/525600.css';
 import FloatingCrystalTileDeck from '../shared/FloatingCrystalTileDeck';
+import ThiccFittLlcBuildPanel from './ThiccFittLlcBuildPanel';
+import { THICC_FITT_LLC_BUILD_UPDATED_EVENT, buildThiccFittLlcBuildSignal } from '../../src/services/thiccFittLlcBuildService';
 
 const BACKGROUND_URL = '/backgrounds/525600/525600-crystallization-operations-court-v3.png';
 const WINDOWS = [['week', '7 DAYS'], ['30d', '30 DAYS'], ['6m', '6 MONTHS'], ['9m', '9 MONTHS'], ['12m', '1 YEAR']];
@@ -23,6 +25,7 @@ function Trend({ label, trend }) {
 export default function Annual525600Section() {
   const [records, setRecords] = useState([]);
   const [windowKey, setWindowKey] = useState('12m');
+  const [liveBusiness, setLiveBusiness] = useState(null);
   useEffect(() => {
     const refresh = () => setRecords(readHopewoodSummationArchive());
     refresh();
@@ -31,6 +34,16 @@ export default function Annual525600Section() {
     window.addEventListener('storage', refresh);
     return () => {
       window.removeEventListener(HOPEWOOD_ARCHIVE_UPDATED_EVENT, refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+  useEffect(() => {
+    const refresh = () => setLiveBusiness(buildThiccFittLlcBuildSignal(new Date()));
+    refresh();
+    window.addEventListener(THICC_FITT_LLC_BUILD_UPDATED_EVENT, refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener(THICC_FITT_LLC_BUILD_UPDATED_EVENT, refresh);
       window.removeEventListener('storage', refresh);
     };
   }, []);
@@ -43,7 +56,8 @@ export default function Annual525600Section() {
     { id: 'food-macros', title: '04 FOOD, MACROS & ADHERENCE', summary: `${intelligence.nutrition.loggedDays} LOGGED DAYS\n${intelligence.nutrition.signals} FOOD SIGNALS`, content: <><div className="annual525600-callouts"><strong>{intelligence.nutrition.loggedDays}</strong><span>LOGGED DAYS</span><strong>{intelligence.nutrition.signals}</strong><span>FOOD SIGNALS</span></div><RankedList title="MEALS · MACROS · TREATS · CRAVINGS" items={intelligence.nutrition.highlights} /></> },
     { id: 'strength-body', title: '05 STRENGTH, MUSCLE & BODY', summary: `${intelligence.strength.trainedDays} TRAINED DAYS\n${intelligence.strength.signals} STRENGTH SIGNALS`, content: <><div className="annual525600-trends"><Trend label="WEIGHT" trend={intelligence.strength.weight} /><Trend label="BMI" trend={intelligence.strength.bmi} /><Trend label="BODY FAT" trend={intelligence.strength.bodyFat} /></div><RankedList title={`${intelligence.strength.trainedDays} TRAINED DAYS · HEAVY LIFTS & DEVELOPMENT`} items={intelligence.strength.highlights} /></> },
     { id: 'discipline-time', title: '06 DISCIPLINE, TIME & MOMENTUM', summary: `${intelligence.discipline.scheduledDays} SCHEDULED DAYS\n${intelligence.discipline.sleepDays} SLEEP RECEIPTS`, content: <><div className="annual525600-callouts"><strong>{intelligence.discipline.scheduledDays}</strong><span>SCHEDULED DAYS</span><strong>{intelligence.discipline.sleepDays}</strong><span>SLEEP RECEIPTS</span></div><RankedList title="THICC.TIME · CONSISTENCY · RECOVERY" items={intelligence.discipline.highlights} /></> },
-    { id: 'years-verdict', title: '07 THE YEAR’S VERDICT', summary: `${intelligence.verdict.dominantMood || 'MOOD PENDING'}\n${intelligence.verdict.definingWord || 'DEFINING WORD PENDING'}`, content: <><dl className="annual525600-verdict-list"><div><dt>DOMINANT MOOD</dt><dd>{intelligence.verdict.dominantMood || '—'}</dd></div><div><dt>DOMINANT ERA</dt><dd>{intelligence.verdict.dominantEra || '—'}</dd></div><div><dt>DEFINING WORD</dt><dd>{intelligence.verdict.definingWord || '—'}</dd></div><div><dt>BIGGEST WIN</dt><dd>{intelligence.verdict.biggestWin || '—'}</dd></div><div><dt>HARDEST PATTERN</dt><dd>{intelligence.verdict.hardestPattern || '—'}</dd></div></dl><blockquote>{intelligence.verdict.goodBroAnswer}</blockquote></> },
+    { id: 'llc-build', title: '07 THICC.FITT LLC BUILD', summary: `${Math.round((intelligence.business.workMinutes || 0) / 60 * 10) / 10} SEALED HOURS\n${liveBusiness?.completedMilestones ?? intelligence.business.completedMilestones} / ${liveBusiness?.totalMilestones ?? intelligence.business.totalMilestones} LIVE MILESTONES`, content: <ThiccFittLlcBuildPanel intelligence={intelligence.business} /> },
+    { id: 'years-verdict', title: '08 THE YEAR’S VERDICT', summary: `${intelligence.verdict.dominantMood || 'MOOD PENDING'}\n${intelligence.verdict.definingWord || 'DEFINING WORD PENDING'}`, content: <><dl className="annual525600-verdict-list"><div><dt>DOMINANT MOOD</dt><dd>{intelligence.verdict.dominantMood || '—'}</dd></div><div><dt>DOMINANT ERA</dt><dd>{intelligence.verdict.dominantEra || '—'}</dd></div><div><dt>DEFINING WORD</dt><dd>{intelligence.verdict.definingWord || '—'}</dd></div><div><dt>BIGGEST WIN</dt><dd>{intelligence.verdict.biggestWin || '—'}</dd></div><div><dt>HARDEST PATTERN</dt><dd>{intelligence.verdict.hardestPattern || '—'}</dd></div></dl><blockquote>{intelligence.verdict.goodBroAnswer}</blockquote></> },
   ].map((tile) => ({ ...tile, title: tile.title.replace(/^\d{2}\s+/, '') }));
 
   return (

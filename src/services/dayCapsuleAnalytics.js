@@ -49,7 +49,13 @@ function findDeep(root, names = []) {
     if (!current || typeof current !== 'object' || visited.has(current)) continue;
     visited.add(current);
     for (const [key, value] of Object.entries(current)) {
-      if (wanted.has(key.toLowerCase()) && cleanAnalyticsText(value)) return value;
+      if (wanted.has(key.toLowerCase())) {
+        const direct = cleanAnalyticsText(value);
+        const nested = value && typeof value === 'object'
+          ? cleanAnalyticsText(value.today ?? value.current ?? value.value ?? value.latest)
+          : '';
+        if (direct || nested) return direct ? value : nested;
+      }
       if (value && typeof value === 'object') queue.push(value);
     }
   }
@@ -107,11 +113,16 @@ export function normalizeDayCapsuleRecord(record = {}) {
     truth?.workoutHighlights,
     truth?.exerciseSummary,
   ], 30);
+  const bodySignals = signals?.thiccFittBody || truth?.thiccFittBodySignals || {};
   const schedule = analyticsList([
     signals?.thiccTime,
     truth?.thiccTimeSignals,
     truth?.scheduleHighlights,
   ], 20);
+  const businessBuild = signals?.thiccFittLlcBuild
+    || truth?.thiccFittLlcBuildSignals
+    || truth?.thiccFittLlcBuild
+    || null;
   const battleCry = first(
     truth?.battleCry,
     truth?.otherSignals?.battleCry,
@@ -119,10 +130,11 @@ export function normalizeDayCapsuleRecord(record = {}) {
   );
   const word = first(truth?.wordOfDay?.word, truth?.wordOfDay);
   const headHummer = first(truth?.headHummer, findDeep(truth, ['headHummer']));
-  const weight = numeric(findDeep(truth, ['weight', 'currentWeight', 'bodyWeight']));
-  const bmi = numeric(findDeep(truth, ['bmi', 'currentBmi']));
-  const bodyFat = numeric(findDeep(truth, ['bodyFat', 'bodyFatPercent']));
-  const sleep = first(findDeep(truth, ['sleepTotal', 'sleep_total', 'hoursSlept']));
+  const bodyTruth = { truth, bodySignals };
+  const weight = numeric(findDeep(bodyTruth, ['weight', 'currentWeight', 'bodyWeight']));
+  const bmi = numeric(findDeep(bodyTruth, ['bmi', 'currentBmi']));
+  const bodyFat = numeric(findDeep(bodyTruth, ['bodyFat', 'bodyFatPercent']));
+  const sleep = first(findDeep(bodyTruth, ['sleepTotal', 'sleep_total', 'hoursSlept']));
   const title = first(record?.title, identity?.titleOfDay, truth?.titleOfDay) || 'UNTITLED DAY';
   const sourceDate = getHopewoodRecordDate(record);
   const tone = intensityFor({ mood, era, lobito, assuredThoughts });
@@ -148,6 +160,7 @@ export function normalizeDayCapsuleRecord(record = {}) {
     meals,
     workouts,
     schedule,
+    businessBuild,
     weight,
     bmi,
     bodyFat,
@@ -178,6 +191,12 @@ export function dayCapsuleFactGroups(record) {
       ['SLEEP', day.sleep], ['BATTLE CRY', day.battleCry],
     ]), items: day.workouts },
     { title: 'THICC.TIME', tone: 'discipline', items: day.schedule },
+    { title: 'THICC.FITT LLC BUILD', tone: 'business', rows: rows([
+      ['WORK MINUTES', day.businessBuild?.workMinutes],
+      ['COMPLETED WORK', day.businessBuild?.completedWork],
+      ['MILESTONES', day.businessBuild ? `${day.businessBuild.completedMilestones || 0} / ${day.businessBuild.totalMilestones || 0}` : ''],
+      ['NEXT ACTION', day.businessBuild?.nextRequiredAction],
+    ]), items: analyticsList(day.businessBuild?.dailyWork, 12) },
   ].filter((group) => group.rows?.length || group.items?.length);
 }
 
