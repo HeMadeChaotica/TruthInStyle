@@ -92,8 +92,9 @@
 .annual525600-business-ledger>header{display:grid;grid-template-columns:.7fr 1.3fr;gap:.65rem;margin-bottom:.75rem}
 .annual525600-business-ledger>header>div{display:grid;gap:.2rem;padding:.7rem;border-radius:12px;background:linear-gradient(145deg,rgba(225,174,193,.72),rgba(255,248,248,.82))}
 .annual525600-business-ledger header span,.annual525600-business-receipts span{font-size:.58rem;letter-spacing:.09em}.annual525600-business-ledger header strong{font-size:.82rem}
-.annual525600-business-milestones{display:grid;gap:.45rem;max-height:54vh;overflow:auto;padding-right:.25rem}
-.annual525600-business-milestones article{display:grid;grid-template-columns:minmax(13rem,1.4fr) minmax(7rem,.55fr) minmax(8rem,.55fr) minmax(13rem,1fr);gap:.45rem;align-items:center;padding:.6rem;border-left:4px solid #a66a82;border-radius:10px;background:rgba(255,255,255,.55)}
+.annual525600-business-milestones{display:grid;gap:.45rem;max-height:54vh;overflow-x:hidden;overflow-y:auto;padding-right:.25rem}
+.annual525600-business-milestones article{display:grid;grid-template-columns:minmax(10rem,1fr) minmax(6.5rem,.48fr) minmax(7.5rem,.58fr);gap:.45rem;align-items:center;padding:.6rem;border-left:4px solid #a66a82;border-radius:10px;background:rgba(255,255,255,.55)}
+.annual525600-business-milestones article>input:last-child{grid-column:1/-1;width:100%;box-sizing:border-box}
 .annual525600-business-milestones article.is-complete{border-left-color:#5d9b7b}.annual525600-business-milestones article.is-blocked{border-left-color:#b44d5d}
 .annual525600-business-milestones article>div{display:grid;gap:.12rem}.annual525600-business-milestones span,.annual525600-business-milestones small{font-size:.52rem;letter-spacing:.08em}.annual525600-business-milestones strong{font-size:.78rem}
 .annual525600-business input,.annual525600-business select,.annual525600-business button{min-height:36px;border:1px solid rgba(139,77,97,.35);border-radius:9px;background:rgba(255,251,250,.88);color:#6f334d;padding:.4rem .55rem;font:700 .68rem/1.1 Impact,'Arial Narrow',sans-serif;letter-spacing:.04em}
