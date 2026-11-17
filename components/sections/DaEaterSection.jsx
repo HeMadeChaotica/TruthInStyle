@@ -187,7 +187,7 @@ export default function DaEaterSection() {
             </div>
             <div className="da-eater-meal-saved-list">
               {(day.meals||[]).length===0
-                ? <div className="da-eater-ledger-empty"><strong>READY FOR FIRST ENTRY</strong><span>LOG IT TO BUILD TODAY’S LEDGER</span></div>
+                ? null
                 : (day.meals||[]).map((m)=><div key={m.id} className="da-eater-meal-card"><div className="da-eater-meal-card-main"><strong>{m.type} • {m.name || 'UNTITLED'}</strong><span>{m.time || 'TIME NOT SET'}</span><div className="da-eater-meal-macros">{m.type === 'WATER' ? <span>WATER {m.waterOz || 0}OZ</span> : <><span>P {m.protein || 0}</span><span>C {m.carbs || 0}</span><span>F {m.fats || 0}</span><span>KCAL {m.calories || 0}</span></>}</div></div><div className="da-eater-meal-controls"><button onClick={()=>setMealForm(m)}>EDIT</button><button onClick={()=>setDay(deleteMealEntry(date,m.id))}>DELETE</button></div></div>)}
             </div>
             <div className="da-eater-ledger-total">
@@ -248,7 +248,7 @@ export default function DaEaterSection() {
     </div>
   );
   const tiles = [
-    { id: 'macro-harvest', title: 'MACRO HARVEST', summary: 'TODAY’S LIVE PROGRESSION', media: macroSummary, content: panelById.macro },
+    { id: 'macro-harvest', title: 'MACRO HARVEST', summary: null, media: macroSummary, content: panelById.macro },
     { id: 'thicc-eats', title: 'THICC.EATS', summary: `${day.meals?.length || 0} MEALS\nAVG MEAL ${averageMealKcal} KCAL`, content: panelById.meals, alwaysOpen: true },
     { id: 'thicc-obsession', title: 'THICC.OBSESSION', summary: `${day.hyperFixationMeal?.currentFixation || day.hyperFixationMeal?.mealName || 'FIXATION PENDING'}\n${day.hyperFixationMeal?.weeklyCount || 0} TIMES THIS WEEK`, media: firstPhoto ? <div className="da-eater-summary-photo" style={{ backgroundImage: `url(${JSON.stringify(photoUrl(firstPhoto)).slice(1, -1)})` }} aria-hidden="true" /> : <div className="da-eater-summary-photo is-empty" aria-hidden="true">PHOTO</div>, content: panelById['fixation-photo-log'] },
     { id: 'thicc-supps', title: 'THICC.SUPPS', summary: `${day.supplements?.length || 0} TODAY`, content: panelById.supps },
@@ -271,27 +271,7 @@ export default function DaEaterSection() {
     <SectionShell className="da-eater-shell">
       <ScenePlate>
         <div className="da-eater-bg" />
-        <div className="da-eater-floor-monogram" aria-hidden="true">
-          <svg viewBox="0 0 100 112" role="presentation">
-            <defs>
-              <linearGradient id="da-eater-tf-gold" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#fff0a8" />
-                <stop offset=".34" stopColor="#d79b38" />
-                <stop offset=".68" stopColor="#fff1a8" />
-                <stop offset="1" stopColor="#9e641d" />
-              </linearGradient>
-              <radialGradient id="da-eater-tf-jewel" cx="35%" cy="25%" r="80%">
-                <stop offset="0" stopColor="#ffd7e7" />
-                <stop offset=".35" stopColor="#f24691" />
-                <stop offset="1" stopColor="#6d143f" />
-              </radialGradient>
-            </defs>
-            <path className="da-eater-tf-shield" d="M12 12H88V65C88 83 72 96 50 105C28 96 12 83 12 65Z" />
-            <path className="da-eater-tf-t" d="M28 31H57V40H47V73H38V40H28Z" />
-            <path className="da-eater-tf-f" d="M54 31H76V40H63V49H73V58H63V73H54Z" />
-            <rect className="da-eater-tf-jewel" x="45" y="5" width="10" height="10" rx="2" transform="rotate(45 50 10)" />
-          </svg>
-        </div>
+        <div className="da-eater-floor-monogram" aria-hidden="true" />
         <svg className="da-eater-orchard-swirls" viewBox="0 0 1280 720" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="da-eater-swirl-gold" x1="0" y1="0" x2="1" y2="1">
